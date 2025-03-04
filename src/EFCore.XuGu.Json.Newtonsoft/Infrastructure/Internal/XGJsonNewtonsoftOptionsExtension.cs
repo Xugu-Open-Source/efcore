@@ -1,0 +1,41 @@
+// Copyright (c) Pomelo Foundation. All rights reserved.
+// Licensed under the MIT. See LICENSE in the project root for license information.
+
+using System;
+using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using EntityFrameworkCore.XuGu.Infrastructure.Internal;
+using EntityFrameworkCore.XuGu.Json.Newtonsoft.Storage.Internal;
+
+namespace EntityFrameworkCore.XuGu.Json.Newtonsoft.Infrastructure.Internal
+{
+    public class XGJsonNewtonsoftOptionsExtension : XGJsonOptionsExtension
+    {
+        public XGJsonNewtonsoftOptionsExtension()
+        {
+        }
+
+        public XGJsonNewtonsoftOptionsExtension([NotNull] XGJsonOptionsExtension copyFrom)
+            : base(copyFrom)
+        {
+        }
+
+        protected override XGJsonOptionsExtension Clone()
+            => new XGJsonNewtonsoftOptionsExtension(this);
+
+        public override string UseJsonOptionName => nameof(XGJsonNewtonsoftDbContextOptionsBuilderExtensions.UseNewtonsoftJson);
+        public override string AddEntityFrameworkName => nameof(XGJsonNewtonsoftServiceCollectionExtensions.AddEntityFrameworkXGJsonNewtonsoft);
+        public override Type TypeMappingSourcePluginType => typeof(XGJsonNewtonsoftTypeMappingSourcePlugin);
+
+        /// <summary>
+        ///     Adds the services required to make the selected options work. This is used when there
+        ///     is no external <see cref="IServiceProvider" /> and EF is maintaining its own service
+        ///     provider internally. This allows database providers (and other extensions) to register their
+        ///     required services when EF is creating an service provider.
+        /// </summary>
+        /// <param name="services"> The collection to add services to. </param>
+        public override void ApplyServices(IServiceCollection services)
+            => services.AddEntityFrameworkXGJsonNewtonsoft();
+    }
+}
