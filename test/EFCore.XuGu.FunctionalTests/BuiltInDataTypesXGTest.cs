@@ -205,7 +205,7 @@ WHERE `m`.`TimeSpanAsTime` = :__timeSpan_0",
                 short? param2 = 79;
                 Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == id && e.ShortAsSmallint == param2));
 
-                byte? param3 = 80;
+                short? param3 = 80;
                 Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == id && e.ByteAsTinyint == param3));
 
                 bool? param4 = true;
@@ -232,7 +232,7 @@ WHERE `m`.`TimeSpanAsTime` = :__timeSpan_0",
                 Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(
                     e => e.Int == id && e.DoubleAsDoublePrecision >= param7c && e.DoubleAsDoublePrecision <= param7cc));
 
-                DateTime? param8 = new DateTime(1605, 1, 2);
+                DateTime? param8 = new DateTime(1605, 1, 3);
                 Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == id && e.DateTimeAsDate == param8));
 
                 //DateTimeOffset? param9 = new DateTimeOffset(new DateTime(), TimeSpan.Zero);
@@ -738,7 +738,7 @@ WHERE `m`.`TimeSpanAsTime` = :__timeSpan_0",
             Assert.Equal("Gumball Rules!", entity.StringAsText);
             Assert.Equal("Gumball Rules OK!", entity.StringAsNtext);
             Assert.Equal(new byte[] { 89, 90, 91, 92 }, entity.BytesAsVarbinary);
-            Assert.Equal(new byte[] { 93, 94, 95, 96}, entity.BytesAsBinary);
+            Assert.Equal(new byte[] { 93, 94, 95, 96, 0, 0 }, entity.BytesAsBinary);
             Assert.Equal(new byte[] { 97, 98, 99, 100 }, entity.BytesAsBlob);
             Assert.Equal(new Guid("A8F9F951-145F-4545-AC60-B92FF57ADA47"), entity.GuidAsUniqueidentifier);
             Assert.Equal(int.MaxValue, entity.UintAsBigint);
@@ -1048,7 +1048,7 @@ AnimalIdentification.Id ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precisio
 AnimalIdentification.Method ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BinaryForeignKeyDataType.BinaryKeyDataTypeId ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BinaryForeignKeyDataType.Id ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
-BinaryKeyDataType.Ex ---> [CLOB] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+BinaryKeyDataType.Ex ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BinaryKeyDataType.Id ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInDataTypes.Enum16 ---> [SMALLINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInDataTypes.Enum32 ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
@@ -1125,7 +1125,7 @@ BuiltInNullableDataTypes.TestNullableTimeSpan ---> [TIME] [MaxLength = 3] [Preci
 BuiltInNullableDataTypes.TestNullableUnsignedInt16 ---> [SMALLINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInNullableDataTypes.TestNullableUnsignedInt32 ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInNullableDataTypes.TestNullableUnsignedInt64 ---> [BIGINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
-BuiltInNullableDataTypes.TestString ---> [CLOB] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+BuiltInNullableDataTypes.TestString ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInNullableDataTypesShadow.Enum16 ---> [SMALLINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInNullableDataTypesShadow.Enum32 ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInNullableDataTypesShadow.Enum64 ---> [BIGINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
@@ -1153,7 +1153,7 @@ BuiltInNullableDataTypesShadow.TestNullableTimeSpan ---> [TIME] [MaxLength = 3] 
 BuiltInNullableDataTypesShadow.TestNullableUnsignedInt16 ---> [SMALLINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInNullableDataTypesShadow.TestNullableUnsignedInt32 ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 BuiltInNullableDataTypesShadow.TestNullableUnsignedInt64 ---> [BIGINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
-BuiltInNullableDataTypesShadow.TestString ---> [CLOB] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+BuiltInNullableDataTypesShadow.TestString ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 DateTimeEnclosure.DateTimeOffset ---> [DATETIME WITH TIME ZONE] [MaxLength = 6] [Precision = 0 [Precision = 6 Scale = 6]
 DateTimeEnclosure.Id ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 EmailTemplate.Id ---> [GUID] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
@@ -1320,22 +1320,22 @@ ObjectBackedDataTypes.Int64 ---> [BIGINT] [MaxLength = -1] [Precision = 0 [Preci
 ObjectBackedDataTypes.PartitionId ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 ObjectBackedDataTypes.SignedByte ---> [TINYINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 ObjectBackedDataTypes.Single ---> [FLOAT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
-ObjectBackedDataTypes.String ---> [CLOB] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+ObjectBackedDataTypes.String ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 ObjectBackedDataTypes.TimeSpan ---> [TIME] [MaxLength = 3] [Precision = 0 [Precision = 3 Scale = 3]
 ObjectBackedDataTypes.UnsignedInt16 ---> [SMALLINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 ObjectBackedDataTypes.UnsignedInt32 ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 ObjectBackedDataTypes.UnsignedInt64 ---> [BIGINT] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 StringEnclosure.Id ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
-StringEnclosure.Value ---> [CLOB] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+StringEnclosure.Value ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 StringForeignKeyDataType.Id ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
-StringForeignKeyDataType.StringKeyDataTypeId ---> [CHAR] [MaxLength = 255] [Precision = 0 [Precision = 255 Scale = 255]
-StringKeyDataType.Id ---> [CHAR] [MaxLength = 255] [Precision = 0 [Precision = 255 Scale = 255]
+StringForeignKeyDataType.StringKeyDataTypeId ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+StringKeyDataType.Id ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 UnicodeDataTypes.Id ---> [INTEGER] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
-UnicodeDataTypes.StringAnsi ---> [CLOB] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+UnicodeDataTypes.StringAnsi ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 UnicodeDataTypes.StringAnsi3 ---> [CHAR] [MaxLength = 3] [Precision = 0 [Precision = 3 Scale = 3]
 UnicodeDataTypes.StringAnsi9000 ---> [CHAR] [MaxLength = 9000] [Precision = 0 [Precision = 9000 Scale = 9000]
-UnicodeDataTypes.StringDefault ---> [CLOB] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
-UnicodeDataTypes.StringUnicode ---> [CLOB] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+UnicodeDataTypes.StringDefault ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
+UnicodeDataTypes.StringUnicode ---> [CHAR] [MaxLength = -1] [Precision = 0 [Precision = -1 Scale = -1]
 ";
 
             Assert.Equal(expected, actual, ignoreLineEndingDifferences: true, ignoreCase: true, ignoreWhiteSpaceDifferences: true);

@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.XuGu.FunctionalTests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "test\TestProject1\TestProject1.csproj", "{C771A790-895D-4A74-8DF1-7DA621C487FE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.XuGu.Tests", "test\EFCore.XuGu.Tests\EFCore.XuGu.Tests.csproj", "{31818EEB-4387-478A-A6C7-5743BA48923B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,14 @@ Global
 		{C771A790-895D-4A74-8DF1-7DA621C487FE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C771A790-895D-4A74-8DF1-7DA621C487FE}.Release|x64.ActiveCfg = Release|Any CPU
 		{C771A790-895D-4A74-8DF1-7DA621C487FE}.Release|x64.Build.0 = Release|Any CPU
+		{31818EEB-4387-478A-A6C7-5743BA48923B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31818EEB-4387-478A-A6C7-5743BA48923B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31818EEB-4387-478A-A6C7-5743BA48923B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{31818EEB-4387-478A-A6C7-5743BA48923B}.Debug|x64.Build.0 = Debug|Any CPU
+		{31818EEB-4387-478A-A6C7-5743BA48923B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31818EEB-4387-478A-A6C7-5743BA48923B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31818EEB-4387-478A-A6C7-5743BA48923B}.Release|x64.ActiveCfg = Release|Any CPU
+		{31818EEB-4387-478A-A6C7-5743BA48923B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -86,6 +96,7 @@ Global
 		{78C03B84-DCFB-4231-94CA-99F7E97BB1CF} = {E09F101B-A22C-473E-9D78-3F85062692B6}
 		{4359C9DA-85C2-4289-B52E-284237CB2CCD} = {D1B13617-C5C6-4E35-A33F-87252BAE39FF}
 		{C771A790-895D-4A74-8DF1-7DA621C487FE} = {D1B13617-C5C6-4E35-A33F-87252BAE39FF}
+		{31818EEB-4387-478A-A6C7-5743BA48923B} = {D1B13617-C5C6-4E35-A33F-87252BAE39FF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3B31492A-9B2E-44DD-B6DE-166D68005906}

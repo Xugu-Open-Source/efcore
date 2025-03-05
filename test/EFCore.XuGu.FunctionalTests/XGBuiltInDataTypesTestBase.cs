@@ -73,6 +73,7 @@ namespace EntityFrameworkCore.XuGu.FunctionalTests
         [ConditionalFact]
         public virtual void Can_perform_query_with_max_length()
         {
+            int id = new Random().Next();
             var shortString = "Sky";
             var shortBinary = new byte[] { 8, 8, 7, 8, 7 };
             var longString = new string('X', Fixture.LongStringLength);
@@ -87,7 +88,7 @@ namespace EntityFrameworkCore.XuGu.FunctionalTests
                 context.Set<MaxLengthDataTypes>().Add(
                     new MaxLengthDataTypes
                     {
-                        Id = 799,
+                        Id = id,
                         String3 = shortString,
                         ByteArray5 = shortBinary,
                         String9000 = longString,
@@ -100,17 +101,17 @@ namespace EntityFrameworkCore.XuGu.FunctionalTests
             using (var context = CreateContext())
             {
                 Assert.NotNull(
-                    context.Set<MaxLengthDataTypes>().Where(e => e.Id == 799 && e.String3 == shortString).ToList().SingleOrDefault());
+                    context.Set<MaxLengthDataTypes>().Where(e => e.Id == id && e.String3 == shortString).ToList().SingleOrDefault());
 
                 Assert.NotNull(
-                    context.Set<MaxLengthDataTypes>().Where(e => e.Id == 799 && e.String9000 == longString).ToList().SingleOrDefault());
+                    context.Set<MaxLengthDataTypes>().Where(e => e.Id == id && e.String9000 == longString).ToList().SingleOrDefault());
 
                 Assert.NotNull(
-                    context.Set<MaxLengthDataTypes>().Where(e => e.Id == 799 && e.ByteArray5 == shortBinary).ToList()
+                    context.Set<MaxLengthDataTypes>().Where(e => e.Id == id && e.ByteArray5 == shortBinary).ToList()
                         .SingleOrDefault());
 
                 Assert.NotNull(
-                    context.Set<MaxLengthDataTypes>().Where(e => e.Id == 799 && e.ByteArray9000 == longBinary).ToList()
+                    context.Set<MaxLengthDataTypes>().Where(e => e.Id == id && e.ByteArray9000 == longBinary).ToList()
                         .SingleOrDefault());
             }
         }
@@ -1021,7 +1022,7 @@ namespace EntityFrameworkCore.XuGu.FunctionalTests
                 {
                     Assert.Same(
                         entity,
-                        context.Set<BuiltInNullableDataTypes>().Where(e => e.Id == id && e.TestNullableByte == 255).ToList().Single());
+                        context.Set<BuiltInNullableDataTypes>().Where(e => e.Id == id && e.TestNullableByte == 127).ToList().Single());
                 }
 
                 Assert.Same(

@@ -61,6 +61,8 @@ namespace EntityFrameworkCore.XuGu.Storage.Internal
 
         private XGStringTypeMapping _enum;
 
+        private XGStringTypeMapping _varcharMax;
+
         // DateTime
         private readonly XGYearTypeMapping _year = new XGYearTypeMapping("year");
         private readonly XGDateTypeMapping _date = new XGDateTypeMapping("date");
@@ -118,6 +120,8 @@ namespace EntityFrameworkCore.XuGu.Storage.Internal
             //
             // String mappings depend on the XGOptions.NoBackslashEscapes setting:
             //
+
+            _varcharMax = new XGStringTypeMapping("varchar", _options, StoreTypePostfix.Size);
 
             _charUnicode = new XGStringTypeMapping("char", _options, StoreTypePostfix.Size, fixedLength: true);
             _varcharUnicode = new XGStringTypeMapping("varchar", _options, StoreTypePostfix.Size);
@@ -185,9 +189,9 @@ namespace EntityFrameworkCore.XuGu.Storage.Internal
                     { "char",                      new[] { _charUnicode } },
                     { "varchar",                   new[] { _varcharUnicode } },
                     { "tinytext",                  new[] { _tinytextUnicode } },
-                    { "text",                      new[] { _textUnicode } },
-                    { "mediumtext",                new[] { _mediumtextUnicode } },
-                    { "longtext",                  new[] { _longtextUnicode } },
+                    { "text",                      new[] { _varcharMax } },
+                    { "mediumtext",                new[] { _varcharMax } },
+                    { "longtext",                  new[] { _varcharMax } },
 
                     { "boolean",                   new[] { _boolean } },
 
@@ -222,6 +226,7 @@ namespace EntityFrameworkCore.XuGu.Storage.Internal
 
 	                // byte / char
 	                { typeof(sbyte),   _tinyint },
+                    { typeof(string),   _varcharMax },
                     //{ typeof(byte),    _utinyint },
                     { typeof(bool),    _boolean },
 
@@ -324,9 +329,6 @@ namespace EntityFrameworkCore.XuGu.Storage.Internal
                 {
                     return _jsonDefaultString;
                 }
-
-                // A store type name was provided, but is unknown. This could be a domain (alias) type, in which case
-                // we proceed with a CLR type lookup (if the type doesn't exist at all the failure will come later).
             }
 
             if (clrType != null)

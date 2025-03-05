@@ -1,0 +1,5 @@
+﻿{
+  "Data": {
+    "ConnectionString": "IP=127.0.0.1;DB=SYSTEM;User=SYSDBA;PWD=SYSDBA;Port=5138;AUTO_COMMIT=off;CHAR_SET=GBK;"
+  }
+}
