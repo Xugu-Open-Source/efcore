@@ -1,5 +1,0 @@
-<#
-    Session["ResourceFile"] = "XGStrings.resx";
-    Session["LoggingDefinitionsClass"] = "Diagnostics.Internal.XGLoggingDefinitions";
-#>
-<#@ include file="..\..\..\tools\Resources.tt" #>

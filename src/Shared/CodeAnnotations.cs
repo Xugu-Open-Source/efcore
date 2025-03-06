@@ -1,26 +1,22 @@
-// Copyright (c) Pomelo Foundation. All rights reserved.
-// Licensed under the MIT. See LICENSE in the project root for license information.
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
 
 namespace JetBrains.Annotations
 {
     [AttributeUsage(
-        AttributeTargets.Method
-        | AttributeTargets.Parameter
-        | AttributeTargets.Property
-        | AttributeTargets.Delegate
-        | AttributeTargets.Field)]
+        AttributeTargets.Method | AttributeTargets.Parameter |
+        AttributeTargets.Property | AttributeTargets.Delegate |
+        AttributeTargets.Field)]
     internal sealed class NotNullAttribute : Attribute
     {
     }
 
     [AttributeUsage(
-        AttributeTargets.Method
-        | AttributeTargets.Parameter
-        | AttributeTargets.Property
-        | AttributeTargets.Delegate
-        | AttributeTargets.Field)]
+        AttributeTargets.Method | AttributeTargets.Parameter |
+        AttributeTargets.Property | AttributeTargets.Delegate |
+        AttributeTargets.Field)]
     internal sealed class CanBeNullAttribute : Attribute
     {
     }
@@ -38,9 +34,9 @@ namespace JetBrains.Annotations
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     internal sealed class ContractAnnotationAttribute : Attribute
     {
-        public string Contract { get; }
+        public string Contract { get; private set; }
 
-        public bool ForceFullStates { get; }
+        public bool ForceFullStates { get; private set; }
 
         public ContractAnnotationAttribute([NotNull] string contract)
             : this(contract, false)
@@ -73,25 +69,25 @@ namespace JetBrains.Annotations
         }
 
         public UsedImplicitlyAttribute(
-            ImplicitUseKindFlags useKindFlags,
-            ImplicitUseTargetFlags targetFlags)
+            ImplicitUseKindFlags useKindFlags, ImplicitUseTargetFlags targetFlags)
         {
             UseKindFlags = useKindFlags;
             TargetFlags = targetFlags;
         }
 
-        public ImplicitUseKindFlags UseKindFlags { get; }
-        public ImplicitUseTargetFlags TargetFlags { get; }
+        public ImplicitUseKindFlags UseKindFlags { get; private set; }
+        public ImplicitUseTargetFlags TargetFlags { get; private set; }
     }
 
     [AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Delegate)]
     internal sealed class StringFormatMethodAttribute : Attribute
     {
         public StringFormatMethodAttribute([NotNull] string formatParameterName)
-            => FormatParameterName = formatParameterName;
+        {
+            FormatParameterName = formatParameterName;
+        }
 
-        [NotNull]
-        public string FormatParameterName { get; }
+        [NotNull] public string FormatParameterName { get; private set; }
     }
 
     [Flags]

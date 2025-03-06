@@ -1,0 +1,239 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{312302E9-F28A-47C9-8D7E-28021B46C42F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.EntityFrameworkCore.XuGuDb.FunctionalTests</RootNamespace>
+    <AssemblyName>Microsoft.EntityFrameworkCore.XuGuDb.FunctionalTests</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Extensions.Configuration, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Configuration.1.0.0\lib\netstandard1.1\Microsoft.Extensions.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Abstractions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Configuration.Abstractions.1.0.0\lib\netstandard1.0\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.EnvironmentVariables, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Configuration.EnvironmentVariables.1.0.0\lib\net451\Microsoft.Extensions.Configuration.EnvironmentVariables.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.FileExtensions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Configuration.FileExtensions.1.0.0\lib\net451\Microsoft.Extensions.Configuration.FileExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Json, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Configuration.Json.1.0.0\lib\net451\Microsoft.Extensions.Configuration.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.DependencyInjection.1.0.0\lib\netstandard1.1\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.1.0.0\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileProviders.Abstractions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.FileProviders.Abstractions.1.0.0\lib\netstandard1.0\Microsoft.Extensions.FileProviders.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileProviders.Physical, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.FileProviders.Physical.1.0.0\lib\net451\Microsoft.Extensions.FileProviders.Physical.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileSystemGlobbing, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.FileSystemGlobbing.1.0.0\lib\net451\Microsoft.Extensions.FileSystemGlobbing.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Logging.1.0.0\lib\netstandard1.1\Microsoft.Extensions.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging.Abstractions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Logging.Abstractions.1.0.0\lib\netstandard1.1\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Primitives, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Primitives.1.0.0\lib\netstandard1.0\Microsoft.Extensions.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Remotion.Linq" />
+    <Reference Include="XuguClient, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\csharp-driver\XGCSClient\bin\Debug\net45\XuguClient.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.assert, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.assert.2.1.0\lib\dotnet\xunit.assert.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.core, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.extensibility.core.2.1.0\lib\dotnet\xunit.core.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.execution.desktop, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.extensibility.execution.2.1.0\lib\net45\xunit.execution.desktop.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AsNoTrackingXuGuDbTest.cs" />
+    <Compile Include="AsTrackingXuGuDbTest.cs" />
+    <Compile Include="AsyncFromSqlQueryXuGuDbTest.cs" />
+    <Compile Include="AsyncFromSqlSprocQueryXuGuDbTest.cs" />
+    <Compile Include="AsyncQueryXuGuDbTest.cs" />
+    <Compile Include="BatchingTest.cs" />
+    <Compile Include="BuiltInDataTypesXuGuDbFixture.cs" />
+    <Compile Include="BuiltInDataTypesXuGuDbTest.cs" />
+    <Compile Include="ChangeTrackingXuGuDbTest.cs" />
+    <Compile Include="CommandConfigurationTest.cs" />
+    <Compile Include="CompiledQueryCacheKeyGeneratorTest.cs" />
+    <Compile Include="ComplexNavigationsQueryXuGuDbFixture.cs" />
+    <Compile Include="ComplexNavigationsQueryXuGuDbTest.cs" />
+    <Compile Include="CompositeKeyEndToEndTest.cs" />
+    <Compile Include="ComputedColumnTest.cs" />
+    <Compile Include="ConnectionSpecificationTest.cs" />
+    <Compile Include="DataAnnotationXuGuDbFixture.cs" />
+    <Compile Include="DataAnnotationXuGuDbTest.cs" />
+    <Compile Include="DefaultValuesTest.cs" />
+    <Compile Include="F1XuGuDbFixture.cs" />
+    <Compile Include="FromSqlQueryXuGuDbTest.cs" />
+    <Compile Include="FromSqlSprocQueryXuGuDbTest.cs" />
+    <Compile Include="GearsOfWarFromSqlQueryXuGuDbTest.cs" />
+    <Compile Include="GearsOfWarQueryXuGuDbFixture.cs" />
+    <Compile Include="GearsOfWarQueryXuGuDbTest.cs" />
+    <Compile Include="GraphUpdatesXuGuDbTestBase.cs" />
+    <Compile Include="GraphUpdatesWithIdentityXuGuDbTest.cs" />
+    <Compile Include="GraphUpdatesWithSequenceXuGuDbTest.cs" />
+    <Compile Include="IncludeAsyncXuGuDbTest.cs" />
+    <Compile Include="IncludeOneToOneXuGuDbTest.cs" />
+    <Compile Include="IncludeXuGuDbTest.cs" />
+    <Compile Include="InheritanceRelationshipsQueryXuGuDbFixture.cs" />
+    <Compile Include="InheritanceRelationshipsQueryXuGuDbTest.cs" />
+    <Compile Include="InheritanceXuGuDbFixture.cs" />
+    <Compile Include="InheritanceXuGuDbTest.cs" />
+    <Compile Include="MappingQueryXuGuDbFixture.cs" />
+    <Compile Include="MappingQueryXuGuDbTest.cs" />
+    <Compile Include="MigrationsXuGuDbFixture.cs" />
+    <Compile Include="MigrationsXuGuDbTest.cs" />
+    <Compile Include="MonsterFixupXuGuDbTest.cs" />
+    <Compile Include="NavigationTest.cs" />
+    <Compile Include="NorthwindQueryXuGuDbFixture.cs" />
+    <Compile Include="NorthwindRowNumberPagingQueryXuGuDbFixture.cs" />
+    <Compile Include="NorthwindSprocQueryXuGuDbFixture.cs" />
+    <Compile Include="NotificationEntitiesXuGuDbTest.cs" />
+    <Compile Include="NullKeysXuGuDbTest.cs" />
+    <Compile Include="NullSemanticsQueryXuGuDbFixture.cs" />
+    <Compile Include="NullSemanticsQueryXuGuDbTest.cs" />
+    <Compile Include="OneToOneQueryXuGuDbFixture.cs" />
+    <Compile Include="OptimisticConcurrencyXuGuDbTest.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyEntryXuGuDbTest.cs" />
+    <Compile Include="QueryBugsTest.cs" />
+    <Compile Include="QueryLoggingXuGuDbTest.cs" />
+    <Compile Include="QueryNavigationsXuGuDbTest.cs" />
+    <Compile Include="QueryNoClientEvalXuGuDbFixture.cs" />
+    <Compile Include="QueryNoClientEvalXuGuDbTest.cs" />
+    <Compile Include="QueryXuGuDbTest.cs" />
+    <Compile Include="RowNumberPagingTest.cs" />
+    <Compile Include="SequenceEndToEndTest.cs" />
+    <Compile Include="SequentialGuidEndToEndTest.cs" />
+    <Compile Include="SqlExecutorXuGuDbTest.cs" />
+    <Compile Include="Utilities\SqlFileLogger.cs" />
+    <Compile Include="Utilities\XuGuDbConditionTraitDiscoverer.cs" />
+    <Compile Include="XuGuDbConfigPatternsTest.cs" />
+    <Compile Include="XuGuDbDatabaseCreationTest.cs" />
+    <Compile Include="XuGuDbDatabaseCreatorTest.cs" />
+    <Compile Include="XuGuDbEndToEndTest.cs" />
+    <Compile Include="XuGuDbMigrationsTest.cs" />
+    <Compile Include="XuGuDbTriggersTest.cs" />
+    <Compile Include="XuGuDbValueGenerationScenariosTest.cs" />
+    <Compile Include="StoreGeneratedXuGuDbTest.cs" />
+    <Compile Include="TransactionXuGuDbFixture.cs" />
+    <Compile Include="TransactionXuGuDbTest.cs" />
+    <Compile Include="UpdatesXuGuDbFixture.cs" />
+    <Compile Include="UpdatesXuGuDbTest.cs" />
+    <Compile Include="WarningsXuGuDbFixture.cs" />
+    <Compile Include="WarningsXuGuDbTest.cs" />
+    <Compile Include="XuGuDbFixture.cs" />
+    <Compile Include="TestModels\XuGuDbNorthwindContext.cs" />
+    <Compile Include="Utilities\DbContextOptionsBuilderExtensions.cs" />
+    <Compile Include="Utilities\XuGuDbConditionAttribute.cs" />
+    <Compile Include="Utilities\XuGuDbConfiguredConditionAttribute.cs" />
+    <Compile Include="Utilities\XuGuDbTestStore.cs" />
+    <Compile Include="Utilities\TestEnvironment.cs" />
+    <Compile Include="Utilities\TestXuGuDbModelSource.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Microsoft.EntityFrameworkCore.InMemory\Microsoft.EntityFrameworkCore.InMemory.csproj">
+      <Project>{6b102cc4-4396-4a7b-9f72-2c6b5c4d8310}</Project>
+      <Name>Microsoft.EntityFrameworkCore.InMemory</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Microsoft.EntityFrameworkCore.Relational.Specification.Tests\Microsoft.EntityFrameworkCore.Relational.Specification.Tests.csproj">
+      <Project>{07fa2b15-a6a5-4292-a096-7771fb32eeda}</Project>
+      <Name>Microsoft.EntityFrameworkCore.Relational.Specification.Tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Microsoft.EntityFrameworkCore.Relational\Microsoft.EntityFrameworkCore.Relational.csproj">
+      <Project>{6a25df99-2615-46d8-9532-821764647ee1}</Project>
+      <Name>Microsoft.EntityFrameworkCore.Relational</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Microsoft.EntityFrameworkCore.Specification.Tests\Microsoft.EntityFrameworkCore.Specification.Tests.csproj">
+      <Project>{1A73D95E-E8B5-4F96-908C-7B040E4F7AFE}</Project>
+      <Name>Microsoft.EntityFrameworkCore.Specification.Tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Microsoft.EntityFrameworkCore.XuGuDB\Microsoft.EntityFrameworkCore.XuGuDB.csproj">
+      <Project>{b567d684-7c37-4b51-8cfc-42cdfca223f0}</Project>
+      <Name>Microsoft.EntityFrameworkCore.XuGuDB</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Microsoft.EntityFrameworkCore\Microsoft.EntityFrameworkCore.csproj">
+      <Project>{715c38e9-b2f5-4db2-8025-0c6492debdd4}</Project>
+      <Name>Microsoft.EntityFrameworkCore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.EntityFrameworkCore.Relational.Tests\Microsoft.EntityFrameworkCore.Relational.Tests.csproj">
+      <Project>{1a884122-dc9e-42b1-8821-e43340f954d1}</Project>
+      <Name>Microsoft.EntityFrameworkCore.Relational.Tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.EntityFrameworkCore.Tests\Microsoft.EntityFrameworkCore.Tests.csproj">
+      <Project>{313f46fe-9962-4a15-805f-fcbdf5a6181e}</Project>
+      <Name>Microsoft.EntityFrameworkCore.Tests</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Northwind.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Northwind1.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

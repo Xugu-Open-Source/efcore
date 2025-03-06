@@ -1,0 +1,74 @@
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using JetBrains.Annotations;
+using System;
+using XuguClient;
+
+namespace Microsoft.EntityFrameworkCore.Scaffolding.Internal
+{
+    // TODO merge with DbDataReaderExtension.GetValueOrDefault when Mono supports GetFieldValue. See #2079
+    /// <summary>
+    ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+    ///     directly from your code. This API may change or be removed in future releases.
+    /// </summary>
+    public static class SqlDataReaderExtension
+    {
+        /// <summary>
+        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static T GetValueOrDefault<T>([NotNull] this XGDataReader reader, [NotNull] string name)
+        {
+            //var idx = reader.GetOrdinal(name);
+
+            //return reader.IsDBNull(idx)
+            //    ? default(T)
+            //    //: reader.GetFieldValue<T>(idx);
+            //    //: (T)reader.GetValue(idx);
+            //    :(T)Convert.ChangeType(reader.GetValue(idx), typeof(T));
+            var idx = reader.GetOrdinal(name);
+
+            if (reader.IsDBNull(idx))
+            {
+                return default(T);
+            }
+
+            var value = reader.GetValue(idx);
+
+            if (typeof(T) == typeof(int?))
+            {
+                if (value == DBNull.Value)
+                {
+                    return (T)(object)null;
+                }
+                int result;
+
+                return (T)(object)(int.TryParse(value.ToString(), out result) ? (int?)result : null);
+            }
+
+            if (typeof(T) == typeof(bool?))
+            {
+                if (value == DBNull.Value)
+                {
+                    return (T)(object)null;
+                }
+
+                return (T)(object)(value is bool ? (bool?)value : null);
+            }
+
+            if (typeof(T) == typeof(long?))
+            {
+                if (value == DBNull.Value)
+                {
+                    return (T)(object)null;
+                }
+                long result;
+
+                return (T)(object)(long.TryParse(value.ToString(), out result) ? (long?)result : null);
+            }
+
+            return (T)Convert.ChangeType(value, typeof(T));
+        }
+    }
+}

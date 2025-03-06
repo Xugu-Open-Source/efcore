@@ -1,0 +1,51 @@
+﻿{
+  "version": "1.0.0",
+  "description": "Shared Entity Framework Core components for relational database providers.",
+  "packOptions": {
+    "tags": [
+      "Entity Framework Core",
+      "entity-framework-core",
+      "EF",
+      "Data",
+      "O/RM"
+    ]
+  },
+  "buildOptions": {
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk",
+    "nowarn": [
+      "CS1591"
+    ],
+    "xmlDoc": true,
+    "compile": {
+      "include": "../Shared/*.cs"
+    },
+    "embed": {
+      "includeFiles": "Properties/Microsoft.EntityFrameworkCore.Relational.rd.xml"
+    }
+  },
+  "dependencies": {
+    "Microsoft.EntityFrameworkCore": "1.0.0",
+    "System.Diagnostics.DiagnosticSource": "4.0.0"
+  },
+  "frameworks": {
+    "net451": {
+      "dependencies": {
+        "System.Diagnostics.DiagnosticSource": "4.0.0"
+      },
+      "frameworkAssemblies": {
+        "System.Data": "",
+        "System.Diagnostics.Tracing": {
+          "type": "build"
+        },
+        "System.Runtime": {
+          "type": "build"
+        },
+        "System.Threading": {
+          "type": "build"
+        },
+        "System.Transactions": ""
+      }
+    }
+  }
+}

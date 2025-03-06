@@ -1,0 +1,18 @@
+{
+  "buildOptions": {
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk"
+  },
+  "dependencies": {
+    "dotnet-test-xunit": "1.0.0-rc3-000000-01",
+    "Microsoft.EntityFrameworkCore.Specification.Tests": "1.0.0"
+  },
+  "testRunner": "xunit",
+  "frameworks": {
+    "net451": {
+      "dependencies": {
+        "Moq": "4.2.1312.1622"
+      }
+    }
+  }
+}

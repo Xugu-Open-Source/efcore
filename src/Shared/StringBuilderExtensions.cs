@@ -1,9 +1,8 @@
-// Copyright (c) Pomelo Foundation. All rights reserved.
-// Licensed under the MIT. See LICENSE in the project root for license information.
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
 
-// ReSharper disable once CheckNamespace
 namespace System.Text
 {
     internal static class StringBuilderExtensions
@@ -76,6 +75,32 @@ namespace System.Text
             foreach (var value in values)
             {
                 joinAction(stringBuilder, value, param1, param2);
+                stringBuilder.Append(separator);
+                appended = true;
+            }
+
+            if (appended)
+            {
+                stringBuilder.Length -= separator.Length;
+            }
+
+            return stringBuilder;
+        }
+
+        public static StringBuilder AppendJoin<T, TParam1, TParam2, TParam3>(
+            this StringBuilder stringBuilder,
+            IEnumerable<T> values,
+            TParam1 param1,
+            TParam2 param2,
+            TParam3 param3,
+            Action<StringBuilder, T, TParam1, TParam2, TParam3> joinAction,
+            string separator = ", ")
+        {
+            var appended = false;
+
+            foreach (var value in values)
+            {
+                joinAction(stringBuilder, value, param1, param2, param3);
                 stringBuilder.Append(separator);
                 appended = true;
             }

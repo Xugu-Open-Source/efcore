@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B567D684-7C37-4B51-8CFC-42CDFCA223F0}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.EntityFrameworkCore.XuGuDB</RootNamespace>
+    <AssemblyName>Microsoft.EntityFrameworkCore.XuGuDB</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Extensions.DependencyInjection, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.DependencyInjection.1.0.0\lib\netstandard1.1\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.1.0.0\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Logging.1.0.0\lib\netstandard1.1\Microsoft.Extensions.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging.Abstractions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Extensions.Logging.Abstractions.1.0.0\lib\netstandard1.1\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Remotion.Linq" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Interactive.Async, Version=3.0.0.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Interactive.Async.3.0.0\lib\net45\System.Interactive.Async.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="XuguClient, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\csharp-driver\XGCSClient\bin\Debug\net45\XuguClient.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Shared\AsyncEnumerableExtensions.cs">
+      <Link>AsyncEnumerableExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Shared\Check.cs">
+      <Link>Check.cs</Link>
+    </Compile>
+    <Compile Include="..\Shared\CodeAnnotations.cs">
+      <Link>CodeAnnotations.cs</Link>
+    </Compile>
+    <Compile Include="..\Shared\LoggingExtensions.cs">
+      <Link>LoggingExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Shared\PropertyInfoExtensions.cs">
+      <Link>PropertyInfoExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Shared\SharedTypeExtensions.cs">
+      <Link>SharedTypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Shared\StringBuilderExtensions.cs">
+      <Link>StringBuilderExtensions.cs</Link>
+    </Compile>
+    <Compile Include="Extensions\XuGuDbReferenceReferenceBuilderExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbIndexBuilderExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbModelBuilderExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbReferenceCollectionBuilderExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbPropertyBuilderExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbEntityTypeBuilderExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbKeyBuilderExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbMetadataExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbContextOptionsExtensions.cs" />
+    <Compile Include="Extensions\XuGuDbServiceCollectionExtensions.cs" />
+    <Compile Include="Infrastructure\Internal\XuGuDbModelSource.cs" />
+    <Compile Include="Infrastructure\Internal\XuGuDbOptionsExtension.cs" />
+    <Compile Include="Infrastructure\XuGuDbContextOptionsBuilder.cs" />
+    <Compile Include="Metadata\Conventions\Internal\XuGuDbValueGenerationStrategyConvention.cs" />
+    <Compile Include="Metadata\Conventions\XuGuDbConventionSetBuilder.cs" />
+    <Compile Include="Metadata\Internal\XuGuDbIndexBuilderAnnotations.cs" />
+    <Compile Include="Metadata\Internal\XuGuDbKeyBuilderAnnotations.cs" />
+    <Compile Include="Metadata\Internal\XuGuDbModelBuilderAnnotations.cs" />
+    <Compile Include="Metadata\Internal\XuGuDbPropertyBuilderAnnotations.cs" />
+    <Compile Include="Metadata\Internal\XuGuDbInternalMetadataBuilderExtensions.cs" />
+    <Compile Include="Metadata\Internal\XuGuDbAnnotationNames.cs" />
+    <Compile Include="Metadata\Internal\XuGuDbFullAnnotationNames.cs" />
+    <Compile Include="Metadata\IXuGuDbIndexAnnotations.cs" />
+    <Compile Include="Metadata\IXuGuDbKeyAnnotations.cs" />
+    <Compile Include="Metadata\IXuGuDbModelAnnotations.cs" />
+    <Compile Include="Metadata\IXuGuDbPropertyAnnotations.cs" />
+    <Compile Include="Metadata\XuGuDbAnnotationProvider.cs" />
+    <Compile Include="Metadata\XuGuDbIndexAnnotations.cs" />
+    <Compile Include="Metadata\XuGuDbKeyAnnotations.cs" />
+    <Compile Include="Metadata\XuGuDbModelAnnotations.cs" />
+    <Compile Include="Metadata\XuGuDbPropertyAnnotations.cs" />
+    <Compile Include="Metadata\XuGuDbValueGenerationStrategy.cs" />
+    <Compile Include="Migrations\Internal\XuGuDbHistoryRepository.cs" />
+    <Compile Include="Migrations\Internal\XuGuDbMigrationsAnnotationProvider.cs" />
+    <Compile Include="Migrations\Operations\XuGuCreateSequenceOperation.cs" />
+    <Compile Include="Migrations\Operations\XuGuDbCreateSchemaOperation.cs" />
+    <Compile Include="Migrations\Operations\XuGuDbCreateDatabaseOperation.cs" />
+    <Compile Include="Migrations\Operations\XuGuDbDropDatabaseOperation.cs" />
+    <Compile Include="Migrations\XuGuDbMigrationsSqlGenerator.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\XuGuDbStrings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>XuGuDbStrings.resx</DependentUpon>
+    </Compile>
+    <Compile Include="QueryableExtensions.cs" />
+    <Compile Include="Query\Expressions\Internal\DatePartExpression.cs" />
+    <Compile Include="Query\Expressions\Internal\RowNumberExpression.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbCompositeMemberTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbCompositeMethodCallTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbConvertTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbDateTimeDateComponentTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbDateTimeDatePartComponentTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbDateTimeNowTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbMathAbsTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbMathCeilingTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbMathFloorTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbMathPowerTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbMathRoundTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbMathTruncateTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbNewGuidTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringIsNullOrWhiteSpaceTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringLengthTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringReplaceTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringSubstringTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringToLowerTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringToUpperTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringTrimEndTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringTrimStartTranslator.cs" />
+    <Compile Include="Query\ExpressionTranslators\Internal\XuGuDbStringTrimTranslator.cs" />
+    <Compile Include="Query\Internal\XuGuDbExpressionPrinter.cs" />
+    <Compile Include="Query\Internal\XuGuDbQueryCompilationContext.cs" />
+    <Compile Include="Query\Internal\XuGuDbQueryCompilationContextFactory.cs" />
+    <Compile Include="Query\Internal\XuGuDbQueryModelVisitor.cs" />
+    <Compile Include="Query\Internal\XuGuDbQueryModelVisitorFactory.cs" />
+    <Compile Include="Query\Internal\XuGuDbCompiledQueryCacheKeyGenerator.cs" />
+    <Compile Include="Query\XuGuQueryMethodProvider.cs" />
+    <Compile Include="Query\Sql\Internal\IXuGuDbExpressionVisitor.cs" />
+    <Compile Include="Query\Sql\Internal\XuGuDbQuerySqlGenerator.cs" />
+    <Compile Include="Query\Sql\Internal\XuGuDbQuerySqlGeneratorFactory.cs" />
+    <Compile Include="Storage\Internal\IXuGuDbConnection.cs" />
+    <Compile Include="Storage\Internal\XuGuDbMaxLengthMapping.cs" />
+    <Compile Include="Storage\Internal\XuGuDbTypeMapper.cs" />
+    <Compile Include="Storage\Internal\XuGuDbSqlGenerationHelper.cs" />
+    <Compile Include="Storage\Internal\XuGuDatabaseProviderServices.cs" />
+    <Compile Include="Storage\Internal\XuGuDbDatabaseCreator.cs" />
+    <Compile Include="Storage\Internal\XuGuDbConnection.cs" />
+    <Compile Include="Update\Internal\IXuGuDbUpdateSqlGenerator.cs" />
+    <Compile Include="Update\Internal\XuGuDbModificationCommandBatch.cs" />
+    <Compile Include="Update\Internal\XuGuDbModificationCommandBatchFactory.cs" />
+    <Compile Include="Update\Internal\XuGuDbUpdateSqlGenerator.cs" />
+    <Compile Include="ValueGeneration\Internal\IXuGuDbSequenceValueGeneratorFactory.cs" />
+    <Compile Include="ValueGeneration\Internal\IXuGuDbValueGeneratorCache.cs" />
+    <Compile Include="ValueGeneration\Internal\XuGuDbSequenceHiLoValueGenerator.cs" />
+    <Compile Include="ValueGeneration\Internal\XuGuDbSequenceValueGeneratorFactory.cs" />
+    <Compile Include="ValueGeneration\Internal\XuGuDbValueGeneratorCache.cs" />
+    <Compile Include="ValueGeneration\Internal\XuGuDbSequenceValueGeneratorState.cs" />
+    <Compile Include="ValueGeneration\Internal\XuGuDbValueGeneratorSelector.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.EntityFrameworkCore.Relational\Microsoft.EntityFrameworkCore.Relational.csproj">
+      <Project>{6a25df99-2615-46d8-9532-821764647ee1}</Project>
+      <Name>Microsoft.EntityFrameworkCore.Relational</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.EntityFrameworkCore\Microsoft.EntityFrameworkCore.csproj">
+      <Project>{715c38e9-b2f5-4db2-8025-0c6492debdd4}</Project>
+      <Name>Microsoft.EntityFrameworkCore</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Properties\Microsoft.EntityFrameworkCore.XuGuDB.rd.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\XuGuDbStrings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>XuGuDbStrings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

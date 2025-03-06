@@ -1,0 +1,31 @@
+﻿{
+  "version": "1.0.0-preview2-final",
+  "description": "Shared design-time components for Entity Framework Core tools.",
+  "packOptions": {
+    "tags": [
+      "Entity Framework Core",
+      "entity-framework-core",
+      "EF",
+      "Data",
+      "O/RM"
+    ]
+  },
+  "buildOptions": {
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk",
+    "nowarn": [
+      "CS1591"
+    ],
+    "xmlDoc": true,
+    "compile": {
+      "include": "../Shared/*.cs"
+    }
+  },
+  "dependencies": {
+    "Microsoft.AspNetCore.Hosting.Abstractions": "1.0.0",
+    "Microsoft.EntityFrameworkCore.Relational.Design": "1.0.0"
+  },
+  "frameworks": {
+    "net451": {}
+  }
+}

@@ -1,13 +1,13 @@
-﻿// Copyright (c) Pomelo Foundation. All rights reserved.
-// Licensed under the MIT. See LICENSE in the project root for license information.
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using JetBrains.Annotations;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using CA = System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Utilities
 {
@@ -17,13 +17,28 @@ namespace Microsoft.EntityFrameworkCore.Utilities
         [ContractAnnotation("value:null => halt")]
         public static T NotNull<T>([NoEnumeration] T value, [InvokerParameterName] [NotNull] string parameterName)
         {
-#pragma warning disable IDE0041 // Use 'is null' check
             if (ReferenceEquals(value, null))
-#pragma warning restore IDE0041 // Use 'is null' check
             {
                 NotEmpty(parameterName, nameof(parameterName));
 
                 throw new ArgumentNullException(parameterName);
+            }
+
+            return value;
+        }
+
+        [ContractAnnotation("value:null => halt")]
+        public static T NotNull<T>(
+            [NoEnumeration] T value,
+            [InvokerParameterName] [NotNull] string parameterName,
+            [NotNull] string propertyName)
+        {
+            if (ReferenceEquals(value, null))
+            {
+                NotEmpty(parameterName, nameof(parameterName));
+                NotEmpty(propertyName, nameof(propertyName));
+
+                throw new ArgumentException(CoreStrings.ArgumentPropertyNull(propertyName, parameterName));
             }
 
             return value;
@@ -38,7 +53,7 @@ namespace Microsoft.EntityFrameworkCore.Utilities
             {
                 NotEmpty(parameterName, nameof(parameterName));
 
-                throw new ArgumentException(AbstractionsStrings.CollectionArgumentIsEmpty(parameterName));
+                throw new ArgumentException(CoreStrings.CollectionArgumentIsEmpty(parameterName));
             }
 
             return value;
@@ -48,13 +63,13 @@ namespace Microsoft.EntityFrameworkCore.Utilities
         public static string NotEmpty(string value, [InvokerParameterName] [NotNull] string parameterName)
         {
             Exception e = null;
-            if (value is null)
+            if (ReferenceEquals(value, null))
             {
                 e = new ArgumentNullException(parameterName);
             }
             else if (value.Trim().Length == 0)
             {
-                e = new ArgumentException(AbstractionsStrings.ArgumentIsEmpty(parameterName));
+                e = new ArgumentException(CoreStrings.ArgumentIsEmpty(parameterName));
             }
 
             if (e != null)
@@ -69,12 +84,12 @@ namespace Microsoft.EntityFrameworkCore.Utilities
 
         public static string NullButNotEmpty(string value, [InvokerParameterName] [NotNull] string parameterName)
         {
-            if (!(value is null)
-                && value.Length == 0)
+            if (!ReferenceEquals(value, null)
+                && (value.Length == 0))
             {
                 NotEmpty(parameterName, nameof(parameterName));
 
-                throw new ArgumentException(AbstractionsStrings.ArgumentIsEmpty(parameterName));
+                throw new ArgumentException(CoreStrings.ArgumentIsEmpty(parameterName));
             }
 
             return value;
@@ -95,55 +110,16 @@ namespace Microsoft.EntityFrameworkCore.Utilities
             return value;
         }
 
-        public static IReadOnlyList<string> HasNoEmptyElements(
-            IReadOnlyList<string> value,
-            [InvokerParameterName] [NotNull] string parameterName)
+        public static Type ValidEntityType(Type value, [InvokerParameterName] [NotNull] string parameterName)
         {
-            NotNull(value, parameterName);
-
-            if (value.Any(s => string.IsNullOrWhiteSpace(s)))
+            if (!value.GetTypeInfo().IsClass)
             {
                 NotEmpty(parameterName, nameof(parameterName));
 
-                throw new ArgumentException(AbstractionsStrings.CollectionArgumentHasEmptyElements(parameterName));
+                throw new ArgumentException(CoreStrings.InvalidEntityType(value, parameterName));
             }
 
             return value;
-        }
-
-        public static TEnum? EnumValue<TEnum>(
-            TEnum? value,
-            [InvokerParameterName] [NotNull] string parameterName)
-            where TEnum : struct
-        {
-            NotNull(value, parameterName);
-
-            return NullOrEnumValue(value, parameterName);
-        }
-
-        public static TEnum? NullOrEnumValue<TEnum>(
-            TEnum? value,
-            [InvokerParameterName] [NotNull] string parameterName)
-            where TEnum : struct
-        {
-            if (value is not null)
-            {
-                if (!Enum.IsDefined(typeof(TEnum), value))
-                {
-                    throw new ArgumentOutOfRangeException(parameterName, value, null);
-                }
-            }
-
-            return value;
-        }
-
-        [Conditional("DEBUG")]
-        public static void DebugAssert([CA.DoesNotReturnIfAttribute(false)] bool condition, string message)
-        {
-            if (!condition)
-            {
-                throw new Exception($"Check.DebugAssert failed: {message}");
-            }
         }
     }
 }
