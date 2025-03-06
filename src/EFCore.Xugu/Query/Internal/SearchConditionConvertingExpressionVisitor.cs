@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
+namespace Microsoft.EntityFrameworkCore.Xugu.Query.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -378,6 +378,8 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
             return ApplyConversion(sqlBinaryExpression, condition);
         }
 
+
+
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -387,7 +389,6 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
         protected override Expression VisitSqlUnary(SqlUnaryExpression sqlUnaryExpression)
         {
             Check.NotNull(sqlUnaryExpression, nameof(sqlUnaryExpression));
-
             var parentSearchCondition = _isSearchCondition;
             bool resultCondition;
             switch (sqlUnaryExpression.OperatorType)
@@ -399,7 +400,10 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
                     resultCondition = true;
                     break;
                 }
-
+                case ExpressionType.And:
+                    _isSearchCondition = false;
+                    resultCondition = false;
+                    break;
                 case ExpressionType.Not:
                     _isSearchCondition = false;
                     resultCondition = false;

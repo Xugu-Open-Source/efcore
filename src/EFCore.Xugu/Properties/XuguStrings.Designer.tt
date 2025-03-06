@@ -1,0 +1,5 @@
+<#
+    Session["ResourceFile"] = "XuguStrings.resx";
+    Session["LoggingDefinitionsClass"] = "Diagnostics.Internal.XuguLoggingDefinitions";
+#>
+<#@ include file="..\..\..\tools\Resources.tt" #>

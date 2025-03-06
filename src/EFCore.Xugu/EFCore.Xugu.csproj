@@ -1,32 +1,98 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Microsoft SQL Server database provider for Entity Framework Core.</Description>
+    <Description>XG database provider for Entity Framework Core.</Description>
     <TargetFramework>net6.0</TargetFramework>
     <MinClientVersion>3.6</MinClientVersion>
-    <AssemblyName>Microsoft.EntityFrameworkCore.SqlServer</AssemblyName>
-    <RootNamespace>Microsoft.EntityFrameworkCore.SqlServer</RootNamespace>
+    <AssemblyName>Microsoft.EntityFrameworkCore.Xugu</AssemblyName>
+    <RootNamespace>Microsoft.EntityFrameworkCore.Xugu</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageTags>$(PackageTags);SQL Server</PackageTags>
+    <PackageTags>$(PackageTags);Xugu</PackageTags>
+    <FileVersion>6.0.3224.26906</FileVersion>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <AssemblyVersion>6.0.32.11</AssemblyVersion>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Version>6.0.32.11</Version>
+    <Copyright>Xugu. All rights reserved.</Copyright>
+    <PackAsTool>False</PackAsTool>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <AnalysisLevel>6.0</AnalysisLevel>
+    <Authors>Xugu</Authors>
+    <Company>Xugu</Company>
+    <IncludeSymbols>True</IncludeSymbols>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <DebugType>none</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" />
   </ItemGroup>
 
+
+
   <ItemGroup>
-    <ProjectReference Include="..\EFCore.Relational\EFCore.Relational.csproj" PrivateAssets="contentfiles;build" />
-    <ProjectReference Condition="'$(BuildingByReSharper)' != 'true'" Include="..\EFCore.Analyzers\EFCore.Analyzers.csproj" ReferenceOutputAssembly="False" OutputItemType="Analyzer" />
+    <Compile Remove="Design\Internal\SqlServerCSharpRuntimeAnnotationCodeGenerator.cs" />
+    <Compile Remove="Extensions\SqlServerDbSetExtensions.cs" />
+    <Compile Remove="Extensions\XuguTableBuilderExtensions.cs" />
+    <Compile Remove="Query\Internal\SqlServerByteArrayMethodTranslator.cs" />
+    <Compile Remove="Query\Internal\SqlServerDataLengthFunctionTranslator.cs" />
+    <Compile Remove="Query\Internal\SqlServerFromPartsFunctionTranslator.cs" />
+    <Compile Remove="Query\Internal\SqlServerIsNumericFunctionTranslator.cs" />
+    <Compile Remove="Query\Internal\SqlServerNavigationExpansionExtensibilityHelper.cs" />
+    <Compile Remove="Query\Internal\SqlServerQueryableMethodTranslatingExpressionVisitor.cs" />
+    <Compile Remove="Query\Internal\SqlServerQueryableMethodTranslatingExpressionVisitorFactory.cs" />
+    <Compile Remove="Query\Internal\SqlServerTimeSpanMemberTranslator.cs" />
+    <Compile Remove="Query\Internal\TemporalAllQueryRootExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalAllTableExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalAsOfQueryRootExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalAsOfTableExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalBetweenQueryRootExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalBetweenTableExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalContainedInQueryRootExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalContainedInTableExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalFromToQueryRootExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalFromToTableExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalQueryRootExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalRangeQueryRootExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalRangeTableExpression.cs" />
+    <Compile Remove="Query\Internal\TemporalTableExpression.cs" />
+    <Compile Remove="Storage\Internal\SqlServerTransaction.cs" />
+    <Compile Remove="Storage\Internal\SqlServerTransactionFactory.cs" />
+    <Compile Remove="Storage\Internal\SqlServerUdtTypeMapping.cs" />
+    <Compile Remove="ValueGeneration\Internal\ISqlServerSequenceValueGeneratorFactory.cs" />
+    <Compile Remove="ValueGeneration\Internal\ISqlServerValueGeneratorCache.cs" />
+    <Compile Remove="ValueGeneration\Internal\SqlServerSequenceHiLoValueGenerator.cs" />
+    <Compile Remove="ValueGeneration\Internal\SqlServerSequenceValueGeneratorFactory.cs" />
+    <Compile Remove="ValueGeneration\Internal\SqlServerSequenceValueGeneratorState.cs" />
+    <Compile Remove="ValueGeneration\Internal\SqlServerValueGeneratorCache.cs" />
+  </ItemGroup>
+
+
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.32" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.32" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.7" />
+    <Reference Include="XuguClient">
+      <HintPath>F:\package\xugu\csharp\efcore\3.1.21\Xugu-C-Sharp-Driver-1.0.2-202405141500\XuguClient.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Properties\SqlServerStrings.Designer.tt">
+    <None Update="Properties\XuguStrings.Designer.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>SqlServerStrings.Designer.cs</LastGenOutput>
+      <LastGenOutput>XuguStrings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
@@ -35,16 +101,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Properties\SqlServerStrings.Designer.cs">
+    <Compile Update="Properties\XuguStringsXugu.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>SqlServerStrings.Designer.tt</DependentUpon>
+      <DependentUpon>XuguStringsXugu.Designer.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Update="Properties\SqlServerStrings.resx">
-      <CustomToolNamespace>Microsoft.EntityFrameworkCore.SqlServer.Internal</CustomToolNamespace>
+    <EmbeddedResource Update="Properties\XuguStringsXugu.resx">
+      <CustomToolNamespace>Microsoft.EntityFrameworkCore.Xugu.Internal</CustomToolNamespace>
     </EmbeddedResource>
   </ItemGroup>
 

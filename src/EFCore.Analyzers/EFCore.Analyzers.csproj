@@ -8,6 +8,9 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <NuspecFile>$(MSBuildProjectName).nuspec</NuspecFile>
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)..\..\rulesets\EFCore.noxmldocs.ruleset</CodeAnalysisRuleSet>
+    <Version>6.0.32</Version>
+    <AssemblyVersion>6.0.32</AssemblyVersion>
+    <FileVersion>6.0.32</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

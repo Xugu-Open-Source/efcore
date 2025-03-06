@@ -13,7 +13,7 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-diagnostics">Logging, events, and diagnostics</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-xugu">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information.
     /// </remarks>
     public class ConflictingValueGenerationStrategiesEventData : EventData
@@ -23,18 +23,18 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
         /// </summary>
         /// <param name="eventDefinition">The event definition.</param>
         /// <param name="messageGenerator">A delegate that generates a log message for this event.</param>
-        /// <param name="sqlServerValueGenerationStrategy">The SQL Server value generation strategy.</param>
+        /// <param name="xuguValueGenerationStrategy">The SQL Server value generation strategy.</param>
         /// <param name="otherValueGenerationStrategy">The other value generation strategy.</param>
         /// <param name="property">The property.</param>
         public ConflictingValueGenerationStrategiesEventData(
             EventDefinitionBase eventDefinition,
             Func<EventDefinitionBase, EventData, string> messageGenerator,
-            SqlServerValueGenerationStrategy sqlServerValueGenerationStrategy,
+            XuguValueGenerationStrategy xuguValueGenerationStrategy,
             string otherValueGenerationStrategy,
             IReadOnlyProperty property)
             : base(eventDefinition, messageGenerator)
         {
-            SqlServerValueGenerationStrategy = sqlServerValueGenerationStrategy;
+            XuguValueGenerationStrategy = xuguValueGenerationStrategy;
             OtherValueGenerationStrategy = otherValueGenerationStrategy;
             Property = property;
         }
@@ -42,7 +42,7 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
         /// <summary>
         ///     The SQL Server value generation strategy.
         /// </summary>
-        public virtual SqlServerValueGenerationStrategy SqlServerValueGenerationStrategy { get; }
+        public virtual XuguValueGenerationStrategy XuguValueGenerationStrategy { get; }
 
         /// <summary>
         ///     The other value generation strategy.

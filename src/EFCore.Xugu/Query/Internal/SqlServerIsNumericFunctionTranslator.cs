@@ -21,8 +21,8 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
     {
         private readonly ISqlExpressionFactory _sqlExpressionFactory;
 
-        private static readonly MethodInfo _methodInfo = typeof(SqlServerDbFunctionsExtensions)
-            .GetRequiredRuntimeMethod(nameof(SqlServerDbFunctionsExtensions.IsNumeric), typeof(DbFunctions), typeof(string));
+        private static readonly MethodInfo _methodInfo = typeof(XuguDbFunctionsExtensions)
+            .GetRequiredRuntimeMethod(nameof(XuguDbFunctionsExtensions.IsNumeric), typeof(DbFunctions), typeof(string));
 
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

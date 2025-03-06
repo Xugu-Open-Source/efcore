@@ -12,6 +12,9 @@ Microsoft.EntityFrameworkCore.DbSet
     <AssemblyName>Microsoft.EntityFrameworkCore</AssemblyName>
     <RootNamespace>Microsoft.EntityFrameworkCore</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Version>6.0.32</Version>
+    <AssemblyVersion>6.0.32</AssemblyVersion>
+    <FileVersion>6.0.32</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

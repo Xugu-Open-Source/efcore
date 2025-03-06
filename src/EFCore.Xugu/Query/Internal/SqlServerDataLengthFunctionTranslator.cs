@@ -30,24 +30,24 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
         private static readonly HashSet<MethodInfo> _methodInfoDataLengthMapping
             = new()
             {
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(string)),
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(bool?)),
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(double?)),
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(decimal?)),
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(DateTime?)),
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(TimeSpan?)),
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(DateTimeOffset?)),
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(byte[])),
-                typeof(SqlServerDbFunctionsExtensions).GetRequiredRuntimeMethod(
-                    nameof(SqlServerDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(Guid?))
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(string)),
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(bool?)),
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(double?)),
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(decimal?)),
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(DateTime?)),
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(TimeSpan?)),
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(DateTimeOffset?)),
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(byte[])),
+                typeof(XuguDbFunctionsExtensions).GetRequiredRuntimeMethod(
+                    nameof(XuguDbFunctionsExtensions.DataLength), typeof(DbFunctions), typeof(Guid?))
             };
 
         private readonly ISqlExpressionFactory _sqlExpressionFactory;

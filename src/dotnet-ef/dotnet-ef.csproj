@@ -23,6 +23,7 @@ dotnet ef database update
     <NuspecFile>$(MSBuildProjectName).nuspec</NuspecFile>
     <RollForward>Major</RollForward>
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)..\..\rulesets\EFCore.noxmldocs.ruleset</CodeAnalysisRuleSet>
+    <FileVersion>6.0.32.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,333 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Update;
+
+namespace Microsoft.EntityFrameworkCore.Xugu.Update.Internal
+{
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public class XuguModificationCommandBatch : AffectedCountModificationCommandBatch
+    {
+        private const int DefaultNetworkPacketSizeBytes = 4096;
+        private const int MaxScriptLength = 65536 * DefaultNetworkPacketSizeBytes / 2;
+        private const int MaxParameterCount = 2100;
+        private const int MaxRowCount = 1000;
+        private int _parameterCount = 1; // Implicit parameter for the command text
+        private readonly int _maxBatchSize;
+        private readonly List<IReadOnlyModificationCommand> _bulkInsertCommands = new();
+        private int _commandsLeftToLengthCheck = 50;
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        public XuguModificationCommandBatch(
+            ModificationCommandBatchFactoryDependencies dependencies,
+            int? maxBatchSize)
+            : base(dependencies)
+        {
+            if (maxBatchSize.HasValue
+                && maxBatchSize.Value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxBatchSize), RelationalStrings.InvalidMaxBatchSize(maxBatchSize.Value));
+            }
+
+            _maxBatchSize = Math.Min(maxBatchSize ?? 42, MaxRowCount);
+        }
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected new virtual IXuguUpdateSqlGenerator UpdateSqlGenerator
+            => (IXuguUpdateSqlGenerator)base.UpdateSqlGenerator;
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected override bool CanAddCommand(IReadOnlyModificationCommand modificationCommand)
+        {
+            if (ModificationCommands.Count >= _maxBatchSize)
+            {
+                return false;
+            }
+
+            var additionalParameterCount = CountParameters(modificationCommand);
+
+            if (_parameterCount + additionalParameterCount >= MaxParameterCount)
+            {
+                return false;
+            }
+
+            _parameterCount += additionalParameterCount;
+            return true;
+        }
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected override void Consume(EntityFrameworkCore.Storage.RelationalDataReader reader)
+        {
+
+            var commandIndex = 0;
+            /* while (reader.DbDataReader.NextResult()) ;*/
+            try
+            {
+
+                //while (reader.DbDataReader.NextResult()) ;
+                var actualResultSetCount = 0;
+                do
+                {
+                    while (reader.DbDataReader.Depth == 1)
+                    {
+                        if (reader.DbDataReader.NextResult())
+                            continue;
+                        else
+                            break;
+                    }
+
+                    while (commandIndex < CommandResultSet.Count
+                        && CommandResultSet[commandIndex] == ResultSetMapping.NoResultSet)
+                    {
+                        commandIndex++;
+                    }
+
+                    if (commandIndex < CommandResultSet.Count)
+                    {
+                        commandIndex = ModificationCommands[commandIndex].RequiresResultPropagation
+                            ? ConsumeResultSetWithPropagation(commandIndex, reader)
+                            : ConsumeResultSetWithoutPropagation(commandIndex, reader);
+                        actualResultSetCount++;
+                    }
+                }
+                while (commandIndex < CommandResultSet.Count
+                    && reader.DbDataReader.NextResult());
+            }
+            catch (Exception ex) when (!(ex is DbUpdateException))
+            {
+                throw new DbUpdateException(
+                    RelationalStrings.UpdateStoreException,
+                    ex,
+                    ModificationCommands[commandIndex].Entries);
+            }
+        }
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected override async Task ConsumeAsync(EntityFrameworkCore.Storage.RelationalDataReader reader, CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+
+            int commandIndex = 0;
+            try
+            {
+                int actualResultSetCount = 0;
+                while (true)
+                {
+                    while (reader.DbDataReader.Depth == 1)
+                    {
+                        if (reader.DbDataReader.NextResult())
+                            continue;
+                        else
+                            break;
+                    }
+                    if (commandIndex < CommandResultSet.Count && CommandResultSet[commandIndex] == ResultSetMapping.NoResultSet)
+                    {
+                        commandIndex++;
+                        continue;
+                    }
+
+                    if (commandIndex < CommandResultSet.Count)
+                    {
+                        int num = ((!ModificationCommands[commandIndex].RequiresResultPropagation) ? (await ConsumeResultSetWithoutPropagationAsync(commandIndex, reader, cancellationToken)) : (await ConsumeResultSetWithPropagationAsync(commandIndex, reader, cancellationToken)));
+                        commandIndex = num;
+                        actualResultSetCount++;
+                    }
+
+                    bool flag = commandIndex < CommandResultSet.Count;
+                    if (flag)
+                    {
+                        flag = await reader.DbDataReader.NextResultAsync(cancellationToken);
+                    }
+
+                    if (!flag)
+                    {
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex) when (!(ex is DbUpdateException))
+            {
+                throw new DbUpdateException(RelationalStrings.UpdateStoreException, ex, ModificationCommands[commandIndex].Entries);
+            }
+        }
+
+
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected override bool IsCommandTextValid()
+        {
+            if (--_commandsLeftToLengthCheck < 0)
+            {
+                var commandTextLength = GetCommandText().Length;
+                if (commandTextLength >= MaxScriptLength)
+                {
+                    return false;
+                }
+
+                var averageCommandLength = commandTextLength / ModificationCommands.Count;
+                var expectedAdditionalCommandCapacity = (MaxScriptLength - commandTextLength) / averageCommandLength;
+                _commandsLeftToLengthCheck = Math.Max(1, expectedAdditionalCommandCapacity / 4);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected override int GetParameterCount()
+            => _parameterCount;
+
+        private static int CountParameters(IReadOnlyModificationCommand modificationCommand)
+        {
+            var parameterCount = 0;
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (var columnIndex = 0; columnIndex < modificationCommand.ColumnModifications.Count; columnIndex++)
+            {
+                var columnModification = modificationCommand.ColumnModifications[columnIndex];
+                if (columnModification.UseCurrentValueParameter)
+                {
+                    parameterCount++;
+                }
+
+                if (columnModification.UseOriginalValueParameter)
+                {
+                    parameterCount++;
+                }
+            }
+
+            return parameterCount;
+        }
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected override void ResetCommandText()
+        {
+            base.ResetCommandText();
+            _bulkInsertCommands.Clear();
+        }
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected override string GetCommandText()
+            => base.GetCommandText() + GetBulkInsertCommandText(ModificationCommands.Count);
+
+        private string GetBulkInsertCommandText(int lastIndex)
+        {
+            if (_bulkInsertCommands.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var stringBuilder = new StringBuilder();
+            var resultSetMapping = UpdateSqlGenerator.AppendBulkInsertOperation(
+                stringBuilder, _bulkInsertCommands, lastIndex - _bulkInsertCommands.Count);
+            for (var i = lastIndex - _bulkInsertCommands.Count; i < lastIndex; i++)
+            {
+                CommandResultSet[i] = resultSetMapping;
+            }
+
+            if (resultSetMapping != ResultSetMapping.NoResultSet)
+            {
+                CommandResultSet[lastIndex - 1] = ResultSetMapping.LastInResultSet;
+            }
+
+            return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        protected override void UpdateCachedCommandText(int commandPosition)
+        {
+            var newModificationCommand = ModificationCommands[commandPosition];
+
+            if (newModificationCommand.EntityState == EntityState.Added)
+            {
+                if (_bulkInsertCommands.Count > 0
+                    && !CanBeInsertedInSameStatement(_bulkInsertCommands[0], newModificationCommand))
+                {
+                    CachedCommandText.Append(GetBulkInsertCommandText(commandPosition));
+                    _bulkInsertCommands.Clear();
+                }
+
+                _bulkInsertCommands.Add(newModificationCommand);
+
+                LastCachedCommandIndex = commandPosition;
+            }
+            else
+            {
+                CachedCommandText.Append(GetBulkInsertCommandText(commandPosition));
+                _bulkInsertCommands.Clear();
+
+                base.UpdateCachedCommandText(commandPosition);
+            }
+        }
+
+        private static bool CanBeInsertedInSameStatement(
+            IReadOnlyModificationCommand firstCommand,
+            IReadOnlyModificationCommand secondCommand)
+            => string.Equals(firstCommand.TableName, secondCommand.TableName, StringComparison.Ordinal)
+                && string.Equals(firstCommand.Schema, secondCommand.Schema, StringComparison.Ordinal)
+                && firstCommand.ColumnModifications.Where(o => o.IsWrite).Select(o => o.ColumnName).SequenceEqual(
+                    secondCommand.ColumnModifications.Where(o => o.IsWrite).Select(o => o.ColumnName))
+                && firstCommand.ColumnModifications.Where(o => o.IsRead).Select(o => o.ColumnName).SequenceEqual(
+                    secondCommand.ColumnModifications.Where(o => o.IsRead).Select(o => o.ColumnName));
+    }
+}

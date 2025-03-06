@@ -41,7 +41,7 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal
         {
             get
             {
-                if (Connection is ISqlServerConnection sqlServerConnection && sqlServerConnection.IsMultipleActiveResultSetsEnabled)
+                if (Connection is IXuguConnection sqlServerConnection && sqlServerConnection.IsMultipleActiveResultSetsEnabled)
                 {
                     Logger.SavepointsDisabledBecauseOfMARS();
 

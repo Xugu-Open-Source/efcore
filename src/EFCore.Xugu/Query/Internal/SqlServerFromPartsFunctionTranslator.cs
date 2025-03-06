@@ -21,33 +21,33 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal
     /// </summary>
     public class SqlServerFromPartsFunctionTranslator : IMethodCallTranslator
     {
-        private static readonly MethodInfo _dateFromPartsMethodInfo = typeof(SqlServerDbFunctionsExtensions)
+        private static readonly MethodInfo _dateFromPartsMethodInfo = typeof(XuguDbFunctionsExtensions)
             .GetRequiredRuntimeMethod(
-                nameof(SqlServerDbFunctionsExtensions.DateFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int));
+                nameof(XuguDbFunctionsExtensions.DateFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int));
 
-        private static readonly MethodInfo _dateTimeFromPartsMethodInfo = typeof(SqlServerDbFunctionsExtensions)
+        private static readonly MethodInfo _dateTimeFromPartsMethodInfo = typeof(XuguDbFunctionsExtensions)
             .GetRequiredRuntimeMethod(
-                nameof(SqlServerDbFunctionsExtensions.DateTimeFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
+                nameof(XuguDbFunctionsExtensions.DateTimeFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
                 typeof(int), typeof(int), typeof(int), typeof(int));
 
-        private static readonly MethodInfo _dateTime2FromPartsMethodInfo = typeof(SqlServerDbFunctionsExtensions)
+        private static readonly MethodInfo _dateTime2FromPartsMethodInfo = typeof(XuguDbFunctionsExtensions)
             .GetRequiredRuntimeMethod(
-                nameof(SqlServerDbFunctionsExtensions.DateTime2FromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
+                nameof(XuguDbFunctionsExtensions.DateTime2FromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
                 typeof(int), typeof(int), typeof(int), typeof(int), typeof(int));
 
-        private static readonly MethodInfo _dateTimeOffsetFromPartsMethodInfo = typeof(SqlServerDbFunctionsExtensions)
+        private static readonly MethodInfo _dateTimeOffsetFromPartsMethodInfo = typeof(XuguDbFunctionsExtensions)
             .GetRequiredRuntimeMethod(
-                nameof(SqlServerDbFunctionsExtensions.DateTimeOffsetFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
+                nameof(XuguDbFunctionsExtensions.DateTimeOffsetFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
                 typeof(int), typeof(int), typeof(int), typeof(int), typeof(int), typeof(int), typeof(int));
 
-        private static readonly MethodInfo _smallDateTimeFromPartsMethodInfo = typeof(SqlServerDbFunctionsExtensions)
+        private static readonly MethodInfo _smallDateTimeFromPartsMethodInfo = typeof(XuguDbFunctionsExtensions)
             .GetRequiredRuntimeMethod(
-                nameof(SqlServerDbFunctionsExtensions.SmallDateTimeFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
+                nameof(XuguDbFunctionsExtensions.SmallDateTimeFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
                 typeof(int), typeof(int));
 
-        private static readonly MethodInfo _timeFromPartsMethodInfo = typeof(SqlServerDbFunctionsExtensions)
+        private static readonly MethodInfo _timeFromPartsMethodInfo = typeof(XuguDbFunctionsExtensions)
             .GetRequiredRuntimeMethod(
-                nameof(SqlServerDbFunctionsExtensions.TimeFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
+                nameof(XuguDbFunctionsExtensions.TimeFromParts), typeof(DbFunctions), typeof(int), typeof(int), typeof(int),
                 typeof(int), typeof(int));
 
         private static readonly IDictionary<MethodInfo, (string FunctionName, string ReturnType)> _methodFunctionMapping
