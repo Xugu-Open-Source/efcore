@@ -3,7 +3,10 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class WarningsSqlServerTest(NorthwindQuerySqlServerFixture<NoopModelCustomizer> fixture)
-    : WarningsTestBase<NorthwindQuerySqlServerFixture<NoopModelCustomizer>>(fixture);
+public class WarningsSqlServerTest : WarningsTestBase<NorthwindQuerySqlServerFixture<NoopModelCustomizer>>
+{
+    public WarningsSqlServerTest(NorthwindQuerySqlServerFixture<NoopModelCustomizer> fixture)
+        : base(fixture)
+    {
+    }
+}

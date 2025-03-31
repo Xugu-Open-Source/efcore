@@ -13,7 +13,7 @@ public class FakeRelationalTestHelpers : TestHelpers
 
     public static FakeRelationalTestHelpers Instance { get; } = new();
 
-    protected override EntityFrameworkDesignServicesBuilder CreateEntityFrameworkDesignServicesBuilder(
+    protected virtual EntityFrameworkDesignServicesBuilder CreateEntityFrameworkDesignServicesBuilder(
         IServiceCollection services)
         => new EntityFrameworkRelationalDesignServicesBuilder(services);
 
@@ -24,7 +24,4 @@ public class FakeRelationalTestHelpers : TestHelpers
         => optionsBuilder.UseFakeRelational();
 
     public override LoggingDefinitions LoggingDefinitions { get; } = new TestRelationalLoggingDefinitions();
-
-    public override ModelAsserter ModelAsserter
-        => RelationalModelAsserter.Instance;
 }

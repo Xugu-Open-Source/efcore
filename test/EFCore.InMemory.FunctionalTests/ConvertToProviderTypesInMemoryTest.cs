@@ -3,12 +3,17 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class ConvertToProviderTypesInMemoryTest(ConvertToProviderTypesInMemoryTest.ConvertToProviderTypesInMemoryFixture fixture)
-    : ConvertToProviderTypesTestBase<
-        ConvertToProviderTypesInMemoryTest.ConvertToProviderTypesInMemoryFixture>(fixture)
+public class ConvertToProviderTypesInMemoryTest : ConvertToProviderTypesTestBase<
+    ConvertToProviderTypesInMemoryTest.ConvertToProviderTypesInMemoryFixture>
 {
-    public override Task Optional_datetime_reading_null_from_database()
-        => Task.CompletedTask;
+    public ConvertToProviderTypesInMemoryTest(ConvertToProviderTypesInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+
+    public override void Optional_datetime_reading_null_from_database()
+    {
+    }
 
     public class ConvertToProviderTypesInMemoryFixture : ConvertToProviderTypesFixtureBase
     {

@@ -4,6 +4,11 @@
 #nullable enable
 
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore.Utilities;
@@ -22,23 +27,18 @@ internal static class EnumerableExtensions
         where T : class
         => source.Distinct(new DynamicEqualityComparer<T>(comparer));
 
-    public static IEnumerable<T> TakeUpTo<T>(this IEnumerable<T> source, Func<T, bool> predicate)
-    {
-        foreach (var item in source)
-        {
-            yield return item;
-            if (predicate(item))
-            {
-                yield break;
-            }
-        }
-    }
-
-    private sealed class DynamicEqualityComparer<T>(Func<T?, T?, bool> func) : IEqualityComparer<T>
+    private sealed class DynamicEqualityComparer<T> : IEqualityComparer<T>
         where T : class
     {
+        private readonly Func<T?, T?, bool> _func;
+
+        public DynamicEqualityComparer(Func<T?, T?, bool> func)
+        {
+            _func = func;
+        }
+
         public bool Equals(T? x, T? y)
-            => func(x, y);
+            => _func(x, y);
 
         public int GetHashCode(T obj)
             => 0;
@@ -123,6 +123,19 @@ internal static class EnumerableExtensions
         }
 
         return false;
+    }
+
+    public static async Task<List<TSource>> ToListAsync<TSource>(
+        this IAsyncEnumerable<TSource> source,
+        CancellationToken cancellationToken = default)
+    {
+        var list = new List<TSource>();
+        await foreach (var element in source.WithCancellation(cancellationToken))
+        {
+            list.Add(element);
+        }
+
+        return list;
     }
 
     public static List<TSource> ToList<TSource>(this IEnumerable source)

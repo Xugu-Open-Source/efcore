@@ -6,12 +6,15 @@ using System.Globalization;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class CompositeKeyEndToEndTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class CompositeKeyEndToEndTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : CompositeKeyEndToEndTestBase<TFixture>.CompositeKeyEndToEndFixtureBase
 {
-    private TFixture Fixture { get; } = fixture;
+    protected CompositeKeyEndToEndTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    private TFixture Fixture { get; }
 
     [ConditionalFact]
     public virtual async Task Can_use_two_non_generated_integers_as_composite_key_end_to_end()
@@ -195,8 +198,13 @@ public abstract class CompositeKeyEndToEndTestBase<TFixture>(TFixture fixture) :
         protected override Type ContextType { get; } = typeof(BronieContext);
     }
 
-    protected class BronieContext(DbContextOptions options) : PoolableDbContext(options)
+    protected class BronieContext : PoolableDbContext
     {
+        public BronieContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         // ReSharper disable UnusedAutoPropertyAccessor.Local
         public DbSet<Pegasus> Pegasuses { get; set; }
         public DbSet<Unicorn> Unicorns { get; set; }

@@ -15,10 +15,11 @@ namespace Microsoft.EntityFrameworkCore.InMemory.Storage.Internal;
 public class InMemoryStore : IInMemoryStore
 {
     private readonly IInMemoryTableFactory _tableFactory;
+    private readonly bool _useNameMatching;
 
     private readonly object _lock = new();
 
-    private Dictionary<string, IInMemoryTable>? _tables;
+    private Dictionary<object, IInMemoryTable>? _tables;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -26,8 +27,13 @@ public class InMemoryStore : IInMemoryStore
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public InMemoryStore(IInMemoryTableFactory tableFactory)
-        => _tableFactory = tableFactory;
+    public InMemoryStore(
+        IInMemoryTableFactory tableFactory,
+        bool useNameMatching)
+    {
+        _tableFactory = tableFactory;
+        _useNameMatching = useNameMatching;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -38,12 +44,13 @@ public class InMemoryStore : IInMemoryStore
     public virtual InMemoryIntegerValueGenerator<TProperty> GetIntegerValueGenerator<TProperty>(
         IProperty property)
     {
-        var entityType = property.DeclaringType.ContainingEntityType;
         lock (_lock)
         {
+            var entityType = property.DeclaringEntityType;
+
             return EnsureTable(entityType).GetIntegerValueGenerator<TProperty>(
                 property,
-                entityType.GetDerivedTypesInclusive().Select(EnsureTable).ToArray());
+                entityType.GetDerivedTypesInclusive().Select(type => EnsureTable(type)).ToArray());
         }
     }
 
@@ -108,7 +115,7 @@ public class InMemoryStore : IInMemoryStore
         }
     }
 
-    private static Dictionary<string, IInMemoryTable> CreateTables()
+    private static Dictionary<object, IInMemoryTable> CreateTables()
         => new();
 
     /// <summary>
@@ -126,7 +133,8 @@ public class InMemoryStore : IInMemoryStore
             {
                 foreach (var et in entityType.GetDerivedTypesInclusive().Where(et => !et.IsAbstract()))
                 {
-                    if (_tables.TryGetValue(et.Name, out var table))
+                    var key = _useNameMatching ? (object)et.Name : et;
+                    if (_tables.TryGetValue(key, out var table))
                     {
                         data.Add(new InMemoryTableSnapshot(et, table.SnapshotRows()));
                     }
@@ -203,7 +211,7 @@ public class InMemoryStore : IInMemoryStore
         var entityTypes = entityType.GetAllBaseTypesInclusive();
         foreach (var currentEntityType in entityTypes)
         {
-            var key = currentEntityType.Name;
+            var key = _useNameMatching ? (object)currentEntityType.Name : currentEntityType;
             if (!_tables.TryGetValue(key, out var table))
             {
                 _tables.Add(key, table = _tableFactory.Create(currentEntityType, baseTable));
@@ -212,6 +220,6 @@ public class InMemoryStore : IInMemoryStore
             baseTable = table;
         }
 
-        return _tables[entityType.Name];
+        return _tables[_useNameMatching ? entityType.Name : entityType];
     }
 }

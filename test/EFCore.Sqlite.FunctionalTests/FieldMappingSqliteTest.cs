@@ -3,13 +3,16 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public abstract class FieldMappingSqliteTest
 {
-    public abstract class FieldMappingSqliteTestBase<TFixture>(TFixture fixture) : FieldMappingTestBase<TFixture>(fixture)
+    public abstract class FieldMappingSqliteTestBase<TFixture> : FieldMappingTestBase<TFixture>
         where TFixture : FieldMappingSqliteTestBase<TFixture>.FieldMappingSqliteFixtureBase, new()
     {
+        protected FieldMappingSqliteTestBase(TFixture fixture)
+            : base(fixture)
+        {
+        }
+
         protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
             => facade.UseTransaction(transaction.GetDbTransaction());
 
@@ -20,15 +23,27 @@ public abstract class FieldMappingSqliteTest
         }
     }
 
-    public class DefaultMappingTest(DefaultMappingTest.DefaultMappingFixture fixture)
-        : FieldMappingSqliteTestBase<DefaultMappingTest.DefaultMappingFixture>(fixture)
+    public class DefaultMappingTest
+        : FieldMappingSqliteTestBase<DefaultMappingTest.DefaultMappingFixture>
     {
-        public class DefaultMappingFixture : FieldMappingSqliteFixtureBase;
+        public DefaultMappingTest(DefaultMappingFixture fixture)
+            : base(fixture)
+        {
+        }
+
+        public class DefaultMappingFixture : FieldMappingSqliteFixtureBase
+        {
+        }
     }
 
-    public class EnforceFieldTest(EnforceFieldTest.EnforceFieldFixture fixture)
-        : FieldMappingSqliteTestBase<EnforceFieldTest.EnforceFieldFixture>(fixture)
+    public class EnforceFieldTest
+        : FieldMappingSqliteTestBase<EnforceFieldTest.EnforceFieldFixture>
     {
+        public EnforceFieldTest(EnforceFieldFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class EnforceFieldFixture : FieldMappingSqliteFixtureBase
         {
             protected override string StoreName
@@ -42,9 +57,14 @@ public abstract class FieldMappingSqliteTest
         }
     }
 
-    public class EnforceFieldForQueryTest(EnforceFieldForQueryTest.EnforceFieldForQueryFixture fixture)
-        : FieldMappingSqliteTestBase<EnforceFieldForQueryTest.EnforceFieldForQueryFixture>(fixture)
+    public class EnforceFieldForQueryTest
+        : FieldMappingSqliteTestBase<EnforceFieldForQueryTest.EnforceFieldForQueryFixture>
     {
+        public EnforceFieldForQueryTest(EnforceFieldForQueryFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class EnforceFieldForQueryFixture : FieldMappingSqliteFixtureBase
         {
             protected override string StoreName
@@ -58,9 +78,14 @@ public abstract class FieldMappingSqliteTest
         }
     }
 
-    public class EnforcePropertyTest(EnforcePropertyTest.EnforcePropertyFixture fixture)
-        : FieldMappingSqliteTestBase<EnforcePropertyTest.EnforcePropertyFixture>(fixture)
+    public class EnforcePropertyTest
+        : FieldMappingSqliteTestBase<EnforcePropertyTest.EnforcePropertyFixture>
     {
+        public EnforcePropertyTest(EnforcePropertyFixture fixture)
+            : base(fixture)
+        {
+        }
+
         // Cannot force property access when properties missing getter/setter
         public override void Simple_query_read_only_props(bool tracking)
         {
@@ -94,8 +119,9 @@ public abstract class FieldMappingSqliteTest
         {
         }
 
-        public override Task Update_read_only_props()
-            => Task.CompletedTask;
+        public override void Update_read_only_props()
+        {
+        }
 
         public override void Simple_query_read_only_props_with_named_fields(bool tracking)
         {
@@ -129,8 +155,9 @@ public abstract class FieldMappingSqliteTest
         {
         }
 
-        public override Task Update_read_only_props_with_named_fields()
-            => Task.CompletedTask;
+        public override void Update_read_only_props_with_named_fields()
+        {
+        }
 
         public override void Simple_query_write_only_props(bool tracking)
         {
@@ -164,8 +191,9 @@ public abstract class FieldMappingSqliteTest
         {
         }
 
-        public override Task Update_write_only_props()
-            => Task.CompletedTask;
+        public override void Update_write_only_props()
+        {
+        }
 
         public override void Simple_query_write_only_props_with_named_fields(bool tracking)
         {
@@ -199,8 +227,9 @@ public abstract class FieldMappingSqliteTest
         {
         }
 
-        public override Task Update_write_only_props_with_named_fields()
-            => Task.CompletedTask;
+        public override void Update_write_only_props_with_named_fields()
+        {
+        }
 
         public override void Simple_query_fields_only(bool tracking)
         {
@@ -234,8 +263,9 @@ public abstract class FieldMappingSqliteTest
         {
         }
 
-        public override Task Update_fields_only()
-            => Task.CompletedTask;
+        public override void Update_fields_only()
+        {
+        }
 
         public override void Simple_query_fields_only_for_navs_too(bool tracking)
         {
@@ -269,8 +299,9 @@ public abstract class FieldMappingSqliteTest
         {
         }
 
-        public override Task Update_fields_only_only_for_navs_too()
-            => Task.CompletedTask;
+        public override void Update_fields_only_only_for_navs_too()
+        {
+        }
 
         public override void Include_collection_full_props(bool tracking)
         {
@@ -288,8 +319,9 @@ public abstract class FieldMappingSqliteTest
         {
         }
 
-        public override Task Update_full_props()
-            => Task.CompletedTask;
+        public override void Update_full_props()
+        {
+        }
 
         public override void Simple_query_props_with_IReadOnlyCollection(bool tracking)
         {
@@ -323,8 +355,9 @@ public abstract class FieldMappingSqliteTest
         {
         }
 
-        public override Task Update_props_with_IReadOnlyCollection()
-            => Task.CompletedTask;
+        public override void Update_props_with_IReadOnlyCollection()
+        {
+        }
 
         public class EnforcePropertyFixture : FieldMappingSqliteFixtureBase
         {

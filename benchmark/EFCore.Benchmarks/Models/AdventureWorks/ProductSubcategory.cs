@@ -4,23 +4,24 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class ProductSubcategory
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public ProductSubcategory()
+    public class ProductSubcategory
     {
-        Product = new HashSet<Product>();
-    }
+        public ProductSubcategory()
+        {
+            Product = new HashSet<Product>();
+        }
 
-    public int ProductSubcategoryID { get; set; }
-    public DateTime ModifiedDate { get; set; }
-    public string Name { get; set; }
-    public int ProductCategoryID { get; set; }
+        public int ProductSubcategoryID { get; set; }
+        public DateTime ModifiedDate { get; set; }
+        public string Name { get; set; }
+        public int ProductCategoryID { get; set; }
 #pragma warning disable IDE1006 // Naming Styles
-    public Guid rowguid { get; set; }
+        public Guid rowguid { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
 
-    public virtual ICollection<Product> Product { get; set; }
-    public virtual ProductCategory ProductCategory { get; set; }
+        public virtual ICollection<Product> Product { get; set; }
+        public virtual ProductCategory ProductCategory { get; set; }
+    }
 }

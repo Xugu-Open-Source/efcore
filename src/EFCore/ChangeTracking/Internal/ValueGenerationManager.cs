@@ -45,8 +45,7 @@ public class ValueGenerationManager : IValueGenerationManager
         InternalEntityEntry? chosenPrincipal = null;
         foreach (var property in entry.EntityType.GetForeignKeyProperties())
         {
-            if (!entry.IsUnknown(property)
-                && entry.HasExplicitValue(property))
+            if (!entry.HasDefaultValue(property))
             {
                 continue;
             }
@@ -69,7 +68,7 @@ public class ValueGenerationManager : IValueGenerationManager
         InternalEntityEntry? chosenPrincipal = null;
         foreach (var property in entry.EntityType.GetForeignKeyProperties())
         {
-            if (entry.HasExplicitValue(property))
+            if (!entry.HasDefaultValue(property))
             {
                 continue;
             }
@@ -92,25 +91,36 @@ public class ValueGenerationManager : IValueGenerationManager
         var entityEntry = new EntityEntry(entry);
         var hasStableValues = false;
         var hasNonStableValues = false;
-        IProperty? propertyWithNoGenerator = null;
 
-        //TODO: Handle complex properties
         foreach (var property in entry.EntityType.GetValueGeneratingProperties())
         {
-            if (!TryFindValueGenerator(
-                    entry, includePrimaryKey, property,
-                    ref hasStableValues, ref hasNonStableValues, ref propertyWithNoGenerator,
-                    out var valueGenerator))
+            if (!entry.HasDefaultValue(property)
+                || (!includePrimaryKey
+                    && property.IsPrimaryKey()))
             {
                 continue;
             }
 
-            var generatedValue = valueGenerator!.Next(entityEntry);
+            var valueGenerator = GetValueGenerator(property);
 
-            FinishGenerate(entry, includePrimaryKey, valueGenerator, property, generatedValue);
+            var generatedValue = valueGenerator.Next(entityEntry);
+            var temporary = valueGenerator.GeneratesTemporaryValues;
+
+            if (valueGenerator.GeneratesStableValues)
+            {
+                hasStableValues = true;
+            }
+            else
+            {
+                hasNonStableValues = true;
+            }
+
+            Log(entry, property, generatedValue, temporary);
+
+            SetGeneratedValue(entry, property, generatedValue, temporary);
+
+            MarkKeyUnknown(entry, includePrimaryKey, property, valueGenerator);
         }
-
-        CheckPropertyWithNoGenerator(propertyWithNoGenerator);
 
         return hasStableValues && !hasNonStableValues;
     }
@@ -141,63 +151,20 @@ public class ValueGenerationManager : IValueGenerationManager
         var entityEntry = new EntityEntry(entry);
         var hasStableValues = false;
         var hasNonStableValues = false;
-        IProperty? propertyWithNoGenerator = null;
-
-        //TODO: Handle complex properties
         foreach (var property in entry.EntityType.GetValueGeneratingProperties())
         {
-            if (!TryFindValueGenerator(
-                    entry, includePrimaryKey, property,
-                    ref hasStableValues, ref hasNonStableValues, ref propertyWithNoGenerator,
-                    out var valueGenerator))
+            if (!entry.HasDefaultValue(property)
+                || (!includePrimaryKey
+                    && property.IsPrimaryKey()))
             {
                 continue;
             }
 
-            var generatedValue = await valueGenerator!.NextAsync(entityEntry, cancellationToken).ConfigureAwait(false);
+            var valueGenerator = GetValueGenerator(property);
+            var generatedValue = await valueGenerator.NextAsync(entityEntry, cancellationToken).ConfigureAwait(false);
+            var temporary = valueGenerator.GeneratesTemporaryValues;
 
-            FinishGenerate(entry, includePrimaryKey, valueGenerator, property, generatedValue);
-        }
-
-        CheckPropertyWithNoGenerator(propertyWithNoGenerator);
-
-        return hasStableValues && !hasNonStableValues;
-    }
-
-    private void FinishGenerate(
-        InternalEntityEntry entry,
-        bool includePrimaryKey,
-        ValueGenerator valueGenerator,
-        IProperty property,
-        object? generatedValue)
-    {
-        var temporary = valueGenerator.GeneratesTemporaryValues;
-        Log(entry, property, generatedValue, temporary);
-        SetGeneratedValue(entry, property, generatedValue, temporary);
-        MarkKeyUnknown(entry, includePrimaryKey, property, valueGenerator);
-    }
-
-    private static void CheckPropertyWithNoGenerator(IProperty? property)
-    {
-        if (property != null)
-        {
-            throw new NotSupportedException(
-                CoreStrings.NoValueGenerator(property.Name, property.DeclaringType.DisplayName(), property.ClrType.ShortDisplayName()));
-        }
-    }
-
-    private bool TryFindValueGenerator(
-        InternalEntityEntry entry,
-        bool includePrimaryKey,
-        IProperty property,
-        ref bool hasStableValues,
-        ref bool hasNonStableValues,
-        ref IProperty? propertyWithNoGenerator,
-        out ValueGenerator? valueGenerator)
-    {
-        if (_valueGeneratorSelector.TrySelect(property, property.DeclaringType, out valueGenerator))
-        {
-            if (valueGenerator!.GeneratesStableValues)
+            if (valueGenerator.GeneratesStableValues)
             {
                 hasStableValues = true;
             }
@@ -205,27 +172,23 @@ public class ValueGenerationManager : IValueGenerationManager
             {
                 hasNonStableValues = true;
             }
+
+            Log(entry, property, generatedValue, temporary);
+
+            SetGeneratedValue(
+                entry,
+                property,
+                generatedValue,
+                temporary);
+
+            MarkKeyUnknown(entry, includePrimaryKey, property, valueGenerator);
         }
 
-        if (valueGenerator == null)
-        {
-            if (property.GetContainingKeys().Any(k => k.Properties.Count == 1))
-            {
-                propertyWithNoGenerator ??= property;
-            }
-
-            return false;
-        }
-
-        if (entry.HasExplicitValue(property)
-            || (!includePrimaryKey
-                && property.IsPrimaryKey()))
-        {
-            return false;
-        }
-
-        return true;
+        return hasStableValues && !hasNonStableValues;
     }
+
+    private ValueGenerator GetValueGenerator(IProperty property)
+        => _valueGeneratorSelector.Select(property, property.DeclaringEntityType);
 
     private static void SetGeneratedValue(InternalEntityEntry entry, IProperty property, object? generatedValue, bool isTemporary)
     {

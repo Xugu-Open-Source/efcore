@@ -3,8 +3,11 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class TPTManyToManyQueryRelationalTestBase<TFixture>(TFixture fixture)
-    : ManyToManyQueryRelationalTestBase<TFixture>(fixture)
-    where TFixture : TPTManyToManyQueryRelationalFixture, new();
+public abstract class TPTManyToManyQueryRelationalTestBase<TFixture> : ManyToManyQueryRelationalTestBase<TFixture>
+    where TFixture : TPTManyToManyQueryRelationalFixture, new()
+{
+    protected TPTManyToManyQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+}

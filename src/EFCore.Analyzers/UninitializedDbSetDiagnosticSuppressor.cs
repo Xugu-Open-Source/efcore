@@ -12,7 +12,7 @@ namespace Microsoft.EntityFrameworkCore;
 public sealed class UninitializedDbSetDiagnosticSuppressor : DiagnosticSuppressor
 {
     private static readonly SuppressionDescriptor SuppressUninitializedDbSetRule = new(
-        id: EFDiagnostics.SuppressUninitializedDbSetRule,
+        id: "EFSPR1001",
         suppressedDiagnosticId: "CS8618",
         justification: AnalyzerStrings.UninitializedDbSetWarningSuppressionJustification);
 
@@ -57,8 +57,8 @@ public sealed class UninitializedDbSetDiagnosticSuppressor : DiagnosticSuppresso
 
             if (dbSetTypeSymbol is null || dbContextTypeSymbol is null)
             {
-                dbSetTypeSymbol = context.Compilation.DbSetType();
-                dbContextTypeSymbol = context.Compilation.DbContextType();
+                dbSetTypeSymbol = context.Compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbSet`1");
+                dbContextTypeSymbol = context.Compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbContext");
 
                 if (dbSetTypeSymbol is null || dbContextTypeSymbol is null)
                 {

@@ -3,10 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class NorthwindIncludeNoTrackingQueryInMemoryTest(NorthwindQueryInMemoryFixture<NoopModelCustomizer> fixture)
-    : NorthwindIncludeNoTrackingQueryTestBase<NorthwindQueryInMemoryFixture<NoopModelCustomizer>>(fixture)
+public class NorthwindIncludeNoTrackingQueryInMemoryTest : NorthwindIncludeNoTrackingQueryTestBase<
+    NorthwindQueryInMemoryFixture<NoopModelCustomizer>>
 {
-    // Right join not supported in InMemory
-    public override Task Include_collection_with_right_join_clause_with_filter(bool async)
-        => AssertTranslationFailed(() => base.Include_collection_with_right_join_clause_with_filter(async));
+    public NorthwindIncludeNoTrackingQueryInMemoryTest(
+        NorthwindQueryInMemoryFixture<NoopModelCustomizer> fixture,
+        ITestOutputHelper testOutputHelper)
+        : base(fixture)
+    {
+        //TestLoggerFactory.TestOutputHelper = testOutputHelper;
+    }
 }

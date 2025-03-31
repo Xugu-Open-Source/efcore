@@ -59,7 +59,7 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IDbSetSource SetSource { get; }
+    public IDbSetSource SetSource { get; init; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -67,7 +67,7 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IEntityFinderFactory EntityFinderFactory { get; }
+    public IEntityFinderFactory EntityFinderFactory { get; init; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -75,7 +75,7 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IAsyncQueryProvider QueryProvider { get; }
+    public IAsyncQueryProvider QueryProvider { get; init; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -83,7 +83,7 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IStateManager StateManager { get; }
+    public IStateManager StateManager { get; init; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -91,7 +91,7 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IChangeDetector ChangeDetector { get; }
+    public IChangeDetector ChangeDetector { get; init; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -99,7 +99,7 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IEntityGraphAttacher EntityGraphAttacher { get; }
+    public IEntityGraphAttacher EntityGraphAttacher { get; init; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -107,7 +107,7 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IExceptionDetector ExceptionDetector { get; }
+    public IExceptionDetector ExceptionDetector { get; init; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -115,7 +115,7 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IDiagnosticsLogger<DbLoggerCategory.Update> UpdateLogger { get; }
+    public IDiagnosticsLogger<DbLoggerCategory.Update> UpdateLogger { get; init; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -123,5 +123,5 @@ public sealed record DbContextDependencies : IDbContextDependencies
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public IDiagnosticsLogger<DbLoggerCategory.Infrastructure> InfrastructureLogger { get; }
+    public IDiagnosticsLogger<DbLoggerCategory.Infrastructure> InfrastructureLogger { get; init; }
 }

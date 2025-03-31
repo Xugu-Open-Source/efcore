@@ -3,7 +3,7 @@
 
 using Microsoft.EntityFrameworkCore.Design.Internal;
 
-namespace Microsoft.EntityFrameworkCore.Scaffolding.Internal;
+namespace Microsoft.EntityFrameworkCore;
 
 public class HumanizerPluralizerTest
 {

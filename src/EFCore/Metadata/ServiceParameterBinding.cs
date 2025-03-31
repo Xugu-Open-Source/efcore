@@ -47,33 +47,25 @@ public abstract class ServiceParameterBinding : ParameterBinding
     /// <param name="bindingInfo">The binding information.</param>
     /// <returns>The expression tree.</returns>
     public override Expression BindToParameter(ParameterBindingInfo bindingInfo)
-    {
-        var serviceInstance = bindingInfo.ServiceInstances.FirstOrDefault(e => e.Type == ServiceType);
-        if (serviceInstance != null)
-        {
-            return serviceInstance;
-        }
-
-        return BindToParameter(
+        => BindToParameter(
             bindingInfo.MaterializationContextExpression,
-            Expression.Constant(bindingInfo));
-    }
+            Expression.Constant(bindingInfo.EntityType));
 
     /// <summary>
     ///     Creates an expression tree representing the binding of the value of a property from a
     ///     materialization expression to a parameter of the constructor, factory method, etc.
     /// </summary>
     /// <param name="materializationExpression">The expression representing the materialization context.</param>
-    /// <param name="bindingInfoExpression">The expression representing the <see cref="ParameterBindingInfo" /> constant.</param>
+    /// <param name="entityTypeExpression">The expression representing the <see cref="IEntityType" /> constant.</param>
     /// <returns>The expression tree.</returns>
     public abstract Expression BindToParameter(
         Expression materializationExpression,
-        Expression bindingInfoExpression);
+        Expression entityTypeExpression);
 
     /// <summary>
     ///     A delegate to set a CLR service property on an entity instance.
     /// </summary>
-    public virtual Func<MaterializationContext, IEntityType, object, object?> ServiceDelegate
+    public virtual Func<MaterializationContext, IEntityType, object, object> ServiceDelegate
         => NonCapturingLazyInitializer.EnsureInitialized(
             ref _serviceDelegate, this, static b =>
             {
@@ -82,12 +74,7 @@ public abstract class ServiceParameterBinding : ParameterBinding
                 var entityParam = Expression.Parameter(typeof(object));
 
                 return Expression.Lambda<Func<MaterializationContext, IEntityType, object, object>>(
-                    b.BindToParameter(
-                        materializationContextParam,
-                        Expression.New(
-                            typeof(ParameterBindingInfo).GetConstructor([typeof(IEntityType), typeof(Expression)])!,
-                            entityTypeParam,
-                            Expression.Constant(materializationContextParam))),
+                    b.BindToParameter(materializationContextParam, entityTypeParam),
                     materializationContextParam,
                     entityTypeParam,
                     entityParam).Compile();

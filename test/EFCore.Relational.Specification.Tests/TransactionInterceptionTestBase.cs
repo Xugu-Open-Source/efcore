@@ -5,16 +5,19 @@ using System.Data;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class TransactionInterceptionTestBase(InterceptionTestBase.InterceptionFixtureBase fixture) : InterceptionTestBase(fixture)
+public abstract class TransactionInterceptionTestBase : InterceptionTestBase
 {
+    protected TransactionInterceptionTestBase(InterceptionFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalTheory]
     [InlineData(false)]
     [InlineData(true)]
     public virtual async Task BeginTransaction_without_interceptor(bool async)
     {
-        using var context = await CreateContextAsync(Enumerable.Empty<IInterceptor>());
+        using var context = CreateContext(Enumerable.Empty<IInterceptor>());
         using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
         using (var transaction = async
                    ? await context.Database.BeginTransactionAsync()
@@ -31,7 +34,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task UseTransaction_without_interceptor(bool async)
     {
-        using var context = await CreateContextAsync(Enumerable.Empty<IInterceptor>());
+        using var context = CreateContext(Enumerable.Empty<IInterceptor>());
         using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
         using var transaction = context.Database.GetDbConnection().BeginTransaction();
         var contextTransaction = async
@@ -51,7 +54,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_BeginTransaction(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
@@ -71,7 +74,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_BeginTransaction_with_isolation_level(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
@@ -91,7 +94,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_BeginTransaction_to_suppress(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<SuppressingTransactionInterceptor>();
+        var (context, interceptor) = CreateContext<SuppressingTransactionInterceptor>();
         using (context)
         {
             using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
@@ -138,7 +141,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_BeginTransaction_to_wrap(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<WrappingTransactionInterceptor>();
+        var (context, interceptor) = CreateContext<WrappingTransactionInterceptor>();
         using (context)
         {
             using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
@@ -203,7 +206,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_UseTransaction(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
@@ -225,7 +228,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_UseTransaction_to_wrap(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<WrappingTransactionInterceptor>();
+        var (context, interceptor) = CreateContext<WrappingTransactionInterceptor>();
         using (context)
         {
             using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
@@ -247,7 +250,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_Commit(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var contextTransaction = async
@@ -276,7 +279,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_Commit_to_suppress(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<CommitSuppressingTransactionInterceptor>();
+        var (context, interceptor) = CreateContext<CommitSuppressingTransactionInterceptor>();
         using (context)
         {
             using var contextTransaction = async
@@ -308,7 +311,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_Rollback(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var contextTransaction = async
@@ -337,7 +340,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_Rollback_to_suppress(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<CommitSuppressingTransactionInterceptor>();
+        var (context, interceptor) = CreateContext<CommitSuppressingTransactionInterceptor>();
         using (context)
         {
             using var contextTransaction = async
@@ -369,7 +372,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_CreateSavepoint(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var contextTransaction = async
@@ -398,7 +401,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_RollbackToSavepoint(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var contextTransaction = async
@@ -436,7 +439,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true)]
     public virtual async Task Intercept_ReleaseSavepoint(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var contextTransaction = async
@@ -521,7 +524,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true, false)]
     public virtual async Task Intercept_error_on_commit_or_rollback(bool async, bool commit)
     {
-        var (context, interceptor) = await CreateContextAsync<TransactionInterceptor>();
+        var (context, interceptor) = CreateContext<TransactionInterceptor>();
         using (context)
         {
             using var contextTransaction = async
@@ -576,7 +579,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
         var interceptor2 = new WrappingTransactionInterceptor();
         var interceptor3 = new TransactionInterceptor();
         var interceptor4 = new WrappingTransactionInterceptor();
-        using var context = await CreateContextAsync(
+        using var context = CreateContext(
             new IInterceptor[] { new NoOpTransactionInterceptor(), interceptor1, interceptor2 },
             new IInterceptor[] { interceptor3, interceptor4, new NoOpTransactionInterceptor() });
         using var listener = Fixture.SubscribeToDiagnosticListener(context.ContextId);
@@ -593,11 +596,18 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
         AssertBeginTransactionEvents(listener);
     }
 
-    protected class NoOpTransactionInterceptor : DbConnectionInterceptor;
-
-    private class WrappedDbTransaction(DbTransaction transaction) : DbTransaction
+    protected class NoOpTransactionInterceptor : DbConnectionInterceptor
     {
-        private readonly DbTransaction _transaction = transaction;
+    }
+
+    private class WrappedDbTransaction : DbTransaction
+    {
+        private readonly DbTransaction _transaction;
+
+        public WrappedDbTransaction(DbTransaction transaction)
+        {
+            _transaction = transaction;
+        }
 
         public override void Commit()
             => _transaction.Commit();
@@ -615,8 +625,16 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
             => _transaction.Dispose();
     }
 
-    private class FakeDbTransaction(DbConnection dbConnection, IsolationLevel isolationLevel) : DbTransaction
+    private class FakeDbTransaction : DbTransaction
     {
+        public FakeDbTransaction(DbConnection dbConnection, IsolationLevel isolationLevel)
+        {
+            DbConnection = dbConnection;
+            IsolationLevel = isolationLevel == IsolationLevel.Unspecified
+                ? IsolationLevel.Snapshot
+                : isolationLevel;
+        }
+
         public override void Commit()
         {
         }
@@ -625,11 +643,9 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
         {
         }
 
-        protected override DbConnection DbConnection { get; } = dbConnection;
+        protected override DbConnection DbConnection { get; }
 
-        public override IsolationLevel IsolationLevel { get; } = isolationLevel == IsolationLevel.Unspecified
-            ? IsolationLevel.Snapshot
-            : isolationLevel;
+        public override IsolationLevel IsolationLevel { get; }
     }
 
     private static void AssertBeginTransaction(DbContext context, TransactionInterceptor interceptor, bool async)
@@ -1107,7 +1123,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
             AsyncCalled = true;
             AssertStarting(connection, eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult<DbTransaction>>(Task.FromResult(result));
         }
 
         public virtual ValueTask<DbTransaction> TransactionStartedAsync(
@@ -1145,7 +1161,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
             AsyncCalled = true;
             AssertUsed(connection, eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<DbTransaction>(Task.FromResult(result));
         }
 
         public virtual InterceptionResult TransactionCommitting(
@@ -1179,7 +1195,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
             AsyncCalled = true;
             AssertCommitting(eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(Task.FromResult(result));
         }
 
         public virtual Task TransactionCommittedAsync(
@@ -1225,7 +1241,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
             AsyncCalled = true;
             AssertRollingBack(eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(Task.FromResult(result));
         }
 
         public virtual Task TransactionRolledBackAsync(
@@ -1271,7 +1287,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
             AsyncCalled = true;
             AssertCreatingSavepoint(eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(Task.FromResult(result));
         }
 
         public virtual Task CreatedSavepointAsync(
@@ -1317,7 +1333,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
             AsyncCalled = true;
             AssertRollingBackToSavepoint(eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(Task.FromResult(result));
         }
 
         public virtual Task RolledBackToSavepointAsync(
@@ -1363,7 +1379,7 @@ public abstract class TransactionInterceptionTestBase(InterceptionTestBase.Inter
             AsyncCalled = true;
             AssertReleasingSavepoint(eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(Task.FromResult(result));
         }
 
         public virtual Task ReleasedSavepointAsync(

@@ -19,7 +19,9 @@ public class SqlQuery : TableBase, ISqlQuery
     /// </summary>
     public SqlQuery(string name, RelationalModel model, string sql)
         : base(name, null, model)
-        => Sql = sql;
+    {
+        Sql = sql;
+    }
 
     /// <inheritdoc />
     public virtual string Sql { get; set; }
@@ -29,15 +31,6 @@ public class SqlQuery : TableBase, ISqlQuery
         => property.GetSqlQueryColumnMappings()
             .FirstOrDefault(cm => cm.TableMapping.Table == this)
             ?.Column;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public new virtual SqlQueryColumn? FindColumn(string name)
-        => (SqlQueryColumn?)base.FindColumn(name);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

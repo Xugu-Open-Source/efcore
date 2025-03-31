@@ -3,97 +3,71 @@
 
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.EntityFrameworkCore;
+namespace Microsoft.EntityFrameworkCore.Cosmos;
 
-public class ReloadTest : IClassFixture<ReloadTest.CosmosReloadTestFixture>
+public class ReloadTest
 {
-    public static IEnumerable<object[]> IsAsyncData = [[false], [true]];
+    public static IEnumerable<object[]> IsAsyncData = new[] { new object[] { true }, new object[] { false } };
 
-    private void AssertSql(params string[] expected)
-        => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
-
-    protected void ClearLog()
-        => Fixture.TestSqlLoggerFactory.Clear();
-
-    protected CosmosReloadTestFixture Fixture { get; }
-
-    public ReloadTest(CosmosReloadTestFixture fixture)
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
+    public async Task Entity_reference_can_be_reloaded(bool async)
     {
-        Fixture = fixture;
-        ClearLog();
-    }
+        await using var testDatabase = CosmosTestStore.CreateInitialized("ReloadTest");
 
-    [ConditionalFact]
-    public async Task Entity_reference_can_be_reloaded()
-    {
-        using var context = CreateContext();
+        using var context = new ReloadTestContext(testDatabase);
+        await context.Database.EnsureCreatedAsync();
 
-        var entry = await context.AddAsync(new Item { Id = 1337, PartitionKey = "Foo" });
+        var entry = await context.AddAsync(new Item { Id = 1337 });
+
         await context.SaveChangesAsync();
 
         var itemJson = entry.Property<JObject>("__jObject").CurrentValue;
         itemJson["unmapped"] = 2;
 
-        await entry.ReloadAsync();
-
-        AssertSql(
-            """
-@p='1337'
-
-SELECT VALUE
-{
-    "Id" : c["Id"],
-    "PartitionKey" : c["PartitionKey"],
-    "$type" : c["$type"],
-    "id0" : c["id"],
-    "" : c
-}
-FROM root c
-WHERE (c["Id"] = @p)
-OFFSET 0 LIMIT 1
-""");
+        if (async)
+        {
+            await entry.ReloadAsync();
+        }
+        else
+        {
+            entry.Reload();
+        }
 
         itemJson = entry.Property<JObject>("__jObject").CurrentValue;
         Assert.Null(itemJson["unmapped"]);
     }
 
-    protected ReloadTestContext CreateContext()
-        => Fixture.CreateContext();
-
-    public class CosmosReloadTestFixture : SharedStoreFixtureBase<ReloadTestContext>
+    public class ReloadTestContext : DbContext
     {
-        protected override string StoreName
-            => nameof(ReloadTest);
+        private readonly string _connectionUri;
+        private readonly string _authToken;
+        private readonly string _name;
 
-        protected override bool UsePooling
-            => false;
-
-        protected override ITestStoreFactory TestStoreFactory
-            => CosmosTestStoreFactory.Instance;
-
-        public TestSqlLoggerFactory TestSqlLoggerFactory
-            => (TestSqlLoggerFactory)ServiceProvider.GetRequiredService<ILoggerFactory>();
-    }
-
-    public class ReloadTestContext(DbContextOptions dbContextOptions) : DbContext(dbContextOptions)
-    {
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-            => modelBuilder.Entity<Item>(b => b.HasPartitionKey(e => e.PartitionKey));
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public ReloadTestContext(CosmosTestStore testStore)
         {
-            base.OnConfiguring(optionsBuilder);
-
-            // TODO: Remove this after #33893 - once Reload is implemented via ReadItem, the warning shouldn't be emitted
-            optionsBuilder.ConfigureWarnings(w => w.Log(CoreEventId.FirstWithoutOrderByAndFilterWarning));
+            _connectionUri = testStore.ConnectionUri;
+            _authToken = testStore.AuthToken;
+            _name = testStore.Name;
         }
 
-        public DbSet<Item> Items { get; set; } = null!;
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+            => optionsBuilder
+                .UseCosmos(
+                    _connectionUri,
+                    _authToken,
+                    _name,
+                    b => b.ApplyConfiguration());
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+        }
+
+        public DbSet<Item> Items { get; set; }
     }
 
     public class Item
     {
         public int Id { get; set; }
-        public required string PartitionKey { get; set; }
     }
 }

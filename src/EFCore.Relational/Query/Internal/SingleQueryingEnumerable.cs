@@ -12,44 +12,10 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal;
 ///     any release. You should only use it directly in your code with extreme caution and knowing that
 ///     doing so can result in application failures when updating to a new Entity Framework Core release.
 /// </summary>
-public static class SingleQueryingEnumerable
-{
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public static SingleQueryingEnumerable<T> Create<T>(
-        RelationalQueryContext relationalQueryContext,
-        RelationalCommandResolver relationalCommandResolver,
-        IReadOnlyList<ReaderColumn?>? readerColumns,
-        Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, T> shaper,
-        Type contextType,
-        bool standAloneStateManager,
-        bool detailedErrorsEnabled,
-        bool threadSafetyChecksEnabled)
-        => new(
-            relationalQueryContext,
-            relationalCommandResolver,
-            readerColumns,
-            shaper,
-            contextType,
-            standAloneStateManager,
-            detailedErrorsEnabled,
-            threadSafetyChecksEnabled);
-}
-
-/// <summary>
-///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-///     any release. You should only use it directly in your code with extreme caution and knowing that
-///     doing so can result in application failures when updating to a new Entity Framework Core release.
-/// </summary>
 public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, IRelationalQueryingEnumerable
 {
     private readonly RelationalQueryContext _relationalQueryContext;
-    private readonly RelationalCommandResolver _relationalCommandResolver;
+    private readonly RelationalCommandCache _relationalCommandCache;
     private readonly IReadOnlyList<ReaderColumn?>? _readerColumns;
     private readonly Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, T> _shaper;
     private readonly Type _contextType;
@@ -66,7 +32,7 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
     /// </summary>
     public SingleQueryingEnumerable(
         RelationalQueryContext relationalQueryContext,
-        RelationalCommandResolver relationalCommandResolver,
+        RelationalCommandCache relationalCommandCache,
         IReadOnlyList<ReaderColumn?>? readerColumns,
         Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, T> shaper,
         Type contextType,
@@ -75,7 +41,7 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
         bool threadSafetyChecksEnabled)
     {
         _relationalQueryContext = relationalQueryContext;
-        _relationalCommandResolver = relationalCommandResolver;
+        _relationalCommandCache = relationalCommandCache;
         _readerColumns = readerColumns;
         _shaper = shaper;
         _contextType = contextType;
@@ -123,7 +89,8 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual DbCommand CreateDbCommand()
-        => _relationalCommandResolver(_relationalQueryContext.ParameterValues)
+        => _relationalCommandCache
+            .GetRelationalCommandTemplate(_relationalQueryContext.ParameterValues)
             .CreateDbCommand(
                 new RelationalCommandParameterObject(
                     _relationalQueryContext.Connection,
@@ -149,7 +116,7 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
     private sealed class Enumerator : IEnumerator<T>
     {
         private readonly RelationalQueryContext _relationalQueryContext;
-        private readonly RelationalCommandResolver _relationalCommandResolver;
+        private readonly RelationalCommandCache _relationalCommandCache;
         private readonly IReadOnlyList<ReaderColumn?>? _readerColumns;
         private readonly Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, T> _shaper;
         private readonly Type _contextType;
@@ -167,7 +134,7 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
         public Enumerator(SingleQueryingEnumerable<T> queryingEnumerable)
         {
             _relationalQueryContext = queryingEnumerable._relationalQueryContext;
-            _relationalCommandResolver = queryingEnumerable._relationalCommandResolver;
+            _relationalCommandCache = queryingEnumerable._relationalCommandCache;
             _readerColumns = queryingEnumerable._readerColumns;
             _shaper = queryingEnumerable._shaper;
             _contextType = queryingEnumerable._contextType;
@@ -191,55 +158,62 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
         {
             try
             {
-                using var _ = _concurrencyDetector?.EnterCriticalSection();
+                _concurrencyDetector?.EnterCriticalSection();
 
-                if (_dataReader == null)
+                try
                 {
-                    _relationalQueryContext.ExecutionStrategy.Execute(
-                        this, static (_, enumerator) => InitializeReader(enumerator), null);
-                }
-
-                var hasNext = _resultCoordinator!.HasNext ?? _dataReader!.Read();
-
-                if (hasNext)
-                {
-                    while (true)
+                    if (_dataReader == null)
                     {
-                        _resultCoordinator.ResultReady = true;
-                        _resultCoordinator.HasNext = null;
-                        Current = _shaper(
-                            _relationalQueryContext, _dbDataReader!, _resultCoordinator.ResultContext, _resultCoordinator);
-                        if (_resultCoordinator.ResultReady)
-                        {
-                            // We generated a result so null out previously stored values
-                            _resultCoordinator.ResultContext.Values = null;
-                            break;
-                        }
+                        _relationalQueryContext.ExecutionStrategy.Execute(
+                            this, static (_, enumerator) => InitializeReader(enumerator), null);
+                    }
 
-                        // If we are already pointing to next row, we don't need to call Read
-                        if (_resultCoordinator.HasNext == true)
-                        {
-                            continue;
-                        }
+                    var hasNext = _resultCoordinator!.HasNext ?? _dataReader!.Read();
 
-                        if (!_dataReader!.Read())
+                    if (hasNext)
+                    {
+                        while (true)
                         {
-                            _resultCoordinator.HasNext = false;
-                            // Enumeration has ended, materialize last element
                             _resultCoordinator.ResultReady = true;
+                            _resultCoordinator.HasNext = null;
                             Current = _shaper(
                                 _relationalQueryContext, _dbDataReader!, _resultCoordinator.ResultContext, _resultCoordinator);
+                            if (_resultCoordinator.ResultReady)
+                            {
+                                // We generated a result so null out previously stored values
+                                _resultCoordinator.ResultContext.Values = null;
+                                break;
+                            }
 
-                            break;
+                            // If we are already pointing to next row, we don't need to call Read
+                            if (_resultCoordinator.HasNext == true)
+                            {
+                                continue;
+                            }
+
+                            if (!_dataReader!.Read())
+                            {
+                                _resultCoordinator.HasNext = false;
+                                // Enumeration has ended, materialize last element
+                                _resultCoordinator.ResultReady = true;
+                                Current = _shaper(
+                                    _relationalQueryContext, _dbDataReader!, _resultCoordinator.ResultContext, _resultCoordinator);
+
+                                break;
+                            }
                         }
                     }
-                }
-                else
-                {
-                    Current = default!;
-                }
+                    else
+                    {
+                        Current = default!;
+                    }
 
-                return hasNext;
+                    return hasNext;
+                }
+                finally
+                {
+                    _concurrencyDetector?.ExitCriticalSection();
+                }
             }
             catch (Exception exception)
             {
@@ -258,10 +232,10 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
 
         private static bool InitializeReader(Enumerator enumerator)
         {
-            EntityFrameworkMetricsData.ReportQueryExecuting();
+            EntityFrameworkEventSource.Log.QueryExecuting();
 
             var relationalCommand = enumerator._relationalCommand =
-                enumerator._relationalCommandResolver.RentAndPopulateRelationalCommand(enumerator._relationalQueryContext);
+                enumerator._relationalCommandCache.RentAndPopulateRelationalCommand(enumerator._relationalQueryContext);
 
             var dataReader = enumerator._dataReader = relationalCommand.ExecuteReader(
                 new RelationalCommandParameterObject(
@@ -299,7 +273,7 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
     private sealed class AsyncEnumerator : IAsyncEnumerator<T>
     {
         private readonly RelationalQueryContext _relationalQueryContext;
-        private readonly RelationalCommandResolver _relationalCommandResolver;
+        private readonly RelationalCommandCache _relationalCommandCache;
         private readonly IReadOnlyList<ReaderColumn?>? _readerColumns;
         private readonly Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, T> _shaper;
         private readonly Type _contextType;
@@ -318,7 +292,7 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
         public AsyncEnumerator(SingleQueryingEnumerable<T> queryingEnumerable)
         {
             _relationalQueryContext = queryingEnumerable._relationalQueryContext;
-            _relationalCommandResolver = queryingEnumerable._relationalCommandResolver;
+            _relationalCommandCache = queryingEnumerable._relationalCommandCache;
             _readerColumns = queryingEnumerable._readerColumns;
             _shaper = queryingEnumerable._shaper;
             _contextType = queryingEnumerable._contextType;
@@ -340,60 +314,67 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
         {
             try
             {
-                using var _ = _concurrencyDetector?.EnterCriticalSection();
+                _concurrencyDetector?.EnterCriticalSection();
 
-                if (_dataReader == null)
+                try
                 {
-                    await _relationalQueryContext.ExecutionStrategy.ExecuteAsync(
-                            this,
-                            static (_, enumerator, cancellationToken) => InitializeReaderAsync(enumerator, cancellationToken),
-                            null,
-                            _cancellationToken)
-                        .ConfigureAwait(false);
-                }
-
-                var hasNext = _resultCoordinator!.HasNext
-                    ?? await _dataReader!.ReadAsync(_cancellationToken).ConfigureAwait(false);
-
-                if (hasNext)
-                {
-                    while (true)
+                    if (_dataReader == null)
                     {
-                        _resultCoordinator.ResultReady = true;
-                        _resultCoordinator.HasNext = null;
-                        Current = _shaper(
-                            _relationalQueryContext, _dbDataReader!, _resultCoordinator.ResultContext, _resultCoordinator);
-                        if (_resultCoordinator.ResultReady)
-                        {
-                            // We generated a result so null out previously stored values
-                            _resultCoordinator.ResultContext.Values = null;
-                            break;
-                        }
+                        await _relationalQueryContext.ExecutionStrategy.ExecuteAsync(
+                                this,
+                                static (_, enumerator, cancellationToken) => InitializeReaderAsync(enumerator, cancellationToken),
+                                null,
+                                _cancellationToken)
+                            .ConfigureAwait(false);
+                    }
 
-                        // If we are already pointing to next row, we don't need to call Read
-                        if (_resultCoordinator.HasNext == true)
-                        {
-                            continue;
-                        }
+                    var hasNext = _resultCoordinator!.HasNext
+                        ?? await _dataReader!.ReadAsync(_cancellationToken).ConfigureAwait(false);
 
-                        if (!await _dataReader!.ReadAsync(_cancellationToken).ConfigureAwait(false))
+                    if (hasNext)
+                    {
+                        while (true)
                         {
-                            _resultCoordinator.HasNext = false;
-                            // Enumeration has ended, materialize last element
                             _resultCoordinator.ResultReady = true;
+                            _resultCoordinator.HasNext = null;
                             Current = _shaper(
                                 _relationalQueryContext, _dbDataReader!, _resultCoordinator.ResultContext, _resultCoordinator);
+                            if (_resultCoordinator.ResultReady)
+                            {
+                                // We generated a result so null out previously stored values
+                                _resultCoordinator.ResultContext.Values = null;
+                                break;
+                            }
 
-                            break;
+                            // If we are already pointing to next row, we don't need to call Read
+                            if (_resultCoordinator.HasNext == true)
+                            {
+                                continue;
+                            }
+
+                            if (!await _dataReader!.ReadAsync(_cancellationToken).ConfigureAwait(false))
+                            {
+                                _resultCoordinator.HasNext = false;
+                                // Enumeration has ended, materialize last element
+                                _resultCoordinator.ResultReady = true;
+                                Current = _shaper(
+                                    _relationalQueryContext, _dbDataReader!, _resultCoordinator.ResultContext, _resultCoordinator);
+
+                                break;
+                            }
                         }
                     }
-                }
-                else
-                {
-                    Current = default!;
-                }
+                    else
+                    {
+                        Current = default!;
+                    }
 
-                return hasNext;
+                    return hasNext;
+                }
+                finally
+                {
+                    _concurrencyDetector?.ExitCriticalSection();
+                }
             }
             catch (Exception exception)
             {
@@ -412,10 +393,10 @@ public class SingleQueryingEnumerable<T> : IEnumerable<T>, IAsyncEnumerable<T>, 
 
         private static async Task<bool> InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
         {
-            EntityFrameworkMetricsData.ReportQueryExecuting();
+            EntityFrameworkEventSource.Log.QueryExecuting();
 
             var relationalCommand = enumerator._relationalCommand =
-                enumerator._relationalCommandResolver.RentAndPopulateRelationalCommand(enumerator._relationalQueryContext);
+                enumerator._relationalCommandCache.RentAndPopulateRelationalCommand(enumerator._relationalQueryContext);
 
             var dataReader = enumerator._dataReader = await relationalCommand.ExecuteReaderAsync(
                     new RelationalCommandParameterObject(

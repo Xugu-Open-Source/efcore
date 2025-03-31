@@ -3,99 +3,37 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class GraphUpdatesSqlServerOwnedTest(GraphUpdatesSqlServerOwnedTest.SqlServerFixture fixture)
-    : GraphUpdatesSqlServerTestBase<GraphUpdatesSqlServerOwnedTest.SqlServerFixture>(fixture)
+public class GraphUpdatesSqlServerOwnedTest : GraphUpdatesSqlServerTestBase<GraphUpdatesSqlServerOwnedTest.SqlServerFixture>
 {
-    // No owned types
-    public override Task Update_root_by_collection_replacement_of_inserted_first_level(bool async)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Mark_explicitly_set_dependent_appropriately_with_any_inheritance_and_stable_generator(bool async, bool useAdd)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Mark_explicitly_set_stable_dependent_appropriately(bool async, bool useAdd)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Mark_explicitly_set_stable_dependent_appropriately_when_deep_in_graph(bool async, bool useAdd)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Update_root_by_collection_replacement_of_deleted_first_level(bool async)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Update_root_by_collection_replacement_of_inserted_second_level(bool async)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Update_root_by_collection_replacement_of_deleted_second_level(bool async)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Update_root_by_collection_replacement_of_inserted_first_level_level(bool async)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Update_root_by_collection_replacement_of_deleted_third_level(bool async)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Sever_relationship_that_will_later_be_deleted(bool async)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Alternate_key_over_foreign_key_doesnt_bypass_delete_behavior(bool async)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Shadow_skip_navigation_in_base_class_is_handled(bool async)
-        => Task.CompletedTask;
+    public GraphUpdatesSqlServerOwnedTest(SqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
 
     // Owned dependents are always loaded
-    public override Task Required_one_to_one_are_cascade_deleted_in_store(
+    public override void Required_one_to_one_are_cascade_deleted_in_store(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
-        => Task.CompletedTask;
+    {
+    }
 
-    public override Task Required_one_to_one_with_alternate_key_are_cascade_deleted_in_store(
+    public override void Required_one_to_one_with_alternate_key_are_cascade_deleted_in_store(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
-        => Task.CompletedTask;
+    {
+    }
 
     // No owned types
     public override Task Can_insert_when_composite_FK_has_default_value_for_one_part(bool async)
         => Task.CompletedTask;
 
-    public override Task Required_one_to_one_relationships_are_one_to_one(CascadeTiming? deleteOrphansTiming)
-        => Task.CompletedTask;
+    public override void Required_one_to_one_relationships_are_one_to_one(CascadeTiming? deleteOrphansTiming)
+    {
+    }
 
-    public override Task Required_one_to_one_with_AK_relationships_are_one_to_one(CascadeTiming? deleteOrphansTiming)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Can_insert_when_bool_PK_in_composite_key_has_sentinel_value(bool async, bool initialValue)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Can_insert_when_int_PK_in_composite_key_has_sentinel_value(bool async, int initialValue)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Can_insert_when_nullable_bool_PK_in_composite_key_has_sentinel_value(bool async, bool? initialValue)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Throws_for_single_property_bool_key_with_default_value_generation(bool async, bool initialValue)
-        => Task.CompletedTask;
-
-    // No owned types
-    public override Task Throws_for_single_property_nullable_bool_key_with_default_value_generation(bool async, bool? initialValue)
-        => Task.CompletedTask;
+    public override void Required_one_to_one_with_AK_relationships_are_one_to_one(CascadeTiming? deleteOrphansTiming)
+    {
+    }
 
     protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
         => facade.UseTransaction(transaction.GetDbTransaction());
@@ -107,15 +45,6 @@ public class GraphUpdatesSqlServerOwnedTest(GraphUpdatesSqlServerOwnedTest.SqlSe
 
         protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
         {
-            modelBuilder.Entity<OwnerRoot>(
-                b =>
-                {
-                    b.OwnsOne(e => e.OptionalSingle).OwnsOne(e => e.Single);
-                    b.OwnsOne(e => e.RequiredSingle).OwnsOne(e => e.Single);
-                    b.OwnsMany(e => e.OptionalChildren).OwnsMany(e => e.Children);
-                    b.OwnsMany(e => e.RequiredChildren).OwnsMany(e => e.Children);
-                });
-
             modelBuilder.Entity<Root>(
                 b =>
                 {
@@ -592,31 +521,6 @@ public class GraphUpdatesSqlServerOwnedTest(GraphUpdatesSqlServerOwnedTest.SqlSe
                 {
                     b.Property(e => e.IdUserState).HasDefaultValue(1);
                     b.HasOne(e => e.UserState).WithMany(e => e.Users).HasForeignKey(e => e.IdUserState);
-                });
-
-            modelBuilder.Entity<AccessStateWithSentinel>(
-                b =>
-                {
-                    b.Property(e => e.AccessStateWithSentinelId).ValueGeneratedNever();
-                    b.HasData(new AccessStateWithSentinel { AccessStateWithSentinelId = 1 });
-                });
-
-            modelBuilder.Entity<CruiserWithSentinel>(
-                b =>
-                {
-                    b.Property(e => e.IdUserState).HasDefaultValue(1).HasSentinel(667);
-                    b.HasOne(e => e.UserState).WithMany(e => e.Users).HasForeignKey(e => e.IdUserState);
-                });
-
-            modelBuilder.Entity<StringKeyAndIndexParent>(
-                b =>
-                {
-                    b.HasAlternateKey(e => e.AlternateId);
-                    b.OwnsOne(
-                        x => x.Child, b =>
-                        {
-                            b.WithOwner(e => e.Parent).HasForeignKey(e => e.ParentId);
-                        });
                 });
         }
     }

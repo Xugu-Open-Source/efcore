@@ -7,12 +7,15 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class QueryNoClientEvalTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class QueryNoClientEvalTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : NorthwindQueryRelationalFixture<NoopModelCustomizer>, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected QueryNoClientEvalTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     [ConditionalFact]
     public virtual void Throws_when_where()
@@ -106,13 +109,36 @@ public abstract class QueryNoClientEvalTestBase<TFixture>(TFixture fixture) : IC
     }
 
     [ConditionalFact]
+    public virtual void Throws_when_select_many()
+    {
+        using var context = CreateContext();
+
+        AssertTranslationFailed(
+            () => (from c1 in context.Customers
+                   from i in new[] { 1, 2, 3 }
+                   select c1)
+                .ToList());
+    }
+
+    [ConditionalFact]
+    public virtual void Throws_when_join()
+    {
+        using var context = CreateContext();
+        AssertTranslationFailed(
+            () => (from e1 in context.Employees
+                   join i in new uint[] { 1, 2, 3 } on e1.EmployeeID equals i
+                   select e1)
+                .ToList());
+    }
+
+    [ConditionalFact]
     public virtual void Does_not_throws_when_group_join()
     {
         using var context = CreateContext();
         (from e1 in context.Employees
-         join i in new uint[] { 1, 2, 3 } on e1.EmployeeID equals i into g
-         select e1)
-            .ToList();
+                   join i in new uint[] { 1, 2, 3 } on e1.EmployeeID equals i into g
+                   select e1)
+                .ToList();
     }
 
     [ConditionalFact(Skip = "Issue#18923")]

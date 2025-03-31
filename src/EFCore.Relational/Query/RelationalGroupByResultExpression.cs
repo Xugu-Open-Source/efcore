@@ -1,6 +1,8 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+
 namespace Microsoft.EntityFrameworkCore.Query;
 
 /// <summary>
@@ -65,11 +67,11 @@ public class RelationalGroupByResultExpression : Expression, IPrintableExpressio
     /// <inheritdoc />
     protected override Expression VisitChildren(ExpressionVisitor visitor)
     {
-        var keyIdentifier = visitor.Visit(KeyIdentifier);
+        var keyIdentifer = visitor.Visit(KeyIdentifier);
         var keyShaper = visitor.Visit(KeyShaper);
         var elementShaper = visitor.Visit(ElementShaper);
 
-        return Update(keyIdentifier, keyShaper, elementShaper);
+        return Update(keyIdentifer, keyShaper, elementShaper);
     }
 
     /// <summary>

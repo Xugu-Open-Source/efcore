@@ -65,17 +65,29 @@ public class ModelCodeGeneratorSelectorTest
         Assert.Same(expected, result);
     }
 
-    private class TestModelCodeGenerator(string language) : ModelCodeGenerator(new ModelCodeGeneratorDependencies())
+    private class TestModelCodeGenerator : ModelCodeGenerator
     {
-        public override string Language { get; } = language;
+        public TestModelCodeGenerator(string language)
+            : base(new ModelCodeGeneratorDependencies())
+        {
+            Language = language;
+        }
+
+        public override string Language { get; }
 
         public override ScaffoldedModel GenerateModel(IModel model, ModelCodeGenerationOptions options)
             => throw new NotImplementedException();
     }
 
-    private class TestTemplatedModelGenerator(bool hasTemplates) : TemplatedModelGenerator(new ModelCodeGeneratorDependencies())
+    private class TestTemplatedModelGenerator : TemplatedModelGenerator
     {
-        private readonly bool _hasTemplates = hasTemplates;
+        private readonly bool _hasTemplates;
+
+        public TestTemplatedModelGenerator(bool hasTemplates)
+            : base(new ModelCodeGeneratorDependencies())
+        {
+            _hasTemplates = hasTemplates;
+        }
 
         public override ScaffoldedModel GenerateModel(IModel model, ModelCodeGenerationOptions options)
             => throw new NotImplementedException();

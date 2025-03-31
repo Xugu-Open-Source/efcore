@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using Azure.Core;
+using Microsoft.EntityFrameworkCore.Cosmos.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Cosmos.Infrastructure.Internal;
 
@@ -22,7 +23,6 @@ public class CosmosOptionsExtension : IDbContextOptionsExtension
     private string? _connectionString;
     private string? _databaseName;
     private string? _region;
-    private IReadOnlyList<string>? _preferredRegions;
     private ConnectionMode? _connectionMode;
     private bool? _limitToEndpoint;
     private Func<ExecutionStrategyDependencies, IExecutionStrategy>? _executionStrategyFactory;
@@ -61,7 +61,6 @@ public class CosmosOptionsExtension : IDbContextOptionsExtension
         _databaseName = copyFrom._databaseName;
         _connectionString = copyFrom._connectionString;
         _region = copyFrom._region;
-        _preferredRegions = copyFrom._preferredRegions;
         _connectionMode = copyFrom._connectionMode;
         _limitToEndpoint = copyFrom._limitToEndpoint;
         _executionStrategyFactory = copyFrom._executionStrategyFactory;
@@ -101,13 +100,14 @@ public class CosmosOptionsExtension : IDbContextOptionsExtension
     /// </summary>
     public virtual CosmosOptionsExtension WithAccountEndpoint(string? accountEndpoint)
     {
+        if (_connectionString != null)
+        {
+            throw new InvalidOperationException(CosmosStrings.ConnectionStringConflictingConfiguration);
+        }
+
         var clone = Clone();
 
         clone._accountEndpoint = accountEndpoint;
-        if (accountEndpoint is not null)
-        {
-            clone._connectionString = null;
-        }
 
         return clone;
     }
@@ -129,14 +129,14 @@ public class CosmosOptionsExtension : IDbContextOptionsExtension
     /// </summary>
     public virtual CosmosOptionsExtension WithAccountKey(string? accountKey)
     {
+        if (accountKey is not null && _connectionString is not null)
+        {
+            throw new InvalidOperationException(CosmosStrings.ConnectionStringConflictingConfiguration);
+        }
+
         var clone = Clone();
 
         clone._accountKey = accountKey;
-        if (accountKey is not null)
-        {
-            clone._connectionString = null;
-            clone._tokenCredential = null;
-        }
 
         return clone;
     }
@@ -158,14 +158,14 @@ public class CosmosOptionsExtension : IDbContextOptionsExtension
     /// </summary>
     public virtual CosmosOptionsExtension WithTokenCredential(TokenCredential? tokenCredential)
     {
+        if (tokenCredential is not null && _connectionString is not null)
+        {
+            throw new InvalidOperationException(CosmosStrings.ConnectionStringConflictingConfiguration);
+        }
+
         var clone = Clone();
 
         clone._tokenCredential = tokenCredential;
-        if (tokenCredential is not null)
-        {
-            clone._connectionString = null;
-            clone._accountKey = null;
-        }
 
         return clone;
     }
@@ -187,15 +187,14 @@ public class CosmosOptionsExtension : IDbContextOptionsExtension
     /// </summary>
     public virtual CosmosOptionsExtension WithConnectionString(string? connectionString)
     {
+        if (connectionString is not null && (_accountEndpoint != null || _accountKey != null || _tokenCredential != null))
+        {
+            throw new InvalidOperationException(CosmosStrings.ConnectionStringConflictingConfiguration);
+        }
+
         var clone = Clone();
 
         clone._connectionString = connectionString;
-        if (connectionString is not null)
-        {
-            clone._accountEndpoint = null;
-            clone._accountKey = null;
-            clone._tokenCredential = null;
-        }
 
         return clone;
     }
@@ -244,30 +243,6 @@ public class CosmosOptionsExtension : IDbContextOptionsExtension
         var clone = Clone();
 
         clone._region = region;
-
-        return clone;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual IReadOnlyList<string>? PreferredRegions
-        => _preferredRegions;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual CosmosOptionsExtension WithPreferredRegions(IReadOnlyList<string>? regions)
-    {
-        var clone = Clone();
-
-        clone._preferredRegions = regions;
 
         return clone;
     }
@@ -592,10 +567,15 @@ public class CosmosOptionsExtension : IDbContextOptionsExtension
     {
     }
 
-    private sealed class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
+    private sealed class ExtensionInfo : DbContextOptionsExtensionInfo
     {
         private string? _logFragment;
         private int? _serviceProviderHash;
+
+        public ExtensionInfo(IDbContextOptionsExtension extension)
+            : base(extension)
+        {
+        }
 
         private new CosmosOptionsExtension Extension
             => (CosmosOptionsExtension)base.Extension;

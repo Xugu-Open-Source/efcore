@@ -5,12 +5,14 @@ using Microsoft.EntityFrameworkCore.TestModels.InheritanceRelationshipsModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class InheritanceRelationshipsQueryRelationalTestBase<TFixture>(TFixture fixture)
-    : InheritanceRelationshipsQueryTestBase<TFixture>(fixture)
+public abstract class InheritanceRelationshipsQueryRelationalTestBase<TFixture> : InheritanceRelationshipsQueryTestBase<TFixture>
     where TFixture : InheritanceRelationshipsQueryRelationalFixture, new()
 {
+    public InheritanceRelationshipsQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public virtual Task Include_collection_with_inheritance_split(bool async)

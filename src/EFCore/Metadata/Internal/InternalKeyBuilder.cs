@@ -59,26 +59,5 @@ public class InternalKeyBuilder : AnnotatableBuilder<Key, InternalModelBuilder>,
     }
 
     IConventionKey IConventionKeyBuilder.Metadata
-    {
-        [DebuggerStepThrough]
-        get => Metadata;
-    }
-
-    /// <inheritdoc />
-    [DebuggerStepThrough]
-    IConventionKeyBuilder? IConventionKeyBuilder.HasAnnotation(string name, object? value, bool fromDataAnnotation)
-        => (IConventionKeyBuilder?)base.HasAnnotation(
-            name, value, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <inheritdoc />
-    [DebuggerStepThrough]
-    IConventionKeyBuilder? IConventionKeyBuilder.HasNonNullAnnotation(string name, object? value, bool fromDataAnnotation)
-        => (IConventionKeyBuilder?)base.HasNonNullAnnotation(
-            name, value, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <inheritdoc />
-    [DebuggerStepThrough]
-    IConventionKeyBuilder? IConventionKeyBuilder.HasNoAnnotation(string name, bool fromDataAnnotation)
-        => (IConventionKeyBuilder?)base.HasNoAnnotation(
-            name, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
+        => Metadata;
 }

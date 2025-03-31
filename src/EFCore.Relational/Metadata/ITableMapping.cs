@@ -50,7 +50,7 @@ public interface ITableMapping : ITableMappingBase
     /// <param name="options">Options for generating the string.</param>
     /// <param name="indent">The number of indent spaces to use before each new line.</param>
     /// <returns>A human-readable representation.</returns>
-    string ITableMappingBase.ToDebugString(MetadataDebugStringOptions options, int indent)
+    string ToDebugString(MetadataDebugStringOptions options = MetadataDebugStringOptions.ShortDefault, int indent = 0)
     {
         var builder = new StringBuilder();
         var indentString = new string(' ', indent);
@@ -66,27 +66,24 @@ public interface ITableMapping : ITableMappingBase
             }
 
             builder
-                .Append(TypeBase.Name)
+                .Append(EntityType.Name)
                 .Append(" - ")
                 .Append(Table.Name);
 
-            if (IncludesDerivedTypes != null)
+            builder.Append(" ");
+            if (!IncludesDerivedTypes)
             {
-                builder.Append(' ');
-                if (!IncludesDerivedTypes.Value)
-                {
-                    builder.Append('!');
-                }
-
-                builder.Append("IncludesDerivedTypes");
+                builder.Append("!");
             }
+
+            builder.Append("IncludesDerivedTypes");
 
             if (IsSharedTablePrincipal != null)
             {
-                builder.Append(' ');
+                builder.Append(" ");
                 if (!IsSharedTablePrincipal.Value)
                 {
-                    builder.Append('!');
+                    builder.Append("!");
                 }
 
                 builder.Append("IsSharedTablePrincipal");
@@ -94,10 +91,10 @@ public interface ITableMapping : ITableMappingBase
 
             if (IsSplitEntityTypePrincipal != null)
             {
-                builder.Append(' ');
+                builder.Append(" ");
                 if (!IsSplitEntityTypePrincipal.Value)
                 {
-                    builder.Append('!');
+                    builder.Append("!");
                 }
 
                 builder.Append("IsSplitEntityTypePrincipal");

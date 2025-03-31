@@ -4,6 +4,7 @@
 #nullable enable
 
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
+using Microsoft.EntityFrameworkCore.InMemory.ValueGeneration.Internal;
 
 // ReSharper disable ClassNeverInstantiated.Local
 // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
@@ -282,11 +283,9 @@ public class ChangeTrackerTest
         Assert.Equal(3, context.ChangeTracker.Entries().Count());
         Assert.Equal(EntityState.Unchanged, context.Entry(cats[0]).State);
         Assert.Equal(EntityState.Unchanged, context.Entry(hats[0]).State);
-        Assert.NotNull(cats[0].EntityType);
 
         context.ChangeTracker.Clear();
 
-        Assert.Null(cats[0].EntityType);
         Assert.Empty(context.ChangeTracker.Entries());
         Assert.Equal(EntityState.Detached, context.Entry(cats[0]).State);
         Assert.Equal(EntityState.Detached, context.Entry(hats[0]).State);
@@ -294,12 +293,10 @@ public class ChangeTrackerTest
         var catsAgain = context.Cats.ToList();
         var hatsAgain = context.Set<Hat>().ToList();
 
-        Assert.NotNull(catsAgain[0].EntityType);
         Assert.Equal(3, context.ChangeTracker.Entries().Count());
         Assert.Equal(EntityState.Unchanged, context.Entry(catsAgain[0]).State);
         Assert.Equal(EntityState.Unchanged, context.Entry(hatsAgain[0]).State);
 
-        Assert.Null(cats[0].EntityType);
         Assert.Equal(EntityState.Detached, context.Entry(cats[0]).State);
         Assert.Equal(EntityState.Detached, context.Entry(hats[0]).State);
     }
@@ -402,9 +399,13 @@ public class ChangeTrackerTest
         public Skinner? TheHero { get; set; }
     }
 
-    public class Skinner;
+    public class Skinner
+    {
+    }
 
-    public class TheStreets;
+    public class TheStreets
+    {
+    }
 
     public class WeakHerosContext : DbContext
     {
@@ -496,61 +497,7 @@ public class ChangeTrackerTest
             context.ChangeTracker.DetectChanges();
         }
 
-        Assert.DoesNotContain(_loggerFactory.Log, e => e.Id.Id == CoreEventId.PropertyChangeDetected.Id);
-    }
-
-    [ConditionalTheory]
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public void Detect_nested_property_change_is_logged(bool sensitive, bool callDetectChangesTwice)
-    {
-        var wocket = new Wocket
-        {
-            Id = 1,
-            Name = "Gollum",
-            Pocket = new Pocket { Contents = "Handsies" }
-        };
-
-        using var context = sensitive ? new LikeAZooContextSensitive() : new LikeAZooContext();
-        context.Database.EnsureDeleted();
-        context.Add(wocket);
-        context.SaveChanges();
-
-        _loggerFactory.Log.Clear();
-
-        wocket.Pocket.Contents = "Fishies";
-
-        context.ChangeTracker.DetectChanges();
-
-        if (callDetectChangesTwice)
-        {
-            context.ChangeTracker.DetectChanges();
-        }
-
-        var (level, _, message, _, _) = _loggerFactory.Log.Single(e => e.Id.Id == CoreEventId.PropertyChangeDetected.Id);
-        Assert.Equal(LogLevel.Debug, level);
-        Assert.Equal(
-            sensitive
-                ? CoreResources.LogPropertyChangeDetectedSensitive(new TestLogger<TestLoggingDefinitions>()).GenerateMessage(
-                    nameof(Pocket), nameof(Pocket.Contents), "Handsies", "Fishies", "{Id: 1}")
-                : CoreResources.LogPropertyChangeDetected(new TestLogger<TestLoggingDefinitions>())
-                    .GenerateMessage(nameof(Pocket), nameof(Pocket.Contents)),
-            message);
-
-        _loggerFactory.Log.Clear();
-
-        wocket.Pocket.Contents = "String...or nothing!";
-
-        context.ChangeTracker.DetectChanges();
-
-        if (callDetectChangesTwice)
-        {
-            context.ChangeTracker.DetectChanges();
-        }
-
-        Assert.DoesNotContain(_loggerFactory.Log, e => e.Id.Id == CoreEventId.PropertyChangeDetected.Id);
+        Assert.Empty(_loggerFactory.Log.Where(e => e.Id.Id == CoreEventId.PropertyChangeDetected.Id));
     }
 
     [ConditionalTheory] // Issue #21896
@@ -578,7 +525,7 @@ public class ChangeTrackerTest
             context.ChangeTracker.DetectChanges();
         }
 
-        Assert.DoesNotContain(_loggerFactory.Log, e => e.Id.Id == CoreEventId.PropertyChangeDetected.Id);
+        Assert.Empty(_loggerFactory.Log.Where(e => e.Id.Id == CoreEventId.PropertyChangeDetected.Id));
 
         _loggerFactory.Log.Clear();
 
@@ -591,7 +538,7 @@ public class ChangeTrackerTest
             context.ChangeTracker.DetectChanges();
         }
 
-        Assert.DoesNotContain(_loggerFactory.Log, e => e.Id.Id == CoreEventId.PropertyChangeDetected.Id);
+        Assert.Empty(_loggerFactory.Log.Where(e => e.Id.Id == CoreEventId.PropertyChangeDetected.Id));
     }
 
     [ConditionalTheory]
@@ -921,9 +868,9 @@ public class ChangeTrackerTest
             Assert.Equal(
                 sensitive
                     ? CoreResources.LogTempValueGeneratedSensitive(new TestLogger<TestLoggingDefinitions>()).GenerateMessage(
-                        nameof(LikeAZooContextSensitive), 1, nameof(Hat), nameof(Hat.Id))
+                        nameof(LikeAZooContextSensitive), 1, nameof(Hat.Id), nameof(Hat))
                     : CoreResources.LogTempValueGenerated(new TestLogger<TestLoggingDefinitions>()).GenerateMessage(
-                        nameof(LikeAZooContext), nameof(Hat), nameof(Hat.Id)),
+                        nameof(LikeAZooContext), nameof(Hat.Id), nameof(Hat)),
                 message);
         }
         else
@@ -931,9 +878,9 @@ public class ChangeTrackerTest
             Assert.Equal(
                 sensitive
                     ? CoreResources.LogValueGeneratedSensitive(new TestLogger<TestLoggingDefinitions>()).GenerateMessage(
-                        nameof(LikeAZooContextSensitive), 1, nameof(Hat), nameof(Hat.Id))
+                        nameof(LikeAZooContextSensitive), 1, nameof(Hat.Id), nameof(Hat))
                     : CoreResources.LogValueGenerated(new TestLogger<TestLoggingDefinitions>()).GenerateMessage(
-                        nameof(LikeAZooContext), nameof(Hat), nameof(Hat.Id)),
+                        nameof(LikeAZooContext), nameof(Hat.Id), nameof(Hat)),
                 message);
         }
     }
@@ -944,8 +891,8 @@ public class ChangeTrackerTest
 
         var generator = (ResettableValueGenerator)cache.GetOrAdd(
             property,
-            property.DeclaringType,
-            (p, e) => new ResettableValueGenerator())!;
+            property.DeclaringEntityType,
+            (p, e) => new ResettableValueGenerator());
 
         generator.Reset(generateTemporaryValues);
     }
@@ -2182,24 +2129,15 @@ public class ChangeTrackerTest
         };
     }
 
-    private class Wocket
+    private class Cat
     {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-        public required Pocket Pocket { get; set; }
-    }
-
-    private class Pocket
-    {
-        public string? Contents { get; set; }
-    }
-
-    private class Cat(int id)
-    {
-        public IEntityType? EntityType { get; set; }
+        public Cat(int id)
+        {
+            Id = id;
+        }
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
-        public int Id { get; private set; } = id;
+        public int Id { get; private set; }
 
         public string? Name { get; set; }
 
@@ -2208,10 +2146,15 @@ public class ChangeTrackerTest
         public ICollection<Mat> Mats { get; } = new List<Mat>();
     }
 
-    private class Hat(int id)
+    private class Hat
     {
+        public Hat(int id)
+        {
+            Id = id;
+        }
+
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
-        public int Id { get; private set; } = id;
+        public int Id { get; private set; }
 
         public string? Color { get; set; }
 
@@ -2219,10 +2162,15 @@ public class ChangeTrackerTest
         public Cat? Cat { get; set; }
     }
 
-    private class Mat(int id)
+    private class Mat
     {
+        public Mat(int id)
+        {
+            Id = id;
+        }
+
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
-        public int Id { get; private set; } = id;
+        public int Id { get; private set; }
 
         public ICollection<Cat> Cats { get; } = new List<Cat>();
     }
@@ -2248,8 +2196,13 @@ public class ChangeTrackerTest
                     .UseInternalServiceProvider(InMemoryFixture.BuildServiceProvider(_loggerFactory)))
             .BuildServiceProvider(validateScopes: true);
 
-    private class LikeAZooContextPooled(DbContextOptions<LikeAZooContextPooled> options) : LikeAZooContext(options)
+    private class LikeAZooContextPooled : LikeAZooContext
     {
+        public LikeAZooContextPooled(DbContextOptions<LikeAZooContextPooled> options)
+            : base(options)
+        {
+        }
+
         protected internal override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
         }
@@ -2279,17 +2232,17 @@ public class ChangeTrackerTest
             modelBuilder
                 .Entity<Cat>()
                 .Property(e => e.Id)
-                .HasValueGenerator((_, __) => new ResettableValueGenerator());
+                .HasValueGenerator<InMemoryIntegerValueGenerator<int>>();
 
             modelBuilder
                 .Entity<Hat>()
                 .Property(e => e.Id)
-                .HasValueGenerator((_, __) => new ResettableValueGenerator());
+                .HasValueGenerator<InMemoryIntegerValueGenerator<int>>();
 
             modelBuilder.Entity<Mat>(
                 b =>
                 {
-                    b.Property(e => e.Id).HasValueGenerator((_, __) => new ResettableValueGenerator());
+                    b.Property(e => e.Id).HasValueGenerator<InMemoryIntegerValueGenerator<int>>();
                     b.HasMany(e => e.Cats)
                         .WithMany(e => e.Mats)
                         .UsingEntity<CatMat>(
@@ -2297,8 +2250,6 @@ public class ChangeTrackerTest
                             ts => ts.HasOne<Mat>().WithMany())
                         .HasKey(ts => new { ts.CatId, ts.MatId });
                 });
-
-            modelBuilder.Entity<Wocket>().ComplexProperty(e => e.Pocket);
         }
     }
 
@@ -2922,7 +2873,8 @@ public class ChangeTrackerTest
             Assert.Equal(EntityState.Unchanged, context.Entry(attachedContainer).State);
             Assert.Equal(EntityState.Unchanged, context.Entry(attachedTroduct!).State);
 
-            if (orphanTiming is null or CascadeTiming.Immediate)
+            if (orphanTiming == null
+                || orphanTiming == CascadeTiming.Immediate)
             {
                 Assert.Equal(EntityState.Deleted, context.Entry(attachedRoom).State);
             }
@@ -2979,7 +2931,7 @@ public class ChangeTrackerTest
     {
         public int Id { get; set; }
         public string? Name { get; set; }
-        public List<KontainerRoom> Rooms { get; } = [];
+        public List<KontainerRoom> Rooms { get; } = new();
     }
 
     private class KontainerRoom
@@ -2996,7 +2948,7 @@ public class ChangeTrackerTest
     {
         public int Id { get; set; }
         public string? Description { get; set; }
-        public List<KontainerRoom> Rooms { get; } = [];
+        public List<KontainerRoom> Rooms { get; } = new();
     }
 
     private class KontainerContext : DbContext
@@ -3641,13 +3593,15 @@ public class ChangeTrackerTest
                 .UseInMemoryDatabase(nameof(TheShadows));
     }
 
-    private class Dark;
+    private class Dark
+    {
+    }
 
     private class Category
     {
         public int Id { get; set; }
 
-        public List<Product> Products { get; } = [];
+        public List<Product> Products { get; } = new();
     }
 
     private class Product
@@ -3661,14 +3615,14 @@ public class ChangeTrackerTest
 
         // ReSharper disable once CollectionNeverUpdated.Local
         // ReSharper disable once MemberHidesStaticFromOuterClass
-        public List<OrderDetails> OrderDetails { get; } = [];
+        public List<OrderDetails> OrderDetails { get; } = new();
     }
 
     private class OptionalCategory
     {
         public int Id { get; set; }
 
-        public List<OptionalProduct> Products { get; } = [];
+        public List<OptionalProduct> Products { get; } = new();
     }
 
     private class OptionalProduct
@@ -3679,7 +3633,9 @@ public class ChangeTrackerTest
         public OptionalCategory? Category { get; set; }
     }
 
-    private class SpecialProduct : Product;
+    private class SpecialProduct : Product
+    {
+    }
 
     private class ProductDetails
     {
@@ -3712,7 +3668,7 @@ public class ChangeTrackerTest
 
         // ReSharper disable once CollectionNeverUpdated.Local
         // ReSharper disable once MemberHidesStaticFromOuterClass
-        public List<OrderDetails> OrderDetails { get; } = [];
+        public List<OrderDetails> OrderDetails { get; } = new();
     }
 
     private class OrderDetails
@@ -3738,9 +3694,13 @@ public class ChangeTrackerTest
         public OfThis? OfThis { get; set; }
     }
 
-    private class AreMade;
+    private class AreMade
+    {
+    }
 
-    private class OfThis : AreMade;
+    private class OfThis : AreMade
+    {
+    }
 
     private class WhoAmI
     {
@@ -3823,10 +3783,16 @@ public class ChangeTrackerTest
             => true;
     }
 
-    private class EarlyLearningCenter(params IInterceptor[] interceptors) : DbContext
+    private class EarlyLearningCenter : DbContext
     {
-        private readonly IInterceptor[] _interceptors = interceptors;
-        private readonly IServiceProvider _serviceProvider = InMemoryTestHelpers.Instance.CreateServiceProvider();
+        private readonly IInterceptor[] _interceptors;
+        private readonly IServiceProvider _serviceProvider;
+
+        public EarlyLearningCenter(params IInterceptor[] interceptors)
+        {
+            _interceptors = interceptors;
+            _serviceProvider = InMemoryTestHelpers.Instance.CreateServiceProvider();
+        }
 
         protected internal override void OnModelCreating(ModelBuilder modelBuilder)
         {

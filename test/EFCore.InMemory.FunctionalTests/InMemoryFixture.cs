@@ -17,7 +17,12 @@ public class InMemoryFixture
     public static IServiceProvider DefaultNullabilitySensitiveCheckProvider { get; }
         = BuildServiceProvider();
 
-    public readonly IServiceProvider ServiceProvider = BuildServiceProvider();
+    public readonly IServiceProvider ServiceProvider;
+
+    public InMemoryFixture()
+    {
+        ServiceProvider = BuildServiceProvider();
+    }
 
     public static ServiceProvider BuildServiceProvider(ILoggerFactory loggerFactory)
         => BuildServiceProvider(new ServiceCollection().AddSingleton(loggerFactory));

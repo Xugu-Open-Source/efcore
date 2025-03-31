@@ -3,9 +3,19 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class NorthwindKeylessEntitiesQueryInMemoryTest(NorthwindQueryInMemoryFixture<NoopModelCustomizer> fixture)
-    : NorthwindKeylessEntitiesQueryTestBase<NorthwindQueryInMemoryFixture<NoopModelCustomizer>>(fixture)
+public class NorthwindKeylessEntitiesQueryInMemoryTest : NorthwindKeylessEntitiesQueryTestBase<
+    NorthwindQueryInMemoryFixture<NoopModelCustomizer>>
 {
+    public NorthwindKeylessEntitiesQueryInMemoryTest(
+        NorthwindQueryInMemoryFixture<NoopModelCustomizer> fixture,
+#pragma warning disable IDE0060 // Remove unused parameter
+        ITestOutputHelper testOutputHelper)
+#pragma warning restore IDE0060 // Remove unused parameter
+        : base(fixture)
+    {
+        //TestLoggerFactory.TestOutputHelper = testOutputHelper;
+    }
+
     // mapping to view not supported on InMemory
     public override Task KeylessEntity_by_database_view(bool async)
         => Task.CompletedTask;

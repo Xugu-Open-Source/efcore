@@ -27,7 +27,7 @@ public class DbSetFinder : IDbSetFinder
 
     private static DbSetProperty[] FindSetsNonCached(Type contextType)
     {
-        var factory = ClrPropertySetterFactory.Instance;
+        var factory = new ClrPropertySetterFactory();
 
         return contextType.GetRuntimeProperties()
             .Where(

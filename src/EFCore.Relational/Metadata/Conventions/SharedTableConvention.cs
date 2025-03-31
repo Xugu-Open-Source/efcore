@@ -84,12 +84,12 @@ public class SharedTableConvention : IModelFinalizingConvention
             var storeObject = StoreObjectIdentifier.Table(tableName, schema);
             foreach (var entityType in conventionEntityTypes)
             {
-                UniquifyColumnNames(entityType, columns, storeObject, maxLength);
-                UniquifyKeyNames(entityType, keys, storeObject, maxLength);
-                UniquifyForeignKeyNames(entityType, foreignKeys, storeObject, maxLength);
-                UniquifyIndexNames(entityType, indexes, storeObject, maxLength);
-                UniquifyCheckConstraintNames(entityType, checkConstraints, storeObject, maxLength);
-                UniquifyTriggerNames(entityType, triggers, storeObject, maxLength);
+                TryUniquifyColumnNames(entityType, columns, storeObject, maxLength);
+                TryUniquifyKeyNames(entityType, keys, storeObject, maxLength);
+                TryUniquifyForeignKeyNames(entityType, foreignKeys, storeObject, maxLength);
+                TryUniquifyIndexNames(entityType, indexes, storeObject, maxLength);
+                TryUniquifyCheckConstraintNames(entityType, checkConstraints, storeObject, maxLength);
+                TryUniquifyTriggerNames(entityType, triggers, storeObject, maxLength);
             }
         }
     }
@@ -145,7 +145,7 @@ public class SharedTableConvention : IModelFinalizingConvention
 
             if (!tables.TryGetValue(table, out var entityTypes))
             {
-                entityTypes = [];
+                entityTypes = new List<IConventionEntityType>();
                 tables[table] = entityTypes;
             }
 
@@ -179,7 +179,7 @@ public class SharedTableConvention : IModelFinalizingConvention
 
                 if (!clashingSubTables.TryGetValue((originalName, table.Schema), out var subTable))
                 {
-                    subTable = [];
+                    subTable = new List<IConventionEntityType>();
                     clashingSubTables[(originalName, table.Schema)] = subTable;
                 }
 
@@ -210,13 +210,13 @@ public class SharedTableConvention : IModelFinalizingConvention
         }
     }
 
-    private static void UniquifyColumnNames(
-        IConventionTypeBase type,
-        Dictionary<string, IConventionProperty> columns,
+    private static void TryUniquifyColumnNames(
+        IConventionEntityType entityType,
+        Dictionary<string, IConventionProperty> properties,
         in StoreObjectIdentifier storeObject,
         int maxLength)
     {
-        foreach (var property in type.GetProperties())
+        foreach (var property in entityType.GetDeclaredProperties())
         {
             var columnName = property.GetColumnName(storeObject);
             if (columnName == null)
@@ -224,14 +224,9 @@ public class SharedTableConvention : IModelFinalizingConvention
                 continue;
             }
 
-            if (!columns.TryGetValue(columnName, out var otherProperty))
+            if (!properties.TryGetValue(columnName, out var otherProperty))
             {
-                columns[columnName] = property;
-                continue;
-            }
-
-            if (property == otherProperty)
-            {
+                properties[columnName] = property;
                 continue;
             }
 
@@ -242,53 +237,47 @@ public class SharedTableConvention : IModelFinalizingConvention
                 || (property.IsConcurrencyToken && otherProperty.IsConcurrencyToken)
                 || (!property.Builder.CanSetColumnName(null) && !otherProperty.Builder.CanSetColumnName(null)))
             {
-                // Handle this with a default value convention #9329
                 if (property.GetAfterSaveBehavior() == PropertySaveBehavior.Save
-                    && property.ValueGenerated is ValueGenerated.Never or ValueGenerated.OnUpdateSometimes)
+                    && otherProperty.GetAfterSaveBehavior() == PropertySaveBehavior.Save
+                    && (property.ValueGenerated == ValueGenerated.Never
+                        || property.ValueGenerated == ValueGenerated.OnUpdateSometimes)
+                    && (otherProperty.ValueGenerated == ValueGenerated.Never
+                        || otherProperty.ValueGenerated == ValueGenerated.OnUpdateSometimes))
                 {
+                    // Handle this with a default value convention #9329
                     property.Builder.ValueGenerated(ValueGenerated.OnUpdateSometimes);
-                }
-
-                if (otherProperty.GetAfterSaveBehavior() == PropertySaveBehavior.Save
-                    && otherProperty.ValueGenerated is ValueGenerated.Never or ValueGenerated.OnUpdateSometimes)
-                {
                     otherProperty.Builder.ValueGenerated(ValueGenerated.OnUpdateSometimes);
                 }
 
                 continue;
             }
 
-            var usePrefix = property.DeclaringType != otherProperty.DeclaringType;
+            var usePrefix = property.DeclaringEntityType != otherProperty.DeclaringEntityType;
             if (!usePrefix
-                || (!property.DeclaringType.IsStrictlyDerivedFrom(otherProperty.DeclaringType)
-                    && !otherProperty.DeclaringType.IsStrictlyDerivedFrom(property.DeclaringType))
-                || (property.DeclaringType as IConventionEntityType)?.FindRowInternalForeignKeys(storeObject).Any() == true)
+                || (!property.DeclaringEntityType.IsStrictlyDerivedFrom(otherProperty.DeclaringEntityType)
+                    && !otherProperty.DeclaringEntityType.IsStrictlyDerivedFrom(property.DeclaringEntityType))
+                || property.DeclaringEntityType.FindRowInternalForeignKeys(storeObject).Any())
             {
-                var newColumnName = TryUniquify(property, columnName, columns, storeObject, usePrefix, maxLength);
+                var newColumnName = TryUniquify(property, columnName, properties, storeObject, usePrefix, maxLength);
                 if (newColumnName != null)
                 {
-                    columns[newColumnName] = property;
+                    properties[newColumnName] = property;
                     continue;
                 }
             }
 
             if (!usePrefix
-                || (!property.DeclaringType.IsStrictlyDerivedFrom(otherProperty.DeclaringType)
-                    && !otherProperty.DeclaringType.IsStrictlyDerivedFrom(property.DeclaringType))
-                || (otherProperty.DeclaringType as IConventionEntityType)?.FindRowInternalForeignKeys(storeObject).Any() == true)
+                || (!property.DeclaringEntityType.IsStrictlyDerivedFrom(otherProperty.DeclaringEntityType)
+                    && !otherProperty.DeclaringEntityType.IsStrictlyDerivedFrom(property.DeclaringEntityType))
+                || otherProperty.DeclaringEntityType.FindRowInternalForeignKeys(storeObject).Any())
             {
-                var newOtherColumnName = TryUniquify(otherProperty, columnName, columns, storeObject, usePrefix, maxLength);
+                var newOtherColumnName = TryUniquify(otherProperty, columnName, properties, storeObject, usePrefix, maxLength);
                 if (newOtherColumnName != null)
                 {
-                    columns[columnName] = property;
-                    columns[newOtherColumnName] = otherProperty;
+                    properties[columnName] = property;
+                    properties[newOtherColumnName] = otherProperty;
                 }
             }
-        }
-
-        foreach (var complexProperty in type.GetDeclaredComplexProperties())
-        {
-            UniquifyColumnNames(complexProperty.ComplexType, columns, storeObject, maxLength);
         }
     }
 
@@ -305,7 +294,7 @@ public class SharedTableConvention : IModelFinalizingConvention
         {
             if (usePrefix)
             {
-                var prefix = property.DeclaringType.ShortName();
+                var prefix = property.DeclaringEntityType.ShortName();
                 if (!columnName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 {
                     columnName = prefix + "_" + columnName;
@@ -325,7 +314,7 @@ public class SharedTableConvention : IModelFinalizingConvention
         return null;
     }
 
-    private void UniquifyKeyNames(
+    private void TryUniquifyKeyNames(
         IConventionEntityType entityType,
         Dictionary<string, (IConventionKey, StoreObjectIdentifier)> keys,
         in StoreObjectIdentifier storeObject,
@@ -399,7 +388,7 @@ public class SharedTableConvention : IModelFinalizingConvention
         return null;
     }
 
-    private void UniquifyIndexNames(
+    private void TryUniquifyIndexNames(
         IConventionEntityType entityType,
         Dictionary<string, (IConventionIndex, StoreObjectIdentifier)> indexes,
         in StoreObjectIdentifier storeObject,
@@ -471,7 +460,7 @@ public class SharedTableConvention : IModelFinalizingConvention
         return null;
     }
 
-    private void UniquifyForeignKeyNames(
+    private void TryUniquifyForeignKeyNames(
         IConventionEntityType entityType,
         Dictionary<string, (IConventionForeignKey, StoreObjectIdentifier)> foreignKeys,
         in StoreObjectIdentifier storeObject,
@@ -564,7 +553,7 @@ public class SharedTableConvention : IModelFinalizingConvention
         return null;
     }
 
-    private void UniquifyCheckConstraintNames(
+    private void TryUniquifyCheckConstraintNames(
         IConventionEntityType entityType,
         Dictionary<(string, string?), (IConventionCheckConstraint, StoreObjectIdentifier)> checkConstraints,
         in StoreObjectIdentifier storeObject,
@@ -637,7 +626,7 @@ public class SharedTableConvention : IModelFinalizingConvention
         return null;
     }
 
-    private void UniquifyTriggerNames(
+    private void TryUniquifyTriggerNames(
         IConventionEntityType entityType,
         Dictionary<string, (IConventionTrigger, StoreObjectIdentifier)> triggers,
         in StoreObjectIdentifier storeObject,

@@ -3,13 +3,9 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class NoopModelCustomizer : ITestModelCustomizer
+public class NoopModelCustomizer : IModelCustomizer
 {
-    public virtual void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    {
-    }
-
-    public virtual void Customize(ModelBuilder modelBuilder, DbContext context)
+    public void Customize(ModelBuilder modelBuilder, DbContext context)
     {
     }
 }

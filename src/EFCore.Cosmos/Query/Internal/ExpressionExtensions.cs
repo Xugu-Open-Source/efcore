@@ -21,7 +21,8 @@ public static class ExpressionExtensions
     {
         for (var i = 0; i < expressions.Length; i++)
         {
-            if (expressions[i] is SqlExpression { TypeMapping: not null } sql)
+            if (expressions[i] is SqlExpression sql
+                && sql.TypeMapping != null)
             {
                 return sql.TypeMapping;
             }

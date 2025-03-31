@@ -3,6 +3,10 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class DataBindingSqliteTest(F1SqliteFixture fixture) : DataBindingTestBase<F1SqliteFixture>(fixture);
+public class DatabindingSqliteTest : DatabindingTestBase<F1SqliteFixture>
+{
+    public DatabindingSqliteTest(F1SqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+}

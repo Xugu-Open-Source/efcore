@@ -3,13 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore.BulkUpdates;
 
-#nullable disable
-
-public class TPCInheritanceBulkUpdatesSqliteTest(
-    TPCInheritanceBulkUpdatesSqliteFixture fixture,
-    ITestOutputHelper testOutputHelper)
-    : TPCInheritanceBulkUpdatesTestBase<TPCInheritanceBulkUpdatesSqliteFixture>(fixture, testOutputHelper)
+public class TPCInheritanceBulkUpdatesSqliteTest : TPCInheritanceBulkUpdatesTestBase<TPCInheritanceBulkUpdatesSqliteFixture>
 {
+    public TPCInheritanceBulkUpdatesSqliteTest(TPCInheritanceBulkUpdatesSqliteFixture fixture)
+        : base(fixture)
+    {
+        ClearLog();
+    }
+
     [ConditionalFact]
     public virtual void Check_all_tests_overridden()
         => TestHelpers.AssertAllMethodsOverridden(GetType());
@@ -26,7 +27,7 @@ public class TPCInheritanceBulkUpdatesSqliteTest(
         await base.Delete_where_hierarchy_derived(async);
 
         AssertSql(
-            """
+"""
 DELETE FROM "Kiwi" AS "k"
 WHERE "k"."Name" = 'Great spotted kiwi'
 """);
@@ -37,18 +38,18 @@ WHERE "k"."Name" = 'Great spotted kiwi'
         await base.Delete_where_using_hierarchy(async);
 
         AssertSql(
-            """
+"""
 DELETE FROM "Countries" AS "c"
 WHERE (
     SELECT COUNT(*)
     FROM (
-        SELECT "e"."CountryId"
+        SELECT "e"."Id", "e"."CountryId", "e"."Name", "e"."Species", "e"."EagleId", "e"."IsFlightless", "e"."Group", NULL AS "FoundOn", 'Eagle' AS "Discriminator"
         FROM "Eagle" AS "e"
         UNION ALL
-        SELECT "k"."CountryId"
+        SELECT "k"."Id", "k"."CountryId", "k"."Name", "k"."Species", "k"."EagleId", "k"."IsFlightless", NULL AS "Group", "k"."FoundOn", 'Kiwi' AS "Discriminator"
         FROM "Kiwi" AS "k"
-    ) AS "u"
-    WHERE "c"."Id" = "u"."CountryId" AND "u"."CountryId" > 0) > 0
+    ) AS "t"
+    WHERE "c"."Id" = "t"."CountryId" AND "t"."CountryId" > 0) > 0
 """);
     }
 
@@ -57,15 +58,15 @@ WHERE (
         await base.Delete_where_using_hierarchy_derived(async);
 
         AssertSql(
-            """
+"""
 DELETE FROM "Countries" AS "c"
 WHERE (
     SELECT COUNT(*)
     FROM (
-        SELECT "k"."CountryId"
+        SELECT "k"."Id", "k"."CountryId", "k"."Name", "k"."Species", "k"."EagleId", "k"."IsFlightless", NULL AS "Group", "k"."FoundOn", 'Kiwi' AS "Discriminator"
         FROM "Kiwi" AS "k"
-    ) AS "u"
-    WHERE "c"."Id" = "u"."CountryId" AND "u"."CountryId" > 0) > 0
+    ) AS "t"
+    WHERE "c"."Id" = "t"."CountryId" AND "t"."CountryId" > 0) > 0
 """);
     }
 
@@ -104,16 +105,9 @@ WHERE (
         AssertSql();
     }
 
-    public override async Task Update_base_type(bool async)
+    public override async Task Update_where_hierarchy(bool async)
     {
-        await base.Update_base_type(async);
-
-        AssertExecuteUpdateSql();
-    }
-
-    public override async Task Update_base_type_with_OfType(bool async)
-    {
-        await base.Update_base_type_with_OfType(async);
+        await base.Update_where_hierarchy(async);
 
         AssertExecuteUpdateSql();
     }
@@ -125,29 +119,15 @@ WHERE (
         AssertExecuteUpdateSql();
     }
 
-    public override async Task Update_base_property_on_derived_type(bool async)
+    public override async Task Update_where_hierarchy_derived(bool async)
     {
-        await base.Update_base_property_on_derived_type(async);
+        await base.Update_where_hierarchy_derived(async);
 
         AssertExecuteUpdateSql(
-            """
-@p='SomeOtherKiwi' (Size = 13)
-
+"""
 UPDATE "Kiwi" AS "k"
-SET "Name" = @p
-""");
-    }
-
-    public override async Task Update_derived_property_on_derived_type(bool async)
-    {
-        await base.Update_derived_property_on_derived_type(async);
-
-        AssertExecuteUpdateSql(
-            """
-@p='0'
-
-UPDATE "Kiwi" AS "k"
-SET "FoundOn" = @p
+SET "Name" = 'Kiwi'
+WHERE "k"."Name" = 'Great spotted kiwi'
 """);
     }
 
@@ -156,36 +136,19 @@ SET "FoundOn" = @p
         await base.Update_where_using_hierarchy(async);
 
         AssertExecuteUpdateSql(
-            """
-@p='Monovia' (Size = 7)
-
+"""
 UPDATE "Countries" AS "c"
-SET "Name" = @p
+SET "Name" = 'Monovia'
 WHERE (
     SELECT COUNT(*)
     FROM (
-        SELECT "e"."CountryId"
+        SELECT "e"."Id", "e"."CountryId", "e"."Name", "e"."Species", "e"."EagleId", "e"."IsFlightless", "e"."Group", NULL AS "FoundOn", 'Eagle' AS "Discriminator"
         FROM "Eagle" AS "e"
         UNION ALL
-        SELECT "k"."CountryId"
+        SELECT "k"."Id", "k"."CountryId", "k"."Name", "k"."Species", "k"."EagleId", "k"."IsFlightless", NULL AS "Group", "k"."FoundOn", 'Kiwi' AS "Discriminator"
         FROM "Kiwi" AS "k"
-    ) AS "u"
-    WHERE "c"."Id" = "u"."CountryId" AND "u"."CountryId" > 0) > 0
-""");
-    }
-
-    public override async Task Update_base_and_derived_types(bool async)
-    {
-        await base.Update_base_and_derived_types(async);
-
-        AssertExecuteUpdateSql(
-            """
-@p='Kiwi' (Size = 4)
-@p0='0'
-
-UPDATE "Kiwi" AS "k"
-SET "Name" = @p,
-    "FoundOn" = @p0
+    ) AS "t"
+    WHERE "c"."Id" = "t"."CountryId" AND "t"."CountryId" > 0) > 0
 """);
     }
 
@@ -194,18 +157,16 @@ SET "Name" = @p,
         await base.Update_where_using_hierarchy_derived(async);
 
         AssertExecuteUpdateSql(
-            """
-@p='Monovia' (Size = 7)
-
+"""
 UPDATE "Countries" AS "c"
-SET "Name" = @p
+SET "Name" = 'Monovia'
 WHERE (
     SELECT COUNT(*)
     FROM (
-        SELECT "k"."CountryId"
+        SELECT "k"."Id", "k"."CountryId", "k"."Name", "k"."Species", "k"."EagleId", "k"."IsFlightless", NULL AS "Group", "k"."FoundOn", 'Kiwi' AS "Discriminator"
         FROM "Kiwi" AS "k"
-    ) AS "u"
-    WHERE "c"."Id" = "u"."CountryId" AND "u"."CountryId" > 0) > 0
+    ) AS "t"
+    WHERE "c"."Id" = "t"."CountryId" AND "t"."CountryId" > 0) > 0
 """);
     }
 
@@ -214,32 +175,6 @@ WHERE (
         await base.Update_where_keyless_entity_mapped_to_sql_query(async);
 
         AssertExecuteUpdateSql();
-    }
-
-    public override async Task Update_with_interface_in_property_expression(bool async)
-    {
-        await base.Update_with_interface_in_property_expression(async);
-
-        AssertExecuteUpdateSql(
-            """
-@p='0'
-
-UPDATE "Coke" AS "c"
-SET "SugarGrams" = @p
-""");
-    }
-
-    public override async Task Update_with_interface_in_EF_Property_in_property_expression(bool async)
-    {
-        await base.Update_with_interface_in_EF_Property_in_property_expression(async);
-
-        AssertExecuteUpdateSql(
-            """
-@p='0'
-
-UPDATE "Coke" AS "c"
-SET "SugarGrams" = @p
-""");
     }
 
     protected override void ClearLog()

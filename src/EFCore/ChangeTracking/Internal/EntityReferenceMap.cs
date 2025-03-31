@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
@@ -28,7 +29,9 @@ public class EntityReferenceMap
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public EntityReferenceMap(bool hasSubMap)
-        => _hasSubMap = hasSubMap;
+    {
+        _hasSubMap = hasSubMap;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -70,24 +73,24 @@ public class EntityReferenceMap
                 switch (state)
                 {
                     case EntityState.Detached:
-                        _detachedReferenceMap ??= new Dictionary<object, InternalEntityEntry>(ReferenceEqualityComparer.Instance);
+                        _detachedReferenceMap ??= new Dictionary<object, InternalEntityEntry>(LegacyReferenceEqualityComparer.Instance);
                         _detachedReferenceMap[mapKey] = entry;
                         break;
                     case EntityState.Unchanged:
                         _unchangedReferenceMap ??=
-                            new Dictionary<object, InternalEntityEntry>(ReferenceEqualityComparer.Instance);
+                            new Dictionary<object, InternalEntityEntry>(LegacyReferenceEqualityComparer.Instance);
                         _unchangedReferenceMap[mapKey] = entry;
                         break;
                     case EntityState.Deleted:
-                        _deletedReferenceMap ??= new Dictionary<object, InternalEntityEntry>(ReferenceEqualityComparer.Instance);
+                        _deletedReferenceMap ??= new Dictionary<object, InternalEntityEntry>(LegacyReferenceEqualityComparer.Instance);
                         _deletedReferenceMap[mapKey] = entry;
                         break;
                     case EntityState.Modified:
-                        _modifiedReferenceMap ??= new Dictionary<object, InternalEntityEntry>(ReferenceEqualityComparer.Instance);
+                        _modifiedReferenceMap ??= new Dictionary<object, InternalEntityEntry>(LegacyReferenceEqualityComparer.Instance);
                         _modifiedReferenceMap[mapKey] = entry;
                         break;
                     case EntityState.Added:
-                        _addedReferenceMap ??= new Dictionary<object, InternalEntityEntry>(ReferenceEqualityComparer.Instance);
+                        _addedReferenceMap ??= new Dictionary<object, InternalEntityEntry>(LegacyReferenceEqualityComparer.Instance);
                         _addedReferenceMap[mapKey] = entry;
                         break;
                 }
@@ -382,7 +385,8 @@ public class EntityReferenceMap
     {
         // Perf sensitive
 
-        if (_addedReferenceMap is { Count: > 0 })
+        if (_addedReferenceMap != null
+            && _addedReferenceMap.Count > 0)
         {
             foreach (var entry in _addedReferenceMap.Values)
             {
@@ -393,7 +397,8 @@ public class EntityReferenceMap
             }
         }
 
-        if (_modifiedReferenceMap is { Count: > 0 })
+        if (_modifiedReferenceMap != null
+            && _modifiedReferenceMap.Count > 0)
         {
             foreach (var entry in _modifiedReferenceMap.Values)
             {
@@ -404,7 +409,8 @@ public class EntityReferenceMap
             }
         }
 
-        if (_unchangedReferenceMap is { Count: > 0 })
+        if (_unchangedReferenceMap != null
+            && _unchangedReferenceMap.Count > 0)
         {
             foreach (var entry in _unchangedReferenceMap.Values)
             {
@@ -415,7 +421,8 @@ public class EntityReferenceMap
             }
         }
 
-        if (_sharedTypeReferenceMap is { Count: > 0 })
+        if (_sharedTypeReferenceMap != null
+            && _sharedTypeReferenceMap.Count > 0)
         {
             foreach (var subMap in _sharedTypeReferenceMap.Values)
             {

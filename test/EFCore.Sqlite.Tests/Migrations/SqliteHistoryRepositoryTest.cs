@@ -8,19 +8,24 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 
 public class SqliteHistoryRepositoryTest
 {
+    private static string EOL
+        => Environment.NewLine;
+
     [ConditionalFact]
     public void GetCreateScript_works()
     {
         var sql = CreateHistoryRepository().GetCreateScript();
 
         Assert.Equal(
-            """
-CREATE TABLE "__EFMigrationsHistory" (
-    "MigrationId" TEXT NOT NULL CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY,
-    "ProductVersion" TEXT NOT NULL
-);
-
-""", sql, ignoreLineEndingDifferences: true);
+            "CREATE TABLE \"__EFMigrationsHistory\" ("
+            + EOL
+            + "    \"MigrationId\" TEXT NOT NULL CONSTRAINT \"PK___EFMigrationsHistory\" PRIMARY KEY,"
+            + EOL
+            + "    \"ProductVersion\" TEXT NOT NULL"
+            + EOL
+            + ");"
+            + EOL,
+            sql);
     }
 
     [ConditionalFact]
@@ -29,13 +34,15 @@ CREATE TABLE "__EFMigrationsHistory" (
         var sql = CreateHistoryRepository().GetCreateIfNotExistsScript();
 
         Assert.Equal(
-            """
-CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
-    "MigrationId" TEXT NOT NULL CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY,
-    "ProductVersion" TEXT NOT NULL
-);
-
-""", sql, ignoreLineEndingDifferences: true);
+            "CREATE TABLE IF NOT EXISTS \"__EFMigrationsHistory\" ("
+            + EOL
+            + "    \"MigrationId\" TEXT NOT NULL CONSTRAINT \"PK___EFMigrationsHistory\" PRIMARY KEY,"
+            + EOL
+            + "    \"ProductVersion\" TEXT NOT NULL"
+            + EOL
+            + ");"
+            + EOL,
+            sql);
     }
 
     [ConditionalFact]
@@ -44,11 +51,8 @@ CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
         var sql = CreateHistoryRepository().GetDeleteScript("Migration1");
 
         Assert.Equal(
-            """
-DELETE FROM "__EFMigrationsHistory"
-WHERE "MigrationId" = 'Migration1';
-
-""", sql, ignoreLineEndingDifferences: true);
+            "DELETE FROM \"__EFMigrationsHistory\"" + EOL + "WHERE \"MigrationId\" = 'Migration1';" + EOL,
+            sql);
     }
 
     [ConditionalFact]
@@ -58,11 +62,11 @@ WHERE "MigrationId" = 'Migration1';
             new HistoryRow("Migration1", "7.0.0"));
 
         Assert.Equal(
-            """
-INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('Migration1', '7.0.0');
-
-""", sql, ignoreLineEndingDifferences: true);
+            "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\")"
+            + EOL
+            + "VALUES ('Migration1', '7.0.0');"
+            + EOL,
+            sql);
     }
 
     [ConditionalFact]

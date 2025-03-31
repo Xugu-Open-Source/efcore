@@ -3,18 +3,20 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class TransactionInterceptionSqliteTestBase(TransactionInterceptionSqliteTestBase.InterceptionSqliteFixtureBase fixture)
-    : TransactionInterceptionTestBase(fixture)
+public abstract class TransactionInterceptionSqliteTestBase : TransactionInterceptionTestBase
 {
+    protected TransactionInterceptionSqliteTestBase(InterceptionSqliteFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     public abstract class InterceptionSqliteFixtureBase : InterceptionFixtureBase
     {
         protected override string StoreName
             => "TransactionInterception";
 
         protected override ITestStoreFactory TestStoreFactory
-            => SharedCacheSqliteTestStoreFactory.Instance;
+            => SqliteTestStoreFactory.Instance;
 
         protected override IServiceCollection InjectInterceptors(
             IServiceCollection serviceCollection,
@@ -22,9 +24,14 @@ public abstract class TransactionInterceptionSqliteTestBase(TransactionIntercept
             => base.InjectInterceptors(serviceCollection.AddEntityFrameworkSqlite(), injectedInterceptors);
     }
 
-    public class TransactionInterceptionSqliteTest(TransactionInterceptionSqliteTest.InterceptionSqliteFixture fixture)
-        : TransactionInterceptionSqliteTestBase(fixture), IClassFixture<TransactionInterceptionSqliteTest.InterceptionSqliteFixture>
+    public class TransactionInterceptionSqliteTest
+        : TransactionInterceptionSqliteTestBase, IClassFixture<TransactionInterceptionSqliteTest.InterceptionSqliteFixture>
     {
+        public TransactionInterceptionSqliteTest(InterceptionSqliteFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqliteFixture : InterceptionSqliteFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener
@@ -32,11 +39,15 @@ public abstract class TransactionInterceptionSqliteTestBase(TransactionIntercept
         }
     }
 
-    public class TransactionInterceptionWithDiagnosticsSqliteTest(
-        TransactionInterceptionWithDiagnosticsSqliteTest.InterceptionSqliteFixture fixture)
-        : TransactionInterceptionSqliteTestBase(fixture),
+    public class TransactionInterceptionWithDiagnosticsSqliteTest
+        : TransactionInterceptionSqliteTestBase,
             IClassFixture<TransactionInterceptionWithDiagnosticsSqliteTest.InterceptionSqliteFixture>
     {
+        public TransactionInterceptionWithDiagnosticsSqliteTest(InterceptionSqliteFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqliteFixture : InterceptionSqliteFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener

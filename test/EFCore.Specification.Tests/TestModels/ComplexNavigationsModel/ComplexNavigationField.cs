@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ComplexNavigationsModel;
 
-#nullable disable
-
 public class ComplexNavigationField
 {
     public string Name { get; set; }

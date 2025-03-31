@@ -36,7 +36,9 @@ public class RelationalModelRuntimeInitializer : ModelRuntimeInitializer
         ModelRuntimeInitializerDependencies dependencies,
         RelationalModelRuntimeInitializerDependencies relationalDependencies)
         : base(dependencies)
-        => RelationalDependencies = relationalDependencies;
+    {
+        RelationalDependencies = relationalDependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.
@@ -58,18 +60,13 @@ public class RelationalModelRuntimeInitializer : ModelRuntimeInitializer
         {
             model.SetRuntimeAnnotation(RelationalAnnotationNames.ModelDependencies, RelationalDependencies.RelationalModelDependencies);
         }
-        else if (model.FindRuntimeAnnotation(RelationalAnnotationNames.RelationalModel) == null
-                 && model.FindRuntimeAnnotation(RelationalAnnotationNames.RelationalModelFactory) == null)
+        else
         {
-            var annotationProvider = RelationalDependencies.RelationalAnnotationProvider;
-            var typeMappingSource = (IRelationalTypeMappingSource)Dependencies.ModelDependencies.TypeMappingSource;
-            model.SetRuntimeAnnotation(
-                RelationalAnnotationNames.RelationalModelFactory,
-                () => RelationalModel.Create(
-                    model,
-                    annotationProvider,
-                    typeMappingSource,
-                    designTime));
+            RelationalModel.Add(
+                model,
+                RelationalDependencies.RelationalAnnotationProvider,
+                (IRelationalTypeMappingSource)Dependencies.ModelDependencies.TypeMappingSource,
+                designTime);
         }
     }
 }

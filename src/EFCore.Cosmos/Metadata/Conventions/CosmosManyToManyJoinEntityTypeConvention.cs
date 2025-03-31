@@ -3,7 +3,6 @@
 
 using Microsoft.EntityFrameworkCore.Cosmos.Metadata.Internal;
 
-// ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 /// <summary>
@@ -42,7 +41,8 @@ public class CosmosManyToManyJoinEntityTypeConvention :
         IConventionAnnotation? oldAnnotation,
         IConventionContext<IConventionAnnotation> context)
     {
-        if (name is CosmosAnnotationNames.PartitionKeyNames or CosmosAnnotationNames.ContainerName)
+        if (name == CosmosAnnotationNames.PartitionKeyName
+            || name == CosmosAnnotationNames.ContainerName)
         {
             foreach (var skipNavigation in entityTypeBuilder.Metadata.GetSkipNavigations())
             {
@@ -85,24 +85,18 @@ public class CosmosManyToManyJoinEntityTypeConvention :
         IConventionSkipNavigation skipNavigation,
         IConventionEntityTypeBuilder joinEntityTypeBuilder)
     {
-        // The join entity type should belong to the same partition as the entity types on either side.
-        var principalProperties = skipNavigation.DeclaringEntityType.GetPartitionKeyProperties();
-        if (!principalProperties.Any() || principalProperties.Any(p => p is null))
-        {
-            return;
-        }
+        var principalPartitionKey = skipNavigation.DeclaringEntityType.GetPartitionKeyProperty()!;
+        var partitionKey = joinEntityTypeBuilder.Property(principalPartitionKey.ClrType, principalPartitionKey.Name)!.Metadata;
+        joinEntityTypeBuilder.HasPartitionKey(partitionKey.Name);
 
-        var partitionKeyProperties = principalProperties.Select(p => joinEntityTypeBuilder.Property(p!.ClrType, p.Name)!.Metadata).ToList();
-        joinEntityTypeBuilder.HasPartitionKey(partitionKeyProperties.Select(p => p.Name).ToList());
-
-        CreateSkipNavigationForeignKey(skipNavigation, joinEntityTypeBuilder, partitionKeyProperties);
-        CreateSkipNavigationForeignKey(skipNavigation.Inverse!, joinEntityTypeBuilder, partitionKeyProperties);
+        CreateSkipNavigationForeignKey(skipNavigation, joinEntityTypeBuilder, partitionKey);
+        CreateSkipNavigationForeignKey(skipNavigation.Inverse!, joinEntityTypeBuilder, partitionKey);
     }
 
     private void CreateSkipNavigationForeignKey(
         IConventionSkipNavigation skipNavigation,
         IConventionEntityTypeBuilder joinEntityTypeBuilder,
-        List<IConventionProperty> partitionKeyProperties)
+        IConventionProperty partitionKeyProperty)
     {
         if (skipNavigation.ForeignKey != null
             && !skipNavigation.Builder.CanSetForeignKey(null))
@@ -112,19 +106,22 @@ public class CosmosManyToManyJoinEntityTypeConvention :
 
         var principalKey = skipNavigation.DeclaringEntityType.FindPrimaryKey();
         if (principalKey == null
-            || principalKey.Properties.All(p => !partitionKeyProperties.Select(e => e.Name).Contains(p.Name)))
+            || principalKey.Properties.All(p => p.Name != partitionKeyProperty.Name))
         {
             CreateSkipNavigationForeignKey(skipNavigation, joinEntityTypeBuilder);
             return;
         }
 
-        // Any partition key property that already exists should be used for the FK, otherwise a new property is created.
+        if (skipNavigation.ForeignKey?.Properties.Contains(partitionKeyProperty) == true)
+        {
+            return;
+        }
+
         var dependentProperties = new IConventionProperty[principalKey.Properties.Count];
         for (var i = 0; i < principalKey.Properties.Count; i++)
         {
             var principalProperty = principalKey.Properties[i];
-            var partitionKeyProperty = partitionKeyProperties.FirstOrDefault(p => p.Name == principalProperty.Name);
-            if (partitionKeyProperty != null)
+            if (principalProperty.Name == partitionKeyProperty.Name)
             {
                 dependentProperties[i] = partitionKeyProperty;
             }
@@ -145,20 +142,22 @@ public class CosmosManyToManyJoinEntityTypeConvention :
     private void ProcessJoinPartitionKey(IConventionSkipNavigation skipNavigation)
     {
         var inverseSkipNavigation = skipNavigation.Inverse;
-        if (skipNavigation is { JoinEntityType: not null, IsCollection: true }
-            && inverseSkipNavigation is { IsCollection: true }
+        if (skipNavigation.JoinEntityType != null
+            && skipNavigation.IsCollection
+            && inverseSkipNavigation != null
+            && inverseSkipNavigation.IsCollection
             && inverseSkipNavigation.JoinEntityType == skipNavigation.JoinEntityType)
         {
             var joinEntityType = skipNavigation.JoinEntityType;
             var joinEntityTypeBuilder = joinEntityType.Builder;
             if (ShouldSharePartitionKey(skipNavigation))
             {
-                var principalPartitionProperties = skipNavigation.DeclaringEntityType.GetPartitionKeyProperties();
-                var partitionKeyProperties = joinEntityType.GetPartitionKeyProperties();
-                if ((partitionKeyProperties.Any()
-                        && (!joinEntityTypeBuilder.CanSetPartitionKey(principalPartitionProperties.Select(p => p!.Name).ToList())
-                            || (partitionKeyProperties.All(p => skipNavigation.ForeignKey!.Properties.Contains(p))
-                                && partitionKeyProperties.All(p => inverseSkipNavigation.ForeignKey!.Properties.Contains(p)))))
+                var principalPartitionKey = skipNavigation.DeclaringEntityType.GetPartitionKeyProperty()!;
+                var partitionKey = joinEntityType.GetPartitionKeyProperty();
+                if ((partitionKey != null
+                        && (!joinEntityTypeBuilder.CanSetPartitionKey(principalPartitionKey.Name)
+                            || (skipNavigation.ForeignKey!.Properties.Contains(partitionKey)
+                                && inverseSkipNavigation.ForeignKey!.Properties.Contains(partitionKey))))
                     || !skipNavigation.Builder.CanSetForeignKey(null)
                     || !inverseSkipNavigation.Builder.CanSetForeignKey(null))
                 {
@@ -169,12 +168,12 @@ public class CosmosManyToManyJoinEntityTypeConvention :
             }
             else
             {
-                var partitionKeyProperties = joinEntityType.GetPartitionKeyProperties();
-                if (partitionKeyProperties.Any()
-                    && joinEntityTypeBuilder.HasPartitionKey((IReadOnlyList<string>?)null) != null
-                    && ((partitionKeyProperties.Any(p => skipNavigation.ForeignKey!.Properties.Contains(p))
+                var partitionKey = joinEntityType.GetPartitionKeyProperty();
+                if (partitionKey != null
+                    && joinEntityTypeBuilder.HasPartitionKey(null) != null
+                    && ((skipNavigation.ForeignKey!.Properties.Contains(partitionKey)
                             && skipNavigation.Builder.CanSetForeignKey(null))
-                        || (partitionKeyProperties.Any(p => inverseSkipNavigation.ForeignKey!.Properties.Contains(p))
+                        || (inverseSkipNavigation.ForeignKey!.Properties.Contains(partitionKey)
                             && inverseSkipNavigation.Builder.CanSetForeignKey(null))))
                 {
                     CreateSkipNavigationForeignKey(skipNavigation, joinEntityTypeBuilder);
@@ -186,8 +185,7 @@ public class CosmosManyToManyJoinEntityTypeConvention :
 
     private static bool ShouldSharePartitionKey(IConventionSkipNavigation skipNavigation)
         => skipNavigation.DeclaringEntityType.GetContainer() == skipNavigation.TargetEntityType.GetContainer()
-            && skipNavigation.DeclaringEntityType.GetPartitionKeyPropertyNames().Any()
-            && (skipNavigation.Inverse?.DeclaringEntityType.GetPartitionKeyPropertyNames()
-                    .SequenceEqual(skipNavigation.DeclaringEntityType.GetPartitionKeyPropertyNames(), StringComparer.Ordinal)
-                == true);
+            && skipNavigation.DeclaringEntityType.GetPartitionKeyPropertyName() != null
+            && skipNavigation.Inverse?.DeclaringEntityType.GetPartitionKeyPropertyName()
+            == skipNavigation.DeclaringEntityType.GetPartitionKeyPropertyName();
 }

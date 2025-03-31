@@ -7,23 +7,16 @@ using Microsoft.EntityFrameworkCore.SqlServer.Update.Internal;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Update;
 
-#nullable disable
-
 public class SqlServerUpdateSqlGeneratorTest : UpdateSqlGeneratorTestBase
 {
     protected override IUpdateSqlGenerator CreateSqlGenerator()
-    {
-        var optionsBuilder = new DbContextOptionsBuilder();
-        optionsBuilder.UseSqlServer("Database=Foo");
-
-        return new SqlServerUpdateSqlGenerator(
+        => new SqlServerUpdateSqlGenerator(
             new UpdateSqlGeneratorDependencies(
                 new SqlServerSqlGenerationHelper(
                     new RelationalSqlGenerationHelperDependencies()),
                 new SqlServerTypeMappingSource(
                     TestServiceFactory.Instance.Create<TypeMappingSourceDependencies>(),
                     TestServiceFactory.Instance.Create<RelationalTypeMappingSourceDependencies>())));
-    }
 
     protected override TestHelpers TestHelpers
         => SqlServerTestHelpers.Instance;
@@ -41,7 +34,7 @@ public class SqlServerUpdateSqlGeneratorTest : UpdateSqlGeneratorTestBase
     protected override void AppendInsertOperation_for_store_generated_columns_but_no_identity_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO [dbo].[Ducks] ([Id], [Name], [Quacks], [ConcurrencyToken])
 OUTPUT INSERTED.[Computed]
 VALUES (@p0, @p1, @p2, @p3);
@@ -50,7 +43,7 @@ VALUES (@p0, @p1, @p2, @p3);
 
     protected override void AppendInsertOperation_insert_if_store_generated_columns_exist_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO [dbo].[Ducks] ([Name], [Quacks], [ConcurrencyToken])
 OUTPUT INSERTED.[Id], INSERTED.[Computed]
 VALUES (@p0, @p1, @p2);
@@ -60,7 +53,7 @@ VALUES (@p0, @p1, @p2);
     protected override void AppendInsertOperation_for_only_single_identity_columns_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO [dbo].[Ducks]
 OUTPUT INSERTED.[Id]
 DEFAULT VALUES;
@@ -69,7 +62,7 @@ DEFAULT VALUES;
 
     protected override void AppendInsertOperation_for_only_identity_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO [dbo].[Ducks] ([Name], [Quacks], [ConcurrencyToken])
 OUTPUT INSERTED.[Id]
 VALUES (@p0, @p1, @p2);
@@ -78,7 +71,7 @@ VALUES (@p0, @p1, @p2);
 
     protected override void AppendInsertOperation_for_all_store_generated_columns_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO [dbo].[Ducks]
 OUTPUT INSERTED.[Id], INSERTED.[Computed]
 DEFAULT VALUES;
@@ -95,7 +88,7 @@ DEFAULT VALUES;
         var grouping = sqlGenerator.AppendBulkInsertOperation(stringBuilder, new[] { command, command }, 0);
 
         AssertBaseline(
-            """
+"""
 MERGE [dbo].[Ducks] USING (
 VALUES (@p0, @p1, @p2, 0),
 (@p0, @p1, @p2, 1)) AS i ([Name], [Quacks], [ConcurrencyToken], _Position) ON 1=0
@@ -118,7 +111,7 @@ OUTPUT INSERTED.[Id], INSERTED.[Computed], i._Position;
         var grouping = sqlGenerator.AppendBulkInsertOperation(stringBuilder, new[] { command, command }, 0);
 
         AssertBaseline(
-            """
+"""
 INSERT INTO [dbo].[Ducks] ([Id], [Name], [Quacks], [ConcurrencyToken])
 VALUES (@p0, @p1, @p2, @p3),
 (@p0, @p1, @p2, @p3);
@@ -137,7 +130,7 @@ VALUES (@p0, @p1, @p2, @p3),
         var grouping = sqlGenerator.AppendBulkInsertOperation(stringBuilder, new[] { command, command }, 0);
 
         AssertBaseline(
-            """
+"""
 DECLARE @inserted0 TABLE ([Id] int);
 INSERT INTO [dbo].[Ducks] ([Id])
 OUTPUT INSERTED.[Id]
@@ -161,7 +154,7 @@ INNER JOIN @inserted0 i ON ([t].[Id] = [i].[Id]);
         var grouping = sqlGenerator.AppendBulkInsertOperation(stringBuilder, new[] { command, command }, 0);
 
         var expectedText =
-            """
+"""
 INSERT INTO [dbo].[Ducks] ([Computed])
 VALUES (DEFAULT),
 (DEFAULT);
@@ -172,7 +165,7 @@ VALUES (DEFAULT),
 
     protected override void AppendUpdateOperation_for_computed_property_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 UPDATE [dbo].[Ducks] SET [Name] = @p0, [Quacks] = @p1, [ConcurrencyToken] = @p2
 OUTPUT INSERTED.[Computed]
 WHERE [Id] = @p3;
@@ -182,7 +175,7 @@ WHERE [Id] = @p3;
     protected override void AppendUpdateOperation_if_store_generated_columns_exist_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 UPDATE [dbo].[Ducks] SET [Name] = @p0, [Quacks] = @p1, [ConcurrencyToken] = @p2
 OUTPUT INSERTED.[Computed]
 WHERE [Id] = @p3 AND [ConcurrencyToken] IS NULL;
@@ -192,7 +185,7 @@ WHERE [Id] = @p3 AND [ConcurrencyToken] IS NULL;
     protected override void AppendUpdateOperation_if_store_generated_columns_dont_exist_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 UPDATE [dbo].[Ducks] SET [Name] = @p0, [Quacks] = @p1, [ConcurrencyToken] = @p2
 OUTPUT 1
 WHERE [Id] = @p3;
@@ -201,7 +194,7 @@ WHERE [Id] = @p3;
 
     protected override void AppendUpdateOperation_appends_where_for_concurrency_token_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 UPDATE [dbo].[Ducks] SET [Name] = @p0, [Quacks] = @p1, [ConcurrencyToken] = @p2
 OUTPUT 1
 WHERE [Id] = @p3 AND [ConcurrencyToken] IS NULL;
@@ -210,7 +203,7 @@ WHERE [Id] = @p3 AND [ConcurrencyToken] IS NULL;
 
     protected override void AppendDeleteOperation_creates_full_delete_command_text_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 DELETE FROM [dbo].[Ducks]
 OUTPUT 1
 WHERE [Id] = @p0;
@@ -220,7 +213,7 @@ WHERE [Id] = @p0;
     protected override void AppendDeleteOperation_creates_full_delete_command_text_with_concurrency_check_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 DELETE FROM [dbo].[Ducks]
 OUTPUT 1
 WHERE [Id] = @p0 AND [ConcurrencyToken] IS NULL;

@@ -3,11 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class ConferencePlannerSqliteTest(ConferencePlannerSqliteTest.ConferencePlannerSqliteFixture fixture)
-    : ConferencePlannerTestBase<ConferencePlannerSqliteTest.ConferencePlannerSqliteFixture>(fixture)
+public class ConferencePlannerSqliteTest : ConferencePlannerTestBase<ConferencePlannerSqliteTest.ConferencePlannerSqliteFixture>
 {
+    public ConferencePlannerSqliteTest(ConferencePlannerSqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
         => facade.UseTransaction(transaction.GetDbTransaction());
 

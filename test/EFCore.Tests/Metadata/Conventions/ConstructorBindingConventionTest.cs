@@ -26,7 +26,9 @@ public class ConstructorBindingConventionTest
         Assert.Empty(constructorBinding.ParameterBindings);
     }
 
-    private class BlogParameterless : Blog;
+    private class BlogParameterless : Blog
+    {
+    }
 
     [ConditionalFact]
     public void Binds_to_parameterless_constructor_if_no_services()
@@ -375,7 +377,7 @@ public class ConstructorBindingConventionTest
         var constructorBinding = GetBinding<BlogConflict>(
             e => ((EntityType)e).ConstructorBinding = new ConstructorBinding(
                 typeof(BlogConflict).GetConstructor(
-                    [typeof(string), typeof(int)]),
+                    new[] { typeof(string), typeof(int) }),
                 new[]
                 {
                     new PropertyParameterBinding((IProperty)e.FindProperty(nameof(Blog.Title))),
@@ -487,9 +489,12 @@ public class ConstructorBindingConventionTest
         Assert.Equal("m_follows", bindings[1].ConsumedProperties.First().Name);
     }
 
-#pragma warning disable CS9113 // Parameters are unread
-    private class BlogWeirdScience(string content, int follows) : Blog;
-#pragma warning restore CS9113
+    private class BlogWeirdScience : Blog
+    {
+        public BlogWeirdScience(string content, int follows)
+        {
+        }
+    }
 
     [ConditionalFact]
     public void Binds_to_context()
@@ -515,9 +520,12 @@ public class ConstructorBindingConventionTest
         Assert.Same(typeof(DbContext), ((ContextParameterBinding)bindings[1]).ServiceType);
     }
 
-#pragma warning disable CS9113 // Parameters are unread
-    private class BlogWithContext(int id, DbContext context) : Blog;
-#pragma warning restore CS9113
+    private class BlogWithContext : Blog
+    {
+        public BlogWithContext(int id, DbContext context)
+        {
+        }
+    }
 
     [ConditionalFact]
     public void Binds_to_context_typed()
@@ -539,9 +547,12 @@ public class ConstructorBindingConventionTest
         Assert.Same(typeof(TypedContext), ((ContextParameterBinding)bindings[0]).ServiceType);
     }
 
-#pragma warning disable CS9113 // Parameter 'context' is unread
-    private class BlogWithTypedContext(TypedContext context) : Blog;
-#pragma warning restore CS9113
+    private class BlogWithTypedContext : Blog
+    {
+        public BlogWithTypedContext(TypedContext context)
+        {
+        }
+    }
 
     [ConditionalFact]
     public void Binds_to_ILazyLoader()
@@ -563,9 +574,12 @@ public class ConstructorBindingConventionTest
         Assert.Same(typeof(ILazyLoader), ((DependencyInjectionParameterBinding)bindings[0]).ServiceType);
     }
 
-#pragma warning disable CS9113 // Parameter 'loader' is unread
-    private class BlogWithLazyLoader(ILazyLoader loader) : Blog;
-#pragma warning restore CS9113
+    private class BlogWithLazyLoader : Blog
+    {
+        public BlogWithLazyLoader(ILazyLoader loader)
+        {
+        }
+    }
 
     [ConditionalFact]
     public void Binds_to_delegate_parameter_called_lazyLoader()
@@ -587,9 +601,12 @@ public class ConstructorBindingConventionTest
         Assert.Same(typeof(ILazyLoader), ((DependencyInjectionMethodParameterBinding)bindings[0]).ServiceType);
     }
 
-#pragma warning disable CS9113 // Parameter 'lazyLoader' is unread
-    private class BlogWithLazyLoaderMethod(Action<object, string> lazyLoader) : Blog;
-#pragma warning restore CS9113
+    private class BlogWithLazyLoaderMethod : Blog
+    {
+        public BlogWithLazyLoaderMethod(Action<object, string> lazyLoader)
+        {
+        }
+    }
 
     [ConditionalFact]
     public void Binds_to_IEntityType()
@@ -610,9 +627,12 @@ public class ConstructorBindingConventionTest
         Assert.Empty(bindings[0].ConsumedProperties);
     }
 
-#pragma warning disable CS9113 // Parameter 'entityType' is unread
-    private class BlogWithEntityType(IEntityType entityType) : Blog;
-#pragma warning restore CS9113
+    private class BlogWithEntityType : Blog
+    {
+        public BlogWithEntityType(IEntityType entityType)
+        {
+        }
+    }
 
     [ConditionalFact]
     public void Does_not_bind_to_delegate_parameter_not_called_lazyLoader()
@@ -639,7 +659,9 @@ public class ConstructorBindingConventionTest
         }
     }
 
-    private class TypedContext : DbContext;
+    private class TypedContext : DbContext
+    {
+    }
 
     [ConditionalFact]
     public void Throws_if_no_usable_constructor()
@@ -692,9 +714,12 @@ public class ConstructorBindingConventionTest
                 + Environment.NewLine),
             Assert.Throws<InvalidOperationException>(() => GetBinding<BlogBadType>()).Message);
 
-#pragma warning disable CS9113 // Parameters are unread
-    private class BlogBadType(Guid shadow, int id) : Blog;
-#pragma warning restore CS9113
+    private class BlogBadType : Blog
+    {
+        public BlogBadType(Guid shadow, int id)
+        {
+        }
+    }
 
     [ConditionalFact]
     public void Throws_in_validation_if_field_not_found()
@@ -716,11 +741,16 @@ public class ConstructorBindingConventionTest
         public DbSet<NoFieldRelated> NoFieldRelateds { get; }
     }
 
-    private class NoField(Action<object, string> lazyLoader)
+    private class NoField
     {
-        private readonly Action<object, string> _loader = lazyLoader;
+        private readonly Action<object, string> _loader;
         private ICollection<NoFieldRelated> _hidden_noFieldRelated;
         public int Id { get; set; }
+
+        public NoField(Action<object, string> lazyLoader)
+        {
+            _loader = lazyLoader;
+        }
 
         public ICollection<NoFieldRelated> NoFieldRelated
         {

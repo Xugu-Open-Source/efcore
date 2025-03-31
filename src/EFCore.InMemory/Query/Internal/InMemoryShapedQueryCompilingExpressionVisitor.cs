@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.InMemory.Query.Internal;
 
-using static Expression;
-
 public partial class InMemoryShapedQueryCompilingExpressionVisitor : ShapedQueryCompilingExpressionVisitor
 {
     private readonly Type _contextType;
@@ -36,10 +34,10 @@ public partial class InMemoryShapedQueryCompilingExpressionVisitor : ShapedQuery
         switch (extensionExpression)
         {
             case InMemoryTableExpression inMemoryTableExpression:
-                return Call(
+                return Expression.Call(
                     TableMethodInfo,
                     QueryCompilationContext.QueryContextParameter,
-                    Constant(inMemoryTableExpression.EntityType));
+                    Expression.Constant(inMemoryTableExpression.EntityType));
         }
 
         return base.VisitExtension(extensionExpression);
@@ -61,15 +59,15 @@ public partial class InMemoryShapedQueryCompilingExpressionVisitor : ShapedQuery
             .ProcessShaper(shapedQueryExpression.ShaperExpression);
         var innerEnumerable = Visit(inMemoryQueryExpression.ServerQueryExpression);
 
-        return New(
+        return Expression.New(
             typeof(QueryingEnumerable<>).MakeGenericType(shaperExpression.ReturnType).GetConstructors()[0],
             QueryCompilationContext.QueryContextParameter,
             innerEnumerable,
-            Constant(shaperExpression.Compile()),
-            Constant(_contextType),
-            Constant(
+            Expression.Constant(shaperExpression.Compile()),
+            Expression.Constant(_contextType),
+            Expression.Constant(
                 QueryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.NoTrackingWithIdentityResolution),
-            Constant(_threadSafetyChecksEnabled));
+            Expression.Constant(_threadSafetyChecksEnabled));
     }
 
     private static readonly MethodInfo TableMethodInfo

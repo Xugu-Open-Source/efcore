@@ -8,11 +8,13 @@ using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class TransactionSqlServerTest(TransactionSqlServerTest.TransactionSqlServerFixture fixture)
-    : TransactionTestBase<TransactionSqlServerTest.TransactionSqlServerFixture>(fixture)
+public class TransactionSqlServerTest : TransactionTestBase<TransactionSqlServerTest.TransactionSqlServerFixture>
 {
+    public TransactionSqlServerTest(TransactionSqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     // Test relies on savepoints, which are disabled when MARS is enabled
     public override Task SaveChanges_implicitly_creates_savepoint(bool async)
         => new SqlConnectionStringBuilder(TestStore.ConnectionString).MultipleActiveResultSets
@@ -87,22 +89,22 @@ public class TransactionSqlServerTest(TransactionSqlServerTest.TransactionSqlSer
         protected override ITestStoreFactory TestStoreFactory
             => SqlServerTestStoreFactory.Instance;
 
-        protected override async Task SeedAsync(PoolableDbContext context)
+        protected override void Seed(PoolableDbContext context)
         {
-            await base.SeedAsync(context);
+            base.Seed(context);
 
-            await context.Database.ExecuteSqlRawAsync("ALTER DATABASE [" + StoreName + "] SET ALLOW_SNAPSHOT_ISOLATION ON");
-            await context.Database.ExecuteSqlRawAsync("ALTER DATABASE [" + StoreName + "] SET READ_COMMITTED_SNAPSHOT ON");
+            context.Database.ExecuteSqlRaw("ALTER DATABASE [" + StoreName + "] SET ALLOW_SNAPSHOT_ISOLATION ON");
+            context.Database.ExecuteSqlRaw("ALTER DATABASE [" + StoreName + "] SET READ_COMMITTED_SNAPSHOT ON");
         }
 
-        public override async Task ReseedAsync()
+        public override void Reseed()
         {
             using var context = CreateContext();
-            context.Set<TransactionCustomer>().RemoveRange(await context.Set<TransactionCustomer>().ToListAsync());
-            context.Set<TransactionOrder>().RemoveRange(await context.Set<TransactionOrder>().ToListAsync());
+            context.Set<TransactionCustomer>().RemoveRange(context.Set<TransactionCustomer>());
+            context.Set<TransactionOrder>().RemoveRange(context.Set<TransactionOrder>());
             context.SaveChanges();
 
-            await base.SeedAsync(context);
+            base.Seed(context);
         }
 
         public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)

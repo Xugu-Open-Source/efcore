@@ -5,6 +5,6 @@ namespace Microsoft.EntityFrameworkCore.Query;
 
 public class IncompleteMappingInheritanceQueryInMemoryFixture : InheritanceQueryInMemoryFixture
 {
-    public override bool IsDiscriminatorMappingComplete
+    protected override bool IsDiscriminatorMappingComplete
         => false;
 }

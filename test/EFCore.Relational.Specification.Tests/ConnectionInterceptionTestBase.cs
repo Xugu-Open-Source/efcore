@@ -1,18 +1,25 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+#nullable enable
+
 using System.Data;
 
 namespace Microsoft.EntityFrameworkCore;
 
-public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.InterceptionFixtureBase fixture) : InterceptionTestBase(fixture)
+public abstract class ConnectionInterceptionTestBase : InterceptionTestBase
 {
+    protected ConnectionInterceptionTestBase(InterceptionFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalTheory]
     [InlineData(false)]
     [InlineData(true)]
     public virtual async Task Intercept_connection_passively(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<ConnectionInterceptor>();
+        var (context, interceptor) = CreateContext<ConnectionInterceptor>();
         using (context)
         {
             // Test infrastructure uses an open connection, so close it first.
@@ -64,7 +71,7 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
     [InlineData(true)]
     public virtual async Task Intercept_connection_to_override_opening(bool async)
     {
-        var (context, interceptor) = await CreateContextAsync<ConnectionOverridingInterceptor>();
+        var (context, interceptor) = CreateContext<ConnectionOverridingInterceptor>();
         using (context)
         {
             // Test infrastructure uses an open connection, so close it first.
@@ -120,7 +127,7 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
         var interceptor2 = new ConnectionOverridingInterceptor();
         var interceptor3 = new ConnectionInterceptor();
         var interceptor4 = new ConnectionOverridingInterceptor();
-        using var context = await CreateContextAsync(
+        using var context = CreateContext(
             new IInterceptor[] { new NoOpConnectionInterceptor(), interceptor1, interceptor2 },
             new IInterceptor[] { interceptor3, interceptor4, new NoOpConnectionInterceptor() });
         // Test infrastructure uses an open connection, so close it first.
@@ -514,7 +521,7 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
             AsyncCalled = true;
             AssertDisposing(eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(result);
         }
 
         public virtual void ConnectionDisposed(
@@ -554,9 +561,14 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
         }
     }
 
-    protected class ConnectionCreationOverrideInterceptor(DbConnection replacementConnection) : ConnectionCreationInterceptor
+    protected class ConnectionCreationOverrideInterceptor : ConnectionCreationInterceptor
     {
-        private readonly DbConnection _replacementConnection = replacementConnection;
+        private readonly DbConnection _replacementConnection;
+
+        public ConnectionCreationOverrideInterceptor(DbConnection replacementConnection)
+        {
+            _replacementConnection = replacementConnection;
+        }
 
         public override InterceptionResult<DbConnection> ConnectionCreating(
             ConnectionCreatingEventData eventData,
@@ -568,9 +580,14 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
         }
     }
 
-    protected class ConnectionCreationReplaceInterceptor(DbConnection replacementConnection) : ConnectionCreationInterceptor
+    protected class ConnectionCreationReplaceInterceptor : ConnectionCreationInterceptor
     {
-        private readonly DbConnection _replacementConnection = replacementConnection;
+        private readonly DbConnection _replacementConnection;
+
+        public ConnectionCreationReplaceInterceptor(DbConnection replacementConnection)
+        {
+            _replacementConnection = replacementConnection;
+        }
 
         public override DbConnection ConnectionCreated(ConnectionCreatedEventData eventData, DbConnection result)
         {
@@ -604,11 +621,16 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
         }
     }
 
-    protected class ConnectionStringContext(Func<DbContextOptionsBuilder, DbContextOptionsBuilder> configureProvider) : DbContext
+    protected class ConnectionStringContext : DbContext
     {
-        private readonly Func<DbContextOptionsBuilder, DbContextOptionsBuilder> _configureProvider = configureProvider;
+        private readonly Func<DbContextOptionsBuilder, DbContextOptionsBuilder> _configureProvider;
 
-        public List<ConnectionCreationInterceptor> Interceptors { get; } = [];
+        public ConnectionStringContext(Func<DbContextOptionsBuilder, DbContextOptionsBuilder> configureProvider)
+        {
+            _configureProvider = configureProvider;
+        }
+
+        public List<ConnectionCreationInterceptor> Interceptors { get; } = new();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => _configureProvider(optionsBuilder).AddInterceptors(Interceptors);
@@ -616,9 +638,17 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
 
     protected abstract BadUniverseContext CreateBadUniverse(DbContextOptionsBuilder optionsBuilder);
 
-    protected class BadUniverseContext(DbContextOptions options) : UniverseContext(options);
+    protected class BadUniverseContext : UniverseContext
+    {
+        public BadUniverseContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+    }
 
-    protected class NoOpConnectionInterceptor : DbConnectionInterceptor;
+    protected class NoOpConnectionInterceptor : DbConnectionInterceptor
+    {
+    }
 
     protected class ConnectionOverridingInterceptor : ConnectionInterceptor
     {
@@ -705,7 +735,7 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
             AsyncCalled = true;
             AssertOpening(eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(result);
         }
 
         public virtual void ConnectionOpened(
@@ -750,7 +780,7 @@ public abstract class ConnectionInterceptionTestBase(InterceptionTestBase.Interc
             AsyncCalled = true;
             AssertClosing(eventData);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(result);
         }
 
         public virtual void ConnectionClosed(

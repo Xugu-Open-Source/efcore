@@ -1,25 +1,18 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Query.Internal;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
 public partial class RelationalShapedQueryCompilingExpressionVisitor
 {
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public sealed partial class ShaperProcessingExpressionVisitor : ExpressionVisitor
+    private sealed partial class ShaperProcessingExpressionVisitor : ExpressionVisitor
     {
         private static readonly MethodInfo ThrowReadValueExceptionMethod =
             typeof(ShaperProcessingExpressionVisitor).GetTypeInfo().GetDeclaredMethod(nameof(ThrowReadValueException))!;
@@ -76,18 +69,11 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
         private static readonly MethodInfo MaterializeJsonEntityCollectionMethodInfo
             = typeof(ShaperProcessingExpressionVisitor).GetTypeInfo().GetDeclaredMethod(nameof(MaterializeJsonEntityCollection))!;
 
-        private static readonly MethodInfo InverseCollectionFixupMethod
-            = typeof(ShaperProcessingExpressionVisitor).GetTypeInfo().GetDeclaredMethod(nameof(InverseCollectionFixup))!;
+        private static readonly MethodInfo ExtractJsonPropertyMethodInfo
+            = typeof(ShaperProcessingExpressionVisitor).GetTypeInfo().GetDeclaredMethod(nameof(ExtractJsonProperty))!;
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EntityFrameworkInternal]
-        public static TValue ThrowReadValueException<TValue>(
+        private static TValue ThrowReadValueException<TValue>(
             Exception exception,
             object? value,
             Type expectedType,
@@ -127,7 +113,9 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static TValue ThrowExtractJsonPropertyException<TValue>(Exception exception, IProperty property)
+        private static TValue ThrowExtractJsonPropertyException<TValue>(
+            Exception exception,
+            IProperty property)
         {
             var entityType = property.DeclaringType.DisplayName();
             var propertyName = property.Name;
@@ -137,14 +125,14 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
                 exception);
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void IncludeReference<TEntity, TIncludingEntity, TIncludedEntity>(
+        private static T? ExtractJsonProperty<T>(JsonElement element, string propertyName, bool nullable)
+            => nullable
+                ? element.TryGetProperty(propertyName, out var jsonValue)
+                    ? jsonValue.Deserialize<T>()
+                    : default
+                : element.GetProperty(propertyName).Deserialize<T>();
+
+        private static void IncludeReference<TEntity, TIncludingEntity, TIncludedEntity>(
             QueryContext queryContext,
             TEntity entity,
             TIncludedEntity? relatedEntity,
@@ -173,7 +161,8 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
                     if (relatedEntity != null)
                     {
                         fixup(includingEntity, relatedEntity);
-                        if (inverseNavigation is { IsCollection: false })
+                        if (inverseNavigation != null
+                            && !inverseNavigation.IsCollection)
                         {
                             inverseNavigation.SetIsLoadedWhenNoTracking(relatedEntity);
                         }
@@ -182,14 +171,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             }
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void InitializeIncludeCollection<TParent, TNavigationEntity>(
+        private static void InitializeIncludeCollection<TParent, TNavigationEntity>(
             int collectionId,
             QueryContext queryContext,
             DbDataReader dbDataReader,
@@ -230,14 +212,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             resultCoordinator.SetSingleQueryCollectionContext(collectionId, collectionMaterializationContext);
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void PopulateIncludeCollection<TIncludingEntity, TIncludedEntity>(
+        private static void PopulateIncludeCollection<TIncludingEntity, TIncludedEntity>(
             int collectionId,
             QueryContext queryContext,
             DbDataReader dbDataReader,
@@ -245,9 +220,9 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             Func<QueryContext, DbDataReader, object[]> parentIdentifier,
             Func<QueryContext, DbDataReader, object[]> outerIdentifier,
             Func<QueryContext, DbDataReader, object[]> selfIdentifier,
-            IReadOnlyList<Func<object, object, bool>> parentIdentifierValueComparers,
-            IReadOnlyList<Func<object, object, bool>> outerIdentifierValueComparers,
-            IReadOnlyList<Func<object, object, bool>> selfIdentifierValueComparers,
+            IReadOnlyList<ValueComparer> parentIdentifierValueComparers,
+            IReadOnlyList<ValueComparer> outerIdentifierValueComparers,
+            IReadOnlyList<ValueComparer> selfIdentifierValueComparers,
             Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, TIncludedEntity> innerShaper,
             INavigationBase? inverseNavigation,
             Action<TIncludingEntity, TIncludedEntity> fixup,
@@ -333,7 +308,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
                     if (!trackingQuery)
                     {
                         fixup(entity, relatedEntity);
-                        if (inverseNavigation is { IsCollection: false })
+                        if (inverseNavigation != null)
                         {
                             inverseNavigation.SetIsLoadedWhenNoTracking(relatedEntity);
                         }
@@ -355,14 +330,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             }
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void InitializeSplitIncludeCollection<TParent, TNavigationEntity>(
+        private static void InitializeSplitIncludeCollection<TParent, TNavigationEntity>(
             int collectionId,
             QueryContext queryContext,
             DbDataReader parentDataReader,
@@ -370,7 +338,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             TParent entity,
             Func<QueryContext, DbDataReader, object[]> parentIdentifier,
             INavigationBase navigation,
-            IClrCollectionAccessor? clrCollectionAccessor,
+            IClrCollectionAccessor clrCollectionAccessor,
             bool trackingQuery,
             bool setLoaded)
             where TParent : class
@@ -391,7 +359,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
                     }
                 }
 
-                collection = clrCollectionAccessor?.GetOrCreate(entity, forMaterialization: true);
+                collection = clrCollectionAccessor.GetOrCreate(entity, forMaterialization: true);
             }
 
             var parentKey = parentIdentifier(queryContext, parentDataReader);
@@ -401,23 +369,16 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             resultCoordinator.SetSplitQueryCollectionContext(collectionId, splitQueryCollectionContext);
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void PopulateSplitIncludeCollection<TIncludingEntity, TIncludedEntity>(
+        private static void PopulateSplitIncludeCollection<TIncludingEntity, TIncludedEntity>(
             int collectionId,
             RelationalQueryContext queryContext,
             IExecutionStrategy executionStrategy,
-            RelationalCommandResolver relationalCommandResolver,
+            RelationalCommandCache relationalCommandCache,
             IReadOnlyList<ReaderColumn?>? readerColumns,
             bool detailedErrorsEnabled,
             SplitQueryResultCoordinator resultCoordinator,
             Func<QueryContext, DbDataReader, object[]> childIdentifier,
-            IReadOnlyList<Func<object, object, bool>> identifierValueComparers,
+            IReadOnlyList<ValueComparer> identifierValueComparers,
             Func<QueryContext, DbDataReader, ResultContext, SplitQueryResultCoordinator, TIncludedEntity> innerShaper,
             Action<QueryContext, IExecutionStrategy, SplitQueryResultCoordinator>? relatedDataLoaders,
             INavigationBase? inverseNavigation,
@@ -431,18 +392,18 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             {
                 // Execute and fetch data reader
                 var dataReader = executionStrategy.Execute(
-                    (queryContext, relationalCommandResolver, readerColumns, detailedErrorsEnabled),
-                    ((RelationalQueryContext, RelationalCommandResolver, IReadOnlyList<ReaderColumn?>?, bool) tup)
+                    (queryContext, relationalCommandCache, readerColumns, detailedErrorsEnabled),
+                    ((RelationalQueryContext, RelationalCommandCache, IReadOnlyList<ReaderColumn?>?, bool) tup)
                         => InitializeReader(tup.Item1, tup.Item2, tup.Item3, tup.Item4),
                     verifySucceeded: null);
 
                 static RelationalDataReader InitializeReader(
                     RelationalQueryContext queryContext,
-                    RelationalCommandResolver relationalCommandResolver,
+                    RelationalCommandCache relationalCommandCache,
                     IReadOnlyList<ReaderColumn?>? readerColumns,
                     bool detailedErrorsEnabled)
                 {
-                    var relationalCommand = relationalCommandResolver.RentAndPopulateRelationalCommand(queryContext);
+                    var relationalCommand = relationalCommandCache.RentAndPopulateRelationalCommand(queryContext);
 
                     return relationalCommand.ExecuteReader(
                         new RelationalCommandParameterObject(
@@ -492,23 +453,16 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             }
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static async Task PopulateSplitIncludeCollectionAsync<TIncludingEntity, TIncludedEntity>(
+        private static async Task PopulateSplitIncludeCollectionAsync<TIncludingEntity, TIncludedEntity>(
             int collectionId,
             RelationalQueryContext queryContext,
             IExecutionStrategy executionStrategy,
-            RelationalCommandResolver relationalCommandResolver,
+            RelationalCommandCache relationalCommandCache,
             IReadOnlyList<ReaderColumn?>? readerColumns,
             bool detailedErrorsEnabled,
             SplitQueryResultCoordinator resultCoordinator,
             Func<QueryContext, DbDataReader, object[]> childIdentifier,
-            IReadOnlyList<Func<object, object, bool>> identifierValueComparers,
+            IReadOnlyList<ValueComparer> identifierValueComparers,
             Func<QueryContext, DbDataReader, ResultContext, SplitQueryResultCoordinator, TIncludedEntity> innerShaper,
             Func<QueryContext, IExecutionStrategy, SplitQueryResultCoordinator, Task>? relatedDataLoaders,
             INavigationBase? inverseNavigation,
@@ -522,10 +476,8 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             {
                 // Execute and fetch data reader
                 var dataReader = await executionStrategy.ExecuteAsync(
-                        (queryContext, relationalCommandResolver, readerColumns, detailedErrorsEnabled),
-                        (
-                                (RelationalQueryContext, RelationalCommandResolver, IReadOnlyList<ReaderColumn?>?, bool) tup,
-                                CancellationToken cancellationToken)
+                        (queryContext, relationalCommandCache, readerColumns, detailedErrorsEnabled),
+                        ((RelationalQueryContext, RelationalCommandCache, IReadOnlyList<ReaderColumn?>?, bool) tup, CancellationToken cancellationToken)
                             => InitializeReaderAsync(tup.Item1, tup.Item2, tup.Item3, tup.Item4, cancellationToken),
                         verifySucceeded: null,
                         queryContext.CancellationToken)
@@ -533,12 +485,12 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
 
                 static async Task<RelationalDataReader> InitializeReaderAsync(
                     RelationalQueryContext queryContext,
-                    RelationalCommandResolver relationalCommandResolver,
+                    RelationalCommandCache relationalCommandCache,
                     IReadOnlyList<ReaderColumn?>? readerColumns,
                     bool detailedErrorsEnabled,
                     CancellationToken cancellationToken)
                 {
-                    var relationalCommand = relationalCommandResolver.RentAndPopulateRelationalCommand(queryContext);
+                    var relationalCommand = relationalCommandCache.RentAndPopulateRelationalCommand(queryContext);
 
                     return await relationalCommand.ExecuteReaderAsync(
                             new RelationalCommandParameterObject(
@@ -595,14 +547,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             }
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static TCollection InitializeCollection<TElement, TCollection>(
+        private static TCollection InitializeCollection<TElement, TCollection>(
             int collectionId,
             QueryContext queryContext,
             DbDataReader dbDataReader,
@@ -624,14 +569,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             return (TCollection)collection;
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void PopulateCollection<TCollection, TElement, TRelatedEntity>(
+        private static void PopulateCollection<TCollection, TElement, TRelatedEntity>(
             int collectionId,
             QueryContext queryContext,
             DbDataReader dbDataReader,
@@ -639,9 +577,9 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             Func<QueryContext, DbDataReader, object[]> parentIdentifier,
             Func<QueryContext, DbDataReader, object[]> outerIdentifier,
             Func<QueryContext, DbDataReader, object[]> selfIdentifier,
-            IReadOnlyList<Func<object, object, bool>> parentIdentifierValueComparers,
-            IReadOnlyList<Func<object, object, bool>> outerIdentifierValueComparers,
-            IReadOnlyList<Func<object, object, bool>> selfIdentifierValueComparers,
+            IReadOnlyList<ValueComparer> parentIdentifierValueComparers,
+            IReadOnlyList<ValueComparer> outerIdentifierValueComparers,
+            IReadOnlyList<ValueComparer> selfIdentifierValueComparers,
             Func<QueryContext, DbDataReader, ResultContext, SingleQueryResultCoordinator, TRelatedEntity> innerShaper)
             where TRelatedEntity : TElement
             where TCollection : class, ICollection<TElement>
@@ -744,14 +682,7 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             }
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static TCollection InitializeSplitCollection<TElement, TCollection>(
+        private static TCollection InitializeSplitCollection<TElement, TCollection>(
             int collectionId,
             QueryContext queryContext,
             DbDataReader parentDataReader,
@@ -769,23 +700,16 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             return (TCollection)collection;
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void PopulateSplitCollection<TCollection, TElement, TRelatedEntity>(
+        private static void PopulateSplitCollection<TCollection, TElement, TRelatedEntity>(
             int collectionId,
             RelationalQueryContext queryContext,
             IExecutionStrategy executionStrategy,
-            RelationalCommandResolver relationalCommandResolver,
+            RelationalCommandCache relationalCommandCache,
             IReadOnlyList<ReaderColumn?>? readerColumns,
             bool detailedErrorsEnabled,
             SplitQueryResultCoordinator resultCoordinator,
             Func<QueryContext, DbDataReader, object[]> childIdentifier,
-            IReadOnlyList<Func<object, object, bool>> identifierValueComparers,
+            IReadOnlyList<ValueComparer> identifierValueComparers,
             Func<QueryContext, DbDataReader, ResultContext, SplitQueryResultCoordinator, TRelatedEntity> innerShaper,
             Action<QueryContext, IExecutionStrategy, SplitQueryResultCoordinator>? relatedDataLoaders)
             where TRelatedEntity : TElement
@@ -796,18 +720,18 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             {
                 // Execute and fetch data reader
                 var dataReader = executionStrategy.Execute(
-                    (queryContext, relationalCommandResolver, readerColumns, detailedErrorsEnabled),
-                    ((RelationalQueryContext, RelationalCommandResolver, IReadOnlyList<ReaderColumn?>?, bool) tup)
+                    (queryContext, relationalCommandCache, readerColumns, detailedErrorsEnabled),
+                    ((RelationalQueryContext, RelationalCommandCache, IReadOnlyList<ReaderColumn?>?, bool) tup)
                         => InitializeReader(tup.Item1, tup.Item2, tup.Item3, tup.Item4),
                     verifySucceeded: null);
 
                 static RelationalDataReader InitializeReader(
                     RelationalQueryContext queryContext,
-                    RelationalCommandResolver relationalCommandResolver,
+                    RelationalCommandCache relationalCommandCache,
                     IReadOnlyList<ReaderColumn?>? readerColumns,
                     bool detailedErrorsEnabled)
                 {
-                    var relationalCommand = relationalCommandResolver.RentAndPopulateRelationalCommand(queryContext);
+                    var relationalCommand = relationalCommandCache.RentAndPopulateRelationalCommand(queryContext);
 
                     return relationalCommand.ExecuteReader(
                         new RelationalCommandParameterObject(
@@ -855,23 +779,16 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             dataReaderContext.HasNext = false;
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static async Task PopulateSplitCollectionAsync<TCollection, TElement, TRelatedEntity>(
+        private static async Task PopulateSplitCollectionAsync<TCollection, TElement, TRelatedEntity>(
             int collectionId,
             RelationalQueryContext queryContext,
             IExecutionStrategy executionStrategy,
-            RelationalCommandResolver relationalCommandResolver,
+            RelationalCommandCache relationalCommandCache,
             IReadOnlyList<ReaderColumn?>? readerColumns,
             bool detailedErrorsEnabled,
             SplitQueryResultCoordinator resultCoordinator,
             Func<QueryContext, DbDataReader, object[]> childIdentifier,
-            IReadOnlyList<Func<object, object, bool>> identifierValueComparers,
+            IReadOnlyList<ValueComparer> identifierValueComparers,
             Func<QueryContext, DbDataReader, ResultContext, SplitQueryResultCoordinator, TRelatedEntity> innerShaper,
             Func<QueryContext, IExecutionStrategy, SplitQueryResultCoordinator, Task>? relatedDataLoaders)
             where TRelatedEntity : TElement
@@ -882,10 +799,8 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             {
                 // Execute and fetch data reader
                 var dataReader = await executionStrategy.ExecuteAsync(
-                        (queryContext, relationalCommandResolver, readerColumns, detailedErrorsEnabled),
-                        (
-                                (RelationalQueryContext, RelationalCommandResolver, IReadOnlyList<ReaderColumn?>?, bool) tup,
-                                CancellationToken cancellationToken)
+                        (queryContext, relationalCommandCache, readerColumns, detailedErrorsEnabled),
+                        ((RelationalQueryContext, RelationalCommandCache, IReadOnlyList<ReaderColumn?>?, bool) tup, CancellationToken cancellationToken)
                             => InitializeReaderAsync(tup.Item1, tup.Item2, tup.Item3, tup.Item4, cancellationToken),
                         verifySucceeded: null,
                         queryContext.CancellationToken)
@@ -893,12 +808,12 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
 
                 static async Task<RelationalDataReader> InitializeReaderAsync(
                     RelationalQueryContext queryContext,
-                    RelationalCommandResolver relationalCommandResolver,
+                    RelationalCommandCache relationalCommandCache,
                     IReadOnlyList<ReaderColumn?>? readerColumns,
                     bool detailedErrorsEnabled,
                     CancellationToken cancellationToken)
                 {
-                    var relationalCommand = relationalCommandResolver.RentAndPopulateRelationalCommand(queryContext);
+                    var relationalCommand = relationalCommandCache.RentAndPopulateRelationalCommand(queryContext);
 
                     return await relationalCommand.ExecuteReaderAsync(
                             new RelationalCommandParameterObject(
@@ -953,273 +868,108 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             dataReaderContext.HasNext = false;
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static TEntity? MaterializeJsonEntity<TEntity>(
+        private static void IncludeJsonEntityReference<TIncludingEntity, TIncludedEntity>(
             QueryContext queryContext,
+            JsonElement? jsonElement,
             object[] keyPropertyValues,
-            JsonReaderData? jsonReaderData,
-            bool nullable,
-            Func<QueryContext, object[], JsonReaderData, TEntity> shaper)
-            where TEntity : class
-        {
-            if (jsonReaderData == null)
-            {
-                return nullable
-                    ? null
-                    : throw new InvalidOperationException(
-                        RelationalStrings.JsonRequiredEntityWithNullJson(typeof(TEntity).Name));
-            }
-
-            var manager = new Utf8JsonReaderManager(jsonReaderData, queryContext.QueryLogger);
-            var tokenType = manager.CurrentReader.TokenType;
-
-            switch (tokenType)
-            {
-                case JsonTokenType.Null:
-                    return nullable
-                        ? null
-                        : throw new InvalidOperationException(
-                            RelationalStrings.JsonRequiredEntityWithNullJson(typeof(TEntity).Name));
-
-                case not JsonTokenType.StartObject:
-                    throw new InvalidOperationException(
-                        CoreStrings.JsonReaderInvalidTokenType(tokenType.ToString()));
-            }
-
-            manager.CaptureState();
-            var result = shaper(queryContext, keyPropertyValues, jsonReaderData);
-
-            return result;
-        }
-
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static TResult? MaterializeJsonEntityCollection<TEntity, TResult>(
-            QueryContext queryContext,
-            object[] keyPropertyValues,
-            JsonReaderData? jsonReaderData,
-            INavigationBase navigation,
-            Func<QueryContext, object[], JsonReaderData, TEntity> innerShaper)
-            where TEntity : class
-        {
-            if (jsonReaderData == null)
-            {
-                return default;
-            }
-
-            var manager = new Utf8JsonReaderManager(jsonReaderData, queryContext.QueryLogger);
-            var tokenType = manager.CurrentReader.TokenType;
-
-            switch (tokenType)
-            {
-                case JsonTokenType.Null:
-                    return default;
-
-                case not JsonTokenType.StartArray:
-                    throw new InvalidOperationException(CoreStrings.JsonReaderInvalidTokenType(tokenType.ToString()));
-
-                default:
-                    break;
-            }
-
-            var collectionAccessor = navigation.GetCollectionAccessor();
-            var result = (TResult)collectionAccessor!.Create();
-
-            var newKeyPropertyValues = new object[keyPropertyValues.Length + 1];
-            Array.Copy(keyPropertyValues, newKeyPropertyValues, keyPropertyValues.Length);
-
-            tokenType = manager.MoveNext();
-
-            var i = 0;
-            while (tokenType != JsonTokenType.EndArray)
-            {
-                newKeyPropertyValues[^1] = ++i;
-
-                if (tokenType == JsonTokenType.StartObject)
-                {
-                    manager.CaptureState();
-                    var entity = innerShaper(queryContext, newKeyPropertyValues, jsonReaderData);
-                    collectionAccessor.AddStandalone(result, entity);
-                    manager = new Utf8JsonReaderManager(manager.Data, queryContext.QueryLogger);
-
-                    if (manager.CurrentReader.TokenType != JsonTokenType.EndObject)
-                    {
-                        throw new InvalidOperationException(
-                            CoreStrings.JsonReaderInvalidTokenType(tokenType.ToString()));
-                    }
-
-                    tokenType = manager.MoveNext();
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        CoreStrings.JsonReaderInvalidTokenType(tokenType.ToString()));
-                }
-            }
-
-            manager.CaptureState();
-
-            return result;
-        }
-
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void IncludeJsonEntityReference<TIncludingEntity, TIncludedEntity>(
-            QueryContext queryContext,
-            object[] keyPropertyValues,
-            JsonReaderData? jsonReaderData,
             TIncludingEntity entity,
-            Func<QueryContext, object[], JsonReaderData, TIncludedEntity> innerShaper,
-            Action<TIncludingEntity, TIncludedEntity> fixup,
-            bool trackingQuery)
+            Func<QueryContext, object[], JsonElement, TIncludedEntity> innerShaper,
+            Action<TIncludingEntity, TIncludedEntity> fixup)
             where TIncludingEntity : class
             where TIncludedEntity : class
         {
-            if (jsonReaderData == null)
+            if (jsonElement.HasValue && jsonElement.Value.ValueKind != JsonValueKind.Null)
             {
-                return;
-            }
-
-            var manager = new Utf8JsonReaderManager(jsonReaderData, queryContext.QueryLogger);
-            var tokenType = manager.CurrentReader.TokenType;
-
-            switch (tokenType)
-            {
-                case JsonTokenType.Null:
-                    return;
-
-                case not JsonTokenType.StartObject:
-                    throw new InvalidOperationException(
-                        CoreStrings.JsonReaderInvalidTokenType(tokenType.ToString()));
-            }
-
-            var included = innerShaper(queryContext, keyPropertyValues, jsonReaderData);
-
-            if (!trackingQuery)
-            {
+                var included = innerShaper(queryContext, keyPropertyValues, jsonElement.Value);
                 fixup(entity, included);
             }
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static void IncludeJsonEntityCollection<TIncludingEntity, TIncludedCollectionElement>(
+        private static void IncludeJsonEntityCollection<TIncludingEntity, TIncludedCollectionElement>(
             QueryContext queryContext,
+            JsonElement? jsonElement,
             object[] keyPropertyValues,
-            JsonReaderData? jsonReaderData,
             TIncludingEntity entity,
-            Func<QueryContext, object[], JsonReaderData, TIncludedCollectionElement> innerShaper,
-            Action<TIncludingEntity> getOrCreateCollectionObject,
-            Action<TIncludingEntity, TIncludedCollectionElement> fixup,
-            bool trackingQuery)
+            Func<QueryContext, object[], JsonElement, TIncludedCollectionElement> innerShaper,
+            Action<TIncludingEntity, TIncludedCollectionElement> fixup)
             where TIncludingEntity : class
             where TIncludedCollectionElement : class
         {
-            if (jsonReaderData == null)
+            if (jsonElement.HasValue && jsonElement.Value.ValueKind != JsonValueKind.Null)
             {
-                return;
-            }
+                var newKeyPropertyValues = new object[keyPropertyValues.Length + 1];
+                Array.Copy(keyPropertyValues, newKeyPropertyValues, keyPropertyValues.Length);
 
-            var manager = new Utf8JsonReaderManager(jsonReaderData, queryContext.QueryLogger);
-            var tokenType = manager.CurrentReader.TokenType;
-
-            switch (tokenType)
-            {
-                case JsonTokenType.Null:
-                    return;
-
-                case not JsonTokenType.StartArray:
-                    throw new InvalidOperationException(
-                        CoreStrings.JsonReaderInvalidTokenType(tokenType.ToString()));
-            }
-
-            getOrCreateCollectionObject(entity);
-
-            var newKeyPropertyValues = new object[keyPropertyValues.Length + 1];
-            Array.Copy(keyPropertyValues, newKeyPropertyValues, keyPropertyValues.Length);
-
-            tokenType = manager.MoveNext();
-
-            var i = 0;
-            while (tokenType != JsonTokenType.EndArray)
-            {
-                newKeyPropertyValues[^1] = ++i;
-
-                if (tokenType == JsonTokenType.StartObject)
+                var i = 0;
+                foreach (var jsonArrayElement in jsonElement.Value.EnumerateArray())
                 {
-                    manager.CaptureState();
-                    var resultElement = innerShaper(queryContext, newKeyPropertyValues, jsonReaderData);
+                    newKeyPropertyValues[^1] = ++i;
 
-                    if (!trackingQuery)
-                    {
-                        fixup(entity, resultElement);
-                    }
+                    var resultElement = innerShaper(queryContext, newKeyPropertyValues, jsonArrayElement);
 
-                    manager = new Utf8JsonReaderManager(manager.Data, queryContext.QueryLogger);
-                    if (manager.CurrentReader.TokenType != JsonTokenType.EndObject)
-                    {
-                        throw new InvalidOperationException(
-                            CoreStrings.JsonReaderInvalidTokenType(tokenType.ToString()));
-                    }
-
-                    tokenType = manager.MoveNext();
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        CoreStrings.JsonReaderInvalidTokenType(tokenType.ToString()));
+                    fixup(entity, resultElement);
                 }
             }
-
-            manager.CaptureState();
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static bool Any(IEnumerable source)
+        private static TEntity? MaterializeJsonEntity<TEntity>(
+            QueryContext queryContext,
+            JsonElement? jsonElement,
+            object[] keyPropertyValues,
+            bool nullable,
+            Func<QueryContext, object[], JsonElement, TEntity> shaper)
+            where TEntity : class
         {
-            foreach (var _ in source)
+            if (jsonElement.HasValue && jsonElement.Value.ValueKind != JsonValueKind.Null)
             {
-                return true;
+                var result = shaper(queryContext, keyPropertyValues, jsonElement.Value);
+
+                return result;
             }
 
-            return false;
+            if (nullable)
+            {
+                return default(TEntity);
+            }
+
+            throw new InvalidOperationException(
+                RelationalStrings.JsonRequiredEntityWithNullJson(typeof(TEntity).Name));
         }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        [EntityFrameworkInternal]
-        public static async Task TaskAwaiter(Func<Task>[] taskFactories)
+        private static TResult? MaterializeJsonEntityCollection<TEntity, TResult>(
+            QueryContext queryContext,
+            JsonElement? jsonElement,
+            object[] keyPropertyValues,
+            INavigationBase navigation,
+            Func<QueryContext, object[], JsonElement, TEntity> innerShaper)
+            where TEntity : class
+            where TResult : ICollection<TEntity>
+        {
+            if (jsonElement.HasValue && jsonElement.Value.ValueKind != JsonValueKind.Null)
+            {
+                var collectionAccessor = navigation.GetCollectionAccessor();
+                var result = (TResult)collectionAccessor!.Create();
+
+                var newKeyPropertyValues = new object[keyPropertyValues.Length + 1];
+                Array.Copy(keyPropertyValues, newKeyPropertyValues, keyPropertyValues.Length);
+
+                var i = 0;
+                foreach (var jsonArrayElement in jsonElement.Value.EnumerateArray())
+                {
+                    newKeyPropertyValues[^1] = ++i;
+
+                    var resultElement = innerShaper(queryContext, newKeyPropertyValues, jsonArrayElement);
+
+                    result.Add(resultElement);
+                }
+
+                return result;
+            }
+
+            return default(TResult);
+        }
+
+        private static async Task TaskAwaiter(Func<Task>[] taskFactories)
         {
             for (var i = 0; i < taskFactories.Length; i++)
             {
@@ -1227,12 +977,12 @@ public partial class RelationalShapedQueryCompilingExpressionVisitor
             }
         }
 
-        private static bool CompareIdentifiers(IReadOnlyList<Func<object, object, bool>> valueComparers, object[] left, object[] right)
+        private static bool CompareIdentifiers(IReadOnlyList<ValueComparer> valueComparers, object[] left, object[] right)
         {
             // Ignoring size check on all for perf as they should be same unless bug in code.
             for (var i = 0; i < left.Length; i++)
             {
-                if (!valueComparers[i](left[i], right[i]))
+                if (!valueComparers[i].Equals(left[i], right[i]))
                 {
                     return false;
                 }

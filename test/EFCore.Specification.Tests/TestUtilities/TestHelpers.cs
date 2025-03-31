@@ -1,10 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Collections;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
-using Microsoft.EntityFrameworkCore.Design.Internal;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -12,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
 public abstract class TestHelpers
 {
-    public DbContextOptions CreateOptions(IModel model, IServiceProvider? serviceProvider = null)
+    public DbContextOptions CreateOptions(IModel model, IServiceProvider serviceProvider = null)
     {
         var optionsBuilder = new DbContextOptionsBuilder()
             .UseInternalServiceProvider(serviceProvider);
@@ -22,7 +19,7 @@ public abstract class TestHelpers
         return optionsBuilder.Options;
     }
 
-    public DbContextOptions CreateOptions(IServiceProvider? serviceProvider = null)
+    public DbContextOptions CreateOptions(IServiceProvider serviceProvider = null)
     {
         var optionsBuilder = new DbContextOptionsBuilder()
             .UseInternalServiceProvider(serviceProvider);
@@ -32,11 +29,11 @@ public abstract class TestHelpers
         return optionsBuilder.Options;
     }
 
-    public IServiceProvider CreateServiceProvider(IServiceCollection? customServices = null)
+    public IServiceProvider CreateServiceProvider(IServiceCollection customServices = null)
         => CreateServiceProvider(customServices, AddProviderServices);
 
     protected static IServiceProvider CreateServiceProvider(
-        IServiceCollection? customServices,
+        IServiceCollection customServices,
         Func<IServiceCollection, IServiceCollection> addProviderServices)
     {
         var services = new ServiceCollection();
@@ -51,73 +48,6 @@ public abstract class TestHelpers
         }
 
         return services.BuildServiceProvider(); // No scope validation; test doubles violate scopes, but only resolved once.
-    }
-
-    public IServiceProvider CreateDesignServiceProvider(
-        IServiceCollection? customServices = null,
-        Action<EntityFrameworkDesignServicesBuilder>? replaceServices = null,
-        Action<IServiceCollection>? addDesignTimeServices = null,
-        IOperationReporter? reporter = null)
-        => CreateDesignServiceProvider(
-            CreateContext().GetService<IDatabaseProvider>().Name,
-            customServices,
-            replaceServices,
-            addDesignTimeServices,
-            reporter);
-
-    public IServiceProvider CreateDesignServiceProvider(
-        string provider,
-        IServiceCollection? customServices = null,
-        Action<EntityFrameworkDesignServicesBuilder>? replaceServices = null,
-        Action<IServiceCollection>? addDesignTimeServices = null,
-        IOperationReporter? reporter = null)
-        => CreateServiceProvider(
-            customServices, services =>
-            {
-                if (replaceServices != null)
-                {
-                    var builder = CreateEntityFrameworkDesignServicesBuilder(services);
-                    replaceServices(builder);
-                }
-
-                if (addDesignTimeServices != null)
-                {
-                    addDesignTimeServices(services);
-                }
-
-                ConfigureProviderServices(provider, services);
-                services.AddEntityFrameworkDesignTimeServices(reporter);
-
-                return services;
-            });
-
-    protected virtual EntityFrameworkDesignServicesBuilder CreateEntityFrameworkDesignServicesBuilder(IServiceCollection services)
-        => new(services);
-
-    private void ConfigureProviderServices(string provider, IServiceCollection services)
-    {
-        var providerAssembly = Assembly.Load(new AssemblyName(provider));
-
-        var providerServicesAttribute = providerAssembly.GetCustomAttribute<DesignTimeProviderServicesAttribute>();
-        if (providerServicesAttribute == null)
-        {
-            throw new InvalidOperationException(DesignStrings.CannotFindDesignTimeProviderAssemblyAttribute(provider));
-        }
-
-        var designTimeServicesType = providerAssembly.GetType(
-            providerServicesAttribute.TypeName,
-            throwOnError: true,
-            ignoreCase: false)!;
-
-        ConfigureDesignTimeServices(designTimeServicesType, services);
-    }
-
-    private static void ConfigureDesignTimeServices(
-        Type designTimeServicesType,
-        IServiceCollection services)
-    {
-        var designTimeServices = (IDesignTimeServices)Activator.CreateInstance(designTimeServicesType)!;
-        designTimeServices.ConfigureDesignTimeServices(services);
     }
 
     public abstract IServiceCollection AddProviderServices(IServiceCollection services);
@@ -186,15 +116,13 @@ public abstract class TestHelpers
         => ((IInfrastructure<IServiceProvider>)CreateContext(customServices)).Instance;
 
     public TestModelBuilder CreateConventionBuilder(
-        IDiagnosticsLogger<DbLoggerCategory.Model>? modelLogger = null,
-        IDiagnosticsLogger<DbLoggerCategory.Model.Validation>? validationLogger = null,
-        Action<TestModelConfigurationBuilder>? configureConventions = null,
-        Func<DbContextOptionsBuilder, DbContextOptionsBuilder>? configureContext = null,
-        Func<IServiceCollection, IServiceCollection>? addServices = null)
+        IDiagnosticsLogger<DbLoggerCategory.Model> modelLogger = null,
+        IDiagnosticsLogger<DbLoggerCategory.Model.Validation> validationLogger = null,
+        Action<TestModelConfigurationBuilder> configureConventions = null,
+        Func<DbContextOptionsBuilder, DbContextOptionsBuilder> configureContext = null,
+        IServiceCollection customServices = null)
     {
-        var customServices = new ServiceCollection();
-        addServices?.Invoke(customServices);
-
+        customServices ??= new ServiceCollection();
         if (modelLogger != null)
         {
             customServices.AddScoped(_ => modelLogger);
@@ -205,18 +133,19 @@ public abstract class TestHelpers
             customServices.AddScoped(_ => validationLogger);
         }
 
-        var optionsBuilder = UseProviderOptions(new DbContextOptionsBuilder());
         var services = configureContext == null
-            ? CreateContextServices(customServices, optionsBuilder.Options)
-            : CreateContextServices(customServices, configureContext(optionsBuilder).Options);
+            ? CreateContextServices(customServices)
+            : CreateContextServices(
+                customServices,
+                configureContext(UseProviderOptions(new DbContextOptionsBuilder())).Options);
 
         return CreateConventionBuilder(services, configureConventions, validationLogger);
     }
 
     public TestModelBuilder CreateConventionBuilder(
         IServiceProvider contextServices,
-        Action<TestModelConfigurationBuilder>? configureConventions = null,
-        IDiagnosticsLogger<DbLoggerCategory.Model.Validation>? validationLogger = null)
+        Action<TestModelConfigurationBuilder> configureConventions = null,
+        IDiagnosticsLogger<DbLoggerCategory.Model.Validation> validationLogger = null)
     {
         var modelCreationDependencies = contextServices.GetRequiredService<ModelCreationDependencies>();
 
@@ -237,7 +166,7 @@ public abstract class TestHelpers
     public InternalEntityEntry CreateInternalEntry<TEntity>(
         IModel model,
         EntityState entityState = EntityState.Detached,
-        TEntity? entity = null)
+        TEntity entity = null)
         where TEntity : class, new()
     {
         var entry = CreateContextServices(model)
@@ -249,9 +178,6 @@ public abstract class TestHelpers
         return entry;
     }
 
-    public virtual ModelAsserter ModelAsserter
-        => ModelAsserter.Instance;
-
     private static int AssertResults<T>(IList<T> expected, IList<T> actual)
     {
         Assert.Equal(expected.Count, actual.Count);
@@ -260,28 +186,17 @@ public abstract class TestHelpers
         {
             Assert.True(
                 actual.Contains(expectedItem),
-                $"\r\nExpected item: '{Render(expectedItem)}' not found in results: '{string.Join(", ", actual.Take(10).Select(Render))}'...");
+                $"\r\nExpected item: [{expectedItem}] not found in results: [{string.Join(", ", actual.Take(10))}]...");
         }
 
         return actual.Count;
-
-        static object? Render(T element)
-        {
-            if (element is not string and IList list)
-            {
-                var start = '[' + string.Join(", ", list.ToList<object>().Take(4));
-                return list.Count > 4 ? start + "...]" : start + ']';
-            }
-
-            return element;
-        }
     }
 
     public static int AssertResults<T>(
         IList<T> expected,
         IList<T> actual,
-        Func<T, object?>? elementSorter,
-        Action<T, T>? elementAsserter,
+        Func<T, object> elementSorter,
+        Action<T, T> elementAsserter,
         bool verifyOrdered)
     {
         Assert.Equal(expected.Count, actual.Count);
@@ -362,13 +277,66 @@ public abstract class TestHelpers
             "\r\n-- Missing test overrides --\r\n\r\n" + methodCalls);
     }
 
+    public static void ExecuteWithStrategyInTransaction<TContext>(
+        Func<TContext> createContext,
+        Action<DatabaseFacade, IDbContextTransaction> useTransaction,
+        Action<TContext> testOperation,
+        Action<TContext> nestedTestOperation1 = null,
+        Action<TContext> nestedTestOperation2 = null,
+        Action<TContext> nestedTestOperation3 = null)
+        where TContext : DbContext
+    {
+        using var c = createContext();
+        c.Database.CreateExecutionStrategy().Execute(
+            c, context =>
+            {
+                using var transaction = context.Database.BeginTransaction();
+                using (var innerContext = createContext())
+                {
+                    useTransaction(innerContext.Database, transaction);
+                    testOperation(innerContext);
+                }
+
+                if (nestedTestOperation1 == null)
+                {
+                    return;
+                }
+
+                using (var innerContext1 = createContext())
+                {
+                    useTransaction(innerContext1.Database, transaction);
+                    nestedTestOperation1(innerContext1);
+                }
+
+                if (nestedTestOperation2 == null)
+                {
+                    return;
+                }
+
+                using (var innerContext2 = createContext())
+                {
+                    useTransaction(innerContext2.Database, transaction);
+                    nestedTestOperation2(innerContext2);
+                }
+
+                if (nestedTestOperation3 == null)
+                {
+                    return;
+                }
+
+                using var innerContext3 = createContext();
+                useTransaction(innerContext3.Database, transaction);
+                nestedTestOperation3(innerContext3);
+            });
+    }
+
     public static async Task ExecuteWithStrategyInTransactionAsync<TContext>(
         Func<TContext> createContext,
         Action<DatabaseFacade, IDbContextTransaction> useTransaction,
         Func<TContext, Task> testOperation,
-        Func<TContext, Task>? nestedTestOperation1 = null,
-        Func<TContext, Task>? nestedTestOperation2 = null,
-        Func<TContext, Task>? nestedTestOperation3 = null)
+        Func<TContext, Task> nestedTestOperation1 = null,
+        Func<TContext, Task> nestedTestOperation2 = null,
+        Func<TContext, Task> nestedTestOperation3 = null)
         where TContext : DbContext
     {
         using var c = createContext();
@@ -415,33 +383,39 @@ public abstract class TestHelpers
             });
     }
 
-    public class TestModelBuilder(
-        ConventionSet conventions,
-        ModelDependencies modelDependencies,
-        ModelConfiguration? modelConfiguration,
-        IModelRuntimeInitializer modelRuntimeInitializer,
-        IDiagnosticsLogger<DbLoggerCategory.Model.Validation> validationLogger)
-        : ModelBuilder(conventions, modelDependencies, modelConfiguration)
+    public class TestModelBuilder : ModelBuilder
     {
-        private readonly IModelRuntimeInitializer _modelRuntimeInitializer = modelRuntimeInitializer;
-        private readonly IDiagnosticsLogger<DbLoggerCategory.Model.Validation> _validationLogger = validationLogger;
+        private readonly IModelRuntimeInitializer _modelRuntimeInitializer;
+        private readonly IDiagnosticsLogger<DbLoggerCategory.Model.Validation> _validationLogger;
+
+        public TestModelBuilder(
+            ConventionSet conventions,
+            ModelDependencies modelDependencies,
+            ModelConfiguration modelConfiguration,
+            IModelRuntimeInitializer modelRuntimeInitializer,
+            IDiagnosticsLogger<DbLoggerCategory.Model.Validation> validationLogger)
+            : base(conventions, modelDependencies, modelConfiguration)
+        {
+            _modelRuntimeInitializer = modelRuntimeInitializer;
+            _validationLogger = validationLogger;
+        }
 
         public override IModel FinalizeModel()
             => FinalizeModel(designTime: false);
 
         public IModel FinalizeModel(bool designTime = false, bool skipValidation = false)
-        {
-            var designTimeModel = _modelRuntimeInitializer.Initialize(
-                (IModel)Model, designTime: true, skipValidation ? null : _validationLogger);
-            var runtimeModel = (IModel)designTimeModel.FindRuntimeAnnotationValue(CoreAnnotationNames.ReadOnlyModel)!;
-            return designTime ? designTimeModel : runtimeModel;
-        }
+            => _modelRuntimeInitializer.Initialize((IModel)Model, designTime, skipValidation ? null : _validationLogger);
     }
 
-    public class TestModelConfigurationBuilder(ConventionSet conventionSet, IServiceProvider serviceProvider)
-        : ModelConfigurationBuilder(conventionSet, serviceProvider)
+    public class TestModelConfigurationBuilder : ModelConfigurationBuilder
     {
-        public ConventionSet ConventionSet { get; } = conventionSet;
+        public TestModelConfigurationBuilder(ConventionSet conventionSet, IServiceProvider serviceProvider)
+            : base(conventionSet, serviceProvider)
+        {
+            ConventionSet = conventionSet;
+        }
+
+        public ConventionSet ConventionSet { get; }
 
         public TestModelBuilder CreateModelBuilder(
             ModelDependencies modelDependencies,
@@ -459,7 +433,7 @@ public abstract class TestHelpers
             ConventionSet.EntityTypeAddedConventions.Clear();
             ConventionSet.EntityTypeAnnotationChangedConventions.Clear();
             ConventionSet.EntityTypeBaseTypeChangedConventions.Clear();
-            ConventionSet.TypeIgnoredConventions.Clear();
+            ConventionSet.EntityTypeIgnoredConventions.Clear();
             ConventionSet.EntityTypeMemberIgnoredConventions.Clear();
             ConventionSet.EntityTypePrimaryKeyChangedConventions.Clear();
             ConventionSet.EntityTypeRemovedConventions.Clear();
@@ -481,7 +455,6 @@ public abstract class TestHelpers
             ConventionSet.KeyAnnotationChangedConventions.Clear();
             ConventionSet.KeyRemovedConventions.Clear();
             ConventionSet.ModelAnnotationChangedConventions.Clear();
-            ConventionSet.ModelEmbeddedDiscriminatorNameConventions.Clear();
             ConventionSet.ModelFinalizedConventions.Clear();
             ConventionSet.ModelFinalizingConventions.Clear();
             ConventionSet.ModelInitializedConventions.Clear();

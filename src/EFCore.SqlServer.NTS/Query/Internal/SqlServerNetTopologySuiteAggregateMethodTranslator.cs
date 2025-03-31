@@ -18,16 +18,16 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 public class SqlServerNetTopologySuiteAggregateMethodTranslator : IAggregateMethodCallTranslator
 {
     private static readonly MethodInfo GeometryCombineMethod
-        = typeof(GeometryCombiner).GetRuntimeMethod(nameof(GeometryCombiner.Combine), [typeof(IEnumerable<Geometry>)])!;
+        = typeof(GeometryCombiner).GetRuntimeMethod(nameof(GeometryCombiner.Combine), new[] { typeof(IEnumerable<Geometry>) })!;
 
     private static readonly MethodInfo ConvexHullMethod
-        = typeof(ConvexHull).GetRuntimeMethod(nameof(ConvexHull.Create), [typeof(IEnumerable<Geometry>)])!;
+        = typeof(ConvexHull).GetRuntimeMethod(nameof(ConvexHull.Create), new[] { typeof(IEnumerable<Geometry>) })!;
 
     private static readonly MethodInfo UnionMethod
-        = typeof(UnaryUnionOp).GetRuntimeMethod(nameof(UnaryUnionOp.Union), [typeof(IEnumerable<Geometry>)])!;
+        = typeof(UnaryUnionOp).GetRuntimeMethod(nameof(UnaryUnionOp.Union), new[] { typeof(IEnumerable<Geometry>) })!;
 
     private static readonly MethodInfo EnvelopeCombineMethod
-        = typeof(EnvelopeCombiner).GetRuntimeMethod(nameof(EnvelopeCombiner.CombineAsGeometry), [typeof(IEnumerable<Geometry>)])!;
+        = typeof(EnvelopeCombiner).GetRuntimeMethod(nameof(EnvelopeCombiner.CombineAsGeometry), new[] { typeof(IEnumerable<Geometry>) })!;
 
     private readonly ISqlExpressionFactory _sqlExpressionFactory;
     private readonly IRelationalTypeMappingSource _typeMappingSource;
@@ -67,6 +67,7 @@ public class SqlServerNetTopologySuiteAggregateMethodTranslator : IAggregateMeth
 
         if (sqlExpression.TypeMapping is not { } typeMapping)
         {
+            Check.DebugFail("SQL expression is missing a type mapping.");
             return null;
         }
 
@@ -101,7 +102,7 @@ public class SqlServerNetTopologySuiteAggregateMethodTranslator : IAggregateMeth
             $"{typeMapping.StoreType}::{functionName}",
             new[] { sqlExpression },
             nullable: true,
-            argumentsPropagateNullability: Statics.FalseArrays[1],
+            argumentsPropagateNullability: new[] { false },
             method.ReturnType,
             _typeMappingSource.FindMapping(method.ReturnType, typeMapping.StoreType));
     }

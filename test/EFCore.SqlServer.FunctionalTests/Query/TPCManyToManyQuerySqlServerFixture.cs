@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class TPCManyToManyQuerySqlServerFixture : TPCManyToManyQueryRelationalFixture
 {
     protected override ITestStoreFactory TestStoreFactory

@@ -5,8 +5,6 @@ using NetTopologySuite.Geometries;
 
 namespace Microsoft.EntityFrameworkCore.TestModels.SpatialModel;
 
-#nullable disable
-
 public static class GeoExtensions
 {
     public static double Distance(this GeoPoint x, GeoPoint y)

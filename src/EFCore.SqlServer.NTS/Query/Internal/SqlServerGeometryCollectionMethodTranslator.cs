@@ -58,7 +58,7 @@ public class SqlServerGeometryCollectionMethodTranslator : IMethodCallTranslator
                 },
                 nullable: true,
                 instancePropagatesNullability: true,
-                argumentsPropagateNullability: Statics.FalseArrays[1],
+                argumentsPropagateNullability: new[] { false },
                 method.ReturnType,
                 _typeMappingSource.FindMapping(typeof(Geometry), instance.TypeMapping!.StoreType));
         }

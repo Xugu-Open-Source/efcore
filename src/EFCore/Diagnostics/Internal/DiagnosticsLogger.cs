@@ -94,7 +94,8 @@ public class DiagnosticsLogger<TLoggerCategory> : IDiagnosticsLogger<TLoggerCate
     {
         var options = Options;
 
-        if (options is { IsSensitiveDataLoggingEnabled: true, IsSensitiveDataLoggingWarned: false })
+        if (options.IsSensitiveDataLoggingEnabled
+            && !options.IsSensitiveDataLoggingWarned)
         {
             this.SensitiveDataLoggingEnabledWarning();
 

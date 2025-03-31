@@ -14,8 +14,6 @@ namespace Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 /// </summary>
 public class RowNumberExpression : SqlExpression
 {
-    private static ConstructorInfo? _quotingConstructor;
-
     /// <summary>
     ///     Creates a new instance of the <see cref="RowNumberExpression" /> class.
     /// </summary>
@@ -28,7 +26,7 @@ public class RowNumberExpression : SqlExpression
         RelationalTypeMapping? typeMapping)
         : base(typeof(long), typeMapping)
     {
-        Partitions = partitions ?? [];
+        Partitions = partitions ?? Array.Empty<SqlExpression>();
         Orderings = orderings;
     }
 
@@ -82,14 +80,6 @@ public class RowNumberExpression : SqlExpression
             && Orderings.SequenceEqual(orderings)
                 ? this
                 : new RowNumberExpression(partitions, orderings, TypeMapping);
-
-    /// <inheritdoc />
-    public override Expression Quote()
-        => New(
-            _quotingConstructor ??= typeof(RowNumberExpression).GetConstructor(
-                [typeof(IReadOnlyList<SqlExpression>), typeof(IReadOnlyList<OrderingExpression>), typeof(RelationalTypeMapping)])!,
-            NewArrayInit(typeof(SqlExpression), initializers: Orderings.Select(o => o.Quote())),
-            RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 
     /// <inheritdoc />
     protected override void Print(ExpressionPrinter expressionPrinter)

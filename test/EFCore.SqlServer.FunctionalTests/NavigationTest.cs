@@ -5,9 +5,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class NavigationTest(NavigationTestFixture fixture) : IClassFixture<NavigationTestFixture>
+public class NavigationTest : IClassFixture<NavigationTestFixture>
 {
     [ConditionalFact]
     public void Duplicate_entries_are_not_created_for_navigations_to_principal()
@@ -24,11 +22,11 @@ public class NavigationTest(NavigationTestFixture fixture) : IClassFixture<Navig
         var entityType = model.GetEntityTypes().First();
 
         Assert.Equal(
-            "ForeignKey: GoTPerson {'LoverId'} -> GoTPerson {'Id'} Unique ClientSetNull ToDependent: LoverReverse ToPrincipal: Lover",
+            "ForeignKey: GoTPerson {'LoverId'} -> GoTPerson {'Id'} Unique ToDependent: LoverReverse ToPrincipal: Lover ClientSetNull",
             entityType.GetForeignKeys().First().ToString());
 
         Assert.Equal(
-            "ForeignKey: GoTPerson {'SiblingReverseId'} -> GoTPerson {'Id'} ClientSetNull ToDependent: Siblings ToPrincipal: SiblingReverse",
+            "ForeignKey: GoTPerson {'SiblingReverseId'} -> GoTPerson {'Id'} ToDependent: Siblings ToPrincipal: SiblingReverse ClientSetNull",
             entityType.GetForeignKeys().Skip(1).First().ToString());
     }
 
@@ -47,15 +45,20 @@ public class NavigationTest(NavigationTestFixture fixture) : IClassFixture<Navig
         var entityType = model.GetEntityTypes().First();
 
         Assert.Equal(
-            "ForeignKey: GoTPerson {'LoverId'} -> GoTPerson {'Id'} Unique ClientSetNull ToDependent: LoverReverse ToPrincipal: Lover",
+            "ForeignKey: GoTPerson {'LoverId'} -> GoTPerson {'Id'} Unique ToDependent: LoverReverse ToPrincipal: Lover ClientSetNull",
             entityType.GetForeignKeys().First().ToString());
 
         Assert.Equal(
-            "ForeignKey: GoTPerson {'SiblingReverseId'} -> GoTPerson {'Id'} ClientSetNull ToDependent: Siblings ToPrincipal: SiblingReverse",
+            "ForeignKey: GoTPerson {'SiblingReverseId'} -> GoTPerson {'Id'} ToDependent: Siblings ToPrincipal: SiblingReverse ClientSetNull",
             entityType.GetForeignKeys().Skip(1).First().ToString());
     }
 
-    private readonly NavigationTestFixture _fixture = fixture;
+    private readonly NavigationTestFixture _fixture;
+
+    public NavigationTest(NavigationTestFixture fixture)
+    {
+        _fixture = fixture;
+    }
 }
 
 public class GoTPerson
@@ -69,8 +72,13 @@ public class GoTPerson
     public GoTPerson SiblingReverse { get; set; }
 }
 
-public class GoTContext(DbContextOptions options) : DbContext(options)
+public class GoTContext : DbContext
 {
+    public GoTContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public DbSet<GoTPerson> People { get; set; }
     public Func<ModelBuilder, int> ConfigAction { get; set; }
 

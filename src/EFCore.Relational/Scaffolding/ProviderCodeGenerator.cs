@@ -24,7 +24,9 @@ public abstract class ProviderCodeGenerator : IProviderConfigurationCodeGenerato
     /// </summary>
     /// <param name="dependencies">The dependencies.</param>
     protected ProviderCodeGenerator(ProviderCodeGeneratorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.

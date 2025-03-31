@@ -1,7 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.EntityFrameworkCore.Storage.Json;
+using System.Text.Json;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
@@ -37,7 +37,6 @@ public class RelationalMapToJsonConvention : IEntityTypeAnnotationChangedConvent
     protected virtual RelationalConventionSetBuilderDependencies RelationalDependencies { get; }
 
     /// <inheritdoc />
-    [Obsolete("Container column mappings are now obtained from IColumnBase.StoreTypeMapping")]
     public virtual void ProcessEntityTypeAnnotationChanged(
         IConventionEntityTypeBuilder entityTypeBuilder,
         string name,
@@ -45,6 +44,23 @@ public class RelationalMapToJsonConvention : IEntityTypeAnnotationChangedConvent
         IConventionAnnotation? oldAnnotation,
         IConventionContext<IConventionAnnotation> context)
     {
+        if (name != RelationalAnnotationNames.ContainerColumnName)
+        {
+            return;
+        }
+
+        var jsonColumnName = annotation?.Value as string;
+        if (!string.IsNullOrEmpty(jsonColumnName))
+        {
+            var jsonColumnTypeMapping = ((IRelationalTypeMappingSource)Dependencies.TypeMappingSource).FindMapping(
+                typeof(JsonElement))!;
+
+            entityTypeBuilder.Metadata.SetContainerColumnTypeMapping(jsonColumnTypeMapping);
+        }
+        else
+        {
+            entityTypeBuilder.Metadata.SetContainerColumnTypeMapping(null);
+        }
     }
 
     /// <inheritdoc />
@@ -54,17 +70,10 @@ public class RelationalMapToJsonConvention : IEntityTypeAnnotationChangedConvent
     {
         foreach (var jsonEntityType in modelBuilder.Metadata.GetEntityTypes().Where(e => e.IsMappedToJson()))
         {
-            foreach (var enumProperty in jsonEntityType
-                         .GetDeclaredProperties()
-                         .Where(p => p.ClrType.UnwrapNullableType().IsEnum))
+            foreach (var enumProperty in jsonEntityType.GetDeclaredProperties().Where(p => p.ClrType.UnwrapNullableType().IsEnum))
             {
-                // If the enum is mapped with no conversion, then use the reader/writer that handles legacy string values and warns.
-                if (enumProperty.GetValueConverter() == null
-                    && enumProperty.GetProviderClrType() == null)
-                {
-                    enumProperty.SetJsonValueReaderWriterType(
-                        typeof(JsonWarningEnumReaderWriter<>).MakeGenericType(enumProperty.ClrType.UnwrapNullableType()));
-                }
+                // by default store enums as strings - values should be human-readable
+                enumProperty.Builder.HasConversion(typeof(string));
             }
         }
     }

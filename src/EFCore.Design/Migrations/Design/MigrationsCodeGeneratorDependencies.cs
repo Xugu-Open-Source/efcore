@@ -18,7 +18,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Design;
 ///     your constructor so that an instance will be created and injected automatically by the
 ///     dependency injection container. To create an instance with some dependent services replaced,
 ///     first resolve the object from the dependency injection container, then replace selected
-///     services using the C# 'with' operator. Do not call the constructor at any point in this process.
+///     services using the 'With...' methods. Do not call the constructor at any point in this process.
 /// </remarks>
 public sealed record MigrationsCodeGeneratorDependencies
 {
@@ -33,7 +33,7 @@ public sealed record MigrationsCodeGeneratorDependencies
     ///     as new dependencies are added. Instead, use this type in your constructor so that an instance
     ///     will be created and injected automatically by the dependency injection container. To create
     ///     an instance with some dependent services replaced, first resolve the object from the dependency
-    ///     injection container, then replace selected services using the C# 'with' operator. Do not call
+    ///     injection container, then replace selected services using the 'With...' methods. Do not call
     ///     the constructor at any point in this process.
     /// </remarks>
     [EntityFrameworkInternal]
@@ -41,16 +41,13 @@ public sealed record MigrationsCodeGeneratorDependencies
         IRelationalTypeMappingSource relationalTypeMappingSource,
         IAnnotationCodeGenerator annotationCodeGenerator)
     {
-#pragma warning disable CS0612 // Type or member is obsolete
         RelationalTypeMappingSource = relationalTypeMappingSource;
-#pragma warning restore CS0612 // Type or member is obsolete
         AnnotationCodeGenerator = annotationCodeGenerator;
     }
 
     /// <summary>
     ///     The type mapper.
     /// </summary>
-    [Obsolete]
     public IRelationalTypeMappingSource RelationalTypeMappingSource { get; init; }
 
     /// <summary>

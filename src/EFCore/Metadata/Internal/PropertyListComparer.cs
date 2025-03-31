@@ -49,6 +49,7 @@ public sealed class PropertyListComparer : IComparer<IReadOnlyList<IReadOnlyProp
         }
 
         var result = x.Count - y.Count;
+
         if (result != 0)
         {
             return result;
@@ -85,7 +86,7 @@ public sealed class PropertyListComparer : IComparer<IReadOnlyList<IReadOnlyProp
         var hash = new HashCode();
         for (var i = 0; i < obj.Count; i++)
         {
-            hash.Add(obj[i].Name);
+            hash.Add(obj[i]);
         }
 
         return hash.ToHashCode();

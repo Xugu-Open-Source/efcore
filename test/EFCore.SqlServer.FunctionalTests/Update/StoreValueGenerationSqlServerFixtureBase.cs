@@ -3,6 +3,8 @@
 
 namespace Microsoft.EntityFrameworkCore.Update;
 
+#nullable enable
+
 public abstract class StoreValueGenerationSqlServerFixtureBase : StoreValueGenerationFixtureBase
 {
     private string? _cleanDataSql;

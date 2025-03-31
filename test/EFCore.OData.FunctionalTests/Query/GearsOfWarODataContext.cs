@@ -5,8 +5,13 @@ using Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class GearsOfWarODataContext(DbContextOptions options) : PoolableDbContext(options)
+public class GearsOfWarODataContext : PoolableDbContext
 {
+    public GearsOfWarODataContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public DbSet<Gear> Gears { get; set; }
     public DbSet<Squad> Squads { get; set; }
     public DbSet<CogTag> Tags { get; set; }
@@ -86,5 +91,13 @@ public class GearsOfWarODataContext(DbContextOptions options) : PoolableDbContex
         modelBuilder.Entity<LocustHighCommand>().Property(l => l.Id).ValueGeneratedNever();
 
         modelBuilder.Entity<City>().Property(g => g.Location).HasColumnType("varchar(100)");
+
+        // No support yet for DateOnly/TimeOnly (#24507)
+        modelBuilder.Entity<Mission>(
+            b =>
+            {
+                b.Ignore(m => m.Date);
+                b.Ignore(m => m.Time);
+            });
     }
 }

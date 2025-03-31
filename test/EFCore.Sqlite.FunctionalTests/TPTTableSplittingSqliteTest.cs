@@ -3,13 +3,12 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class TPTTableSplittingSqliteTest(ITestOutputHelper testOutputHelper) : TPTTableSplittingTestBase(testOutputHelper)
+public class TPTTableSplittingSqliteTest : TPTTableSplittingTestBase
 {
-    public override Task Can_insert_dependent_with_just_one_parent()
-        // This scenario is not valid for TPT
-        => Task.CompletedTask;
+    public TPTTableSplittingSqliteTest(ITestOutputHelper testOutputHelper)
+        : base(testOutputHelper)
+    {
+    }
 
     protected override ITestStoreFactory TestStoreFactory
         => SqliteTestStoreFactory.Instance;

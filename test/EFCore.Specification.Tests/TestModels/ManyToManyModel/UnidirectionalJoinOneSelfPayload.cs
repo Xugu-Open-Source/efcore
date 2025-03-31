@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
-#nullable disable
-
 public class UnidirectionalJoinOneSelfPayload
 {
     public virtual int LeftId { get; set; }

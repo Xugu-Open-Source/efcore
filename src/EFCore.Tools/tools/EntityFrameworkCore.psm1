@@ -574,16 +574,16 @@ Register-TabExpansion Scaffold-DbContext @{
     The name of the DbContext. Defaults to the database name.
 
 .PARAMETER Schemas
-    The schemas of tables and views to generate entity types for. All tables and views in the schemas will be included in the model, even if they are not explicitly included with the 'Tables' parameter.
+    The schemas of tables to generate entity types for.
 
 .PARAMETER Tables
-    The tables and views to generate entity types for. Tables or views in a specific schema can be included using the 'schema.table' or 'schema.view' format.
+    The tables to generate entity types for.
 
 .PARAMETER DataAnnotations
     Use attributes to configure the model (where possible). If omitted, only the fluent API is used.
 
 .PARAMETER UseDatabaseNames
-    Use table, view, sequence, and column names directly from the database.
+    Use table and column names directly from the database.
 
 .PARAMETER Force
     Overwrite existing files.
@@ -1220,15 +1220,15 @@ function EF($project, $startupProject, $params, $applicationArgs, [switch] $skip
         $platformTarget = GetPlatformTarget $startupProject
         if ($platformTarget -eq 'x86')
         {
-            $exePath = Join-Path $PSScriptRoot 'net472\win-x86\ef.exe'
+            $exePath = Join-Path $PSScriptRoot 'net461\win-x86\ef.exe'
         }
         elseif ($platformTarget -eq 'ARM64')
         {
-            $exePath = Join-Path $PSScriptRoot 'net472\win-arm64\ef.exe'
+            $exePath = Join-Path $PSScriptRoot 'net461\win-arm64\ef.exe'
         }
         elseif ($platformTarget -in 'AnyCPU', 'x64')
         {
-            $exePath = Join-Path $PSScriptRoot 'net472\any\ef.exe'
+            $exePath = Join-Path $PSScriptRoot 'net461\any\ef.exe'
         }
         else
         {
@@ -1253,7 +1253,7 @@ function EF($project, $startupProject, $params, $applicationArgs, [switch] $skip
         $projectAssetsFile = GetCpsProperty $startupProject 'ProjectAssetsFile'
         $runtimeConfig = Join-Path $targetDir ($startupTargetName + '.runtimeconfig.json')
         $runtimeFrameworkVersion = GetCpsProperty $startupProject 'RuntimeFrameworkVersion'
-        $efPath = Join-Path $PSScriptRoot 'net10.0\any\ef.dll'
+        $efPath = Join-Path $PSScriptRoot 'netcoreapp2.0\any\ef.dll'
 
         $dotnetParams = 'exec', '--depsfile', $depsFile
 

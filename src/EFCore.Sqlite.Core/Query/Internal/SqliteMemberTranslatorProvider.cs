@@ -23,10 +23,11 @@ public class SqliteMemberTranslatorProvider : RelationalMemberTranslatorProvider
         var sqlExpressionFactory = (SqliteSqlExpressionFactory)dependencies.SqlExpressionFactory;
 
         AddTranslators(
-        [
-            new SqliteDateTimeMemberTranslator(sqlExpressionFactory),
-            new SqliteStringLengthTranslator(sqlExpressionFactory),
-            new SqliteDateOnlyMemberTranslator(sqlExpressionFactory)
-        ]);
+            new IMemberTranslator[]
+            {
+                new SqliteDateTimeMemberTranslator(sqlExpressionFactory),
+                new SqliteStringLengthTranslator(sqlExpressionFactory),
+                new SqliteDateOnlyMemberTranslator(sqlExpressionFactory)
+            });
     }
 }

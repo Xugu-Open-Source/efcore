@@ -5,9 +5,7 @@ using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class TemporalPointInTimeQueryRewriter(DateTime pointInTime, List<Type> temporalEntityTypes) : ExpressionVisitor
+public class TemporalPointInTimeQueryRewriter : ExpressionVisitor
 {
     private static readonly MethodInfo _setMethodInfo
         = typeof(ISetSource).GetMethod(nameof(ISetSource.Set));
@@ -15,10 +13,16 @@ public class TemporalPointInTimeQueryRewriter(DateTime pointInTime, List<Type> t
     private static readonly MethodInfo _asOfMethodInfo
         = typeof(SqlServerDbSetExtensions).GetMethod(nameof(SqlServerDbSetExtensions.TemporalAsOf));
 
-    private readonly DateTime _pointInTime = pointInTime;
+    private readonly DateTime _pointInTime;
 
     // TODO: need model instead
-    private readonly List<Type> _temporalEntityTypes = temporalEntityTypes;
+    private readonly List<Type> _temporalEntityTypes;
+
+    public TemporalPointInTimeQueryRewriter(DateTime pointInTime, List<Type> temporalEntityTypes)
+    {
+        _pointInTime = pointInTime;
+        _temporalEntityTypes = temporalEntityTypes;
+    }
 
     protected override Expression VisitExtension(Expression extensionExpression)
     {
@@ -37,7 +41,7 @@ public class TemporalPointInTimeQueryRewriter(DateTime pointInTime, List<Type> t
     protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
     {
         // TODO: issue #25236 - also match named sets
-        // in case we want to reuse this on queries that are not using AssertQuery infra
+        // in case we want to reuse this on queries that are not using AssertQuery infra 
         if (methodCallExpression.Method.IsGenericMethod
             && methodCallExpression.Method.GetGenericMethodDefinition() == _setMethodInfo)
         {

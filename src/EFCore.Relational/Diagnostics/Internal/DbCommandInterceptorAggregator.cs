@@ -20,9 +20,14 @@ public class DbCommandInterceptorAggregator : InterceptorAggregator<IDbCommandIn
     protected override IDbCommandInterceptor CreateChain(IEnumerable<IDbCommandInterceptor> interceptors)
         => new CompositeDbCommandInterceptor(interceptors);
 
-    private sealed class CompositeDbCommandInterceptor(IEnumerable<IDbCommandInterceptor> interceptors) : IDbCommandInterceptor
+    private sealed class CompositeDbCommandInterceptor : IDbCommandInterceptor
     {
-        private readonly IDbCommandInterceptor[] _interceptors = interceptors.ToArray();
+        private readonly IDbCommandInterceptor[] _interceptors;
+
+        public CompositeDbCommandInterceptor(IEnumerable<IDbCommandInterceptor> interceptors)
+        {
+            _interceptors = interceptors.ToArray();
+        }
 
         public InterceptionResult<DbCommand> CommandCreating(
             CommandCorrelatedEventData eventData,

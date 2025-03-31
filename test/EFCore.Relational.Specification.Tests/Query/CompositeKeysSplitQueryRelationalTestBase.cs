@@ -3,17 +3,16 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class CompositeKeysSplitQueryRelationalTestBase<TFixture>(TFixture fixture) : CompositeKeysQueryTestBase<TFixture>(fixture)
+public abstract class CompositeKeysSplitQueryRelationalTestBase<TFixture> : CompositeKeysQueryTestBase<TFixture>
     where TFixture : CompositeKeysQueryFixtureBase, new()
 {
-    protected override Expression RewriteServerQueryExpression(Expression serverQueryExpression)
+    public CompositeKeysSplitQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
     {
-        serverQueryExpression = base.RewriteServerQueryExpression(serverQueryExpression);
-
-        return new SplitQueryRewritingExpressionVisitor().Visit(serverQueryExpression);
     }
+
+    protected override Expression RewriteServerQueryExpression(Expression serverQueryExpression)
+        => new SplitQueryRewritingExpressionVisitor().Visit(serverQueryExpression);
 
     private class SplitQueryRewritingExpressionVisitor : ExpressionVisitor
     {
@@ -33,7 +32,10 @@ public abstract class CompositeKeysSplitQueryRelationalTestBase<TFixture>(TFixtu
         }
     }
 
+    protected virtual bool CanExecuteQueryString
+        => false;
+
     protected override QueryAsserter CreateQueryAsserter(TFixture fixture)
         => new RelationalQueryAsserter(
-            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression);
+            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression, canExecuteQueryString: CanExecuteQueryString);
 }

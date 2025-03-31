@@ -11,7 +11,7 @@ public static class TestPocoLoadingExtensions
         this Action<object, string> loader,
         object entity,
         ref TRelated navigationField,
-        [CallerMemberName] string navigationName = "")
+        [CallerMemberName] string navigationName = null)
         where TRelated : class
     {
         loader?.Invoke(entity, navigationName);

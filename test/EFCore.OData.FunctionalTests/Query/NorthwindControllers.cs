@@ -8,9 +8,14 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class CustomersController(NorthwindODataContext context) : TestODataController, IDisposable
+public class CustomersController : TestODataController, IDisposable
 {
-    private readonly NorthwindODataContext _context = context;
+    private readonly NorthwindODataContext _context;
+
+    public CustomersController(NorthwindODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -31,9 +36,14 @@ public class CustomersController(NorthwindODataContext context) : TestODataContr
     }
 }
 
-public class OrdersController(NorthwindODataContext context) : TestODataController, IDisposable
+public class OrdersController : TestODataController, IDisposable
 {
-    private readonly NorthwindODataContext _context = context;
+    private readonly NorthwindODataContext _context;
+
+    public OrdersController(NorthwindODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -54,9 +64,14 @@ public class OrdersController(NorthwindODataContext context) : TestODataControll
     }
 }
 
-public class OrderDetailsController(NorthwindODataContext context) : TestODataController, IDisposable
+public class OrderDetailsController : TestODataController, IDisposable
 {
-    private readonly NorthwindODataContext _context = context;
+    private readonly NorthwindODataContext _context;
+
+    public OrderDetailsController(NorthwindODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -77,9 +92,14 @@ public class OrderDetailsController(NorthwindODataContext context) : TestODataCo
     }
 }
 
-public class EmployeesController(NorthwindODataContext context) : TestODataController, IDisposable
+public class EmployeesController : TestODataController, IDisposable
 {
-    private readonly NorthwindODataContext _context = context;
+    private readonly NorthwindODataContext _context;
+
+    public EmployeesController(NorthwindODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -100,9 +120,14 @@ public class EmployeesController(NorthwindODataContext context) : TestODataContr
     }
 }
 
-public class ProductsController(NorthwindODataContext context) : TestODataController, IDisposable
+public class ProductsController : TestODataController, IDisposable
 {
-    private readonly NorthwindODataContext _context = context;
+    private readonly NorthwindODataContext _context;
+
+    public ProductsController(NorthwindODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]

@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class SaveChangesInterceptionSqlServerTestBase(
-    SaveChangesInterceptionSqlServerTestBase.InterceptionSqlServerFixtureBase fixture)
-    : SaveChangesInterceptionTestBase(fixture)
+public abstract class SaveChangesInterceptionSqlServerTestBase : SaveChangesInterceptionTestBase
 {
+    protected SaveChangesInterceptionSqlServerTestBase(InterceptionSqlServerFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalTheory]
     [InlineData(false, false, false)]
     [InlineData(true, false, false)]
@@ -25,7 +26,7 @@ public abstract class SaveChangesInterceptionSqlServerTestBase(
         var saveChangesInterceptor = new RelationalConcurrencySaveChangesInterceptor();
         var commandInterceptor = new TestCommandInterceptor();
 
-        var context = await CreateContextAsync(saveChangesInterceptor, commandInterceptor);
+        var context = CreateContext(saveChangesInterceptor, commandInterceptor);
 
         using var _ = context;
 
@@ -56,7 +57,7 @@ public abstract class SaveChangesInterceptionSqlServerTestBase(
         Assert.Equal(async, saveChangesInterceptor.AsyncCalled);
         Assert.NotEqual(async, saveChangesInterceptor.SyncCalled);
         Assert.NotEqual(saveChangesInterceptor.AsyncCalled, saveChangesInterceptor.SyncCalled);
-        Assert.False(saveChangesInterceptor.FailedCalled);
+        Assert.True(saveChangesInterceptor.FailedCalled);
         Assert.Same(context, saveChangesInterceptor.Context);
         Assert.Same(thrown, saveChangesInterceptor.Exception);
 
@@ -136,7 +137,7 @@ public abstract class SaveChangesInterceptionSqlServerTestBase(
         {
             RecordEventData(command, eventData, result);
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<DbDataReader>(result);
         }
 
         private void RecordEventData(DbCommand command, CommandExecutedEventData eventData, DbDataReader result)
@@ -167,10 +168,14 @@ public abstract class SaveChangesInterceptionSqlServerTestBase(
         }
     }
 
-    public class SaveChangesInterceptionSqlServerTest(SaveChangesInterceptionSqlServerTest.InterceptionSqlServerFixture fixture)
-        : SaveChangesInterceptionSqlServerTestBase(fixture),
-            IClassFixture<SaveChangesInterceptionSqlServerTest.InterceptionSqlServerFixture>
+    public class SaveChangesInterceptionSqlServerTest
+        : SaveChangesInterceptionSqlServerTestBase, IClassFixture<SaveChangesInterceptionSqlServerTest.InterceptionSqlServerFixture>
     {
+        public SaveChangesInterceptionSqlServerTest(InterceptionSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqlServerFixture : InterceptionSqlServerFixtureBase
         {
             protected override string StoreName
@@ -181,11 +186,15 @@ public abstract class SaveChangesInterceptionSqlServerTestBase(
         }
     }
 
-    public class SaveChangesInterceptionWithDiagnosticsSqlServerTest(
-        SaveChangesInterceptionWithDiagnosticsSqlServerTest.InterceptionSqlServerFixture fixture)
-        : SaveChangesInterceptionSqlServerTestBase(fixture),
+    public class SaveChangesInterceptionWithDiagnosticsSqlServerTest
+        : SaveChangesInterceptionSqlServerTestBase,
             IClassFixture<SaveChangesInterceptionWithDiagnosticsSqlServerTest.InterceptionSqlServerFixture>
     {
+        public SaveChangesInterceptionWithDiagnosticsSqlServerTest(InterceptionSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqlServerFixture : InterceptionSqlServerFixtureBase
         {
             protected override string StoreName

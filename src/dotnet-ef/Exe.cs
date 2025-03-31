@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
@@ -12,50 +13,33 @@ internal static class Exe
         string executable,
         IReadOnlyList<string> args,
         string? workingDirectory = null,
-        Action<string?>? handleOutput = null,
-        Action<string?>? handleError = null,
-        Action<string>? processCommandLine = null)
+        bool interceptOutput = false)
     {
         var arguments = ToArguments(args);
 
-        processCommandLine ??= Reporter.WriteVerbose;
-        processCommandLine(executable + " " + arguments);
+        Reporter.WriteVerbose(executable + " " + arguments);
 
         var startInfo = new ProcessStartInfo
         {
             FileName = executable,
             Arguments = arguments,
             UseShellExecute = false,
-            RedirectStandardOutput = handleOutput != null,
-            RedirectStandardError = handleError != null
+            RedirectStandardOutput = interceptOutput
         };
         if (workingDirectory != null)
         {
             startInfo.WorkingDirectory = workingDirectory;
         }
 
-        var process = new Process { StartInfo = startInfo };
+        var process = Process.Start(startInfo)!;
 
-        if (handleOutput != null)
+        if (interceptOutput)
         {
-            process.OutputDataReceived += (sender, args) => handleOutput(args.Data);
-        }
-
-        if (handleError != null)
-        {
-            process.ErrorDataReceived += (sender, args) => handleError(args.Data);
-        }
-
-        process.Start();
-
-        if (handleOutput != null)
-        {
-            process.BeginOutputReadLine();
-        }
-
-        if (handleError != null)
-        {
-            process.BeginErrorReadLine();
+            string? line;
+            while ((line = process.StandardOutput.ReadLine()) != null)
+            {
+                Reporter.WriteVerbose(line);
+            }
         }
 
         process.WaitForExit();
@@ -63,7 +47,7 @@ internal static class Exe
         return process.ExitCode;
     }
 
-    public static string ToArguments(IReadOnlyList<string> args)
+    private static string ToArguments(IReadOnlyList<string> args)
     {
         var builder = new StringBuilder();
         for (var i = 0; i < args.Count; i++)

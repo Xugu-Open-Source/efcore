@@ -5,14 +5,12 @@ using System.Text.RegularExpressions;
 
 namespace Microsoft.EntityFrameworkCore.Update;
 
-#nullable disable
-
 public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
 {
     protected override string StoreName
         => "StoredProcedureUpdateTest";
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Insert_with_output_parameter(bool async);
 
@@ -39,7 +37,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Insert_twice_with_output_parameter(bool async);
 
@@ -68,7 +66,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Insert_with_result_column(bool async);
 
@@ -93,7 +91,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Insert_with_two_result_columns(bool async);
 
@@ -128,7 +126,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Insert_with_output_parameter_and_result_column(bool async);
 
@@ -162,7 +160,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Update(bool async);
 
@@ -193,7 +191,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Update_partial(bool async);
 
@@ -228,7 +226,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Update_with_output_parameter_and_rows_affected_result_column(bool async);
 
@@ -271,7 +269,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Update_with_output_parameter_and_rows_affected_result_column_concurrency_failure(bool async);
 
@@ -315,7 +313,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         Assert.Same(entity1, entry.Entity);
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Delete(bool async);
 
@@ -345,7 +343,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Delete_and_insert(bool async);
 
@@ -382,7 +380,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Rows_affected_parameter(bool async);
 
@@ -416,7 +414,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Rows_affected_parameter_and_concurrency_failure(bool async);
 
@@ -454,7 +452,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         Assert.Same(entity1, entry.Entity);
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Rows_affected_result_column(bool async);
 
@@ -488,7 +486,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Rows_affected_result_column_and_concurrency_failure(bool async);
 
@@ -526,7 +524,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         Assert.Same(entity1, entry.Entity);
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Rows_affected_return_value(bool async);
 
@@ -560,7 +558,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Rows_affected_return_value_and_concurrency_failure(bool async);
 
@@ -598,7 +596,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         Assert.Same(entity1, entry.Entity);
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Store_generated_concurrency_token_as_in_out_parameter(bool async);
 
@@ -606,18 +604,18 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
     {
         var contextFactory = await InitializeAsync<DbContext>(
             modelBuilder => modelBuilder.Entity<Entity>(
-                b =>
-                {
-                    ConfigureStoreGeneratedConcurrencyToken(b, "ConcurrencyToken");
+                    b =>
+                    {
+                        ConfigureStoreGeneratedConcurrencyToken(b, "ConcurrencyToken");
 
-                    b.UpdateUsingStoredProcedure(
-                        nameof(Entity) + "_Update",
-                        spb => spb
-                            .HasOriginalValueParameter(w => w.Id)
-                            .HasOriginalValueParameter("ConcurrencyToken", pb => pb.IsInputOutput())
-                            .HasParameter(w => w.Name)
-                            .HasRowsAffectedParameter());
-                }),
+                        b.UpdateUsingStoredProcedure(
+                            nameof(Entity) + "_Update",
+                            spb => spb
+                                .HasOriginalValueParameter(w => w.Id)
+                                .HasOriginalValueParameter("ConcurrencyToken", pb => pb.IsInputOutput())
+                                .HasParameter(w => w.Name)
+                                .HasRowsAffectedParameter());
+                    }),
             seed: ctx => CreateStoredProcedures(ctx, createSprocSql));
 
         await using var context1 = contextFactory.CreateContext();
@@ -642,7 +640,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         Assert.Same(entity1, entry.Entity);
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Store_generated_concurrency_token_as_two_parameters(bool async);
 
@@ -690,7 +688,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         Assert.Same(entity1, entry.Entity);
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task User_managed_concurrency_token(bool async);
 
@@ -740,7 +738,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         Assert.Same(entity1, Assert.Single(exception.Entries).Entity);
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Original_and_current_value_on_non_concurrency_token(bool async);
 
@@ -777,7 +775,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Input_or_output_parameter_with_input(bool async);
 
@@ -785,16 +783,16 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
     {
         var contextFactory = await InitializeAsync<DbContext>(
             modelBuilder => modelBuilder.Entity<Entity>(
-                b =>
-                {
-                    b.Property(w => w.Name).IsRequired().ValueGeneratedOnAdd();
+                    b =>
+                    {
+                        b.Property(w => w.Name).IsRequired().ValueGeneratedOnAdd();
 
-                    b.InsertUsingStoredProcedure(
-                        nameof(Entity) + "_Insert",
-                        spb => spb
-                            .HasParameter(w => w.Id, pb => pb.IsOutput())
-                            .HasParameter(w => w.Name, pb => pb.IsInputOutput()));
-                }),
+                        b.InsertUsingStoredProcedure(
+                            nameof(Entity) + "_Insert",
+                            spb => spb
+                                .HasParameter(w => w.Id, pb => pb.IsOutput())
+                                .HasParameter(w => w.Name, pb => pb.IsInputOutput()));
+                    }),
             seed: ctx => CreateStoredProcedures(ctx, createSprocSql));
 
         await using var context = contextFactory.CreateContext();
@@ -812,7 +810,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Input_or_output_parameter_with_output(bool async);
 
@@ -847,7 +845,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Tph(bool async);
 
@@ -901,7 +899,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Tpt(bool async);
 
@@ -948,7 +946,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Tpt_mixed_sproc_and_non_sproc(bool async);
 
@@ -991,7 +989,7 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
         }
     }
 
-    [ConditionalTheory]
+    [ConditionalFact]
     [MemberData(nameof(IsAsyncData))]
     public abstract Task Tpc(bool async);
 
@@ -1027,48 +1025,6 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
 
             Assert.Equal("Child", entity2.Name);
             Assert.Equal(8, entity2.Child1Property);
-        }
-    }
-
-    [ConditionalTheory]
-    [MemberData(nameof(IsAsyncData))]
-    public abstract Task Non_sproc_followed_by_sproc_commands_in_the_same_batch(bool async);
-
-    protected async Task Non_sproc_followed_by_sproc_commands_in_the_same_batch(bool async, string createSprocSql)
-    {
-        var contextFactory = await InitializeAsync<DbContext>(
-            modelBuilder => modelBuilder.Entity<EntityWithAdditionalProperty>()
-                .InsertUsingStoredProcedure(
-                    nameof(EntityWithAdditionalProperty) + "_Insert",
-                    spb => spb
-                        .HasParameter(w => w.Name)
-                        .HasParameter(w => w.Id, pb => pb.IsOutput())
-                        .HasParameter(w => w.AdditionalProperty))
-                .Property(e => e.AdditionalProperty).IsConcurrencyToken(),
-            seed: ctx => CreateStoredProcedures(ctx, createSprocSql));
-
-        await using var context = contextFactory.CreateContext();
-
-        // Prepare by adding an entity
-        var entity1 = new EntityWithAdditionalProperty { Name = "Entity1", AdditionalProperty = 1 };
-        context.Set<EntityWithAdditionalProperty>().Add(entity1);
-
-        using (TestSqlLoggerFactory.SuspendRecordingEvents())
-        {
-            await SaveChanges(context, async);
-        }
-
-        // Now add a second entity and update the first one. The update gets ordered first, and doesn't use a sproc, and then the insertion
-        // does.
-        var entity2 = new EntityWithAdditionalProperty { Name = "Entity2" };
-        context.Set<EntityWithAdditionalProperty>().Add(entity2);
-        entity1.Name = "Entity1_Modified";
-        entity1.AdditionalProperty = 2;
-        await SaveChanges(context, async);
-
-        using (TestSqlLoggerFactory.SuspendRecordingEvents())
-        {
-            Assert.Equal("Entity2", context.Set<EntityWithAdditionalProperty>().Single(b => b.Id == entity2.Id).Name);
         }
     }
 
@@ -1130,13 +1086,13 @@ public abstract class StoredProcedureUpdateTestBase : NonSharedModelTestBase
     protected virtual void ClearLog()
         => TestSqlLoggerFactory.Clear();
 
-    protected virtual async Task CreateStoredProcedures(DbContext context, string createSprocSql)
+    protected virtual void CreateStoredProcedures(DbContext context, string createSprocSql)
     {
         foreach (var batch in
                  new Regex("^GO", RegexOptions.IgnoreCase | RegexOptions.Multiline, TimeSpan.FromMilliseconds(1000.0))
                      .Split(createSprocSql).Where(b => !string.IsNullOrEmpty(b)))
         {
-            await context.Database.ExecuteSqlRawAsync(batch);
+            context.Database.ExecuteSqlRaw(batch);
         }
     }
 }

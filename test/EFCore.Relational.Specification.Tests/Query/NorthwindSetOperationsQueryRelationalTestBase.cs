@@ -3,12 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class NorthwindSetOperationsQueryRelationalTestBase<TFixture>(TFixture fixture)
-    : NorthwindSetOperationsQueryTestBase<TFixture>(fixture)
+public abstract class NorthwindSetOperationsQueryRelationalTestBase<TFixture> : NorthwindSetOperationsQueryTestBase<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
+    protected NorthwindSetOperationsQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public override async Task Collection_projection_after_set_operation_fails_if_distinct(bool async)
     {
         var message = (await Assert.ThrowsAsync<InvalidOperationException>(
@@ -25,7 +27,10 @@ public abstract class NorthwindSetOperationsQueryRelationalTestBase<TFixture>(TF
         Assert.Equal(RelationalStrings.SetOperationsNotAllowedAfterClientEvaluation, message);
     }
 
+    protected virtual bool CanExecuteQueryString
+        => false;
+
     protected override QueryAsserter CreateQueryAsserter(TFixture fixture)
         => new RelationalQueryAsserter(
-            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression);
+            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression, canExecuteQueryString: CanExecuteQueryString);
 }

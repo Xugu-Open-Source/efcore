@@ -1,13 +1,16 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-namespace Microsoft.EntityFrameworkCore;
+namespace Microsoft.EntityFrameworkCore.Cosmos;
 
-#nullable disable
-
-public class OverzealousInitializationCosmosTest(OverzealousInitializationCosmosTest.OverzealousInitializationCosmosFixture fixture)
-    : OverzealousInitializationTestBase<OverzealousInitializationCosmosTest.OverzealousInitializationCosmosFixture>(fixture)
+public class OverzealousInitializationCosmosTest
+    : OverzealousInitializationTestBase<OverzealousInitializationCosmosTest.OverzealousInitializationCosmosFixture>
 {
+    public OverzealousInitializationCosmosTest(OverzealousInitializationCosmosFixture fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalFact(Skip = "Issue #17246")]
     public override void Fixup_ignores_eagerly_initialized_reference_navs()
     {
@@ -15,11 +18,6 @@ public class OverzealousInitializationCosmosTest(OverzealousInitializationCosmos
 
     public class OverzealousInitializationCosmosFixture : OverzealousInitializationFixtureBase
     {
-        public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
-            => base.AddOptions(
-                builder.ConfigureWarnings(
-                    w => w.Ignore(CosmosEventId.NoPartitionKeyDefined)));
-
         protected override ITestStoreFactory TestStoreFactory
             => CosmosTestStoreFactory.Instance;
     }

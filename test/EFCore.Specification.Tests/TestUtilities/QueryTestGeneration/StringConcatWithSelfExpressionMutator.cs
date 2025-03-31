@@ -1,13 +1,16 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Microsoft.EntityFrameworkCore.TestUtilities.QueryTestGeneration;
 
-public class StringConcatWithSelfExpressionMutator(DbContext context) : ExpressionMutator(context)
+public class StringConcatWithSelfExpressionMutator : ExpressionMutator
 {
     private readonly ExpressionFinder _expressionFinder = new();
+
+    public StringConcatWithSelfExpressionMutator(DbContext context)
+        : base(context)
+    {
+    }
 
     public override bool IsValid(Expression expression)
     {
@@ -23,7 +26,7 @@ public class StringConcatWithSelfExpressionMutator(DbContext context) : Expressi
         var stringConcatMethodInfo
             = typeof(string).GetRuntimeMethod(
                 nameof(string.Concat),
-                [typeof(string), typeof(string)]);
+                new[] { typeof(string), typeof(string) });
 
         var injector = new ExpressionInjector(_expressionFinder.FoundExpressions[i], e => Expression.Add(e, e, stringConcatMethodInfo));
 
@@ -34,10 +37,9 @@ public class StringConcatWithSelfExpressionMutator(DbContext context) : Expressi
     {
         private bool _insideLambda;
 
-        public List<Expression> FoundExpressions { get; } = [];
+        public List<Expression> FoundExpressions { get; } = new();
 
-        [return: NotNullIfNotNull(nameof(node))]
-        public override Expression? Visit(Expression? node)
+        public override Expression Visit(Expression node)
         {
             if (_insideLambda
                 && node?.Type == typeof(string)
@@ -62,6 +64,14 @@ public class StringConcatWithSelfExpressionMutator(DbContext context) : Expressi
         }
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
-            => node.Method.IsEFPropertyMethod() ? node : base.VisitMethodCall(node);
+        {
+            if (node != null
+                && node.Method.IsEFPropertyMethod())
+            {
+                return node;
+            }
+
+            return base.VisitMethodCall(node);
+        }
     }
 }

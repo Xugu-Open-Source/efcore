@@ -3,11 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.InheritanceRelationshipsModel;
 
-#nullable disable
-
-public class InheritanceRelationshipsContext(DbContextOptions options) : PoolableDbContext(options)
+public class InheritanceRelationshipsContext : PoolableDbContext
 {
     public static readonly string StoreName = "InheritanceRelationships";
+
+    public InheritanceRelationshipsContext(DbContextOptions options)
+        : base(options)
+    {
+    }
 
     public DbSet<BaseCollectionOnBase> BaseCollectionsOnBase { get; set; }
     public DbSet<BaseCollectionOnDerived> BaseCollectionsOnDerived { get; set; }
@@ -23,7 +26,7 @@ public class InheritanceRelationshipsContext(DbContextOptions options) : Poolabl
     public DbSet<ReferenceOnBase> ReferencesOnBase { get; set; }
     public DbSet<ReferenceOnDerived> ReferencesOnDerived { get; set; }
 
-    public static Task SeedAsync(InheritanceRelationshipsContext context)
+    public static void Seed(InheritanceRelationshipsContext context)
     {
         var baseCollectionsOnBase = InheritanceRelationshipsData.CreateBaseCollectionsOnBase();
         var baseCollectionsOnDerived = InheritanceRelationshipsData.CreateBaseCollectionsOnDerived();
@@ -66,6 +69,6 @@ public class InheritanceRelationshipsContext(DbContextOptions options) : Poolabl
         context.ReferencesOnBase.AddRange(referencesOnBase);
         context.ReferencesOnDerived.AddRange(referencesOnDerived);
 
-        return context.SaveChangesAsync();
+        context.SaveChanges();
     }
 }

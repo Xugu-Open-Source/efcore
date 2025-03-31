@@ -8,44 +8,47 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 [SqlServerCondition(SqlServerCondition.SupportsMemoryOptimized)]
-public class MemoryOptimizedTablesTest(MemoryOptimizedTablesTest.MemoryOptimizedTablesFixture fixture)
-    : IClassFixture<MemoryOptimizedTablesTest.MemoryOptimizedTablesFixture>
+public class MemoryOptimizedTablesTest : IClassFixture<MemoryOptimizedTablesTest.MemoryOptimizedTablesFixture>
 {
-    protected MemoryOptimizedTablesFixture Fixture { get; } = fixture;
+    protected MemoryOptimizedTablesFixture Fixture { get; }
+
+    public MemoryOptimizedTablesTest(MemoryOptimizedTablesFixture fixture)
+    {
+        Fixture = fixture;
+    }
 
     [ConditionalFact]
-    public async Task Can_create_memoryOptimized_table()
+    public void Can_create_memoryOptimized_table()
     {
-        await using (await CreateTestStoreAsync())
+        using (CreateTestStore())
         {
             var bigUn = new BigUn();
             var fastUns = new[] { new FastUn { Name = "First 'un", BigUn = bigUn }, new FastUn { Name = "Second 'un", BigUn = bigUn } };
             using (var context = CreateContext())
             {
-                await context.Database.EnsureCreatedResilientlyAsync();
+                context.Database.EnsureCreatedResiliently();
 
                 // ReSharper disable once CoVariantArrayConversion
                 context.AddRange(fastUns);
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
             }
 
             using (var context = CreateContext())
             {
-                Assert.Equal(fastUns.Select(f => f.Name), await context.FastUns.OrderBy(f => f.Name).Select(f => f.Name).ToListAsync());
+                Assert.Equal(fastUns.Select(f => f.Name), context.FastUns.OrderBy(f => f.Name).Select(f => f.Name).ToList());
             }
         }
     }
 
     protected TestStore TestStore { get; set; }
 
-    protected Task<TestStore> CreateTestStoreAsync()
+    protected TestStore CreateTestStore()
     {
         TestStore = SqlServerTestStore.Create(nameof(MemoryOptimizedTablesTest));
-        return TestStore.InitializeAsync(null, CreateContext, _ => Task.CompletedTask);
+        TestStore.Initialize(null, CreateContext, c => { });
+        return TestStore;
     }
 
     private MemoryOptimizedContext CreateContext()
@@ -57,8 +60,13 @@ public class MemoryOptimizedTablesTest(MemoryOptimizedTablesTest.MemoryOptimized
             => SqlServerTestStoreFactory.Instance;
     }
 
-    private class MemoryOptimizedContext(DbContextOptions options) : DbContext(options)
+    private class MemoryOptimizedContext : DbContext
     {
+        public MemoryOptimizedContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public DbSet<FastUn> FastUns { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

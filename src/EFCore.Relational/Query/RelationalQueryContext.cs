@@ -29,7 +29,9 @@ public class RelationalQueryContext : QueryContext
         QueryContextDependencies dependencies,
         RelationalQueryContextDependencies relationalDependencies)
         : base(dependencies)
-        => RelationalDependencies = relationalDependencies;
+    {
+        RelationalDependencies = relationalDependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.

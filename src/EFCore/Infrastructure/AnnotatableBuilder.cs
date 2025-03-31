@@ -103,7 +103,7 @@ public abstract class AnnotatableBuilder<TMetadata, TModelBuilder> : IConvention
         object? value,
         ConfigurationSource configurationSource)
         => value == null
-            ? HasNoAnnotation(name, configurationSource)
+            ? RemoveAnnotation(name, configurationSource)
             : HasAnnotation(name, value, configurationSource, canOverrideSameSource: true);
 
     /// <summary>
@@ -143,19 +143,7 @@ public abstract class AnnotatableBuilder<TMetadata, TModelBuilder> : IConvention
     /// <param name="name">The name of the annotation to remove.</param>
     /// <param name="configurationSource">The configuration source of the annotation to be set.</param>
     /// <returns>The same builder so that multiple calls can be chained.</returns>
-    [Obsolete("Use HasNoAnnotation instead")]
     public virtual AnnotatableBuilder<TMetadata, TModelBuilder>? RemoveAnnotation(
-        string name,
-        ConfigurationSource configurationSource)
-        => HasNoAnnotation(name, configurationSource);
-
-    /// <summary>
-    ///     Removes any annotation with the given name.
-    /// </summary>
-    /// <param name="name">The name of the annotation to remove.</param>
-    /// <param name="configurationSource">The configuration source of the annotation to be set.</param>
-    /// <returns>The same builder so that multiple calls can be chained.</returns>
-    public virtual AnnotatableBuilder<TMetadata, TModelBuilder>? HasNoAnnotation(
         string name,
         ConfigurationSource configurationSource)
     {
@@ -250,7 +238,7 @@ public abstract class AnnotatableBuilder<TMetadata, TModelBuilder> : IConvention
     /// <inheritdoc />
     [DebuggerStepThrough]
     IConventionAnnotatableBuilder? IConventionAnnotatableBuilder.HasNoAnnotation(string name, bool fromDataAnnotation)
-        => HasNoAnnotation(name, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
+        => RemoveAnnotation(name, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <inheritdoc />
     [DebuggerStepThrough]

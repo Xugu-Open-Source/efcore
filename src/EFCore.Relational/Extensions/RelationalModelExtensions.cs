@@ -66,21 +66,13 @@ public static class RelationalModelExtensions
     /// <returns>The database model.</returns>
     public static IRelationalModel GetRelationalModel(this IModel model)
     {
-        var relationalModel = (IRelationalModel?)model.FindRuntimeAnnotationValue(RelationalAnnotationNames.RelationalModel);
-        if (relationalModel == null)
+        var databaseModel = (IRelationalModel?)model.FindRuntimeAnnotationValue(RelationalAnnotationNames.RelationalModel);
+        if (databaseModel == null)
         {
-            var relationalModelFactory = (Func<IRelationalModel>?)model.FindRuntimeAnnotationValue(
-                    RelationalAnnotationNames.RelationalModelFactory)
-                ?? throw new InvalidOperationException(CoreStrings.ModelNotFinalized(nameof(GetRelationalModel)));
-            lock (relationalModelFactory)
-            {
-                relationalModel = model.GetOrAddRuntimeAnnotationValue(
-                    RelationalAnnotationNames.RelationalModel, f => f!(), relationalModelFactory);
-                model.RemoveRuntimeAnnotation(RelationalAnnotationNames.RelationalModelFactory);
-            }
+            throw new InvalidOperationException(CoreStrings.ModelNotFinalized(nameof(GetRelationalModel)));
         }
 
-        return relationalModel;
+        return databaseModel;
     }
 
     #region Max identifier length
@@ -321,7 +313,7 @@ public static class RelationalModelExtensions
     /// <param name="method">The <see cref="MethodInfo" /> for the method that is mapped to the function.</param>
     /// <returns>The function or <see langword="null" /> if the method is not mapped.</returns>
     public static IDbFunction? FindDbFunction(this IModel model, MethodInfo method)
-        => DbFunction.FindDbFunction(model, method);
+        => (IDbFunction?)((IReadOnlyModel)model).FindDbFunction(method);
 
     /// <summary>
     ///     Finds a function that is mapped to the method represented by the given name.
@@ -357,7 +349,7 @@ public static class RelationalModelExtensions
     /// <param name="name">The model name of the function.</param>
     /// <returns>The function or <see langword="null" /> if the method is not mapped.</returns>
     public static IDbFunction? FindDbFunction(this IModel model, string name)
-        => DbFunction.FindDbFunction(model, name);
+        => (IDbFunction?)((IReadOnlyModel)model).FindDbFunction(name);
 
     /// <summary>
     ///     Creates an <see cref="IMutableDbFunction" /> mapped to the given method.

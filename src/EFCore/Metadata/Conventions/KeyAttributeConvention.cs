@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
@@ -18,8 +17,7 @@ public class KeyAttributeConvention
     : PropertyAttributeConventionBase<KeyAttribute>,
         IModelFinalizingConvention,
         IEntityTypeAddedConvention,
-        IEntityTypeBaseTypeChangedConvention,
-        IComplexPropertyAddedConvention
+        IEntityTypeBaseTypeChangedConvention
 {
     /// <summary>
     ///     Creates a new instance of <see cref="KeyAttributeConvention" />.
@@ -51,52 +49,32 @@ public class KeyAttributeConvention
         CheckAttributesAndEnsurePrimaryKey((EntityType)entityTypeBuilder.Metadata, null, shouldThrow: false);
     }
 
-    /// <summary>
-    ///     Called after a property is added to the entity type with an attribute on the associated CLR property or field.
-    /// </summary>
-    /// <param name="propertyBuilder">The builder for the property.</param>
-    /// <param name="attribute">The attribute.</param>
-    /// <param name="clrMember">The member that has the attribute.</param>
-    /// <param name="context">Additional information associated with convention execution.</param>
+    /// <inheritdoc />
     protected override void ProcessPropertyAdded(
         IConventionPropertyBuilder propertyBuilder,
         KeyAttribute attribute,
         MemberInfo clrMember,
         IConventionContext context)
     {
-        if (propertyBuilder.Metadata.DeclaringType is EntityType entityType)
+        var entityType = propertyBuilder.Metadata.DeclaringEntityType;
+        if (entityType.IsKeyless)
         {
-            if (entityType.IsKeyless)
+            switch (entityType.GetIsKeylessConfigurationSource())
             {
-                switch (entityType.GetIsKeylessConfigurationSource())
-                {
-                    case ConfigurationSource.DataAnnotation:
-                        Dependencies.Logger.ConflictingKeylessAndKeyAttributesWarning(propertyBuilder.Metadata);
-                        return;
+                case ConfigurationSource.DataAnnotation:
+                    Dependencies.Logger.ConflictingKeylessAndKeyAttributesWarning(propertyBuilder.Metadata);
+                    return;
 
-                    case ConfigurationSource.Explicit:
-                        // fluent API overrides the attribute - no warning
-                        return;
-                }
-            }
-
-            CheckAttributesAndEnsurePrimaryKey(
-                entityType,
-                propertyBuilder,
-                shouldThrow: false);
-        }
-        else
-        {
-            var property = propertyBuilder.Metadata;
-            var member = property.GetIdentifyingMemberInfo();
-            if (member != null
-                && Attribute.IsDefined(member, typeof(ForeignKeyAttribute), inherit: true))
-            {
-                throw new InvalidOperationException(
-                    CoreStrings.AttributeNotOnEntityTypeProperty(
-                        "Key", property.DeclaringType.DisplayName(), property.Name));
+                case ConfigurationSource.Explicit:
+                    // fluent API overrides the attribute - no warning
+                    return;
             }
         }
+
+        CheckAttributesAndEnsurePrimaryKey(
+            (EntityType)propertyBuilder.Metadata.DeclaringEntityType,
+            propertyBuilder,
+            shouldThrow: false);
     }
 
     private bool CheckAttributesAndEnsurePrimaryKey(
@@ -136,30 +114,6 @@ public class KeyAttributeConvention
         }
 
         return primaryKeyAttributeExists;
-    }
-
-    /// <summary>
-    ///     Called after a complex property is added to a type with an attribute on the associated CLR property or field.
-    /// </summary>
-    /// <param name="propertyBuilder">The builder for the property.</param>
-    /// <param name="attribute">The attribute.</param>
-    /// <param name="clrMember">The member that has the attribute.</param>
-    /// <param name="context">Additional information associated with convention execution.</param>
-    protected override void ProcessPropertyAdded(
-        IConventionComplexPropertyBuilder propertyBuilder,
-        KeyAttribute attribute,
-        MemberInfo clrMember,
-        IConventionContext context)
-    {
-        var property = propertyBuilder.Metadata;
-        var member = property.GetIdentifyingMemberInfo();
-        if (member != null
-            && Attribute.IsDefined(member, typeof(ForeignKeyAttribute), inherit: true))
-        {
-            throw new InvalidOperationException(
-                CoreStrings.AttributeNotOnEntityTypeProperty(
-                    "Key", property.DeclaringType.DisplayName(), property.Name));
-        }
     }
 
     /// <inheritdoc />

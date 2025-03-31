@@ -3,15 +3,16 @@
 
 using System;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class ProductCostHistory
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public int ProductID { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-    public DateTime ModifiedDate { get; set; }
-    public decimal StandardCost { get; set; }
+    public class ProductCostHistory
+    {
+        public int ProductID { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public DateTime ModifiedDate { get; set; }
+        public decimal StandardCost { get; set; }
 
-    public virtual Product Product { get; set; }
+        public virtual Product Product { get; set; }
+    }
 }

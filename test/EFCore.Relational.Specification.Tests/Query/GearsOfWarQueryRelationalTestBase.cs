@@ -6,19 +6,22 @@ using Xunit.Sdk;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class GearsOfWarQueryRelationalTestBase<TFixture>(TFixture fixture) : GearsOfWarQueryTestBase<TFixture>(fixture)
+public abstract class GearsOfWarQueryRelationalTestBase<TFixture> : GearsOfWarQueryTestBase<TFixture>
     where TFixture : GearsOfWarQueryFixtureBase, new()
 {
+    protected GearsOfWarQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public virtual Task Parameter_used_multiple_times_take_appropriate_inferred_type_mapping(bool async)
     {
-        var place = "Ephyra's location";
+        var place = "Seattle";
         return AssertQuery(
             async,
-            ss => ss.Set<City>().Where(e => e.Nation == place || e.Location == place || e.Location == place));
+            ss => ss.Set<City>().Where(e => e.Nation == place || e.Location == place));
     }
 
     public override async Task Correlated_collection_with_distinct_not_projecting_identifier_column_also_projecting_complex_expressions(
@@ -162,7 +165,10 @@ public abstract class GearsOfWarQueryRelationalTestBase<TFixture>(TFixture fixtu
             (await Assert.ThrowsAsync<InvalidOperationException>(
                 () => base.Correlated_collection_after_distinct_3_levels_without_original_identifiers(async))).Message);
 
+    protected virtual bool CanExecuteQueryString
+        => false;
+
     protected override QueryAsserter CreateQueryAsserter(TFixture fixture)
         => new RelationalQueryAsserter(
-            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression);
+            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression, canExecuteQueryString: CanExecuteQueryString);
 }

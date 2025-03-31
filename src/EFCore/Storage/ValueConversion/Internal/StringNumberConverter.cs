@@ -13,9 +13,6 @@ namespace Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 /// </summary>
 public class StringNumberConverter<TModel, TProvider, TNumber> : ValueConverter<TModel, TProvider>
 {
-    private static readonly Expression<Func<CultureInfo>> _cultureInfoInvariantCultureLambda =
-        () => CultureInfo.InvariantCulture;
-
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -58,7 +55,7 @@ public class StringNumberConverter<TModel, TProvider, TNumber> : ValueConverter<
 
         var parseMethod = type.GetMethod(
             nameof(double.Parse),
-            [typeof(string), typeof(NumberStyles), typeof(IFormatProvider)])!;
+            new[] { typeof(string), typeof(NumberStyles), typeof(IFormatProvider) })!;
 
         var param = Expression.Parameter(typeof(string), "v");
 
@@ -66,7 +63,7 @@ public class StringNumberConverter<TModel, TProvider, TNumber> : ValueConverter<
             parseMethod,
             param,
             Expression.Constant(NumberStyles.Any),
-            _cultureInfoInvariantCultureLambda.Body);
+            Expression.Constant(CultureInfo.InvariantCulture, typeof(IFormatProvider)));
 
         if (typeof(TNumber).IsNullableType())
         {
@@ -98,20 +95,20 @@ public class StringNumberConverter<TModel, TProvider, TNumber> : ValueConverter<
 
         var formatMethod = typeof(string).GetMethod(
             nameof(string.Format),
-            [typeof(IFormatProvider), typeof(string), typeof(object)])!;
+            new[] { typeof(IFormatProvider), typeof(string), typeof(object) })!;
 
         var param = Expression.Parameter(typeof(TNumber), "v");
 
         Expression expression = Expression.Call(
             formatMethod,
-            _cultureInfoInvariantCultureLambda.Body,
+            Expression.Constant(CultureInfo.InvariantCulture),
             Expression.Constant(type == typeof(float) || type == typeof(double) ? "{0:R}" : "{0}"),
             Expression.Convert(param, typeof(object)));
 
         if (typeof(TNumber).IsNullableType())
         {
             expression = Expression.Condition(
-                Expression.MakeMemberAccess(param, typeof(TNumber).GetProperty("HasValue")!),
+                Expression.Call(param, typeof(TNumber).GetMethod("get_HasValue")!),
                 expression,
                 Expression.Constant(null, typeof(string)));
         }

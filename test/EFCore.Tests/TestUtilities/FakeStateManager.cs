@@ -19,7 +19,7 @@ public class FakeStateManager : IStateManager
     public Task ResetStateAsync(CancellationToken cancellationToken = default)
         => Task.CompletedTask;
 
-    public void Unsubscribe(bool resetting)
+    public void Unsubscribe()
     {
     }
 
@@ -47,9 +47,6 @@ public class FakeStateManager : IStateManager
         return Task.FromResult(1);
     }
 
-    public InternalEntityEntry TryGetExistingEntry(object entity, IKey key)
-        => throw new NotImplementedException();
-
     public IEnumerable<InternalEntityEntry> Entries
         => InternalEntries ?? Enumerable.Empty<InternalEntityEntry>();
 
@@ -76,7 +73,7 @@ public class FakeStateManager : IStateManager
 
     public IDiagnosticsLogger<DbLoggerCategory.Update> UpdateLogger { get; }
 
-    public void Clear(bool resetting)
+    public void Clear()
         => throw new NotImplementedException();
 
     public bool SavingChanges
@@ -95,13 +92,7 @@ public class FakeStateManager : IStateManager
     public void UpdateDependentMap(InternalEntityEntry entry, IForeignKey foreignKey)
         => throw new NotImplementedException();
 
-    public IEnumerable<InternalEntityEntry> GetEntries(IKey key)
-        => throw new NotImplementedException();
-
     public IEnumerable<IUpdateEntry> GetDependents(IUpdateEntry principalEntry, IForeignKey foreignKey)
-        => throw new NotImplementedException();
-
-    public IEnumerable<IUpdateEntry> GetDependents(IReadOnlyList<object> keyValues, IForeignKey foreignKey)
         => throw new NotImplementedException();
 
     public IEnumerable<IUpdateEntry> GetDependentsUsingRelationshipSnapshot(
@@ -134,13 +125,7 @@ public class FakeStateManager : IStateManager
     public InternalEntityEntry StartTrackingFromQuery(
         IEntityType baseEntityType,
         object entity,
-        in ISnapshot snapshot)
-        => throw new NotImplementedException();
-
-    public InternalEntityEntry TryGetEntry(IKey key, IReadOnlyList<object> keyValues)
-        => throw new NotImplementedException();
-
-    public InternalEntityEntry TryGetEntryTyped<TKey>(IKey key, TKey keyValue)
+        in ValueBuffer valueBuffer)
         => throw new NotImplementedException();
 
     public InternalEntityEntry TryGetEntry(IKey key, object[] keyValues)

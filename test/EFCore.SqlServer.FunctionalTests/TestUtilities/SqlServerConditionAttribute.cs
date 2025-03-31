@@ -7,9 +7,14 @@ using Microsoft.EntityFrameworkCore.TestUtilities.Xunit;
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-public sealed class SqlServerConditionAttribute(SqlServerCondition conditions) : Attribute, ITestCondition
+public sealed class SqlServerConditionAttribute : Attribute, ITestCondition
 {
-    public SqlServerCondition Conditions { get; set; } = conditions;
+    public SqlServerCondition Conditions { get; set; }
+
+    public SqlServerConditionAttribute(SqlServerCondition conditions)
+    {
+        Conditions = conditions;
+    }
 
     public ValueTask<bool> IsMetAsync()
     {
@@ -25,12 +30,12 @@ public sealed class SqlServerConditionAttribute(SqlServerCondition conditions) :
             isMet &= TestEnvironment.IsMemoryOptimizedTablesSupported;
         }
 
-        if (Conditions.HasFlag(SqlServerCondition.IsAzureSql))
+        if (Conditions.HasFlag(SqlServerCondition.IsSqlAzure))
         {
             isMet &= TestEnvironment.IsSqlAzure;
         }
 
-        if (Conditions.HasFlag(SqlServerCondition.IsNotAzureSql))
+        if (Conditions.HasFlag(SqlServerCondition.IsNotSqlAzure))
         {
             isMet &= !TestEnvironment.IsSqlAzure;
         }
@@ -67,14 +72,9 @@ public sealed class SqlServerConditionAttribute(SqlServerCondition conditions) :
             isMet &= TestEnvironment.IsUtf8Supported;
         }
 
-        if (Conditions.HasFlag(SqlServerCondition.SupportsJsonPathExpressions))
+        if (Conditions.HasFlag(SqlServerCondition.SupportsFunctions2019))
         {
-            isMet &= TestEnvironment.SupportsJsonPathExpressions;
-        }
-
-        if (Conditions.HasFlag(SqlServerCondition.SupportsSqlClr))
-        {
-            isMet &= TestEnvironment.IsSqlClrSupported;
+            isMet &= TestEnvironment.IsFunctions2019Supported;
         }
 
         if (Conditions.HasFlag(SqlServerCondition.SupportsFunctions2017))
@@ -82,22 +82,7 @@ public sealed class SqlServerConditionAttribute(SqlServerCondition conditions) :
             isMet &= TestEnvironment.IsFunctions2017Supported;
         }
 
-        if (Conditions.HasFlag(SqlServerCondition.SupportsFunctions2019))
-        {
-            isMet &= TestEnvironment.IsFunctions2019Supported;
-        }
-
-        if (Conditions.HasFlag(SqlServerCondition.SupportsFunctions2022))
-        {
-            isMet &= TestEnvironment.IsFunctions2022Supported;
-        }
-
-        if (Conditions.HasFlag(SqlServerCondition.SupportsJsonType))
-        {
-            isMet &= TestEnvironment.IsJsonTypeSupported;
-        }
-
-        return ValueTask.FromResult(isMet);
+        return new ValueTask<bool>(isMet);
     }
 
     public string SkipReason

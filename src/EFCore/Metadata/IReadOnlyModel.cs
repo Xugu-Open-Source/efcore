@@ -46,13 +46,6 @@ public interface IReadOnlyModel : IReadOnlyAnnotatable
     PropertyAccessMode GetPropertyAccessMode();
 
     /// <summary>
-    ///     Gets the name to use for discriminator properties embedded in JSON documents. The default is "$type".
-    /// </summary>
-    /// <returns>The name.</returns>
-    [DebuggerStepThrough]
-    string GetEmbeddedDiscriminatorName();
-
-    /// <summary>
     ///     Gets the EF Core assembly version used to build this model.
     /// </summary>
     /// <remarks>
@@ -203,15 +196,6 @@ public interface IReadOnlyModel : IReadOnlyAnnotatable
     }
 
     /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public Guid ModelId { get; }
-
-    /// <summary>
     ///     <para>
     ///         Creates a human-readable representation of the given metadata.
     ///     </para>
@@ -245,19 +229,6 @@ public interface IReadOnlyModel : IReadOnlyAnnotatable
             foreach (var entityType in GetEntityTypes())
             {
                 builder.AppendLine().Append(entityType.ToDebugString(options, indent + 2));
-            }
-
-            if (this is RuntimeModel runtimeModel)
-            {
-                var adHocEntityTypes = runtimeModel.GetAdHocEntityTypes().ToList();
-                if (adHocEntityTypes.Count > 0)
-                {
-                    builder.AppendLine().Append(indentString + "  ").Append("Ad-hoc entity types:");
-                    foreach (var entityType in adHocEntityTypes)
-                    {
-                        builder.AppendLine().Append(entityType.ToDebugString(options, indent + 4));
-                    }
-                }
             }
 
             if ((options & MetadataDebugStringOptions.IncludeAnnotations) != 0)

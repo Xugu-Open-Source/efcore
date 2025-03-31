@@ -1,0 +1,92 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Microsoft XuGu database provider for Entity Framework Core.</Description>
+    <TargetFramework>net6.0</TargetFramework>
+    <MinClientVersion>3.6</MinClientVersion>
+    <AssemblyName>Microsoft.EntityFrameworkCore.XuGu</AssemblyName>
+    <RootNamespace>Microsoft.EntityFrameworkCore.XuGu</RootNamespace>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <PackageTags>$(PackageTags);XuGu</PackageTags>
+    <ImplicitUsings>true</ImplicitUsings>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>SA0001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Remove="D:\Projects\efcore-7.0.0\stylecop.json" />
+    <AdditionalFiles Remove="stylecop.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System.Data.Common" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Linq.Expressions" />
+    <Using Include="System.Reflection" />
+    <Using Include="Microsoft.EntityFrameworkCore" />
+    <Using Include="Microsoft.EntityFrameworkCore.ChangeTracking" />
+    <Using Include="Microsoft.EntityFrameworkCore.Diagnostics" />
+    <Using Include="Microsoft.EntityFrameworkCore.Design" />
+    <Using Include="Microsoft.EntityFrameworkCore.Infrastructure" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata.Builders" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata.Conventions" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure" />
+    <Using Include="Microsoft.EntityFrameworkCore.Migrations" />
+    <Using Include="Microsoft.EntityFrameworkCore.Migrations.Operations" />
+    <Using Include="Microsoft.EntityFrameworkCore.Query" />
+    <Using Include="Microsoft.EntityFrameworkCore.Scaffolding" />
+    <Using Include="Microsoft.EntityFrameworkCore.Storage" />
+    <Using Include="Microsoft.EntityFrameworkCore.Storage.ValueConversion" />
+    <Using Include="Microsoft.EntityFrameworkCore.Update" />
+    <Using Include="Microsoft.EntityFrameworkCore.ValueGeneration" />
+    <Using Include="Microsoft.EntityFrameworkCore.Utilities" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="XuguClient">
+      <HintPath>..\..\..\csharp-driver7.0\XGCSClient\bin\Debug\netstandard2.1\XuguClient.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\XGJsonStrings.Designer.cs">
+      <DependentUpon>XGJsonStrings.Designer.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="Properties\XGStrings.Designer.cs">
+      <DependentUpon>XGStrings.Designer.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\XGJsonStrings.Designer.tt">
+      <CustomToolNamespace>Microsoft.EntityFrameworkCore.XuGu.Internal</CustomToolNamespace>
+      <LastGenOutput>XGJsonStrings.Designer.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="Properties\XGStrings.Designer.tt">
+      <CustomToolNamespace>Microsoft.EntityFrameworkCore.XuGu.Internal</CustomToolNamespace>
+      <LastGenOutput>XGStrings.Designer.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+</Project>

@@ -19,7 +19,9 @@ public class SqliteSqlTranslatingExpressionVisitorFactory : IRelationalSqlTransl
     /// </summary>
     public SqliteSqlTranslatingExpressionVisitorFactory(
         RelationalSqlTranslatingExpressionVisitorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.

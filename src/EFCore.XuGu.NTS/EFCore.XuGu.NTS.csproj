@@ -1,0 +1,89 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>NetTopologySuite support for Pomelo's XuGu provider for Entity Framework Core.</Description>
+    <TargetFramework>net6.0</TargetFramework>
+    <MinClientVersion>3.6</MinClientVersion>
+    <AssemblyName>Microsoft.EntityFrameworkCore.XuGu.NetTopologySuite</AssemblyName>
+    <RootNamespace>Microsoft.EntityFrameworkCore.XuGu</RootNamespace>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ImplicitUsings>true</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>SA0001</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="System.Data.Common" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Linq.Expressions" />
+    <Using Include="System.Reflection" />
+    <Using Include="Microsoft.EntityFrameworkCore" />
+    <Using Include="Microsoft.EntityFrameworkCore.ChangeTracking" />
+    <Using Include="Microsoft.EntityFrameworkCore.Diagnostics" />
+    <Using Include="Microsoft.EntityFrameworkCore.Design" />
+    <Using Include="Microsoft.EntityFrameworkCore.Infrastructure" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata.Builders" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata.Conventions" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure" />
+    <Using Include="Microsoft.EntityFrameworkCore.Migrations" />
+    <Using Include="Microsoft.EntityFrameworkCore.Migrations.Operations" />
+    <Using Include="Microsoft.EntityFrameworkCore.Query" />
+    <Using Include="Microsoft.EntityFrameworkCore.Scaffolding" />
+    <Using Include="Microsoft.EntityFrameworkCore.Storage" />
+    <Using Include="Microsoft.EntityFrameworkCore.Storage.ValueConversion" />
+    <Using Include="Microsoft.EntityFrameworkCore.Update" />
+    <Using Include="Microsoft.EntityFrameworkCore.ValueGeneration" />
+    <Using Include="Microsoft.EntityFrameworkCore.Utilities" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="NetTopologySuite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite" Version="2.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EFCore.Analyzers\EFCore.Analyzers.csproj" />
+    <ProjectReference Include="..\EFCore.XuGu\EFCore.XuGu.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="XuguClient">
+      <HintPath>..\..\..\csharp-driver7.0\XGCSClient\bin\Debug\netstandard2.1\XuguClient.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  
+
+  <ItemGroup>
+    <None Update="Properties\XGNTSStrings.Designer.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>XGNTSStrings.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>Microsoft.EntityFrameworkCore.XuGu.Internal</CustomToolNamespace>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\XGNTSStrings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>XGNTSStrings.Designer.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\XGNTSStrings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>XGNTSStrings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

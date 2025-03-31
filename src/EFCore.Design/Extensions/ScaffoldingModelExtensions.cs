@@ -27,9 +27,8 @@ public static class ScaffoldingModelExtensions
             var primaryKey = entityType.FindPrimaryKey();
             var properties = entityType.GetProperties().ToList();
             var foreignKeys = entityType.GetForeignKeys().ToList();
-            var referencingForeignKeys = entityType.GetReferencingForeignKeys().ToList();
-            if (primaryKey is { Properties.Count: > 1 }
-                && referencingForeignKeys.Count == 0
+            if (primaryKey != null
+                && primaryKey.Properties.Count > 1
                 && foreignKeys.Count == 2
                 && primaryKey.Properties.Count == properties.Count
                 && foreignKeys[0].Properties.Count + foreignKeys[1].Properties.Count == properties.Count
@@ -67,7 +66,6 @@ public static class ScaffoldingModelExtensions
     /// <returns>The property name.</returns>
     public static string GetDbSetName(this IReadOnlyEntityType entityType)
         => (string?)entityType[ScaffoldingAnnotationNames.DbSetName]
-            ?? entityType.GetTableName()
             ?? entityType.ShortName();
 
     /// <summary>
@@ -289,14 +287,16 @@ public static class ScaffoldingModelExtensions
         this INavigation navigation,
         IAnnotationCodeGenerator annotationCodeGenerator)
     {
-        if (navigation.IsOnDependent)
+        if (navigation.IsOnDependent
+            && navigation.ForeignKey.PrincipalKey.IsPrimaryKey())
         {
             yield return new AttributeCodeFragment(
                 typeof(ForeignKeyAttribute),
                 string.Join(", ", navigation.ForeignKey.Properties.Select(p => p.Name)));
         }
 
-        if (navigation.Inverse != null)
+        if (navigation.ForeignKey.PrincipalKey.IsPrimaryKey()
+            && navigation.Inverse != null)
         {
             yield return new AttributeCodeFragment(typeof(InversePropertyAttribute), navigation.Inverse.Name);
         }
@@ -312,11 +312,14 @@ public static class ScaffoldingModelExtensions
         this ISkipNavigation skipNavigation,
         IAnnotationCodeGenerator annotationCodeGenerator)
     {
-        yield return new AttributeCodeFragment(
-            typeof(ForeignKeyAttribute),
-            string.Join(", ", skipNavigation.ForeignKey.Properties.Select(p => p.Name)));
+        if (skipNavigation.ForeignKey!.PrincipalKey.IsPrimaryKey())
+        {
+            yield return new AttributeCodeFragment(
+                typeof(ForeignKeyAttribute),
+                string.Join(", ", skipNavigation.ForeignKey.Properties.Select(p => p.Name)));
 
-        yield return new AttributeCodeFragment(typeof(InversePropertyAttribute), skipNavigation.Inverse.Name);
+            yield return new AttributeCodeFragment(typeof(InversePropertyAttribute), skipNavigation.Inverse.Name);
+        }
     }
 
     /// <summary>
@@ -398,9 +401,7 @@ public static class ScaffoldingModelExtensions
         var toTableArguments = new List<object?>();
 
         if (explicitSchema
-            || tableName != null
-            && (tableName != entityType.GetDbSetName()
-                || (entityType.IsSimpleManyToManyJoinEntityType() && tableName != entityType.ShortName())))
+            || tableName != null && tableName != entityType.GetDbSetName())
         {
             toTableHandledByConventions = false;
 
@@ -719,12 +720,6 @@ public static class ScaffoldingModelExtensions
         var hasForeignKey =
             new FluentApiCodeFragment(nameof(ReferenceReferenceBuilder.HasForeignKey)) { IsHandledByDataAnnotations = true };
 
-        // HACK: Work around issue #29448
-        if (!foreignKey.PrincipalKey.IsPrimaryKey())
-        {
-            hasForeignKey.IsHandledByDataAnnotations = false;
-        }
-
         if (foreignKey.IsUnique)
         {
             hasForeignKey.TypeArguments.Add(foreignKey.DeclaringEntityType.Name);
@@ -819,23 +814,6 @@ public static class ScaffoldingModelExtensions
         bool isHandledByDataAnnotations = false)
     {
         FluentApiCodeFragment? root = null;
-
-        if (annotatable is IProperty property
-            && annotations.TryGetValue(RelationalAnnotationNames.DefaultValueSql, out _)
-            && annotations.TryGetValue(RelationalAnnotationNames.DefaultValue, out var parsedAnnotation))
-        {
-            if (Equals(property.ClrType.GetDefaultValue(), parsedAnnotation.Value))
-            {
-                // Default value is CLR default for property, so exclude it from scaffolded model
-                annotations.Remove(RelationalAnnotationNames.DefaultValueSql);
-                annotations.Remove(RelationalAnnotationNames.DefaultValue);
-            }
-            else
-            {
-                // SQL was parsed, so use parsed value and exclude raw value
-                annotations.Remove(RelationalAnnotationNames.DefaultValueSql);
-            }
-        }
 
         foreach (var methodCall in annotationCodeGenerator.GenerateFluentApiCalls(annotatable, annotations))
         {

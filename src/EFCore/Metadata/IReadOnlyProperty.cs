@@ -3,12 +3,11 @@
 
 using System.Text;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Microsoft.EntityFrameworkCore.Metadata;
 
 /// <summary>
-///     Represents a scalar property of a structural type.
+///     Represents a scalar property of an entity type.
 /// </summary>
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-modeling">Modeling entity types and relationships</see> for more information and examples.
@@ -18,9 +17,7 @@ public interface IReadOnlyProperty : IReadOnlyPropertyBase
     /// <summary>
     ///     Gets the entity type that this property belongs to.
     /// </summary>
-    [Obsolete("Use DeclaringType and cast to IReadOnlyEntityType or IReadOnlyComplexType")]
-    IReadOnlyEntityType DeclaringEntityType
-        => (IReadOnlyEntityType)DeclaringType;
+    IReadOnlyEntityType DeclaringEntityType { get; }
 
     /// <summary>
     ///     Gets a value indicating whether this property can contain <see langword="null" />.
@@ -70,10 +67,7 @@ public interface IReadOnlyProperty : IReadOnlyPropertyBase
     ///     Gets the maximum length of data that is allowed in this property. For example, if the property is a <see cref="string" />
     ///     then this is the maximum number of characters.
     /// </summary>
-    /// <returns>
-    ///     The maximum length, <c>-1</c> if the property has no maximum length, or <see langword="null" /> if the maximum length hasn't been
-    ///     set.
-    /// </returns>
+    /// <returns>The maximum length, or <see langword="null" /> if none is defined.</returns>
     int? GetMaxLength();
 
     /// <summary>
@@ -135,7 +129,7 @@ public interface IReadOnlyProperty : IReadOnlyPropertyBase
     ///     Gets the factory that has been set to generate values for this property, if any.
     /// </summary>
     /// <returns>The factory, or <see langword="null" /> if no factory has been set.</returns>
-    Func<IProperty, ITypeBase, ValueGenerator>? GetValueGeneratorFactory();
+    Func<IProperty, IEntityType, ValueGenerator>? GetValueGeneratorFactory();
 
     /// <summary>
     ///     Gets the custom <see cref="ValueConverter" /> set for this property.
@@ -168,24 +162,6 @@ public interface IReadOnlyProperty : IReadOnlyPropertyBase
     ValueComparer? GetProviderValueComparer();
 
     /// <summary>
-    ///     Gets the <see cref="JsonValueReaderWriter" /> for this property, or <see langword="null" /> if none is set.
-    /// </summary>
-    /// <returns>The reader/writer, or <see langword="null" /> if none has been set.</returns>
-    JsonValueReaderWriter? GetJsonValueReaderWriter();
-
-    /// <summary>
-    ///     Gets the configuration for elements of the primitive collection represented by this property.
-    /// </summary>
-    /// <returns>The configuration for the elements.</returns>
-    IReadOnlyElementType? GetElementType();
-
-    /// <summary>
-    ///     A property is a primitive collection if it has an element type that matches the element type of the CLR type.
-    /// </summary>
-    /// <returns><see langword="true" /> if the property represents a primitive collection.</returns>
-    bool IsPrimitiveCollection { get; }
-
-    /// <summary>
     ///     Finds the first principal property that the given property is constrained by
     ///     if the given property is part of a foreign key.
     /// </summary>
@@ -212,31 +188,21 @@ public interface IReadOnlyProperty : IReadOnlyPropertyBase
     /// </summary>
     /// <returns>The list of all associated principal properties including the given property.</returns>
     IReadOnlyList<IReadOnlyProperty> GetPrincipals()
-        => GetPrincipals<IReadOnlyProperty>();
-
-    /// <summary>
-    ///     Finds the list of principal properties including the given property that the given property is constrained by
-    ///     if the given property is part of a foreign key.
-    /// </summary>
-    /// <returns>The list of all associated principal properties including the given property.</returns>
-    IReadOnlyList<T> GetPrincipals<T>()
-        where T : IReadOnlyProperty
     {
-        var principals = new List<T> { (T)this };
-        AddPrincipals((T)this, principals);
+        var principals = new List<IReadOnlyProperty> { this };
+        AddPrincipals(this, principals);
         return principals;
     }
 
-    private static void AddPrincipals<T>(T property, List<T> visited)
-        where T : IReadOnlyProperty
+    private static void AddPrincipals(IReadOnlyProperty property, List<IReadOnlyProperty> visited)
     {
         foreach (var foreignKey in property.GetContainingForeignKeys())
         {
             for (var propertyIndex = 0; propertyIndex < foreignKey.Properties.Count; propertyIndex++)
             {
-                if (ReferenceEquals(property, foreignKey.Properties[propertyIndex]))
+                if (property == foreignKey.Properties[propertyIndex])
                 {
-                    var principal = (T)foreignKey.PrincipalKey.Properties[propertyIndex];
+                    var principal = foreignKey.PrincipalKey.Properties[propertyIndex];
                     if (!visited.Contains(principal))
                     {
                         visited.Add(principal);
@@ -333,7 +299,7 @@ public interface IReadOnlyProperty : IReadOnlyPropertyBase
             var singleLine = (options & MetadataDebugStringOptions.SingleLine) != 0;
             if (singleLine)
             {
-                builder.Append($"Property: {DeclaringType.DisplayName()}.");
+                builder.Append($"Property: {DeclaringEntityType.DisplayName()}.");
             }
 
             builder.Append(Name).Append(" (");
@@ -391,11 +357,6 @@ public interface IReadOnlyProperty : IReadOnlyPropertyBase
                 builder.Append(" Concurrency");
             }
 
-            if (Sentinel != null && !Equals(Sentinel, ClrType.GetDefaultValue()))
-            {
-                builder.Append(" Sentinel:").Append(Sentinel);
-            }
-
             if (GetBeforeSaveBehavior() != PropertySaveBehavior.Save)
             {
                 builder.Append(" BeforeSave:").Append(GetBeforeSaveBehavior());
@@ -418,18 +379,12 @@ public interface IReadOnlyProperty : IReadOnlyPropertyBase
 
             if (IsUnicode() == false)
             {
-                builder.Append(" ANSI");
+                builder.Append(" Ansi");
             }
 
             if (GetPropertyAccessMode() != PropertyAccessMode.PreferField)
             {
                 builder.Append(" PropertyAccessMode.").Append(GetPropertyAccessMode());
-            }
-
-            var elementType = GetElementType();
-            if (elementType != null)
-            {
-                builder.Append(" Element type: ").Append(elementType.ToDebugString());
             }
 
             if ((options & MetadataDebugStringOptions.IncludePropertyIndexes) != 0

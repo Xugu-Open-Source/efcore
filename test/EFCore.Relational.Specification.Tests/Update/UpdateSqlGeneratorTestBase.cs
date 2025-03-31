@@ -7,8 +7,6 @@ using Microsoft.EntityFrameworkCore.Update.Internal;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Update;
 
-#nullable disable
-
 public abstract class UpdateSqlGeneratorTestBase
 {
     [ConditionalFact]
@@ -246,7 +244,7 @@ public abstract class UpdateSqlGeneratorTestBase
         entry.SetEntityState(EntityState.Added);
         var generator = new ParameterNameGenerator();
 
-        var duckType = entry.EntityType;
+        var duckType = model.FindEntityType(typeof(Duck));
         var idProperty = duckType.FindProperty(nameof(Duck.Id));
         var nameProperty = duckType.FindProperty(nameof(Duck.Name));
         var quacksProperty = duckType.FindProperty(nameof(Duck.Quacks));
@@ -288,7 +286,7 @@ public abstract class UpdateSqlGeneratorTestBase
         entry.SetEntityState(EntityState.Modified);
         var generator = new ParameterNameGenerator();
 
-        var duckType = entry.EntityType;
+        var duckType = model.FindEntityType(typeof(Duck));
         var idProperty = duckType.FindProperty(nameof(Duck.Id));
         var nameProperty = duckType.FindProperty(nameof(Duck.Name));
         var quacksProperty = duckType.FindProperty(nameof(Duck.Quacks));
@@ -319,12 +317,13 @@ public abstract class UpdateSqlGeneratorTestBase
 
     protected IModificationCommand CreateDeleteCommand(bool concurrencyToken = true)
     {
-        var stateManager = TestHelpers.CreateContextServices(GetDuckModel()).GetRequiredService<IStateManager>();
+        var model = GetDuckModel();
+        var stateManager = TestHelpers.CreateContextServices(model).GetRequiredService<IStateManager>();
         var entry = stateManager.GetOrCreateEntry(new Duck());
         entry.SetEntityState(EntityState.Deleted);
         var generator = new ParameterNameGenerator();
 
-        var duckType = entry.EntityType;
+        var duckType = model.FindEntityType(typeof(Duck));
         var idProperty = duckType.FindProperty(nameof(Duck.Id));
         var concurrencyProperty = duckType.FindProperty(nameof(Duck.ConcurrencyToken));
 

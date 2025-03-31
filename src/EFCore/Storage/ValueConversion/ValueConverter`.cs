@@ -16,12 +16,6 @@ public class ValueConverter<TModel, TProvider> : ValueConverter
 {
     private Func<object?, object?>? _convertToProvider;
     private Func<object?, object?>? _convertFromProvider;
-    private Func<TModel, TProvider>? _convertToProviderTyped;
-    private Func<TProvider, TModel>? _convertFromProviderTyped;
-
-    private static readonly ConstructorInfo MappingHintsCtor
-        = typeof(ConverterMappingHints).GetConstructor(
-            [typeof(int?), typeof(int?), typeof(int?), typeof(bool?), typeof(Func<IProperty, IEntityType, ValueGenerator>)])!;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="ValueConverter{TModel,TProvider}" /> class.
@@ -78,13 +72,17 @@ public class ValueConverter<TModel, TProvider> : ValueConverter
     }
 
     private static Func<object?, object?> SanitizeConverter<TIn, TOut>(
-        Func<TIn, TOut> convertFunc,
+        Expression<Func<TIn, TOut>> convertExpression,
         bool convertsNulls)
-        => convertsNulls
-            ? v => convertFunc((TIn)v!)
+    {
+        var compiled = convertExpression.Compile();
+
+        return convertsNulls
+            ? v => compiled((TIn)v!)
             : v => v == null
                 ? null
-                : convertFunc(Sanitize<TIn>(v));
+                : compiled(Sanitize<TIn>(v));
+    }
 
     private static T Sanitize<T>(object value)
     {
@@ -104,7 +102,7 @@ public class ValueConverter<TModel, TProvider> : ValueConverter
     /// </remarks>
     public override Func<object?, object?> ConvertToProvider
         => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _convertToProvider, this, static c => SanitizeConverter(c.ConvertToProviderTyped, c.ConvertsNulls));
+            ref _convertToProvider, this, static c => SanitizeConverter(c.ConvertToProviderExpression, c.ConvertsNulls));
 
     /// <summary>
     ///     Gets the function to convert objects when reading data from the store,
@@ -115,27 +113,7 @@ public class ValueConverter<TModel, TProvider> : ValueConverter
     /// </remarks>
     public override Func<object?, object?> ConvertFromProvider
         => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _convertFromProvider, this, static c => SanitizeConverter(c.ConvertFromProviderTyped, c.ConvertsNulls));
-
-    /// <summary>
-    ///     Gets the function to convert objects when writing data to the store.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-value-converters">EF Core value converters</see> for more information and examples.
-    /// </remarks>
-    public virtual Func<TModel, TProvider> ConvertToProviderTyped
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _convertToProviderTyped, this, static c => c.ConvertToProviderExpression.Compile());
-
-    /// <summary>
-    ///     Gets the function to convert objects when reading data from the store.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-value-converters">EF Core value converters</see> for more information and examples.
-    /// </remarks>
-    public virtual Func<TProvider, TModel> ConvertFromProviderTyped
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _convertFromProviderTyped, this, static c => c.ConvertFromProviderExpression.Compile());
+            ref _convertFromProvider, this, static c => SanitizeConverter(c.ConvertFromProviderExpression, c.ConvertsNulls));
 
     /// <summary>
     ///     Gets the expression to convert objects when writing data to the store,
@@ -176,28 +154,4 @@ public class ValueConverter<TModel, TProvider> : ValueConverter
     /// </remarks>
     public override Type ProviderClrType
         => typeof(TProvider);
-
-    private readonly ConstructorInfo _constructorInfo = typeof(ValueConverter<TModel, TProvider>).GetConstructor(
-    [
-        typeof(Expression<Func<TModel, TProvider>>),
-        typeof(Expression<Func<TProvider, TModel>>),
-        typeof(ConverterMappingHints)
-    ])!;
-
-    /// <inheritdoc />
-    public override Expression ConstructorExpression
-        => Expression.New(
-            _constructorInfo,
-            ConvertToProviderExpression,
-            ConvertFromProviderExpression,
-            MappingHints != null
-                ? Expression.New(
-                    MappingHintsCtor,
-                    Expression.Constant(MappingHints.Size, typeof(int?)),
-                    Expression.Constant(MappingHints.Precision, typeof(int?)),
-                    Expression.Constant(MappingHints.Scale, typeof(int?)),
-                    Expression.Constant(MappingHints.IsUnicode, typeof(bool?)),
-                    // valueGeneratorFactory is difficult to build using Expression trees and is obsolete
-                    Expression.Default(typeof(Func<IProperty, IEntityType, ValueGenerator>)))
-                : Expression.Default(typeof(ConverterMappingHints)));
 }

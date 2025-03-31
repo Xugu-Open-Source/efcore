@@ -3,40 +3,21 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class FunkyDataQuerySqliteTest : FunkyDataQueryTestBase<FunkyDataQuerySqliteTest.FunkyDataQuerySqliteFixture>
 {
-    public FunkyDataQuerySqliteTest(FunkyDataQuerySqliteFixture fixture, ITestOutputHelper testOutputHelper)
+    public FunkyDataQuerySqliteTest(FunkyDataQuerySqliteFixture fixture)
         : base(fixture)
     {
-        Fixture.TestSqlLoggerFactory.Clear();
-        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
-    public override async Task String_Contains_and_StartsWith_with_same_parameter(bool async)
-    {
-        await base.String_Contains_and_StartsWith_with_same_parameter(async);
-
-        AssertSql(
-            """
-@s='B' (Size = 1)
-@s_startswith='B%' (Size = 2)
-
-SELECT "f"."Id", "f"."FirstName", "f"."LastName", "f"."NullableBool"
-FROM "FunkyCustomers" AS "f"
-WHERE instr("f"."FirstName", @s) > 0 OR "f"."LastName" LIKE @s_startswith ESCAPE '\'
-""");
-    }
+    protected virtual bool CanExecuteQueryString
+        => false;
 
     protected override QueryAsserter CreateQueryAsserter(FunkyDataQuerySqliteFixture fixture)
         => new RelationalQueryAsserter(
-            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression);
+            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression, canExecuteQueryString: CanExecuteQueryString);
 
-    private void AssertSql(params string[] expected)
-        => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
-
-    public class FunkyDataQuerySqliteFixture : FunkyDataQueryFixtureBase, ITestSqlLoggerFactory
+    public class FunkyDataQuerySqliteFixture : FunkyDataQueryFixtureBase
     {
         public TestSqlLoggerFactory TestSqlLoggerFactory
             => (TestSqlLoggerFactory)ListLoggerFactory;

@@ -157,7 +157,8 @@ public class ReferenceNavigationBuilder : IInfrastructure<IConventionForeignKeyB
         var builder = Builder.HasEntityTypes(
             (EntityType)RelatedEntityType, (EntityType)DeclaringEntityType, ConfigurationSource.Explicit)!;
         var collectionName = collection.Name;
-        if (builder.Metadata is { IsUnique: true, PrincipalToDependent: not null }
+        if (builder.Metadata.IsUnique
+            && builder.Metadata.PrincipalToDependent != null
             && builder.Metadata.GetPrincipalToDependentConfigurationSource() == ConfigurationSource.Explicit
             && collectionName != null)
         {

@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore.TestModels.ConferencePlanner.ConferenceDTO;
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ConferencePlanner;
 
-#nullable disable
-
 public static class EntityExtensions
 {
     public static SessionResponse MapSessionResponse(this Session session)

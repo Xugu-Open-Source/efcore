@@ -19,7 +19,7 @@ namespace Microsoft.EntityFrameworkCore.Storage;
 ///         your constructor so that an instance will be created and injected automatically by the
 ///         dependency injection container. To create an instance with some dependent services replaced,
 ///         first resolve the object from the dependency injection container, then replace selected
-///         services using the C# 'with' operator. Do not call the constructor at any point in this process.
+///         services using the 'With...' methods. Do not call the constructor at any point in this process.
 ///     </para>
 ///     <para>
 ///         The service lifetime is <see cref="ServiceLifetime.Scoped" />. This means that each
@@ -41,7 +41,7 @@ public sealed record RelationalDatabaseCreatorDependencies
     ///     as new dependencies are added. Instead, use this type in your constructor so that an instance
     ///     will be created and injected automatically by the dependency injection container. To create
     ///     an instance with some dependent services replaced, first resolve the object from the dependency
-    ///     injection container, then replace selected services using the C# 'with' operator. Do not call
+    ///     injection container, then replace selected services using the 'With...' methods. Do not call
     ///     the constructor at any point in this process.
     /// </remarks>
     [EntityFrameworkInternal]
@@ -53,7 +53,6 @@ public sealed record RelationalDatabaseCreatorDependencies
         ISqlGenerationHelper sqlGenerationHelper,
         IExecutionStrategy executionStrategy,
         ICurrentDbContext currentContext,
-        IDbContextOptions contextOptions,
         IRelationalCommandDiagnosticsLogger commandLogger)
     {
         Connection = connection;
@@ -63,7 +62,6 @@ public sealed record RelationalDatabaseCreatorDependencies
         SqlGenerationHelper = sqlGenerationHelper;
         ExecutionStrategy = executionStrategy;
         CurrentContext = currentContext;
-        ContextOptions = contextOptions;
         CommandLogger = commandLogger;
     }
 
@@ -101,11 +99,6 @@ public sealed record RelationalDatabaseCreatorDependencies
     ///     Gets the command logger.
     /// </summary>
     public IRelationalCommandDiagnosticsLogger CommandLogger { get; init; }
-
-    /// <summary>
-    ///     Gets the context options.
-    /// </summary>
-    public IDbContextOptions ContextOptions { get; init; }
 
     /// <summary>
     ///     Contains the <see cref="DbContext" /> currently in use.

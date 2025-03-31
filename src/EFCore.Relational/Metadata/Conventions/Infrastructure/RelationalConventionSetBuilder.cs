@@ -41,7 +41,9 @@ public abstract class RelationalConventionSetBuilder : ProviderConventionSetBuil
         ProviderConventionSetBuilderDependencies dependencies,
         RelationalConventionSetBuilderDependencies relationalDependencies)
         : base(dependencies)
-        => RelationalDependencies = relationalDependencies;
+    {
+        RelationalDependencies = relationalDependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.
@@ -71,7 +73,6 @@ public abstract class RelationalConventionSetBuilder : ProviderConventionSetBuil
         conventionSet.Add(new TableValuedDbFunctionConvention(Dependencies, RelationalDependencies));
         conventionSet.Add(new StoreGenerationConvention(Dependencies, RelationalDependencies));
         conventionSet.Add(new EntitySplittingConvention(Dependencies, RelationalDependencies));
-        conventionSet.Add(new DiscriminatorLengthConvention(Dependencies, RelationalDependencies));
         conventionSet.Add(new EntityTypeHierarchyMappingConvention(Dependencies, RelationalDependencies));
         conventionSet.Add(new SequenceUniquificationConvention(Dependencies, RelationalDependencies));
         conventionSet.Add(new SharedTableConvention(Dependencies, RelationalDependencies));
@@ -79,15 +80,9 @@ public abstract class RelationalConventionSetBuilder : ProviderConventionSetBuil
 
         conventionSet.Replace<ValueGenerationConvention>(
             new RelationalValueGenerationConvention(Dependencies, RelationalDependencies));
-
-        conventionSet.Replace<KeyDiscoveryConvention>(
-            new RelationalKeyDiscoveryConvention(Dependencies, RelationalDependencies));
-
         conventionSet.Replace<QueryFilterRewritingConvention>(
             new RelationalQueryFilterRewritingConvention(Dependencies, RelationalDependencies));
-
-        conventionSet.Replace<RuntimeModelConvention>(
-            new RelationalRuntimeModelConvention(Dependencies, RelationalDependencies));
+        conventionSet.Replace<RuntimeModelConvention>(new RelationalRuntimeModelConvention(Dependencies, RelationalDependencies));
 
         return conventionSet;
     }

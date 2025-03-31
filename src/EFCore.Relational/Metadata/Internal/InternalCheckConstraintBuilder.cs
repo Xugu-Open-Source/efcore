@@ -98,7 +98,7 @@ public class InternalCheckConstraintBuilder :
                     return null;
                 }
 
-                checkConstraintsToBeDetached ??= [];
+                checkConstraintsToBeDetached ??= new List<IConventionCheckConstraint>();
 
                 checkConstraintsToBeDetached.Add(derivedCheckConstraint);
             }
@@ -107,7 +107,7 @@ public class InternalCheckConstraintBuilder :
         List<IConventionCheckConstraint>? detachedCheckConstraints = null;
         if (checkConstraintsToBeDetached != null)
         {
-            detachedCheckConstraints = [];
+            detachedCheckConstraints = new List<IConventionCheckConstraint>();
             foreach (var checkConstraintToBeDetached in checkConstraintsToBeDetached)
             {
                 detachedCheckConstraints.Add(
@@ -173,27 +173,6 @@ public class InternalCheckConstraintBuilder :
         [DebuggerStepThrough]
         get => Metadata;
     }
-
-    /// <inheritdoc />
-    [DebuggerStepThrough]
-    IConventionCheckConstraintBuilder? IConventionCheckConstraintBuilder.HasAnnotation(string name, object? value, bool fromDataAnnotation)
-        => (IConventionCheckConstraintBuilder?)base.HasAnnotation(
-            name, value, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <inheritdoc />
-    [DebuggerStepThrough]
-    IConventionCheckConstraintBuilder? IConventionCheckConstraintBuilder.HasNonNullAnnotation(
-        string name,
-        object? value,
-        bool fromDataAnnotation)
-        => (IConventionCheckConstraintBuilder?)base.HasNonNullAnnotation(
-            name, value, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <inheritdoc />
-    [DebuggerStepThrough]
-    IConventionCheckConstraintBuilder? IConventionCheckConstraintBuilder.HasNoAnnotation(string name, bool fromDataAnnotation)
-        => (IConventionCheckConstraintBuilder?)base.HasNoAnnotation(
-            name, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <inheritdoc />
     [DebuggerStepThrough]

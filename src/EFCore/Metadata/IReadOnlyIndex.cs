@@ -79,7 +79,7 @@ public interface IReadOnlyIndex : IReadOnlyAnnotatable
                 ", ",
                 Properties.Select(
                     p => singleLine
-                        ? p.DeclaringType.DisplayName(omitSharedType: true) + "." + p.Name
+                        ? p.DeclaringEntityType.DisplayName(omitSharedType: true) + "." + p.Name
                         : p.Name));
 
         if (Name != null)

@@ -3,11 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class TPTRelationshipsQuerySqliteTest(TPTRelationshipsQuerySqliteTest.TPTRelationshipsQuerySqliteFixture fixture) :
-    TPTRelationshipsQueryTestBase<TPTRelationshipsQuerySqliteTest.TPTRelationshipsQuerySqliteFixture>(fixture)
+public class TPTRelationshipsQuerySqliteTest :
+    TPTRelationshipsQueryTestBase<TPTRelationshipsQuerySqliteTest.TPTRelationshipsQuerySqliteFixture>
 {
+    public TPTRelationshipsQuerySqliteTest(TPTRelationshipsQuerySqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class TPTRelationshipsQuerySqliteFixture : TPTRelationshipsQueryRelationalFixture
     {
         protected override ITestStoreFactory TestStoreFactory

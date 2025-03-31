@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
@@ -23,7 +24,9 @@ public class KeyPropagator : IKeyPropagator
     /// </summary>
     public KeyPropagator(
         IValueGeneratorSelector valueGeneratorSelector)
-        => _valueGeneratorSelector = valueGeneratorSelector;
+    {
+        _valueGeneratorSelector = valueGeneratorSelector;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -46,7 +49,7 @@ public class KeyPropagator : IKeyPropagator
                 generationProperty,
                 generationProperty == property
                     ? entry.EntityType
-                    : generationProperty?.DeclaringType);
+                    : generationProperty?.DeclaringEntityType);
 
             if (valueGenerator != null)
             {
@@ -81,7 +84,7 @@ public class KeyPropagator : IKeyPropagator
                 generationProperty,
                 generationProperty == property
                     ? entry.EntityType
-                    : generationProperty?.DeclaringType);
+                    : generationProperty?.DeclaringEntityType);
 
             if (valueGenerator != null)
             {
@@ -146,8 +149,9 @@ public class KeyPropagator : IKeyPropagator
 
                         if (principalProperty != property)
                         {
+                            var principalValue = principalEntry[principalProperty];
                             if (generationProperty == null
-                                || principalEntry.HasExplicitValue(principalProperty))
+                                || !principalProperty.ClrType.IsDefaultValue(principalValue))
                             {
                                 entry.PropagateValue(principalEntry, principalProperty, property);
 
@@ -164,21 +168,8 @@ public class KeyPropagator : IKeyPropagator
         return null;
     }
 
-    private ValueGenerator? TryGetValueGenerator(IProperty? generationProperty, ITypeBase? typeBase)
-    {
-        if (generationProperty == null)
-        {
-            return null;
-        }
-
-        if (!_valueGeneratorSelector.TrySelect(generationProperty, typeBase!, out var valueGenerator))
-        {
-            throw new NotSupportedException(
-                CoreStrings.NoValueGenerator(
-                    generationProperty.Name, generationProperty.DeclaringType.DisplayName(),
-                    generationProperty.ClrType.ShortDisplayName()));
-        }
-
-        return valueGenerator!;
-    }
+    private ValueGenerator? TryGetValueGenerator(IProperty? generationProperty, IEntityType? entityType)
+        => generationProperty != null
+            ? _valueGeneratorSelector.Select(generationProperty, entityType!)
+            : null;
 }

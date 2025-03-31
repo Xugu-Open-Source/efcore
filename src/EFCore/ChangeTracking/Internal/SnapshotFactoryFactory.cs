@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -20,8 +21,14 @@ public abstract class SnapshotFactoryFactory
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual Func<ISnapshot> CreateEmpty(IRuntimeEntityType entityType)
-        => CreateEmptyExpression(entityType).Compile();
+    public virtual Func<ISnapshot> CreateEmpty(IEntityType entityType)
+        => GetPropertyCount(entityType) == 0
+            ? (() => Snapshot.Empty)
+            : Expression.Lambda<Func<ISnapshot>>(
+                    // TODO-Nullable: This whole code path is null unsafe. We are passing null parameter but later using parameter
+                    // as if always exists.
+                    CreateConstructorExpression(entityType, null!))
+                .Compile();
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -29,29 +36,16 @@ public abstract class SnapshotFactoryFactory
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual Expression<Func<ISnapshot>> CreateEmptyExpression(IRuntimeEntityType entityType)
-        => Expression.Lambda<Func<ISnapshot>>(CreateConstructorExpression(entityType, null));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual Expression CreateConstructorExpression(
-        IRuntimeEntityType entityType,
-        Expression? parameter)
+    protected virtual Expression CreateConstructorExpression(
+        IEntityType entityType,
+        ParameterExpression parameter)
     {
         var count = GetPropertyCount(entityType);
-        if (count == 0)
-        {
-            return Expression.MakeMemberAccess(null, Snapshot.EmptyField);
-        }
 
         var types = new Type[count];
-        var propertyBases = new IPropertyBase?[count];
+        var propertyBases = new IPropertyBase[count];
 
-        foreach (var propertyBase in entityType.GetSnapshottableMembers())
+        foreach (var propertyBase in entityType.GetPropertiesAndNavigations())
         {
             var index = GetPropertyIndex(propertyBase);
             if (index >= 0)
@@ -99,9 +93,9 @@ public abstract class SnapshotFactoryFactory
     /// </summary>
     protected virtual Expression CreateSnapshotExpression(
         Type? entityType,
-        Expression? parameter,
+        ParameterExpression parameter,
         Type[] types,
-        IList<IPropertyBase?> propertyBases)
+        IList<IPropertyBase> propertyBases)
     {
         var count = types.Length;
 
@@ -114,34 +108,31 @@ public abstract class SnapshotFactoryFactory
         for (var i = 0; i < count; i++)
         {
             var propertyBase = propertyBases[i];
-
-            switch (propertyBase)
+            if (propertyBase == null)
             {
-                case null:
-                    arguments[i] = Expression.Constant(null);
-                    types[i] = typeof(object);
-                    continue;
+                arguments[i] = Expression.Constant(null);
+                types[i] = typeof(object);
+                continue;
+            }
 
-                case IProperty property:
-                    arguments[i] = CreateSnapshotValueExpression(CreateReadValueExpression(parameter, property), property);
-                    continue;
+            if (propertyBase is IProperty property)
+            {
+                arguments[i] = CreateSnapshotValueExpression(CreateReadValueExpression(parameter, property), property);
+                continue;
+            }
 
-                case IComplexProperty complexProperty:
-                    arguments[i] = CreateSnapshotValueExpression(CreateReadValueExpression(parameter, complexProperty), complexProperty);
-                    continue;
-
-                case var _ when propertyBase.IsShadowProperty():
-                    arguments[i] = CreateSnapshotValueExpression(CreateReadShadowValueExpression(parameter, propertyBase), propertyBase);
-                    continue;
+            if (propertyBase.IsShadowProperty())
+            {
+                arguments[i] = CreateSnapshotValueExpression(CreateReadShadowValueExpression(parameter, propertyBase), propertyBase);
+                continue;
             }
 
             var memberInfo = propertyBase.GetMemberInfo(forMaterialization: false, forSet: false);
-            var memberAccess = PropertyAccessorsFactory.CreateMemberAccess(
-                propertyBase, entityVariable!, memberInfo, fromContainingType: false);
+            var memberAccess = PropertyBase.CreateMemberAccess(propertyBase, entityVariable!, memberInfo);
 
             if (memberAccess.Type != propertyBase.ClrType)
             {
-                var hasDefaultValueExpression = memberAccess.MakeHasSentinel(propertyBase);
+                var hasDefaultValueExpression = memberAccess.MakeHasDefaultValue(propertyBase);
 
                 memberAccess = Expression.Condition(
                     hasDefaultValueExpression,
@@ -163,10 +154,6 @@ public abstract class SnapshotFactoryFactory
                 arguments),
             typeof(ISnapshot));
 
-        Check.DebugAssert(
-            !UseEntityVariable || entityVariable == null || parameter != null,
-            "Parameter can only be null when not using entity variable.");
-
         return UseEntityVariable
             && entityVariable != null
                 ? Expression.Block(
@@ -176,7 +163,7 @@ public abstract class SnapshotFactoryFactory
                         Expression.Assign(
                             entityVariable,
                             Expression.Convert(
-                                Expression.Property(parameter!, nameof(InternalEntityEntry.Entity)),
+                                Expression.Property(parameter, "Entity"),
                                 entityType!)),
                         constructorExpression
                     })
@@ -185,39 +172,30 @@ public abstract class SnapshotFactoryFactory
 
     private Expression CreateSnapshotValueExpression(Expression expression, IPropertyBase propertyBase)
     {
-        if (propertyBase is not IProperty property
-            || GetValueComparer(property) is not ValueComparer comparer)
+        if (propertyBase is IProperty property)
         {
-            return expression;
+            var comparer = GetValueComparer(property);
+
+            if (comparer != null)
+            {
+                var snapshotExpression = ReplacingExpressionVisitor.Replace(
+                    comparer.SnapshotExpression.Parameters.Single(),
+                    expression,
+                    comparer.SnapshotExpression.Body);
+
+                if (snapshotExpression.Type != propertyBase.ClrType)
+                {
+                    snapshotExpression = Expression.Convert(snapshotExpression, propertyBase.ClrType);
+                }
+
+                expression = propertyBase.ClrType.IsNullableType()
+                    ? Expression.Condition(
+                        Expression.Equal(expression, Expression.Constant(null, propertyBase.ClrType)),
+                        Expression.Constant(null, propertyBase.ClrType),
+                        snapshotExpression)
+                    : snapshotExpression;
+            }
         }
-
-        if (expression.Type != comparer.Type)
-        {
-            expression = Expression.Convert(expression, comparer.Type);
-        }
-
-        var comparerExpression = Expression.Convert(
-            Expression.Call(
-                Expression.Constant(property),
-                GetValueComparerMethod()!),
-            typeof(ValueComparer<>).MakeGenericType(comparer.Type));
-
-        Expression snapshotExpression = Expression.Call(
-            comparerExpression,
-            ValueComparer.GetGenericSnapshotMethod(comparer.Type),
-            expression);
-
-        if (snapshotExpression.Type != propertyBase.ClrType)
-        {
-            snapshotExpression = Expression.Convert(snapshotExpression, propertyBase.ClrType);
-        }
-
-        expression = propertyBase.ClrType.IsNullableType()
-            ? Expression.Condition(
-                Expression.Equal(expression, Expression.Constant(null, propertyBase.ClrType)),
-                Expression.Constant(null, propertyBase.ClrType),
-                snapshotExpression)
-            : snapshotExpression;
 
         return expression;
     }
@@ -236,16 +214,8 @@ public abstract class SnapshotFactoryFactory
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected abstract MethodInfo? GetValueComparerMethod();
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     protected virtual Expression CreateReadShadowValueExpression(
-        Expression? parameter,
+        ParameterExpression parameter,
         IPropertyBase property)
         => Expression.Call(
             parameter,
@@ -259,12 +229,12 @@ public abstract class SnapshotFactoryFactory
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected virtual Expression CreateReadValueExpression(
-        Expression? parameter,
+        ParameterExpression parameter,
         IPropertyBase property)
         => Expression.Call(
             parameter,
             InternalEntityEntry.MakeGetCurrentValueMethod(property.ClrType),
-            Expression.Constant(property, typeof(IPropertyBase)));
+            Expression.Constant(property, typeof(IProperty)));
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -280,7 +250,7 @@ public abstract class SnapshotFactoryFactory
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected abstract int GetPropertyCount(IRuntimeEntityType entityType);
+    protected abstract int GetPropertyCount(IEntityType entityType);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -294,14 +264,9 @@ public abstract class SnapshotFactoryFactory
     private static readonly MethodInfo SnapshotCollectionMethod
         = typeof(SnapshotFactoryFactory).GetTypeInfo().GetDeclaredMethod(nameof(SnapshotCollection))!;
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public static HashSet<object>? SnapshotCollection(IEnumerable<object>? collection)
+    [UsedImplicitly]
+    private static HashSet<object>? SnapshotCollection(IEnumerable<object>? collection)
         => collection == null
             ? null
-            : new HashSet<object>(collection, ReferenceEqualityComparer.Instance);
+            : new HashSet<object>(collection, LegacyReferenceEqualityComparer.Instance);
 }

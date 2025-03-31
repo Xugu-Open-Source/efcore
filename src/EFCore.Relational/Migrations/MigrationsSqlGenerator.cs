@@ -238,7 +238,6 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
             .Append("ALTER TABLE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
             .Append(" ADD ");
-
         PrimaryKeyConstraint(operation, model, builder);
 
         if (terminate)
@@ -264,9 +263,7 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
             .Append("ALTER TABLE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
             .Append(" ADD ");
-
         UniqueConstraint(operation, model, builder);
-
         builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
         EndStatement(builder);
     }
@@ -797,16 +794,8 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
         builder
             .Append("ALTER SEQUENCE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
-            .Append(" RESTART");
-
-        if (operation.StartValue.HasValue)
-        {
-            builder
-                .Append(" WITH ")
-                .Append(longTypeMapping.GenerateSqlLiteral(operation.StartValue.Value));
-        }
-
-        builder
+            .Append(" RESTART WITH ")
+            .Append(longTypeMapping.GenerateSqlLiteral(operation.StartValue))
             .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
 
         EndStatement(builder);
@@ -1205,8 +1194,7 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
             operation.Name,
             operation,
             model,
-            builder,
-            forAlter: true);
+            builder);
 
     /// <summary>
     ///     Generates a SQL fragment configuring a sequence in a <see cref="CreateSequenceOperation" />.
@@ -1239,24 +1227,6 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
         SequenceOperation operation,
         IModel? model,
         MigrationCommandListBuilder builder)
-        => SequenceOptions(schema, name, operation, model, builder, forAlter: false);
-
-    /// <summary>
-    ///     Generates a SQL fragment configuring a sequence with the given options.
-    /// </summary>
-    /// <param name="schema">The schema that contains the sequence, or <see langword="null" /> to use the default schema.</param>
-    /// <param name="name">The sequence name.</param>
-    /// <param name="operation">The sequence options.</param>
-    /// <param name="model">The target model which may be <see langword="null" /> if the operations exist without a model.</param>
-    /// <param name="builder">The command builder to use to add the SQL fragment.</param>
-    /// <param name="forAlter">If <see langword="true" />, then all options are included, even if default.</param>
-    protected virtual void SequenceOptions(
-        string? schema,
-        string name,
-        SequenceOperation operation,
-        IModel? model,
-        MigrationCommandListBuilder builder,
-        bool forAlter)
     {
         var intTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(int));
         var longTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(long));
@@ -1271,10 +1241,9 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
                 .Append(" MINVALUE ")
                 .Append(longTypeMapping.GenerateSqlLiteral(operation.MinValue));
         }
-        else if (forAlter)
+        else
         {
-            builder
-                .Append(" NO MINVALUE");
+            builder.Append(" NO MINVALUE");
         }
 
         if (operation.MaxValue != null)
@@ -1283,10 +1252,9 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
                 .Append(" MAXVALUE ")
                 .Append(longTypeMapping.GenerateSqlLiteral(operation.MaxValue));
         }
-        else if (forAlter)
+        else
         {
-            builder
-                .Append(" NO MAXVALUE");
+            builder.Append(" NO MAXVALUE");
         }
 
         builder.Append(operation.IsCyclic ? " CYCLE" : " NO CYCLE");
@@ -1601,8 +1569,6 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
         builder.Append("(")
             .Append(ColumnList(operation.Columns))
             .Append(")");
-
-        IndexOptions(operation, model, builder);
     }
 
     /// <summary>
@@ -1650,8 +1616,6 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
         builder.Append("(")
             .Append(ColumnList(operation.Columns))
             .Append(")");
-
-        IndexOptions(operation, model, builder);
     }
 
     /// <summary>
@@ -1740,14 +1704,13 @@ public class MigrationsSqlGenerator : IMigrationsSqlGenerator
     /// <param name="operation">The operation.</param>
     /// <param name="model">The target model which may be <see langword="null" /> if the operations exist without a model.</param>
     /// <param name="builder">The command builder to use to add the SQL fragment.</param>
-    protected virtual void IndexOptions(MigrationOperation operation, IModel? model, MigrationCommandListBuilder builder)
+    protected virtual void IndexOptions(CreateIndexOperation operation, IModel? model, MigrationCommandListBuilder builder)
     {
-        if (operation is CreateIndexOperation createIndexOperation
-            && !string.IsNullOrEmpty(createIndexOperation.Filter))
+        if (!string.IsNullOrEmpty(operation.Filter))
         {
             builder
                 .Append(" WHERE ")
-                .Append(createIndexOperation.Filter);
+                .Append(operation.Filter);
         }
     }
 

@@ -19,7 +19,9 @@ public class OwnedNavigationTableValuedFunctionBuilder : DbFunctionBuilderBase, 
         IMutableDbFunction function,
         OwnedNavigationBuilder ownedNavigationBuilder)
         : base(function)
-        => OwnedNavigationBuilder = ownedNavigationBuilder;
+    {
+        OwnedNavigationBuilder = ownedNavigationBuilder;
+    }
 
     private OwnedNavigationBuilder OwnedNavigationBuilder { get; }
 

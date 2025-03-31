@@ -19,7 +19,9 @@ public class DbContextFactorySource<TContext> : IDbContextFactorySource<TContext
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public DbContextFactorySource()
-        => Factory = CreateActivator();
+    {
+        Factory = CreateActivator();
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -33,7 +35,7 @@ public class DbContextFactorySource<TContext> : IDbContextFactorySource<TContext
     {
         var constructors
             = typeof(TContext).GetTypeInfo().DeclaredConstructors
-                .Where(c => c is { IsStatic: false, IsPublic: true } && c.GetParameters().Length != 0)
+                .Where(c => !c.IsStatic && c.IsPublic && c.GetParameters().Length != 0)
                 .ToArray();
 
         if (constructors.Length == 1)
@@ -54,7 +56,7 @@ public class DbContextFactorySource<TContext> : IDbContextFactorySource<TContext
                                 constructors[0],
                                 isGeneric
                                     ? optionsParam
-                                    : Expression.Convert(optionsParam, typeof(DbContextOptions))),
+                                    : (Expression)Expression.Convert(optionsParam, typeof(DbContextOptions))),
                             providerParam, optionsParam)
                         .Compile();
                 }

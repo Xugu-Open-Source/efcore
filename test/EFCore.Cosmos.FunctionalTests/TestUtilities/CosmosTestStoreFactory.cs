@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-#nullable disable
-
 public class CosmosTestStoreFactory : ITestStoreFactory
 {
     public static CosmosTestStoreFactory Instance { get; } = new();
@@ -16,7 +14,8 @@ public class CosmosTestStoreFactory : ITestStoreFactory
     public IServiceCollection AddProviderServices(IServiceCollection serviceCollection)
         => serviceCollection
             .AddEntityFrameworkCosmos()
-            .AddSingleton<ILoggerFactory>(new TestSqlLoggerFactory());
+            .AddSingleton<ILoggerFactory>(new TestSqlLoggerFactory())
+            .AddSingleton<TestStoreIndex>();
 
     public TestStore Create(string storeName)
         => CosmosTestStore.Create(storeName);

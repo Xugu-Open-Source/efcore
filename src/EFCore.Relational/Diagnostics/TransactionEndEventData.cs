@@ -35,7 +35,9 @@ public class TransactionEndEventData : TransactionEventData
         DateTimeOffset startTime,
         TimeSpan duration)
         : base(eventDefinition, messageGenerator, transaction, context, transactionId, connectionId, async, startTime)
-        => Duration = duration;
+    {
+        Duration = duration;
+    }
 
     /// <summary>
     ///     The duration of this event.

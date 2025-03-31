@@ -24,7 +24,9 @@ public class MigrationsAnnotationProvider : IMigrationsAnnotationProvider
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     public MigrationsAnnotationProvider(MigrationsAnnotationProviderDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.

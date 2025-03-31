@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.TransportationModel;
 
-#nullable disable
-
 public class Operator
 {
     public string VehicleName { get; set; }

@@ -30,7 +30,8 @@ public class InvocationExpressionRemovingExpressionVisitor : ExpressionVisitor
 
     private static Expression StripTrivialConversions(Expression expression)
     {
-        while (expression is UnaryExpression { NodeType: ExpressionType.Convert } unaryExpression
+        while (expression is UnaryExpression unaryExpression
+               && unaryExpression.NodeType == ExpressionType.Convert
                && expression.Type == unaryExpression.Operand.Type
                && unaryExpression.Method == null)
         {

@@ -1,13 +1,12 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-#if NET472
+#if NET461
 using System;
 using System.Collections;
 using System.IO;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Tools.Properties;
 
@@ -18,28 +17,24 @@ namespace Microsoft.EntityFrameworkCore.Tools
         private readonly object _executor;
         private readonly AppDomain _domain;
         private bool _disposed;
-        private const string ReportHandlerTypeName = "Microsoft.EntityFrameworkCore.Design.OperationReportHandler";
 
         public AppDomainOperationExecutor(
             string assembly,
             string? startupAssembly,
-            string? project,
             string? projectDir,
             string? dataDirectory,
             string? rootNamespace,
             string? language,
             bool nullable,
-            string[] remainingArguments,
-            IOperationReportHandler reportHandler)
-            : base(assembly, startupAssembly, project, projectDir, rootNamespace, language, nullable, remainingArguments, reportHandler)
+            string[] remainingArguments)
+            : base(assembly, startupAssembly, projectDir, rootNamespace, language, nullable, remainingArguments)
         {
             var info = new AppDomainSetup { ApplicationBase = AppBasePath };
 
-            var reporter = new OperationReporter(reportHandler);
             var configurationFile = (startupAssembly ?? assembly) + ".config";
             if (File.Exists(configurationFile))
             {
-                reporter.WriteVerbose(Resources.UsingConfigurationFile(configurationFile));
+                Reporter.WriteVerbose(Resources.UsingConfigurationFile(configurationFile));
                 info.ConfigurationFile = configurationFile;
             }
 
@@ -47,24 +42,15 @@ namespace Microsoft.EntityFrameworkCore.Tools
 
             if (dataDirectory != null)
             {
-                reporter.WriteVerbose(Resources.UsingDataDir(dataDirectory));
+                Reporter.WriteVerbose(Resources.UsingDataDir(dataDirectory));
                 _domain.SetData("DataDirectory", dataDirectory);
             }
 
-            var designReportHandler = _domain.CreateInstanceAndUnwrap(
-                DesignAssemblyName,
-                ReportHandlerTypeName,
-                false,
-                BindingFlags.Default,
-                null,
-                [
-                    (Action<string>)reportHandler.OnError,
-                    (Action<string>)reportHandler.OnWarning,
-                    (Action<string>)reportHandler.OnInformation,
-                    (Action<string>)reportHandler.OnVerbose
-                ],
-                null,
-                null);
+            var reportHandler = new OperationReportHandler(
+                Reporter.WriteError,
+                Reporter.WriteWarning,
+                Reporter.WriteInformation,
+                Reporter.WriteVerbose);
 
             _executor = _domain.CreateInstanceAndUnwrap(
                 DesignAssemblyName,
@@ -72,13 +58,13 @@ namespace Microsoft.EntityFrameworkCore.Tools
                 false,
                 BindingFlags.Default,
                 null,
-                [
-                    designReportHandler,
+                new object[]
+                {
+                    reportHandler,
                     new Hashtable
                     {
                         { "targetName", AssemblyFileName },
                         { "startupTargetName", StartupAssemblyFileName },
-                        { "project", Project },
                         { "projectDir", ProjectDirectory },
                         { "rootNamespace", RootNamespace },
                         { "language", Language },
@@ -86,7 +72,7 @@ namespace Microsoft.EntityFrameworkCore.Tools
                         { "toolsVersion", ProductInfo.GetVersion() },
                         { "remainingArguments", RemainingArguments }
                     }
-                ],
+                },
                 null,
                 null);
         }
@@ -101,7 +87,7 @@ namespace Microsoft.EntityFrameworkCore.Tools
                 false,
                 BindingFlags.Default,
                 null,
-                [_executor, resultHandler, arguments],
+                new[] { _executor, resultHandler, arguments },
                 null,
                 null);
 
@@ -115,4 +101,7 @@ namespace Microsoft.EntityFrameworkCore.Tools
         }
     }
 }
+#elif NETCOREAPP2_0
+#else
+#error target frameworks need to be updated.
 #endif

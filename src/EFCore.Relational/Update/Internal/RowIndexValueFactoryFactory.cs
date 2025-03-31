@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using JetBrains.Annotations;
+
 namespace Microsoft.EntityFrameworkCore.Update.Internal;
 
 /// <summary>
@@ -21,12 +23,13 @@ public class RowIndexValueFactoryFactory : IRowIndexValueFactoryFactory
         => index.Columns.Count == 1
             ? (IRowIndexValueFactory)_createMethod
                 .MakeGenericMethod(index.Columns.First().ProviderClrType)
-                .Invoke(null, [index])!
+                .Invoke(null, new object[] { index })!
             : new CompositeRowIndexValueFactory(index);
 
     private static readonly MethodInfo _createMethod = typeof(RowIndexValueFactoryFactory).GetTypeInfo()
         .GetDeclaredMethod(nameof(CreateSimple))!;
 
+    [UsedImplicitly]
     private static IRowIndexValueFactory<TKey> CreateSimple<TKey>(ITableIndex index)
         => new SimpleRowIndexValueFactory<TKey>(index);
 }

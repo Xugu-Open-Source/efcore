@@ -76,7 +76,7 @@ public partial class ModelValidatorTest
         modelBuilder.Entity(typeof(NonPrimitiveReferenceTypePropertyEntity));
 
         Assert.Equal(
-            CoreStrings.NavigationNotAdded(
+            CoreStrings.PropertyNotAdded(
                 typeof(NonPrimitiveReferenceTypePropertyEntity).ShortDisplayName(),
                 nameof(NonPrimitiveReferenceTypePropertyEntity.Property),
                 typeof(ICollection<Uri>).ShortDisplayName()),
@@ -250,14 +250,18 @@ public partial class ModelValidatorTest
     protected virtual IModel Validate(TestHelpers.TestModelBuilder modelBuilder)
         => modelBuilder.FinalizeModel(designTime: true);
 
-    protected class NonPrimitiveNonNavigationAsPropertyEntity;
+    protected class NonPrimitiveNonNavigationAsPropertyEntity
+    {
+    }
 
     protected class NonPrimitiveAsPropertyEntity
     {
         public NavigationAsProperty Property { get; set; }
     }
 
-    protected class NavigationAsProperty;
+    protected class NavigationAsProperty
+    {
+    }
 
     protected class PrimitivePropertyEntity
     {
@@ -308,17 +312,11 @@ public partial class ModelValidatorTest
         public IList<INavigationEntity> Navigation { get; set; }
     }
 
-    protected abstract class LivingBeing
+    protected class Animal
     {
         public int Id { get; set; }
         public string Name { get; set; }
 
-        [NotMapped]
-        public OwnedEntity Details { get; set; }
-    }
-
-    protected class Animal : LivingBeing
-    {
         public Person FavoritePerson { get; set; }
     }
 
@@ -342,12 +340,16 @@ public partial class ModelValidatorTest
         public int Identity { get; set; }
     }
 
-    protected class Person : LivingBeing
+    protected class Person
     {
+        public int Id { get; set; }
+        public string Name { get; set; }
         public string FavoriteBreed { get; set; }
     }
 
-    protected class Employee : Person;
+    protected class Employee : Person
+    {
+    }
 
     protected class Owner
     {

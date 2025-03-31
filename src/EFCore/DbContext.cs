@@ -54,7 +54,7 @@ public class DbContext :
 {
     private readonly DbContextOptions _options;
 
-    private Dictionary<(Type Type, string? Name), object>? _sets;
+    private IDictionary<(Type Type, string? Name), object>? _sets;
     private IDbContextServices? _contextServices;
     private IDbContextDependencies? _dbContextDependencies;
     private DatabaseFacade? _database;
@@ -80,11 +80,9 @@ public class DbContext :
     ///     for more information and examples.
     /// </remarks>
     [RequiresUnreferencedCode(
-        "EF Core isn't fully compatible with trimming, and running the application may generate unexpected runtime failures. "
-        + "Some specific coding pattern are usually required to make trimming work properly, see https://aka.ms/efcore-docs-trimming for "
-        + "more details.")]
-    [RequiresDynamicCode(
-        "EF Core isn't fully compatible with NativeAOT, and running the application may generate unexpected runtime failures.")]
+        "EF Core isn't fully compatible with trimming, and running the application may generate unexpected runtime failures. " +
+        "Some specific coding pattern are usually required to make trimming work properly, see https://aka.ms/efcore-docs-trimming for " +
+        "more details.")]
     protected DbContext()
         : this(new DbContextOptions<DbContext>())
     {
@@ -101,11 +99,9 @@ public class DbContext :
     /// </remarks>
     /// <param name="options">The options for this context.</param>
     [RequiresUnreferencedCode(
-        "EF Core isn't fully compatible with trimming, and running the application may generate unexpected runtime failures. "
-        + "Some specific coding pattern are usually required to make trimming work properly, see https://aka.ms/efcore-docs-trimming for "
-        + "more details.")]
-    [RequiresDynamicCode(
-        "EF Core isn't fully compatible with NativeAOT, and running the application may generate unexpected runtime failures.")]
+        "EF Core isn't fully compatible with trimming, and running the application may generate unexpected runtime failures. " +
+        "Some specific coding pattern are usually required to make trimming work properly, see https://aka.ms/efcore-docs-trimming for " +
+        "more details.")]
     public DbContext(DbContextOptions options)
     {
         Check.NotNull(options, nameof(options));
@@ -129,7 +125,7 @@ public class DbContext :
             .GetRequiredService<IDbSetInitializer>()
             .InitializeSets(this);
 
-        EntityFrameworkMetricsData.ReportDbContextInitializing();
+        EntityFrameworkEventSource.Log.DbContextInitializing();
     }
 
     /// <summary>
@@ -141,13 +137,7 @@ public class DbContext :
         {
             CheckDisposed();
 
-            if (_database == null)
-            {
-                _database = new DatabaseFacade(this);
-                _cachedResettableServices?.Add(_database);
-            }
-
-            return _database;
+            return _database ??= new DatabaseFacade(this);
         }
     }
 
@@ -158,18 +148,7 @@ public class DbContext :
     ///     See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
     /// </remarks>
     public virtual ChangeTracker ChangeTracker
-    {
-        get
-        {
-            if (_changeTracker == null)
-            {
-                _changeTracker = InternalServiceProvider.GetRequiredService<IChangeTrackerFactory>().Create();
-                _cachedResettableServices?.Add(_changeTracker);
-            }
-
-            return _changeTracker;
-        }
-    }
+        => _changeTracker ??= InternalServiceProvider.GetRequiredService<IChangeTrackerFactory>().Create();
 
     /// <summary>
     ///     The metadata about the shape of entities, the relationships between them, and how they map to the database.
@@ -297,7 +276,7 @@ public class DbContext :
     {
         CheckDisposed();
 
-        _sets ??= [];
+        _sets ??= new Dictionary<(Type Type, string? Name), object>();
 
         if (!_sets.TryGetValue((type, null), out var set))
         {
@@ -323,7 +302,7 @@ public class DbContext :
     {
         CheckDisposed();
 
-        _sets ??= [];
+        _sets ??= new Dictionary<(Type Type, string? Name), object>();
 
         if (!_sets.TryGetValue((type, entityTypeName), out var set))
         {
@@ -658,7 +637,9 @@ public class DbContext :
         }
         catch (DbUpdateConcurrencyException exception)
         {
-            EntityFrameworkMetricsData.ReportOptimisticConcurrencyFailure();
+            EntityFrameworkEventSource.Log.OptimisticConcurrencyFailure();
+
+            DbContextDependencies.UpdateLogger.SaveChangesFailed(this, exception);
 
             SaveChangesFailed?.Invoke(this, new SaveChangesFailedEventArgs(acceptAllChangesOnSuccess, exception));
 
@@ -803,7 +784,9 @@ public class DbContext :
         }
         catch (DbUpdateConcurrencyException exception)
         {
-            EntityFrameworkMetricsData.ReportOptimisticConcurrencyFailure();
+            EntityFrameworkEventSource.Log.OptimisticConcurrencyFailure();
+
+            await DbContextDependencies.UpdateLogger.SaveChangesFailedAsync(this, exception, cancellationToken).ConfigureAwait(false);
 
             SaveChangesFailed?.Invoke(this, new SaveChangesFailedEventArgs(acceptAllChangesOnSuccess, exception));
 
@@ -900,11 +883,7 @@ public class DbContext :
         {
             var changeTracker = ChangeTracker;
             changeTracker.AutoDetectChangesEnabled = _configurationSnapshot.AutoDetectChangesEnabled;
-            if (_configurationSnapshot.QueryTrackingBehavior.HasValue)
-            {
-                changeTracker.QueryTrackingBehavior = _configurationSnapshot.QueryTrackingBehavior.Value;
-            }
-
+            changeTracker.QueryTrackingBehavior = _configurationSnapshot.QueryTrackingBehavior;
             changeTracker.LazyLoadingEnabled = _configurationSnapshot.LazyLoadingEnabled;
             changeTracker.CascadeDeleteTiming = _configurationSnapshot.CascadeDeleteTiming;
             changeTracker.DeleteOrphansTiming = _configurationSnapshot.DeleteOrphansTiming;
@@ -961,7 +940,7 @@ public class DbContext :
             _changeTracker != null,
             changeDetectorEvents != null,
             _changeTracker?.AutoDetectChangesEnabled ?? true,
-            _changeTracker?.QueryTrackingBehavior,
+            _changeTracker?.QueryTrackingBehavior ?? QueryTrackingBehavior.TrackAll,
             _database?.AutoTransactionBehavior ?? AutoTransactionBehavior.WhenNeeded,
             _database?.AutoSavepointsEnabled ?? true,
             _changeTracker?.LazyLoadingEnabled ?? true,
@@ -1015,7 +994,7 @@ public class DbContext :
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private List<IResettableService> GetResettableServices()
+    private IEnumerable<IResettableService> GetResettableServices()
     {
         if (_cachedResettableServices is not null)
         {
@@ -1034,18 +1013,9 @@ public class DbContext :
             _cachedResettableServices = resettableServices;
         }
 
-        if (_changeTracker != null)
-        {
-            resettableServices.Add(_changeTracker);
-        }
-        else if (_sets is not null)
+        if (_sets is not null)
         {
             resettableServices.AddRange(_sets.Values.OfType<IResettableService>());
-        }
-
-        if (_database != null)
-        {
-            resettableServices.Add(_database);
         }
 
         return resettableServices;
@@ -1106,26 +1076,19 @@ public class DbContext :
         {
             if (contextShouldBeDisposed)
             {
-                if (_contextServices != null)
-                {
-                    // Make sure to create the model before the context is marked as disposed
-                    // This is necessary for the corner case where a pooled context is used only for design-time operations
-                    var _ = Model;
-                }
-
                 _disposed = true;
                 _lease = DbContextLease.InactiveLease;
             }
         }
         else if (!_disposed)
         {
-            EntityFrameworkMetricsData.ReportDbContextDisposing();
+            EntityFrameworkEventSource.Log.DbContextDisposing();
 
             _dbContextDependencies?.InfrastructureLogger.ContextDisposed(this);
 
             _disposed = true;
 
-            _dbContextDependencies?.StateManager.Unsubscribe(resetting: true);
+            _dbContextDependencies?.StateManager.Unsubscribe();
 
             _dbContextDependencies = null;
             _changeTracker = null;
@@ -2164,7 +2127,7 @@ public class DbContext :
     {
         CheckDisposed();
 
-        return Set<TEntity>().Find(keyValues);
+        return ((IEntityFinder<TEntity>)Finder(typeof(TEntity))).Find(keyValues);
     }
 
     /// <summary>
@@ -2195,7 +2158,7 @@ public class DbContext :
     {
         CheckDisposed();
 
-        return Set<TEntity>().FindAsync(keyValues);
+        return ((IEntityFinder<TEntity>)Finder(typeof(TEntity))).FindAsync(keyValues);
     }
 
     /// <summary>
@@ -2223,13 +2186,12 @@ public class DbContext :
     /// <returns>The entity found, or <see langword="null" />.</returns>
     /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
     public virtual ValueTask<TEntity?> FindAsync<[DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)] TEntity>(
-        object?[]? keyValues,
-        CancellationToken cancellationToken)
+        object?[]? keyValues, CancellationToken cancellationToken)
         where TEntity : class
     {
         CheckDisposed();
 
-        return Set<TEntity>().FindAsync(keyValues, cancellationToken);
+        return ((IEntityFinder<TEntity>)Finder(typeof(TEntity))).FindAsync(keyValues, cancellationToken);
     }
 
     /// <summary>

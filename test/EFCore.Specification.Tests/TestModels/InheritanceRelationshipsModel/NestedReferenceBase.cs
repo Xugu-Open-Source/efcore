@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.InheritanceRelationshipsModel;
 
-#nullable disable
-
 public class NestedReferenceBase
 {
     public int Id { get; set; }

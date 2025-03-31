@@ -104,18 +104,37 @@ public class CandidateNamingService : ICandidateNamingService
 
     private static string FindCandidateNavigationName(IEnumerable<IReadOnlyProperty> properties)
     {
-        var name = "";
-        foreach (var property in properties)
+        var count = properties.Count();
+        if (count == 0)
         {
-            if (name != "")
-            {
-                return "";
-            }
-
-            name = property.Name;
+            return string.Empty;
         }
 
-        return StripId(name);
+        var firstProperty = properties.First();
+        return StripId(
+            count == 1
+                ? firstProperty.Name
+                : FindCommonPrefix(firstProperty.Name, properties.Select(p => p.Name)));
+    }
+
+    private static string FindCommonPrefix(string firstName, IEnumerable<string> propertyNames)
+    {
+        var prefixLength = 0;
+        foreach (var c in firstName)
+        {
+            foreach (var s in propertyNames)
+            {
+                if (s.Length <= prefixLength
+                    || s[prefixLength] != c)
+                {
+                    return firstName[..prefixLength];
+                }
+            }
+
+            prefixLength++;
+        }
+
+        return firstName[..prefixLength];
     }
 
     private static string StripId(string commonPrefix)

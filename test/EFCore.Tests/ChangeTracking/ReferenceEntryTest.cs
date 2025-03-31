@@ -524,7 +524,6 @@ public class ReferenceEntryTest
         public int Baked { get; set; }
         public int Id { get; set; }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public int? MonkeyId { get; set; }
         public Chunky Monkey { get; set; }
     }

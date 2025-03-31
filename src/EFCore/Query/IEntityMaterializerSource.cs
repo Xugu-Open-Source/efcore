@@ -39,32 +39,10 @@ public interface IEntityMaterializerSource
     /// <param name="entityInstanceName">The name of the instance being materialized.</param>
     /// <param name="materializationExpression">The materialization expression to build on.</param>
     /// <returns>An expression to read the value.</returns>
-    [Obsolete("Use the overload that accepts an EntityMaterializerSourceParameters object.")]
     Expression CreateMaterializeExpression(
         IEntityType entityType,
         string entityInstanceName,
         Expression materializationExpression);
-
-    /// <summary>
-    ///     <para>
-    ///         Creates an <see cref="Expression" /> tree representing creating an entity instance.
-    ///     </para>
-    ///     <para>
-    ///         This method is typically used by database providers (and other extensions). It is generally
-    ///         not used in application code.
-    ///     </para>
-    /// </summary>
-    /// <param name="parameters">Parameters for the entity being materialized.</param>
-    /// <param name="materializationExpression">The materialization expression to build on.</param>
-    /// <returns>An expression to read the value.</returns>
-#pragma warning disable CS0618
-    Expression CreateMaterializeExpression(
-        EntityMaterializerSourceParameters parameters,
-        Expression materializationExpression)
-        => parameters.StructuralType is IEntityType entityType
-            ? CreateMaterializeExpression(entityType, parameters.InstanceName, materializationExpression)
-            : throw new NotImplementedException(CoreStrings.ComplexTypesNotSupported(GetType().Name));
-#pragma warning restore CS0618
 
     /// <summary>
     ///     <para>

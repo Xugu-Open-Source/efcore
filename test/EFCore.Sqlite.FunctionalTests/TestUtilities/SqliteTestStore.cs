@@ -9,62 +9,61 @@ public class SqliteTestStore : RelationalTestStore
 {
     public const int CommandTimeout = 30;
 
-    public static SqliteTestStore GetOrCreate(string name, bool sharedCache = false)
+    public static SqliteTestStore GetOrCreate(string name, bool sharedCache = true)
         => new(name, sharedCache: sharedCache);
 
-    public static async Task<SqliteTestStore> GetOrCreateInitializedAsync(string name)
-        => await new SqliteTestStore(name).InitializeSqliteAsync(
+    public static SqliteTestStore GetOrCreateInitialized(string name)
+        => new SqliteTestStore(name).InitializeSqlite(
             new ServiceCollection().AddEntityFrameworkSqlite().BuildServiceProvider(validateScopes: true),
-            (Func<DbContext>?)null,
+            (Func<DbContext>)null,
             null);
 
     public static SqliteTestStore GetExisting(string name)
         => new(name, seed: false);
 
-    public static SqliteTestStore Create(string name)
-        => new(name, shared: false);
+    public static SqliteTestStore Create(string name, bool sharedCache = true)
+        => new(name, sharedCache: sharedCache, shared: false);
 
     private readonly bool _seed;
 
-    private SqliteTestStore(string name, bool seed = true, bool sharedCache = false, bool shared = true)
-        : base(name, shared, CreateConnection(name, sharedCache))
-        => _seed = seed;
+    private SqliteTestStore(string name, bool seed = true, bool sharedCache = true, bool shared = true)
+        : base(name, shared)
+    {
+        _seed = seed;
+
+        ConnectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = Name + ".db", Cache = sharedCache ? SqliteCacheMode.Shared : SqliteCacheMode.Private
+        }.ToString();
+
+        var connection = new SqliteConnection(ConnectionString);
+        Connection = connection;
+    }
 
     public virtual DbContextOptionsBuilder AddProviderOptions(
         DbContextOptionsBuilder builder,
-        Action<SqliteDbContextOptionsBuilder>? configureSqlite)
-        => UseConnectionString
-            ? builder.UseSqlite(
-                ConnectionString, b =>
-                {
-                    b.CommandTimeout(CommandTimeout);
-                    b.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
-                    configureSqlite?.Invoke(b);
-                })
-            : builder.UseSqlite(
-                Connection, b =>
-                {
-                    b.CommandTimeout(CommandTimeout);
-                    b.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
-                    configureSqlite?.Invoke(b);
-                });
+        Action<SqliteDbContextOptionsBuilder> configureSqlite)
+        => builder.UseSqlite(
+            Connection, b =>
+            {
+                b.CommandTimeout(CommandTimeout);
+                b.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
+                configureSqlite?.Invoke(b);
+            });
 
     public override DbContextOptionsBuilder AddProviderOptions(DbContextOptionsBuilder builder)
         => AddProviderOptions(builder, configureSqlite: null);
 
-    public async Task<SqliteTestStore> InitializeSqliteAsync(
-        IServiceProvider? serviceProvider,
-        Func<DbContext>? createContext,
-        Func<DbContext, Task>? seed)
-        => (SqliteTestStore)await InitializeAsync(serviceProvider, createContext, seed);
+    public SqliteTestStore InitializeSqlite(IServiceProvider serviceProvider, Func<DbContext> createContext, Action<DbContext> seed)
+        => (SqliteTestStore)Initialize(serviceProvider, createContext, seed);
 
-    public async Task<SqliteTestStore> InitializeSqliteAsync(
+    public SqliteTestStore InitializeSqlite(
         IServiceProvider serviceProvider,
         Func<SqliteTestStore, DbContext> createContext,
-        Func<DbContext, Task> seed)
-        => (SqliteTestStore)await InitializeAsync(serviceProvider, () => createContext(this), seed);
+        Action<DbContext> seed)
+        => (SqliteTestStore)Initialize(serviceProvider, () => createContext(this), seed);
 
-    protected override async Task InitializeAsync(Func<DbContext> createContext, Func<DbContext, Task>? seed, Func<DbContext, Task>? clean)
+    protected override void Initialize(Func<DbContext> createContext, Action<DbContext> seed, Action<DbContext> clean)
     {
         if (!_seed)
         {
@@ -72,30 +71,17 @@ public class SqliteTestStore : RelationalTestStore
         }
 
         using var context = createContext();
-        if (!await context.Database.EnsureCreatedResilientlyAsync())
+        if (!context.Database.EnsureCreated())
         {
-            if (clean != null)
-            {
-                await clean(context);
-            }
-
-            await CleanAsync(context);
-
-            // Run context seeding
-            await context.Database.EnsureCreatedResilientlyAsync();
+            clean?.Invoke(context);
+            Clean(context);
         }
 
-        if (seed != null)
-        {
-            await seed(context);
-        }
+        seed?.Invoke(context);
     }
 
-    public override Task CleanAsync(DbContext context)
-    {
-        context.Database.EnsureClean();
-        return Task.CompletedTask;
-    }
+    public override void Clean(DbContext context)
+        => context.Database.EnsureClean();
 
     public int ExecuteNonQuery(string sql, params object[] parameters)
     {
@@ -106,7 +92,7 @@ public class SqliteTestStore : RelationalTestStore
     public T ExecuteScalar<T>(string sql, params object[] parameters)
     {
         using var command = CreateCommand(sql, parameters);
-        return (T)command.ExecuteScalar()!;
+        return (T)command.ExecuteScalar();
     }
 
     private DbCommand CreateCommand(string commandText, object[] parameters)
@@ -122,15 +108,5 @@ public class SqliteTestStore : RelationalTestStore
         }
 
         return command;
-    }
-
-    private static SqliteConnection CreateConnection(string name, bool sharedCache)
-    {
-        var connectionString = new SqliteConnectionStringBuilder
-        {
-            DataSource = name + ".db", Cache = sharedCache ? SqliteCacheMode.Shared : SqliteCacheMode.Private
-        }.ToString();
-
-        return new SqliteConnection(connectionString);
     }
 }

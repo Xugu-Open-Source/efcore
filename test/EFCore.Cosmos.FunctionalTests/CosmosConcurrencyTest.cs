@@ -1,56 +1,119 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-namespace Microsoft.EntityFrameworkCore;
+namespace Microsoft.EntityFrameworkCore.Cosmos;
 
-#nullable disable
-
-public class CosmosConcurrencyTest(CosmosConcurrencyTest.CosmosFixture fixture) : IClassFixture<CosmosConcurrencyTest.CosmosFixture>
+public class CosmosConcurrencyTest : IClassFixture<CosmosConcurrencyTest.CosmosFixture>
 {
     private const string DatabaseName = "CosmosConcurrencyTest";
 
-    protected CosmosFixture Fixture { get; } = fixture;
+    protected CosmosFixture Fixture { get; }
+
+    public CosmosConcurrencyTest(CosmosFixture fixture)
+    {
+        Fixture = fixture;
+    }
 
     [ConditionalFact]
     public virtual Task Adding_the_same_entity_twice_results_in_DbUpdateException()
         => ConcurrencyTestAsync<DbUpdateException>(
-            ctx =>
-            {
-                ctx.Customers.Add(
-                    new Customer
-                    {
-                        Id = "1", Name = "CreatedTwice",
-                    });
-                return Task.CompletedTask;
-            });
+            ctx => ctx.Customers.Add(
+                new Customer
+                {
+                    Id = "1", Name = "CreatedTwice",
+                }));
 
     [ConditionalFact]
     public virtual Task Updating_then_deleting_the_same_entity_results_in_DbUpdateConcurrencyException()
         => ConcurrencyTestAsync<DbUpdateConcurrencyException>(
-            ctx =>
-            {
-                ctx.Customers.Add(
-                    new Customer
-                    {
-                        Id = "2", Name = "Added",
-                    });
-                return Task.CompletedTask;
-            }, async ctx => (await ctx.Customers.SingleAsync(c => c.Id == "2")).Name = "Updated",
-            async ctx => ctx.Customers.Remove(await ctx.Customers.SingleAsync(c => c.Id == "2")));
+            ctx => ctx.Customers.Add(
+                new Customer
+                {
+                    Id = "2", Name = "Added",
+                }),
+            ctx => ctx.Customers.Single(c => c.Id == "2").Name = "Updated",
+            ctx => ctx.Customers.Remove(ctx.Customers.Single(c => c.Id == "2")));
 
     [ConditionalFact]
     public virtual Task Updating_then_updating_the_same_entity_results_in_DbUpdateConcurrencyException()
         => ConcurrencyTestAsync<DbUpdateConcurrencyException>(
-            ctx =>
-            {
-                ctx.Customers.Add(
-                    new Customer
-                    {
-                        Id = "3", Name = "Added",
-                    });
-                return Task.CompletedTask;
-            }, async ctx => (await ctx.Customers.SingleAsync(c => c.Id == "3")).Name = "Updated",
-            async ctx => (await ctx.Customers.SingleAsync(c => c.Id == "3")).Name = "Updated");
+            ctx => ctx.Customers.Add(
+                new Customer
+                {
+                    Id = "3", Name = "Added",
+                }),
+            ctx => ctx.Customers.Single(c => c.Id == "3").Name = "Updated",
+            ctx => ctx.Customers.Single(c => c.Id == "3").Name = "Updated");
+
+    [ConditionalFact]
+    public async Task Etag_will_return_when_content_response_enabled_false()
+    {
+        await using var testDatabase = CosmosTestStore.CreateInitialized(
+            DatabaseName,
+            o => o.ContentResponseOnWriteEnabled(false));
+
+        var customer = new Customer
+        {
+            Id = "4", Name = "Theon",
+        };
+
+        await using (var context = new ConcurrencyContext(CreateOptions(testDatabase)))
+        {
+            await context.Database.EnsureCreatedAsync();
+
+            await context.AddAsync(customer);
+
+            await context.SaveChangesAsync();
+        }
+
+        await using (var context = new ConcurrencyContext(CreateOptions(testDatabase)))
+        {
+            var customerFromStore = await context.Set<Customer>().SingleAsync();
+
+            Assert.Equal(customer.Id, customerFromStore.Id);
+            Assert.Equal("Theon", customerFromStore.Name);
+            Assert.Equal(customer.ETag, customerFromStore.ETag);
+
+            context.Remove(customerFromStore);
+
+            await context.SaveChangesAsync();
+        }
+    }
+
+    [ConditionalFact]
+    public async Task Etag_will_return_when_content_response_enabled_true()
+    {
+        await using var testDatabase = CosmosTestStore.CreateInitialized(
+            DatabaseName,
+            o => o.ContentResponseOnWriteEnabled());
+
+        var customer = new Customer
+        {
+            Id = "3", Name = "Theon",
+        };
+
+        await using (var context = new ConcurrencyContext(CreateOptions(testDatabase)))
+        {
+            await context.Database.EnsureCreatedAsync();
+
+            await context.AddAsync(customer);
+
+            await context.SaveChangesAsync();
+        }
+
+        await using (var context = new ConcurrencyContext(CreateOptions(testDatabase)))
+        {
+            var customerFromStore = await context.Set<Customer>().SingleAsync();
+
+            Assert.Equal(customer.Id, customerFromStore.Id);
+            Assert.Equal("Theon", customerFromStore.Name);
+            Assert.Equal(customer.ETag, customerFromStore.ETag);
+
+            context.Remove(customerFromStore);
+
+            await context.SaveChangesAsync();
+        }
+    }
 
     [ConditionalTheory]
     [InlineData(null)]
@@ -58,16 +121,15 @@ public class CosmosConcurrencyTest(CosmosConcurrencyTest.CosmosFixture fixture) 
     [InlineData(false)]
     public async Task Etag_is_updated_in_entity_after_SaveChanges(bool? contentResponseOnWriteEnabled)
     {
-        var options = new DbContextOptionsBuilder(Fixture.CreateOptions())
-            .UseCosmos(
-                o =>
+        await using var testDatabase = CosmosTestStore.CreateInitialized(
+            DatabaseName,
+            o =>
+            {
+                if (contentResponseOnWriteEnabled.HasValue)
                 {
-                    if (contentResponseOnWriteEnabled != null)
-                    {
-                        o.ContentResponseOnWriteEnabled(contentResponseOnWriteEnabled.Value);
-                    }
-                })
-            .Options;
+                    o.ContentResponseOnWriteEnabled(contentResponseOnWriteEnabled.Value);
+                }
+            });
 
         var customer = new Customer
         {
@@ -77,9 +139,10 @@ public class CosmosConcurrencyTest(CosmosConcurrencyTest.CosmosFixture fixture) 
         };
 
         string etag = null;
-        await using (var context = new ConcurrencyContext(options))
+
+        await using (var context = new ConcurrencyContext(CreateOptions(testDatabase)))
         {
-            await Fixture.TestStore.CleanAsync(context);
+            await context.Database.EnsureCreatedAsync();
 
             await context.AddAsync(customer);
 
@@ -88,74 +151,9 @@ public class CosmosConcurrencyTest(CosmosConcurrencyTest.CosmosFixture fixture) 
             etag = customer.ETag;
         }
 
-        await using (var context = new ConcurrencyContext(options))
+        await using (var context = new ConcurrencyContext(CreateOptions(testDatabase)))
         {
             var customerFromStore = await context.Set<Customer>().SingleAsync();
-
-            Assert.NotEmpty(customerFromStore.ETag);
-            Assert.Equal(etag, customerFromStore.ETag);
-
-            customerFromStore.Children.Add(new DummyChild { Id = "1" });
-
-            await context.SaveChangesAsync();
-
-            Assert.NotEmpty(customerFromStore.ETag);
-            Assert.NotEqual(etag, customerFromStore.ETag);
-
-            customerFromStore.Children.Add(new DummyChild { Id = "2" });
-
-            Assert.NotEmpty(customerFromStore.ETag);
-            Assert.NotEqual(etag, customerFromStore.ETag);
-
-            customerFromStore.Children.Add(new DummyChild { Id = "3" });
-
-            await context.SaveChangesAsync();
-
-            Assert.NotEmpty(customerFromStore.ETag);
-            Assert.NotEqual(etag, customerFromStore.ETag);
-        }
-    }
-
-    [ConditionalTheory]
-    [InlineData(null)]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task Etag_is_updated_in_derived_entity_after_SaveChanges(bool? contentResponseOnWriteEnabled)
-    {
-        var options = new DbContextOptionsBuilder(Fixture.CreateOptions())
-            .UseCosmos(
-                o =>
-                {
-                    if (contentResponseOnWriteEnabled != null)
-                    {
-                        o.ContentResponseOnWriteEnabled(contentResponseOnWriteEnabled.Value);
-                    }
-                })
-            .Options;
-
-        var customer = new PremiumCustomer
-        {
-            Id = "5",
-            Name = "Theon",
-            LoyaltyLevel = "Bronze",
-            Children = { new DummyChild { Id = "0" } }
-        };
-
-        string etag = null;
-        await using (var context = new ConcurrencyContext(options))
-        {
-            await Fixture.TestStore.CleanAsync(context);
-
-            await context.AddAsync(customer);
-
-            await context.SaveChangesAsync();
-
-            etag = customer.ETag;
-        }
-
-        await using (var context = new ConcurrencyContext(options))
-        {
-            var customerFromStore = await context.Set<PremiumCustomer>().SingleAsync();
 
             Assert.NotEmpty(customerFromStore.ETag);
             Assert.Equal(etag, customerFromStore.ETag);
@@ -190,7 +188,7 @@ public class CosmosConcurrencyTest(CosmosConcurrencyTest.CosmosFixture fixture) 
     ///     the database at the end of the process can be validated.
     /// </summary>
     protected virtual Task ConcurrencyTestAsync<TException>(
-        Func<ConcurrencyContext, Task> change)
+        Action<ConcurrencyContext> change)
         where TException : DbUpdateException
         => ConcurrencyTestAsync<TException>(
             null, change, change);
@@ -204,33 +202,21 @@ public class CosmosConcurrencyTest(CosmosConcurrencyTest.CosmosFixture fixture) 
     ///     the database at the end of the process can be validated.
     /// </summary>
     protected virtual async Task ConcurrencyTestAsync<TException>(
-        Func<ConcurrencyContext, Task> seedAction,
-        Func<ConcurrencyContext, Task> storeChange,
-        Func<ConcurrencyContext, Task> clientChange)
+        Action<ConcurrencyContext> seedAction,
+        Action<ConcurrencyContext> storeChange,
+        Action<ConcurrencyContext> clientChange)
         where TException : DbUpdateException
     {
         using var outerContext = CreateContext();
-        await Fixture.TestStore.CleanAsync(outerContext);
-
-        if (seedAction != null)
-        {
-            await seedAction(outerContext);
-        }
-
+        await outerContext.Database.EnsureCreatedAsync();
+        seedAction?.Invoke(outerContext);
         await outerContext.SaveChangesAsync();
 
-        if (clientChange != null)
-        {
-            await clientChange(outerContext);
-        }
+        clientChange?.Invoke(outerContext);
 
         using (var innerContext = CreateContext())
         {
-            if (storeChange != null)
-            {
-                await storeChange(innerContext);
-            }
-
+            storeChange?.Invoke(innerContext);
             await innerContext.SaveChangesAsync();
         }
 
@@ -253,26 +239,29 @@ public class CosmosConcurrencyTest(CosmosConcurrencyTest.CosmosFixture fixture) 
             => CosmosTestStoreFactory.Instance;
     }
 
-    public class ConcurrencyContext(DbContextOptions options) : PoolableDbContext(options)
+    public class ConcurrencyContext : PoolableDbContext
     {
+        public ConcurrencyContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public DbSet<Customer> Customers { get; set; }
 
-        public DbSet<PremiumCustomer> PremiumCustomers { get; set; }
-
         protected override void OnModelCreating(ModelBuilder builder)
-        {
-            builder.Entity<Customer>(
+            => builder.Entity<Customer>(
                 b =>
                 {
                     b.HasKey(c => c.Id);
                     b.Property(c => c.ETag).IsETagConcurrency();
                     b.OwnsMany(x => x.Children);
-                    b.HasPartitionKey(c => c.Id);
                 });
-
-            builder.Entity<PremiumCustomer>().HasBaseType<Customer>();
-        }
     }
+
+    private DbContextOptions CreateOptions(CosmosTestStore testDatabase)
+        => testDatabase.AddProviderOptions(new DbContextOptionsBuilder())
+            .EnableDetailedErrors()
+            .Options;
 
     public class Customer
     {
@@ -288,10 +277,5 @@ public class CosmosConcurrencyTest(CosmosConcurrencyTest.CosmosFixture fixture) 
     public class DummyChild
     {
         public string Id { get; init; }
-    }
-
-    public class PremiumCustomer : Customer
-    {
-        public string LoyaltyLevel { get; set; }
     }
 }

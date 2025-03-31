@@ -3,9 +3,12 @@
 
 #nullable enable
 
+using System.Linq;
+
 namespace System.Reflection;
 
 internal static class EntityFrameworkMemberInfoExtensions
+
 {
     public static Type GetMemberType(this MemberInfo memberInfo)
         => (memberInfo as PropertyInfo)?.PropertyType ?? ((FieldInfo)memberInfo).FieldType;
@@ -46,5 +49,5 @@ internal static class EntityFrameworkMemberInfoExtensions
     }
 
     public static bool IsReallyVirtual(this MethodInfo method)
-        => method is { IsVirtual: true, IsFinal: false };
+        => method.IsVirtual && !method.IsFinal;
 }

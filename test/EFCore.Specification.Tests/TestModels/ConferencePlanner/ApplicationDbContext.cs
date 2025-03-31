@@ -3,10 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ConferencePlanner;
 
-#nullable disable
-
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
+public class ApplicationDbContext : DbContext
 {
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
+    {
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Attendee>()

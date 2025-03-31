@@ -5,10 +5,8 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class NorthwindQuerySqlServerFixture<TModelCustomizer> : NorthwindQueryRelationalFixture<TModelCustomizer>
-    where TModelCustomizer : ITestModelCustomizer, new()
+    where TModelCustomizer : IModelCustomizer, new()
 {
     protected override ITestStoreFactory TestStoreFactory
         => SqlServerNorthwindTestStoreFactory.Instance;
@@ -23,7 +21,7 @@ public class NorthwindQuerySqlServerFixture<TModelCustomizer> : NorthwindQueryRe
                 b.Property(c => c.CustomerID).HasColumnType("nchar(5)");
                 b.Property(cm => cm.CompanyName).HasMaxLength(40);
                 b.Property(cm => cm.ContactName).HasMaxLength(30);
-                b.Property(cm => cm.ContactTitle).HasColumnType("national character varying(30)");
+                b.Property(cm => cm.ContactTitle).HasColumnType("NVarChar(30)");
             });
 
         modelBuilder.Entity<Employee>(
@@ -56,7 +54,4 @@ public class NorthwindQuerySqlServerFixture<TModelCustomizer> : NorthwindQueryRe
             .Property(p => p.UnitPrice)
             .HasColumnType("money");
     }
-
-    protected override Type ContextType
-        => typeof(NorthwindSqlServerContext);
 }

@@ -3,11 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class StoreGeneratedFixupRelationalTestBase<TFixture>(TFixture fixture) : StoreGeneratedFixupTestBase<TFixture>(fixture)
+public abstract class StoreGeneratedFixupRelationalTestBase<TFixture> : StoreGeneratedFixupTestBase<TFixture>
     where TFixture : StoreGeneratedFixupRelationalTestBase<TFixture>.StoreGeneratedFixupRelationalFixtureBase, new()
 {
+    protected StoreGeneratedFixupRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public abstract class StoreGeneratedFixupRelationalFixtureBase : StoreGeneratedFixupFixtureBase
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)

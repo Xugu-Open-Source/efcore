@@ -5,8 +5,6 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public class DefaultValuesTest : SharedStoreFixtureBase<DbContext>
 {
     [ConditionalFact]
@@ -43,8 +41,13 @@ public class DefaultValuesTest : SharedStoreFixtureBase<DbContext>
     private ChipsContext CreateChipsContext()
         => (ChipsContext)CreateContext();
 
-    private class ChipsContext(DbContextOptions options) : PoolableDbContext(options)
+    private class ChipsContext : PoolableDbContext
     {
+        public ChipsContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public DbSet<KettleChips> Chips { get; set; }
 

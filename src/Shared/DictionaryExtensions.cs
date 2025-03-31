@@ -27,7 +27,7 @@ internal static class DictionaryExtensions
     public static TValue? Find<TKey, TValue>(
         this IReadOnlyDictionary<TKey, TValue> source,
         TKey key)
-        => source.GetValueOrDefault(key);
+        => !source.TryGetValue(key, out var value) ? default : value;
 
     public static bool TryGetAndRemove<TKey, TValue, TReturn>(
         this IDictionary<TKey, TValue> source,
@@ -63,7 +63,7 @@ internal static class DictionaryExtensions
         {
             if (found)
             {
-                pairsRemainder ??= [];
+                pairsRemainder ??= new List<KeyValuePair<TKey, TValue>>();
 
                 pairsRemainder.Add(pair);
                 continue;

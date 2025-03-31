@@ -19,7 +19,9 @@ public class InMemoryQueryTranslationPreprocessorFactory : IQueryTranslationPrep
     /// </summary>
     public InMemoryQueryTranslationPreprocessorFactory(
         QueryTranslationPreprocessorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.

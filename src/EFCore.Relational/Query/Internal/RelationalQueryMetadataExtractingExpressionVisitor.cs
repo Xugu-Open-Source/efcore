@@ -21,7 +21,9 @@ public class RelationalQueryMetadataExtractingExpressionVisitor : ExpressionVisi
     /// </summary>
     public RelationalQueryMetadataExtractingExpressionVisitor(
         RelationalQueryCompilationContext relationalQueryCompilationContext)
-        => _relationalQueryCompilationContext = relationalQueryCompilationContext;
+    {
+        _relationalQueryCompilationContext = relationalQueryCompilationContext;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

@@ -30,7 +30,9 @@ public class FallbackEventDefinition : EventDefinitionBase
         string eventIdCode,
         string messageFormat)
         : base(loggingOptions, eventId, level, eventIdCode)
-        => MessageFormat = messageFormat;
+    {
+        MessageFormat = messageFormat;
+    }
 
     /// <summary>
     ///     Generates the message that would be logged without logging it.

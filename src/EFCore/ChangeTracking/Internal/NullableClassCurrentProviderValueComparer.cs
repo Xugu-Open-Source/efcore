@@ -12,7 +12,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 public class NullableClassCurrentProviderValueComparer<TModel, TProvider> : IComparer<IUpdateEntry>
     where TModel : class
 {
-    private readonly IProperty _property;
+    private readonly IPropertyBase _property;
     private readonly IComparer<TProvider> _underlyingComparer;
     private readonly Func<TModel, TProvider> _converter;
 
@@ -22,10 +22,12 @@ public class NullableClassCurrentProviderValueComparer<TModel, TProvider> : ICom
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NullableClassCurrentProviderValueComparer(IProperty property)
+    public NullableClassCurrentProviderValueComparer(
+        IPropertyBase property,
+        ValueConverter<TModel, TProvider> converter)
     {
         _property = property;
-        _converter = ((ValueConverter<TModel, TProvider>)property.GetTypeMapping().Converter!).ConvertToProviderTyped;
+        _converter = converter.ConvertToProviderExpression.Compile();
         _underlyingComparer = Comparer<TProvider>.Default;
     }
 

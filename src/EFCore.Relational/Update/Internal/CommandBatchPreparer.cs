@@ -17,7 +17,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
     private readonly int _minBatchSize;
     private readonly bool _sensitiveLoggingEnabled;
     private readonly bool _detailedErrorsEnabled;
-    private readonly Multigraph<IReadOnlyModificationCommand, CommandDependency> _modificationCommandGraph;
+    private readonly Multigraph<IReadOnlyModificationCommand, IAnnotatable> _modificationCommandGraph;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -31,8 +31,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
             dependencies.Options.Extensions.OfType<RelationalOptionsExtension>().FirstOrDefault()?.MinBatchSize
             ?? 1;
 
-        _modificationCommandGraph =
-            new Multigraph<IReadOnlyModificationCommand, CommandDependency>(dependencies.ModificationCommandComparer);
+        _modificationCommandGraph = new Multigraph<IReadOnlyModificationCommand, IAnnotatable>(dependencies.ModificationCommandComparer);
         Dependencies = dependencies;
 
         if (dependencies.LoggingOptions.IsSensitiveDataLoggingEnabled)
@@ -210,40 +209,62 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         Dictionary<(string Name, string? Schema), SharedTableEntryMap<IModificationCommand>>? sharedTablesCommandsMap = null;
         foreach (var entry in entries)
         {
-            if (entry is { SharedIdentityEntry: not null, EntityState: EntityState.Deleted })
+            if (entry.SharedIdentityEntry != null
+                && entry.EntityState == EntityState.Deleted)
             {
                 continue;
             }
 
-            using var sharedIdentityTableMappings =
-                entry.SharedIdentityEntry != null
-                && entry.SharedIdentityEntry.EntityState == EntityState.Deleted
-                    ? entry.SharedIdentityEntry.EntityType.GetTableMappings().GetEnumerator()
-                    : null;
-
             var foundMapping = false;
+
             foreach (var tableMapping in entry.EntityType.GetTableMappings())
             {
-                if (sharedIdentityTableMappings != null
-                    && sharedIdentityTableMappings.MoveNext()
-                    && sharedIdentityTableMappings.Current.Table != tableMapping.Table)
+                var sprocMapping = entry.EntityState switch
                 {
-                    ProcessEntry(
-                        entry.SharedIdentityEntry!, sharedIdentityTableMappings.Current, commands, updateAdapter, generateParameterName,
-                        ref sharedTablesCommandsMap);
+                    EntityState.Added => tableMapping.InsertStoredProcedureMapping,
+                    EntityState.Modified => tableMapping.UpdateStoredProcedureMapping,
+                    EntityState.Deleted => tableMapping.DeleteStoredProcedureMapping,
+
+                    _ => throw new ArgumentOutOfRangeException("Unexpected entry.EntityState: " + entry.EntityState)
+                };
+
+                var table = tableMapping.Table;
+
+                IModificationCommand command;
+                var isMainEntry = true;
+                if (table.IsShared)
+                {
+                    Check.DebugAssert(sprocMapping is null, "Shared table with sproc mapping");
+
+                    sharedTablesCommandsMap ??= new Dictionary<(string Name, string? Schema), SharedTableEntryMap<IModificationCommand>>();
+
+                    var tableKey = (table.Name, table.Schema);
+                    if (!sharedTablesCommandsMap.TryGetValue(tableKey, out var sharedCommandsMap))
+                    {
+                        sharedCommandsMap = new SharedTableEntryMap<IModificationCommand>(table, updateAdapter);
+                        sharedTablesCommandsMap.Add(tableKey, sharedCommandsMap);
+                    }
+
+                    command = sharedCommandsMap.GetOrAddValue(
+                        entry,
+                        (t, comparer) => Dependencies.ModificationCommandFactory.CreateModificationCommand(
+                            new ModificationCommandParameters(
+                                t, _sensitiveLoggingEnabled, _detailedErrorsEnabled, comparer, generateParameterName,
+                                Dependencies.UpdateLogger)));
+                    isMainEntry = sharedCommandsMap.IsMainEntry(entry);
+                }
+                else
+                {
+                    command = Dependencies.ModificationCommandFactory.CreateModificationCommand(
+                        new ModificationCommandParameters(
+                            table, sprocMapping?.StoreStoredProcedure, _sensitiveLoggingEnabled, _detailedErrorsEnabled,
+                            comparer: null, generateParameterName, Dependencies.UpdateLogger));
                 }
 
-                ProcessEntry(entry, tableMapping, commands, updateAdapter, generateParameterName, ref sharedTablesCommandsMap);
+                command.AddEntry(entry, isMainEntry);
+                commands.Add(command);
 
                 foundMapping = true;
-            }
-
-            while (sharedIdentityTableMappings != null
-                   && sharedIdentityTableMappings.MoveNext())
-            {
-                ProcessEntry(
-                    entry.SharedIdentityEntry!, sharedIdentityTableMappings.Current, commands, updateAdapter, generateParameterName,
-                    ref sharedTablesCommandsMap);
             }
 
             if (!foundMapping)
@@ -258,60 +279,6 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         }
 
         return commands;
-
-        void ProcessEntry(
-            IUpdateEntry entry,
-            ITableMapping tableMapping,
-            List<IModificationCommand> commands,
-            IUpdateAdapter updateAdapter,
-            Func<string> generateParameterName,
-            ref Dictionary<(string Name, string? Schema), SharedTableEntryMap<IModificationCommand>>? sharedTablesCommandsMap)
-        {
-            var sprocMapping = entry.EntityState switch
-            {
-                EntityState.Added => tableMapping.InsertStoredProcedureMapping,
-                EntityState.Modified => tableMapping.UpdateStoredProcedureMapping,
-                EntityState.Deleted => tableMapping.DeleteStoredProcedureMapping,
-
-                _ => throw new ArgumentOutOfRangeException("Unexpected entry.EntityState: " + entry.EntityState)
-            };
-
-            var table = tableMapping.Table;
-
-            IModificationCommand command;
-            var isMainEntry = true;
-            if (table.IsShared)
-            {
-                Check.DebugAssert(sprocMapping is null, "Shared table with sproc mapping");
-
-                sharedTablesCommandsMap ??= new Dictionary<(string Name, string? Schema), SharedTableEntryMap<IModificationCommand>>();
-
-                var tableKey = (table.Name, table.Schema);
-                if (!sharedTablesCommandsMap.TryGetValue(tableKey, out var sharedCommandsMap))
-                {
-                    sharedCommandsMap = new SharedTableEntryMap<IModificationCommand>(table, updateAdapter);
-                    sharedTablesCommandsMap.Add(tableKey, sharedCommandsMap);
-                }
-
-                command = sharedCommandsMap.GetOrAddValue(
-                    entry,
-                    (t, comparer) => Dependencies.ModificationCommandFactory.CreateModificationCommand(
-                        new ModificationCommandParameters(
-                            t, _sensitiveLoggingEnabled, _detailedErrorsEnabled, comparer, generateParameterName,
-                            Dependencies.UpdateLogger)));
-                isMainEntry = sharedCommandsMap.IsMainEntry(entry);
-            }
-            else
-            {
-                command = Dependencies.ModificationCommandFactory.CreateModificationCommand(
-                    new ModificationCommandParameters(
-                        table, sprocMapping?.StoreStoredProcedure, _sensitiveLoggingEnabled, _detailedErrorsEnabled,
-                        comparer: null, generateParameterName, Dependencies.UpdateLogger));
-            }
-
-            command.AddEntry(entry, isMainEntry);
-            commands.Add(command);
-        }
     }
 
     private static void AddUnchangedSharingEntries(
@@ -370,19 +337,22 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         _modificationCommandGraph.Clear();
         _modificationCommandGraph.AddVertices(commands);
 
-        AddForeignKeyEdges();
+        AddForeignKeyEdges(_modificationCommandGraph);
 
-        AddUniqueValueEdges();
+        AddUniqueValueEdges(_modificationCommandGraph);
 
-        AddSameTableEdges();
+        AddSameTableEdges(_modificationCommandGraph);
 
         return _modificationCommandGraph.BatchingTopologicalSort(
-            static (_, _, edges) => edges.All(e => e.Breakable),
+            static (_, _, edges) => edges.All(
+                e =>
+                    e is ITable
+                    || (e is ITableIndex index && index.Filter != null)),
             FormatCycle);
     }
 
     private string FormatCycle(
-        IReadOnlyList<Tuple<IReadOnlyModificationCommand, IReadOnlyModificationCommand, IEnumerable<CommandDependency>>> data)
+        IReadOnlyList<Tuple<IReadOnlyModificationCommand, IReadOnlyModificationCommand, IEnumerable<IAnnotatable>>> data)
     {
         var builder = new StringBuilder();
         for (var i = 0; i < data.Count; i++)
@@ -390,7 +360,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
             var (command1, command2, edges) = data[i];
             Format(command1, builder);
 
-            switch (edges.First().Metadata)
+            switch (edges.First())
             {
                 case IForeignKey foreignKey:
                     Format(foreignKey, command1, command2, builder);
@@ -482,7 +452,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         var dependentCommand = reverseDependency ? target : source;
         var dependentEntry = dependentCommand.Entries.First(e => foreignKey.DeclaringEntityType.IsAssignableFrom(e.EntityType));
         builder.Append(dependentEntry.BuildCurrentValuesString(foreignKey.Properties))
-            .Append(' ');
+            .Append(" ");
 
         if (!reverseDependency)
         {
@@ -541,7 +511,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                 ? dependentEntry.BuildCurrentValuesString(key.Properties)
                 : dependentEntry.BuildOriginalValuesString(key.Properties));
 
-        builder.Append(' ');
+        builder.Append(" ");
 
         if (!reverseDependency)
         {
@@ -595,8 +565,8 @@ public class CommandBatchPreparer : ICommandBatchPreparer
 
         var rowForeignKeyValueFactory = ((TableIndex)index).GetRowIndexValueFactory();
         var dependentCommand = reverseDependency ? target : source;
-        var indexValue = rowForeignKeyValueFactory.CreateIndexValue(dependentCommand, fromOriginalValues: !reverseDependency)!;
-        FormatValues(indexValue.Value!, index.Columns, dependentCommand, builder);
+        var values = rowForeignKeyValueFactory.CreateIndexValue(dependentCommand, fromOriginalValues: !reverseDependency)!;
+        FormatValues(values, index.Columns, dependentCommand, builder);
 
         builder.Append(" } ");
 
@@ -607,7 +577,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
     }
 
     private void FormatValues(
-        object?[] values,
+        object[] values,
         IReadOnlyList<IColumn> columns,
         IReadOnlyModificationCommand dependentCommand,
         StringBuilder builder)
@@ -621,15 +591,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
             if (_sensitiveLoggingEnabled)
             {
                 builder.Append(": ");
-                var value = values[i];
-                if (value != null)
-                {
-                    builder.Append(values[i]);
-                }
-                else
-                {
-                    builder.Append("NULL");
-                }
+                builder.Append(values[i]);
             }
 
             if (i != columns.Count - 1)
@@ -639,11 +601,12 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         }
     }
 
-    private void AddForeignKeyEdges()
+    private void AddForeignKeyEdges(
+        Multigraph<IReadOnlyModificationCommand, IAnnotatable> commandGraph)
     {
         var predecessorsMap = new Dictionary<object, List<IReadOnlyModificationCommand>>();
         var originalPredecessorsMap = new Dictionary<object, List<IReadOnlyModificationCommand>>();
-        foreach (var command in _modificationCommandGraph.Vertices)
+        foreach (var command in commandGraph.Vertices)
         {
             if (command.EntityState is EntityState.Modified or EntityState.Added)
             {
@@ -662,7 +625,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
 
                         if (!predecessorsMap.TryGetValue(principalKeyValue, out var predecessorCommands))
                         {
-                            predecessorCommands = [];
+                            predecessorCommands = new List<IReadOnlyModificationCommand>();
                             predecessorsMap.Add(principalKeyValue, predecessorCommands);
                         }
 
@@ -677,8 +640,8 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                     {
                         if (!CanCreateDependency(foreignKey, command, principal: true)
                             || !IsModified(foreignKey.PrincipalKey.Properties, entry)
-                            || (command.Table != null
-                                && !IsStoreGenerated(entry, foreignKey.PrincipalKey)))
+                            || command.Table != null
+                            && !HasTempKey(entry, foreignKey.PrincipalKey))
                         {
                             continue;
                         }
@@ -689,7 +652,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
 
                         if (!predecessorsMap.TryGetValue(principalKeyValue, out var predecessorCommands))
                         {
-                            predecessorCommands = [];
+                            predecessorCommands = new List<IReadOnlyModificationCommand>();
                             predecessorsMap.Add(principalKeyValue, predecessorCommands);
                         }
 
@@ -715,7 +678,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                         {
                             if (!originalPredecessorsMap.TryGetValue(dependentKeyValue, out var predecessorCommands))
                             {
-                                predecessorCommands = [];
+                                predecessorCommands = new List<IReadOnlyModificationCommand>();
                                 originalPredecessorsMap.Add(dependentKeyValue, predecessorCommands);
                             }
 
@@ -742,7 +705,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                             {
                                 if (!originalPredecessorsMap.TryGetValue(dependentKeyValue, out var predecessorCommands))
                                 {
-                                    predecessorCommands = [];
+                                    predecessorCommands = new List<IReadOnlyModificationCommand>();
                                     originalPredecessorsMap.Add(dependentKeyValue, predecessorCommands);
                                 }
 
@@ -754,7 +717,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
             }
         }
 
-        foreach (var command in _modificationCommandGraph.Vertices)
+        foreach (var command in commandGraph.Vertices)
         {
             if (command.EntityState is EntityState.Modified or EntityState.Added)
             {
@@ -775,7 +738,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                         }
 
                         AddMatchingPredecessorEdge(
-                            predecessorsMap, dependentKeyValue, command, foreignKey, checkStoreGenerated: true);
+                            predecessorsMap, dependentKeyValue, commandGraph, command, foreignKey, checkStoreGenerated: true);
                     }
                 }
 
@@ -799,7 +762,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                         }
 
                         AddMatchingPredecessorEdge(
-                            predecessorsMap, dependentKeyValue, command, foreignKey, checkStoreGenerated: true);
+                            predecessorsMap, dependentKeyValue, commandGraph, command, foreignKey, checkStoreGenerated: true);
                     }
                 }
             }
@@ -819,7 +782,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                             .CreatePrincipalEquatableKeyValue(command, fromOriginalValues: true);
                         Check.DebugAssert(principalKeyValue != null, "null principalKeyValue");
                         AddMatchingPredecessorEdge(
-                            originalPredecessorsMap, principalKeyValue, command, foreignKey);
+                            originalPredecessorsMap, principalKeyValue, commandGraph, command, foreignKey);
                     }
                 }
                 else
@@ -839,7 +802,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                                 .CreatePrincipalEquatableKey(entry, fromOriginalValues: true);
                             Check.DebugAssert(principalKeyValue != null, "null principalKeyValue");
                             AddMatchingPredecessorEdge(
-                                originalPredecessorsMap, principalKeyValue, command, foreignKey);
+                                originalPredecessorsMap, principalKeyValue, commandGraph, command, foreignKey);
                         }
                     }
                 }
@@ -847,7 +810,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         }
     }
 
-    private static bool IsStoreGenerated(IUpdateEntry entry, IKey key)
+    private static bool HasTempKey(IUpdateEntry entry, IKey key)
     {
         var keyProperties = key.Properties;
 
@@ -857,7 +820,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         {
             var keyProperty = keyProperties[i];
 
-            if (entry.IsStoreGenerated(keyProperty))
+            if (entry.HasTemporaryValue(keyProperty))
             {
                 return true;
             }
@@ -993,30 +956,18 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                 var entry = command.Entries[entryIndex];
                 var columnMapping = column.FindColumnMapping(entry.EntityType);
                 var property = columnMapping?.Property;
-                if (property != null)
+                if (property != null
+                    && (property.GetAfterSaveBehavior() == PropertySaveBehavior.Save
+                        || (!property.IsPrimaryKey() && entry.EntityState != EntityState.Modified)))
                 {
                     switch (entry.EntityState)
                     {
                         case EntityState.Added:
                             currentValue = entry.GetCurrentProviderValue(property);
-                            if (entry.SharedIdentityEntry != null)
-                            {
-                                var sharedProperty = entry.SharedIdentityEntry.EntityType == entry.EntityType
-                                    ? property
-                                    : column.FindColumnMapping(entry.SharedIdentityEntry.EntityType)?.Property;
-
-                                if (sharedProperty != null)
-                                {
-                                    originalValue ??= entry.SharedIdentityEntry.GetOriginalProviderValue(sharedProperty);
-                                }
-                            }
-
                             break;
                         case EntityState.Deleted:
                         case EntityState.Unchanged:
                             originalValue ??= entry.GetOriginalProviderValue(property);
-                            Check.DebugAssert(entry.SharedIdentityEntry == null, "entry.SharedIdentityEntry != null");
-
                             break;
                         case EntityState.Modified:
                             if (entry.IsModified(property))
@@ -1025,7 +976,6 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                             }
 
                             originalValue ??= entry.GetOriginalProviderValue(property);
-                            currentValue ??= entry.GetCurrentProviderValue(property);
                             break;
                     }
 
@@ -1043,9 +993,10 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         return false;
     }
 
-    private void AddMatchingPredecessorEdge<T>(
+    private static void AddMatchingPredecessorEdge<T>(
         Dictionary<T, List<IReadOnlyModificationCommand>> predecessorsMap,
         T keyValue,
+        Multigraph<IReadOnlyModificationCommand, IAnnotatable> commandGraph,
         IReadOnlyModificationCommand command,
         IForeignKey foreignKey,
         bool checkStoreGenerated = false)
@@ -1068,7 +1019,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                         for (var j = 0; j < predecessor.Entries.Count; j++)
                         {
                             var entry = predecessor.Entries[j];
-                            if (IsStoreGenerated(entry, foreignKey.PrincipalKey))
+                            if (HasTempKey(entry, foreignKey.PrincipalKey))
                             {
                                 requiresBatchingBoundary = true;
                                 goto AfterLoop;
@@ -1077,15 +1028,16 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                     }
 
                     AfterLoop:
-                    _modificationCommandGraph.AddEdge(predecessor, command, new CommandDependency(foreignKey), requiresBatchingBoundary);
+                    commandGraph.AddEdge(predecessor, command, foreignKey, requiresBatchingBoundary);
                 }
             }
         }
     }
 
-    private void AddMatchingPredecessorEdge<T>(
+    private static void AddMatchingPredecessorEdge<T>(
         Dictionary<T, List<IReadOnlyModificationCommand>> predecessorsMap,
         T keyValue,
+        Multigraph<IReadOnlyModificationCommand, IAnnotatable> commandGraph,
         IReadOnlyModificationCommand command,
         IForeignKeyConstraint foreignKey,
         bool checkStoreGenerated = false)
@@ -1112,7 +1064,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                             foreach (var key in foreignKey.PrincipalUniqueConstraint.MappedKeys)
                             {
                                 if (key.DeclaringEntityType.IsAssignableFrom(entry.EntityType)
-                                    && IsStoreGenerated(entry, key))
+                                    && HasTempKey(entry, key))
                                 {
                                     requiresBatchingBoundary = true;
                                     goto AfterLoop;
@@ -1122,17 +1074,18 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                     }
 
                     AfterLoop:
-                    _modificationCommandGraph.AddEdge(predecessor, command, new CommandDependency(foreignKey), requiresBatchingBoundary);
+                    commandGraph.AddEdge(predecessor, command, foreignKey, requiresBatchingBoundary);
                 }
             }
         }
     }
 
-    private void AddMatchingPredecessorEdge<T>(
+    private static void AddMatchingPredecessorEdge<T>(
         Dictionary<T, List<IReadOnlyModificationCommand>> predecessorsMap,
         T keyValue,
+        Multigraph<IReadOnlyModificationCommand, IAnnotatable> commandGraph,
         IReadOnlyModificationCommand command,
-        CommandDependency edge)
+        IAnnotatable edgeAnnotatable)
         where T : notnull
     {
         if (predecessorsMap.TryGetValue(keyValue, out var predecessorCommands))
@@ -1141,17 +1094,17 @@ public class CommandBatchPreparer : ICommandBatchPreparer
             {
                 if (predecessor != command)
                 {
-                    _modificationCommandGraph.AddEdge(predecessor, command, edge);
+                    commandGraph.AddEdge(predecessor, command, edgeAnnotatable);
                 }
             }
         }
     }
 
-    private void AddUniqueValueEdges()
+    private void AddUniqueValueEdges(Multigraph<IReadOnlyModificationCommand, IAnnotatable> commandGraph)
     {
         Dictionary<object, List<IReadOnlyModificationCommand>>? indexPredecessorsMap = null;
         var keyPredecessorsMap = new Dictionary<object, List<IReadOnlyModificationCommand>>();
-        foreach (var command in _modificationCommandGraph.Vertices)
+        foreach (var command in commandGraph.Vertices)
         {
             if (command.EntityState is EntityState.Added)
             {
@@ -1168,15 +1121,15 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                         continue;
                     }
 
-                    var (value, _) = ((TableIndex)index).GetRowIndexValueFactory()
+                    var indexValue = ((TableIndex)index).GetRowIndexValueFactory()
                         .CreateEquatableIndexValue(command, fromOriginalValues: true);
-                    if (value != null)
+                    if (indexValue != null)
                     {
                         indexPredecessorsMap ??= new Dictionary<object, List<IReadOnlyModificationCommand>>();
-                        if (!indexPredecessorsMap.TryGetValue(value, out var predecessorCommands))
+                        if (!indexPredecessorsMap.TryGetValue(indexValue, out var predecessorCommands))
                         {
-                            predecessorCommands = [];
-                            indexPredecessorsMap.Add(value, predecessorCommands);
+                            predecessorCommands = new List<IReadOnlyModificationCommand>();
+                            indexPredecessorsMap.Add(indexValue, predecessorCommands);
                         }
 
                         predecessorCommands.Add(command);
@@ -1198,7 +1151,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                     Check.DebugAssert(keyValue != null, "null keyValue");
                     if (!keyPredecessorsMap.TryGetValue((key, keyValue), out var predecessorCommands))
                     {
-                        predecessorCommands = [];
+                        predecessorCommands = new List<IReadOnlyModificationCommand>();
                         keyPredecessorsMap.Add((key, keyValue), predecessorCommands);
                     }
 
@@ -1222,7 +1175,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                         Check.DebugAssert(keyValue != null, "null keyValue");
                         if (!keyPredecessorsMap.TryGetValue((key, keyValue), out var predecessorCommands))
                         {
-                            predecessorCommands = [];
+                            predecessorCommands = new List<IReadOnlyModificationCommand>();
                             keyPredecessorsMap.Add((key, keyValue), predecessorCommands);
                         }
 
@@ -1234,7 +1187,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
 
         if (indexPredecessorsMap != null)
         {
-            foreach (var command in _modificationCommandGraph.Vertices)
+            foreach (var command in commandGraph.Vertices)
             {
                 if (command.EntityState is EntityState.Deleted
                     || command.Table == null)
@@ -1250,13 +1203,12 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                         continue;
                     }
 
-                    var (value, hasNullValue) = ((TableIndex)index).GetRowIndexValueFactory()
+                    var indexValue = ((TableIndex)index).GetRowIndexValueFactory()
                         .CreateEquatableIndexValue(command);
-                    if (value != null)
+                    if (indexValue != null)
                     {
                         AddMatchingPredecessorEdge(
-                            indexPredecessorsMap, value, command,
-                            new CommandDependency(index, Breakable: index.Filter != null || hasNullValue));
+                            indexPredecessorsMap, indexValue, commandGraph, command, index);
                     }
                 }
             }
@@ -1264,7 +1216,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
 
         if (keyPredecessorsMap != null)
         {
-            foreach (var command in _modificationCommandGraph.Vertices)
+            foreach (var command in commandGraph.Vertices)
             {
                 if (command.EntityState is not EntityState.Added)
                 {
@@ -1279,7 +1231,8 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                             .CreateEquatableKeyValue(command, fromOriginalValues: true);
                         Check.DebugAssert(keyValue != null, "null keyValue");
 
-                        AddMatchingPredecessorEdge(keyPredecessorsMap, keyValue, command, new CommandDependency(key));
+                        AddMatchingPredecessorEdge(
+                            keyPredecessorsMap, keyValue, commandGraph, command, key);
                     }
                 }
                 else
@@ -1298,7 +1251,8 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                                 .CreateEquatableKey(entry, fromOriginalValues: true);
                             Check.DebugAssert(keyValue != null, "null keyValue");
 
-                            AddMatchingPredecessorEdge(keyPredecessorsMap, keyValue, command, new CommandDependency(key));
+                            AddMatchingPredecessorEdge(
+                                keyPredecessorsMap, keyValue, commandGraph, command, key);
                         }
                     }
                 }
@@ -1306,18 +1260,18 @@ public class CommandBatchPreparer : ICommandBatchPreparer
         }
     }
 
-    private void AddSameTableEdges()
+    private static void AddSameTableEdges(Multigraph<IReadOnlyModificationCommand, IAnnotatable> modificationCommandGraph)
     {
         var deletedDictionary = new Dictionary<(string, string?), (List<IReadOnlyModificationCommand> List, bool EdgesAdded)>();
 
-        foreach (var command in _modificationCommandGraph.Vertices)
+        foreach (var command in modificationCommandGraph.Vertices)
         {
             if (command.EntityState == EntityState.Deleted)
             {
                 var table = (command.TableName, command.Schema);
                 if (!deletedDictionary.TryGetValue(table, out var deletedCommands))
                 {
-                    deletedCommands = ([], false);
+                    deletedCommands = (new List<IReadOnlyModificationCommand>(), false);
                     deletedDictionary.Add(table, deletedCommands);
                 }
 
@@ -1325,7 +1279,7 @@ public class CommandBatchPreparer : ICommandBatchPreparer
             }
         }
 
-        foreach (var command in _modificationCommandGraph.Vertices)
+        foreach (var command in modificationCommandGraph.Vertices)
         {
             if (command.EntityState == EntityState.Added)
             {
@@ -1338,29 +1292,15 @@ public class CommandBatchPreparer : ICommandBatchPreparer
                         for (var i = 0; i < deletedCommands.List.Count - 1; i++)
                         {
                             var deleted = deletedCommands.List[i];
-                            _modificationCommandGraph.AddEdge(deleted, lastDelete, new CommandDependency(deleted.Table!, Breakable: true));
+                            modificationCommandGraph.AddEdge(deleted, lastDelete, deleted.Table!);
                         }
 
                         deletedDictionary[table] = (deletedCommands.List, true);
                     }
 
-                    _modificationCommandGraph.AddEdge(lastDelete, command, new CommandDependency(command.Table!, Breakable: true));
+                    modificationCommandGraph.AddEdge(lastDelete, command, command.Table!);
                 }
             }
         }
     }
-
-    /// <inheritdoc />
-    void IResettableService.ResetState()
-        => _modificationCommandGraph.Clear();
-
-    /// <inheritdoc />
-    Task IResettableService.ResetStateAsync(CancellationToken cancellationToken)
-    {
-        ((IResettableService)this).ResetState();
-
-        return Task.CompletedTask;
-    }
-
-    private sealed record class CommandDependency(IAnnotatable Metadata, bool Breakable = false);
 }

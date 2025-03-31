@@ -4,21 +4,22 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class ProductDescription
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public ProductDescription()
+    public class ProductDescription
     {
-        ProductModelProductDescriptionCulture = new HashSet<ProductModelProductDescriptionCulture>();
-    }
+        public ProductDescription()
+        {
+            ProductModelProductDescriptionCulture = new HashSet<ProductModelProductDescriptionCulture>();
+        }
 
-    public int ProductDescriptionID { get; set; }
-    public string Description { get; set; }
-    public DateTime ModifiedDate { get; set; }
+        public int ProductDescriptionID { get; set; }
+        public string Description { get; set; }
+        public DateTime ModifiedDate { get; set; }
 #pragma warning disable IDE1006 // Naming Styles
-    public Guid rowguid { get; set; }
+        public Guid rowguid { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
 
-    public virtual ICollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCulture { get; set; }
+        public virtual ICollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCulture { get; set; }
+    }
 }

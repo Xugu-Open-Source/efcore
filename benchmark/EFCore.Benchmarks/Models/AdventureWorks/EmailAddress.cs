@@ -3,17 +3,18 @@
 
 using System;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class EmailAddress
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public int BusinessEntityID { get; set; }
-    public int EmailAddressID { get; set; }
-    public string EmailAddress1 { get; set; }
-    public DateTime ModifiedDate { get; set; }
+    public class EmailAddress
+    {
+        public int BusinessEntityID { get; set; }
+        public int EmailAddressID { get; set; }
+        public string EmailAddress1 { get; set; }
+        public DateTime ModifiedDate { get; set; }
 #pragma warning disable IDE1006 // Naming Styles
-    public Guid rowguid { get; set; }
+        public Guid rowguid { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
 
-    public virtual Person BusinessEntity { get; set; }
+        public virtual Person BusinessEntity { get; set; }
+    }
 }

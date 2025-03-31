@@ -12,8 +12,8 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 public class ConcurrencyDetector : IConcurrencyDetector
 {
     private int _inCriticalSection;
-    private static readonly AsyncLocal<int> ThreadAcquiredLocksCount = new();
-    private int _currentContextRefCount;
+    private static readonly AsyncLocal<bool> ThreadHasLock = new();
+    private int _refCount;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -25,14 +25,17 @@ public class ConcurrencyDetector : IConcurrencyDetector
     {
         if (Interlocked.CompareExchange(ref _inCriticalSection, 1, 0) == 1)
         {
-            if (ThreadAcquiredLocksCount.Value == 0)
+            if (!ThreadHasLock.Value)
             {
                 throw new InvalidOperationException(CoreStrings.ConcurrentMethodInvocation);
             }
         }
+        else
+        {
+            ThreadHasLock.Value = true;
+        }
 
-        ThreadAcquiredLocksCount.Value++;
-        _currentContextRefCount++;
+        _refCount++;
         return new ConcurrencyDetectorCriticalSectionDisposer(this);
     }
 
@@ -46,9 +49,9 @@ public class ConcurrencyDetector : IConcurrencyDetector
     {
         Check.DebugAssert(_inCriticalSection == 1, "Expected to be in a critical section");
 
-        ThreadAcquiredLocksCount.Value--;
-        if (--_currentContextRefCount == 0)
+        if (--_refCount == 0)
         {
+            ThreadHasLock.Value = false;
             _inCriticalSection = 0;
         }
     }

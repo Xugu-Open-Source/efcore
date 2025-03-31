@@ -3,27 +3,25 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public class LazyLoadProxySqlServerTest : LazyLoadProxyTestBase<LazyLoadProxySqlServerTest.LoadSqlServerFixture>
 {
     public LazyLoadProxySqlServerTest(LoadSqlServerFixture fixture)
         : base(fixture)
-        => fixture.TestSqlLoggerFactory.Clear();
+    {
+        fixture.TestSqlLoggerFactory.Clear();
+    }
 
     public override void Lazy_load_collection(EntityState state, bool useAttach, bool useDetach)
     {
         base.Lazy_load_collection(state, useAttach, useDetach);
 
         AssertSql(
-            state == EntityState.Detached && useAttach
-                ? ""
-                : """
-@p='707' (Nullable = true)
+"""
+@__p_0='707' (Nullable = true)
 
-SELECT [c].[Id], [c].[ParentId], [c].[Culture_Rating], [c].[Culture_Species], [c].[Culture_Subspecies], [c].[Culture_Validation], [c].[Culture_License_Charge], [c].[Culture_License_Title], [c].[Culture_License_Tag_Text], [c].[Culture_License_Tog_Text], [c].[Culture_Manufacturer_Name], [c].[Culture_Manufacturer_Rating], [c].[Culture_Manufacturer_Tag_Text], [c].[Culture_Manufacturer_Tog_Text], [c].[Milk_Rating], [c].[Milk_Species], [c].[Milk_Subspecies], [c].[Milk_Validation], [c].[Milk_License_Charge], [c].[Milk_License_Title], [c].[Milk_License_Tag_Text], [c].[Milk_License_Tog_Text], [c].[Milk_Manufacturer_Name], [c].[Milk_Manufacturer_Rating], [c].[Milk_Manufacturer_Tag_Text], [c].[Milk_Manufacturer_Tog_Text]
+SELECT [c].[Id], [c].[ParentId]
 FROM [Child] AS [c]
-WHERE [c].[ParentId] = @p
+WHERE [c].[ParentId] = @__p_0
 """);
     }
 
@@ -32,14 +30,12 @@ WHERE [c].[ParentId] = @p
         base.Lazy_load_many_to_one_reference_to_principal(state, useAttach, useDetach);
 
         AssertSql(
-            state == EntityState.Detached && useAttach
-                ? ""
-                : """
-@p='707'
+"""
+@__p_0='707'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[Id] = @p
+WHERE [p].[Id] = @__p_0
 """);
     }
 
@@ -48,14 +44,12 @@ WHERE [p].[Id] = @p
         base.Lazy_load_one_to_one_reference_to_principal(state, useAttach, useDetach);
 
         AssertSql(
-            state == EntityState.Detached && useAttach
-                ? ""
-                : """
-@p='707'
+"""
+@__p_0='707'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[Id] = @p
+WHERE [p].[Id] = @__p_0
 """);
     }
 
@@ -64,14 +58,12 @@ WHERE [p].[Id] = @p
         base.Lazy_load_one_to_one_reference_to_dependent(state, useAttach, useDetach);
 
         AssertSql(
-            state == EntityState.Detached && useAttach
-                ? ""
-                : """
-@p='707' (Nullable = true)
+"""
+@__p_0='707' (Nullable = true)
 
-SELECT TOP(1) [s].[Id], [s].[ParentId], [s].[Culture_Rating], [s].[Culture_Species], [s].[Culture_Subspecies], [s].[Culture_Validation], [s].[Culture_License_Charge], [s].[Culture_License_Title], [s].[Culture_License_Tag_Text], [s].[Culture_License_Tog_Text], [s].[Culture_Manufacturer_Name], [s].[Culture_Manufacturer_Rating], [s].[Culture_Manufacturer_Tag_Text], [s].[Culture_Manufacturer_Tog_Text], [s].[Milk_Rating], [s].[Milk_Species], [s].[Milk_Subspecies], [s].[Milk_Validation], [s].[Milk_License_Charge], [s].[Milk_License_Title], [s].[Milk_License_Tag_Text], [s].[Milk_License_Tog_Text], [s].[Milk_Manufacturer_Name], [s].[Milk_Manufacturer_Rating], [s].[Milk_Manufacturer_Tag_Text], [s].[Milk_Manufacturer_Tog_Text]
+SELECT [s].[Id], [s].[ParentId]
 FROM [Single] AS [s]
-WHERE [s].[ParentId] = @p
+WHERE [s].[ParentId] = @__p_0
 """);
     }
 
@@ -80,12 +72,12 @@ WHERE [s].[ParentId] = @p
         base.Lazy_load_one_to_one_PK_to_PK_reference_to_principal(state);
 
         AssertSql(
-            """
-@p='707'
+"""
+@__p_0='707'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[Id] = @p
+WHERE [p].[Id] = @__p_0
 """);
     }
 
@@ -94,12 +86,12 @@ WHERE [p].[Id] = @p
         base.Lazy_load_one_to_one_PK_to_PK_reference_to_dependent(state);
 
         AssertSql(
-            """
-@p='707'
+"""
+@__p_0='707'
 
-SELECT TOP(1) [s].[Id], [s].[Culture_Rating], [s].[Culture_Species], [s].[Culture_Subspecies], [s].[Culture_Validation], [s].[Culture_License_Charge], [s].[Culture_License_Title], [s].[Culture_License_Tag_Text], [s].[Culture_License_Tog_Text], [s].[Culture_Manufacturer_Name], [s].[Culture_Manufacturer_Rating], [s].[Culture_Manufacturer_Tag_Text], [s].[Culture_Manufacturer_Tog_Text], [s].[Milk_Rating], [s].[Milk_Species], [s].[Milk_Subspecies], [s].[Milk_Validation], [s].[Milk_License_Charge], [s].[Milk_License_Title], [s].[Milk_License_Tag_Text], [s].[Milk_License_Tog_Text], [s].[Milk_Manufacturer_Name], [s].[Milk_Manufacturer_Rating], [s].[Milk_Manufacturer_Tag_Text], [s].[Milk_Manufacturer_Tog_Text]
+SELECT [s].[Id]
 FROM [SinglePkToPk] AS [s]
-WHERE [s].[Id] = @p
+WHERE [s].[Id] = @__p_0
 """);
     }
 
@@ -122,12 +114,12 @@ WHERE [s].[Id] = @p
         base.Lazy_load_collection_not_found(state);
 
         AssertSql(
-            """
-@p='767' (Nullable = true)
+"""
+@__p_0='767' (Nullable = true)
 
-SELECT [c].[Id], [c].[ParentId], [c].[Culture_Rating], [c].[Culture_Species], [c].[Culture_Subspecies], [c].[Culture_Validation], [c].[Culture_License_Charge], [c].[Culture_License_Title], [c].[Culture_License_Tag_Text], [c].[Culture_License_Tog_Text], [c].[Culture_Manufacturer_Name], [c].[Culture_Manufacturer_Rating], [c].[Culture_Manufacturer_Tag_Text], [c].[Culture_Manufacturer_Tog_Text], [c].[Milk_Rating], [c].[Milk_Species], [c].[Milk_Subspecies], [c].[Milk_Validation], [c].[Milk_License_Charge], [c].[Milk_License_Title], [c].[Milk_License_Tag_Text], [c].[Milk_License_Tog_Text], [c].[Milk_Manufacturer_Name], [c].[Milk_Manufacturer_Rating], [c].[Milk_Manufacturer_Tag_Text], [c].[Milk_Manufacturer_Tog_Text]
+SELECT [c].[Id], [c].[ParentId]
 FROM [Child] AS [c]
-WHERE [c].[ParentId] = @p
+WHERE [c].[ParentId] = @__p_0
 """);
     }
 
@@ -136,12 +128,12 @@ WHERE [c].[ParentId] = @p
         base.Lazy_load_many_to_one_reference_to_principal_not_found(state);
 
         AssertSql(
-            """
-@p='787'
+"""
+@__p_0='787'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[Id] = @p
+WHERE [p].[Id] = @__p_0
 """);
     }
 
@@ -150,12 +142,12 @@ WHERE [p].[Id] = @p
         base.Lazy_load_one_to_one_reference_to_principal_not_found(state);
 
         AssertSql(
-            """
-@p='787'
+"""
+@__p_0='787'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[Id] = @p
+WHERE [p].[Id] = @__p_0
 """);
     }
 
@@ -164,12 +156,12 @@ WHERE [p].[Id] = @p
         base.Lazy_load_one_to_one_reference_to_dependent_not_found(state);
 
         AssertSql(
-            """
-@p='767' (Nullable = true)
+"""
+@__p_0='767' (Nullable = true)
 
-SELECT TOP(1) [s].[Id], [s].[ParentId], [s].[Culture_Rating], [s].[Culture_Species], [s].[Culture_Subspecies], [s].[Culture_Validation], [s].[Culture_License_Charge], [s].[Culture_License_Title], [s].[Culture_License_Tag_Text], [s].[Culture_License_Tog_Text], [s].[Culture_Manufacturer_Name], [s].[Culture_Manufacturer_Rating], [s].[Culture_Manufacturer_Tag_Text], [s].[Culture_Manufacturer_Tog_Text], [s].[Milk_Rating], [s].[Milk_Species], [s].[Milk_Subspecies], [s].[Milk_Validation], [s].[Milk_License_Charge], [s].[Milk_License_Title], [s].[Milk_License_Tag_Text], [s].[Milk_License_Tog_Text], [s].[Milk_Manufacturer_Name], [s].[Milk_Manufacturer_Rating], [s].[Milk_Manufacturer_Tag_Text], [s].[Milk_Manufacturer_Tog_Text]
+SELECT [s].[Id], [s].[ParentId]
 FROM [Single] AS [s]
-WHERE [s].[ParentId] = @p
+WHERE [s].[ParentId] = @__p_0
 """);
     }
 
@@ -224,12 +216,12 @@ WHERE [s].[ParentId] = @p
         base.Lazy_load_many_to_one_reference_to_principal_alternate_key(state);
 
         AssertSql(
-            """
-@p='Root' (Size = 450)
+"""
+@__p_0='Root' (Size = 450)
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[AlternateId] = @p
+WHERE [p].[AlternateId] = @__p_0
 """);
     }
 
@@ -238,12 +230,12 @@ WHERE [p].[AlternateId] = @p
         base.Lazy_load_one_to_one_reference_to_principal_alternate_key(state);
 
         AssertSql(
-            """
-@p='Root' (Size = 450)
+"""
+@__p_0='Root' (Size = 450)
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[AlternateId] = @p
+WHERE [p].[AlternateId] = @__p_0
 """);
     }
 
@@ -252,12 +244,12 @@ WHERE [p].[AlternateId] = @p
         base.Lazy_load_one_to_one_reference_to_dependent_alternate_key(state);
 
         AssertSql(
-            """
-@p='Root' (Size = 450)
+"""
+@__p_0='Root' (Size = 450)
 
-SELECT TOP(1) [s].[Id], [s].[ParentId], [s].[Culture_Rating], [s].[Culture_Species], [s].[Culture_Subspecies], [s].[Culture_Validation], [s].[Culture_License_Charge], [s].[Culture_License_Title], [s].[Culture_License_Tag_Text], [s].[Culture_License_Tog_Text], [s].[Culture_Manufacturer_Name], [s].[Culture_Manufacturer_Rating], [s].[Culture_Manufacturer_Tag_Text], [s].[Culture_Manufacturer_Tog_Text], [s].[Milk_Rating], [s].[Milk_Species], [s].[Milk_Subspecies], [s].[Milk_Validation], [s].[Milk_License_Charge], [s].[Milk_License_Title], [s].[Milk_License_Tag_Text], [s].[Milk_License_Tog_Text], [s].[Milk_Manufacturer_Name], [s].[Milk_Manufacturer_Rating], [s].[Milk_Manufacturer_Tag_Text], [s].[Milk_Manufacturer_Tog_Text]
+SELECT [s].[Id], [s].[ParentId]
 FROM [SingleAk] AS [s]
-WHERE [s].[ParentId] = @p
+WHERE [s].[ParentId] = @__p_0
 """);
     }
 
@@ -280,12 +272,12 @@ WHERE [s].[ParentId] = @p
         base.Lazy_load_collection_shadow_fk(state);
 
         AssertSql(
-            """
-@p='707' (Nullable = true)
+"""
+@__p_0='707' (Nullable = true)
 
-SELECT [c].[Id], [c].[ParentId], [c].[Culture_Rating], [c].[Culture_Species], [c].[Culture_Subspecies], [c].[Culture_Validation], [c].[Culture_License_Charge], [c].[Culture_License_Title], [c].[Culture_License_Tag_Text], [c].[Culture_License_Tog_Text], [c].[Culture_Manufacturer_Name], [c].[Culture_Manufacturer_Rating], [c].[Culture_Manufacturer_Tag_Text], [c].[Culture_Manufacturer_Tog_Text], [c].[Milk_Rating], [c].[Milk_Species], [c].[Milk_Subspecies], [c].[Milk_Validation], [c].[Milk_License_Charge], [c].[Milk_License_Title], [c].[Milk_License_Tag_Text], [c].[Milk_License_Tog_Text], [c].[Milk_Manufacturer_Name], [c].[Milk_Manufacturer_Rating], [c].[Milk_Manufacturer_Tag_Text], [c].[Milk_Manufacturer_Tog_Text]
+SELECT [c].[Id], [c].[ParentId]
 FROM [ChildShadowFk] AS [c]
-WHERE [c].[ParentId] = @p
+WHERE [c].[ParentId] = @__p_0
 """);
     }
 
@@ -294,14 +286,12 @@ WHERE [c].[ParentId] = @p
         base.Lazy_load_many_to_one_reference_to_principal_shadow_fk(state);
 
         AssertSql(
-            state == EntityState.Detached
-                ? ""
-                : """
-@p='707'
+"""
+@__p_0='707'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[Id] = @p
+WHERE [p].[Id] = @__p_0
 """);
     }
 
@@ -310,14 +300,12 @@ WHERE [p].[Id] = @p
         base.Lazy_load_one_to_one_reference_to_principal_shadow_fk(state);
 
         AssertSql(
-            state == EntityState.Detached
-                ? ""
-                : """
-@p='707'
+"""
+@__p_0='707'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[Id] = @p
+WHERE [p].[Id] = @__p_0
 """);
     }
 
@@ -326,12 +314,12 @@ WHERE [p].[Id] = @p
         base.Lazy_load_one_to_one_reference_to_dependent_shadow_fk(state);
 
         AssertSql(
-            """
-@p='707' (Nullable = true)
+"""
+@__p_0='707' (Nullable = true)
 
-SELECT TOP(1) [s].[Id], [s].[ParentId], [s].[Culture_Rating], [s].[Culture_Species], [s].[Culture_Subspecies], [s].[Culture_Validation], [s].[Culture_License_Charge], [s].[Culture_License_Title], [s].[Culture_License_Tag_Text], [s].[Culture_License_Tog_Text], [s].[Culture_Manufacturer_Name], [s].[Culture_Manufacturer_Rating], [s].[Culture_Manufacturer_Tag_Text], [s].[Culture_Manufacturer_Tog_Text], [s].[Milk_Rating], [s].[Milk_Species], [s].[Milk_Subspecies], [s].[Milk_Validation], [s].[Milk_License_Charge], [s].[Milk_License_Title], [s].[Milk_License_Tag_Text], [s].[Milk_License_Tog_Text], [s].[Milk_Manufacturer_Name], [s].[Milk_Manufacturer_Rating], [s].[Milk_Manufacturer_Tag_Text], [s].[Milk_Manufacturer_Tog_Text]
+SELECT [s].[Id], [s].[ParentId]
 FROM [SingleShadowFk] AS [s]
-WHERE [s].[ParentId] = @p
+WHERE [s].[ParentId] = @__p_0
 """);
     }
 
@@ -354,13 +342,13 @@ WHERE [s].[ParentId] = @p
         base.Lazy_load_collection_composite_key(state);
 
         AssertSql(
-            """
-@p='Root' (Size = 450)
-@p0='707' (Nullable = true)
+"""
+@__p_0='Root' (Size = 450)
+@__p_1='707' (Nullable = true)
 
-SELECT [c].[Id], [c].[ParentAlternateId], [c].[ParentId], [c].[Culture_Rating], [c].[Culture_Species], [c].[Culture_Subspecies], [c].[Culture_Validation], [c].[Culture_License_Charge], [c].[Culture_License_Title], [c].[Culture_License_Tag_Text], [c].[Culture_License_Tog_Text], [c].[Culture_Manufacturer_Name], [c].[Culture_Manufacturer_Rating], [c].[Culture_Manufacturer_Tag_Text], [c].[Culture_Manufacturer_Tog_Text], [c].[Milk_Rating], [c].[Milk_Species], [c].[Milk_Subspecies], [c].[Milk_Validation], [c].[Milk_License_Charge], [c].[Milk_License_Title], [c].[Milk_License_Tag_Text], [c].[Milk_License_Tog_Text], [c].[Milk_Manufacturer_Name], [c].[Milk_Manufacturer_Rating], [c].[Milk_Manufacturer_Tag_Text], [c].[Milk_Manufacturer_Tog_Text]
+SELECT [c].[Id], [c].[ParentAlternateId], [c].[ParentId]
 FROM [ChildCompositeKey] AS [c]
-WHERE [c].[ParentAlternateId] = @p AND [c].[ParentId] = @p0
+WHERE [c].[ParentAlternateId] = @__p_0 AND [c].[ParentId] = @__p_1
 """);
     }
 
@@ -369,13 +357,13 @@ WHERE [c].[ParentAlternateId] = @p AND [c].[ParentId] = @p0
         base.Lazy_load_many_to_one_reference_to_principal_composite_key(state);
 
         AssertSql(
-            """
-@p='Root' (Size = 450)
-@p0='707'
+"""
+@__p_0='Root' (Size = 450)
+@__p_1='707'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[AlternateId] = @p AND [p].[Id] = @p0
+WHERE [p].[AlternateId] = @__p_0 AND [p].[Id] = @__p_1
 """);
     }
 
@@ -384,13 +372,13 @@ WHERE [p].[AlternateId] = @p AND [p].[Id] = @p0
         base.Lazy_load_one_to_one_reference_to_principal_composite_key(state);
 
         AssertSql(
-            """
-@p='Root' (Size = 450)
-@p0='707'
+"""
+@__p_0='Root' (Size = 450)
+@__p_1='707'
 
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+SELECT [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
-WHERE [p].[AlternateId] = @p AND [p].[Id] = @p0
+WHERE [p].[AlternateId] = @__p_0 AND [p].[Id] = @__p_1
 """);
     }
 
@@ -399,13 +387,13 @@ WHERE [p].[AlternateId] = @p AND [p].[Id] = @p0
         base.Lazy_load_one_to_one_reference_to_dependent_composite_key(state);
 
         AssertSql(
-            """
-@p='Root' (Size = 450)
-@p0='707' (Nullable = true)
+"""
+@__p_0='Root' (Size = 450)
+@__p_1='707' (Nullable = true)
 
-SELECT TOP(1) [s].[Id], [s].[ParentAlternateId], [s].[ParentId], [s].[Culture_Rating], [s].[Culture_Species], [s].[Culture_Subspecies], [s].[Culture_Validation], [s].[Culture_License_Charge], [s].[Culture_License_Title], [s].[Culture_License_Tag_Text], [s].[Culture_License_Tog_Text], [s].[Culture_Manufacturer_Name], [s].[Culture_Manufacturer_Rating], [s].[Culture_Manufacturer_Tag_Text], [s].[Culture_Manufacturer_Tog_Text], [s].[Milk_Rating], [s].[Milk_Species], [s].[Milk_Subspecies], [s].[Milk_Validation], [s].[Milk_License_Charge], [s].[Milk_License_Title], [s].[Milk_License_Tag_Text], [s].[Milk_License_Tog_Text], [s].[Milk_Manufacturer_Name], [s].[Milk_Manufacturer_Rating], [s].[Milk_Manufacturer_Tag_Text], [s].[Milk_Manufacturer_Tog_Text]
+SELECT [s].[Id], [s].[ParentAlternateId], [s].[ParentId]
 FROM [SingleCompositeKey] AS [s]
-WHERE [s].[ParentAlternateId] = @p AND [s].[ParentId] = @p0
+WHERE [s].[ParentAlternateId] = @__p_0 AND [s].[ParentId] = @__p_1
 """);
     }
 
@@ -430,12 +418,12 @@ WHERE [s].[ParentAlternateId] = @p AND [s].[ParentId] = @p0
         if (!async)
         {
             AssertSql(
-                """
-@p='707' (Nullable = true)
+"""
+@__p_0='707' (Nullable = true)
 
-SELECT [c].[Id], [c].[ParentId], [c].[Culture_Rating], [c].[Culture_Species], [c].[Culture_Subspecies], [c].[Culture_Validation], [c].[Culture_License_Charge], [c].[Culture_License_Title], [c].[Culture_License_Tag_Text], [c].[Culture_License_Tog_Text], [c].[Culture_Manufacturer_Name], [c].[Culture_Manufacturer_Rating], [c].[Culture_Manufacturer_Tag_Text], [c].[Culture_Manufacturer_Tog_Text], [c].[Milk_Rating], [c].[Milk_Species], [c].[Milk_Subspecies], [c].[Milk_Validation], [c].[Milk_License_Charge], [c].[Milk_License_Title], [c].[Milk_License_Tag_Text], [c].[Milk_License_Tog_Text], [c].[Milk_Manufacturer_Name], [c].[Milk_Manufacturer_Rating], [c].[Milk_Manufacturer_Tag_Text], [c].[Milk_Manufacturer_Tog_Text]
+SELECT [c].[Id], [c].[ParentId]
 FROM [Child] AS [c]
-WHERE [c].[ParentId] = @p
+WHERE [c].[ParentId] = @__p_0
 """);
         }
     }
@@ -446,16 +434,16 @@ WHERE [c].[ParentId] = @p
         base.Top_level_projection_track_entities_before_passing_to_client_method();
 
         AssertSql(
-            """
-SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator], [p].[Culture_Rating], [p].[Culture_Species], [p].[Culture_Subspecies], [p].[Culture_Validation], [p].[Culture_License_Charge], [p].[Culture_License_Title], [p].[Culture_License_Tag_Text], [p].[Culture_License_Tog_Text], [p].[Culture_Manufacturer_Name], [p].[Culture_Manufacturer_Rating], [p].[Culture_Manufacturer_Tag_Text], [p].[Culture_Manufacturer_Tog_Text], [p].[Milk_Rating], [p].[Milk_Species], [p].[Milk_Subspecies], [p].[Milk_Validation], [p].[Milk_License_Charge], [p].[Milk_License_Title], [p].[Milk_License_Tag_Text], [p].[Milk_License_Tog_Text], [p].[Milk_Manufacturer_Name], [p].[Milk_Manufacturer_Rating], [p].[Milk_Manufacturer_Tag_Text], [p].[Milk_Manufacturer_Tog_Text]
+"""
+SELECT TOP(1) [p].[Id], [p].[AlternateId], [p].[Discriminator]
 FROM [Parent] AS [p]
 ORDER BY [p].[Id]
 
-@p='707' (Nullable = true)
+@__p_0='707' (Nullable = true)
 
-SELECT TOP(1) [s].[Id], [s].[ParentId], [s].[Culture_Rating], [s].[Culture_Species], [s].[Culture_Subspecies], [s].[Culture_Validation], [s].[Culture_License_Charge], [s].[Culture_License_Title], [s].[Culture_License_Tag_Text], [s].[Culture_License_Tog_Text], [s].[Culture_Manufacturer_Name], [s].[Culture_Manufacturer_Rating], [s].[Culture_Manufacturer_Tag_Text], [s].[Culture_Manufacturer_Tog_Text], [s].[Milk_Rating], [s].[Milk_Species], [s].[Milk_Subspecies], [s].[Milk_Validation], [s].[Milk_License_Charge], [s].[Milk_License_Title], [s].[Milk_License_Tag_Text], [s].[Milk_License_Tog_Text], [s].[Milk_Manufacturer_Name], [s].[Milk_Manufacturer_Rating], [s].[Milk_Manufacturer_Tag_Text], [s].[Milk_Manufacturer_Tog_Text]
+SELECT [s].[Id], [s].[ParentId]
 FROM [Single] AS [s]
-WHERE [s].[ParentId] = @p
+WHERE [s].[ParentId] = @__p_0
 """);
     }
 
@@ -464,13 +452,13 @@ WHERE [s].[ParentId] = @p
         await base.Entity_equality_with_proxy_parameter(async);
 
         AssertSql(
-            """
-@entity_equality_called_Id='707' (Nullable = true)
+"""
+@__entity_equality_called_0_Id='707' (Nullable = true)
 
-SELECT [c].[Id], [c].[ParentId], [c].[Culture_Rating], [c].[Culture_Species], [c].[Culture_Subspecies], [c].[Culture_Validation], [c].[Culture_License_Charge], [c].[Culture_License_Title], [c].[Culture_License_Tag_Text], [c].[Culture_License_Tog_Text], [c].[Culture_Manufacturer_Name], [c].[Culture_Manufacturer_Rating], [c].[Culture_Manufacturer_Tag_Text], [c].[Culture_Manufacturer_Tog_Text], [c].[Milk_Rating], [c].[Milk_Species], [c].[Milk_Subspecies], [c].[Milk_Validation], [c].[Milk_License_Charge], [c].[Milk_License_Title], [c].[Milk_License_Tag_Text], [c].[Milk_License_Tog_Text], [c].[Milk_Manufacturer_Name], [c].[Milk_Manufacturer_Rating], [c].[Milk_Manufacturer_Tag_Text], [c].[Milk_Manufacturer_Tog_Text]
+SELECT [c].[Id], [c].[ParentId]
 FROM [Child] AS [c]
 LEFT JOIN [Parent] AS [p] ON [c].[ParentId] = [p].[Id]
-WHERE [p].[Id] = @entity_equality_called_Id
+WHERE [p].[Id] = @__entity_equality_called_0_Id
 """);
     }
 
@@ -485,17 +473,15 @@ WHERE [p].[Id] = @entity_equality_called_Id
 
     private void AssertSql(string expected)
     {
-        expected ??= "";
-        var sql = Sql ?? "";
         try
         {
             Assert.Equal(
-                expected, sql, ignoreLineEndingDifferences: true);
+                expected, Sql, ignoreLineEndingDifferences: true);
         }
         catch
         {
             var methodCallLine = Environment.StackTrace.Split(
-                [Environment.NewLine],
+                new[] { Environment.NewLine },
                 StringSplitOptions.RemoveEmptyEntries)[2][6..];
 
             var indexMethodEnding = methodCallLine.IndexOf(')') + 1;
@@ -515,7 +501,7 @@ WHERE [p].[Id] = @entity_equality_called_Id
 
             var testInfo = testName + " : " + lineNumber + FileNewLine;
             var newBaseLine = $@"            AssertSql(
-                {"@\"" + sql.Replace("\"", "\"\"") + "\""});
+                {"@\"" + Sql.Replace("\"", "\"\"") + "\""});
 
 ";
 

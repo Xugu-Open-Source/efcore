@@ -5,11 +5,9 @@ using System.Data;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public abstract class RelationalTestStore(string name, bool shared, DbConnection connection) : TestStore(name, shared)
+public abstract class RelationalTestStore : TestStore
 {
-    public virtual string ConnectionString { get; } = connection.ConnectionString;
-
-    public virtual bool UseConnectionString { get; set; }
+    public virtual string ConnectionString { get; protected set; }
 
     public ConnectionState ConnectionState
         => Connection.State;
@@ -26,28 +24,33 @@ public abstract class RelationalTestStore(string name, bool shared, DbConnection
     public DbTransaction BeginTransaction()
         => Connection.BeginTransaction();
 
-    protected virtual DbConnection Connection { get; } = connection;
+    protected virtual DbConnection Connection { get; set; }
 
-    public override async Task<TestStore> InitializeAsync(
-        IServiceProvider? serviceProvider,
-        Func<DbContext>? createContext,
-        Func<DbContext, Task>? seed = null,
-        Func<DbContext, Task>? clean = null)
+    protected RelationalTestStore(string name, bool shared)
+        : base(name, shared)
     {
-        await base.InitializeAsync(serviceProvider, createContext, seed, clean);
+    }
+
+    public override TestStore Initialize(
+        IServiceProvider serviceProvider,
+        Func<DbContext> createContext,
+        Action<DbContext> seed = null,
+        Action<DbContext> clean = null)
+    {
+        base.Initialize(serviceProvider, createContext, seed, clean);
 
         if (ConnectionState != ConnectionState.Open)
         {
-            await OpenConnectionAsync();
+            OpenConnection();
         }
 
         return this;
     }
 
-    public override async ValueTask DisposeAsync()
+    public override void Dispose()
     {
-        await Connection.DisposeAsync();
-        await base.DisposeAsync();
+        Connection?.Dispose();
+        base.Dispose();
     }
 
     public virtual string NormalizeDelimitersInRawString(string sql)

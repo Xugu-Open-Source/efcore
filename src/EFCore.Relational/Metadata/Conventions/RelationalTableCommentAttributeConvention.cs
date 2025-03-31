@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-conventions">Model building conventions</see> for more information and examples.
 /// </remarks>
-public class RelationalTableCommentAttributeConvention : TypeAttributeConventionBase<CommentAttribute>
+public class RelationalTableCommentAttributeConvention : EntityTypeAttributeConventionBase<CommentAttribute>
 {
     /// <summary>
     ///     Creates a new instance of <see cref="RelationalTableCommentAttributeConvention" />.
@@ -20,7 +20,9 @@ public class RelationalTableCommentAttributeConvention : TypeAttributeConvention
         ProviderConventionSetBuilderDependencies dependencies,
         RelationalConventionSetBuilderDependencies relationalDependencies)
         : base(dependencies)
-        => RelationalDependencies = relationalDependencies;
+    {
+        RelationalDependencies = relationalDependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.

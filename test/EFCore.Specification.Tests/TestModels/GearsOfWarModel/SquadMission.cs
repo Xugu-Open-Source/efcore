@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
-#nullable disable
-
 public class SquadMission
 {
     public Squad Squad { get; set; }

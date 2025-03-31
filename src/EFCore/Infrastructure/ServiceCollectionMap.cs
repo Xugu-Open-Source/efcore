@@ -31,7 +31,9 @@ public class ServiceCollectionMap : IInfrastructure<IInternalServiceCollectionMa
     /// </summary>
     /// <param name="serviceCollection">The collection to work with.</param>
     public ServiceCollectionMap(IServiceCollection serviceCollection)
-        => _map = new InternalServiceCollectionMap(serviceCollection);
+    {
+        _map = new InternalServiceCollectionMap(serviceCollection);
+    }
 
     /// <summary>
     ///     The underlying <see cref="IServiceCollection" />.

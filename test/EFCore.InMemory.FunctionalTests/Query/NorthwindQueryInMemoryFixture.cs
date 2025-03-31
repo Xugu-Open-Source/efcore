@@ -4,7 +4,7 @@
 namespace Microsoft.EntityFrameworkCore.Query;
 
 public class NorthwindQueryInMemoryFixture<TModelCustomizer> : NorthwindQueryFixtureBase<TModelCustomizer>
-    where TModelCustomizer : ITestModelCustomizer, new()
+    where TModelCustomizer : IModelCustomizer, new()
 {
     protected override ITestStoreFactory TestStoreFactory
         => InMemoryTestStoreFactory.Instance;

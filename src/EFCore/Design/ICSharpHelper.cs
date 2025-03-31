@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Numerics;
-using Microsoft.EntityFrameworkCore.Design.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Design;
 
@@ -60,19 +59,6 @@ public interface ICSharpHelper
     /// </param>
     /// <returns>The identifier.</returns>
     string Identifier(string name, ICollection<string>? scope = null, bool? capitalize = null);
-
-    /// <summary>
-    ///     Generates a valid C# identifier from the specified string unique to the scope.
-    /// </summary>
-    /// <param name="name">The base identifier name.</param>
-    /// <param name="value">The value that will be associated with the identifier.</param>
-    /// <param name="scope">A list of in-scope identifiers.</param>
-    /// <param name="capitalize">
-    ///     <see langword="true" /> if the first letter should be converted to uppercase;
-    ///     <see langword="false" /> if the first letter should be converted to lowercase;
-    /// </param>
-    /// <returns>The identifier.</returns>
-    string Identifier<T>(string name, T value, IDictionary<string, T> scope, bool? capitalize = null);
 
     /// <summary>
     ///     Generates a property accessor lambda.
@@ -174,9 +160,8 @@ public interface ICSharpHelper
     ///     Generates an enum literal.
     /// </summary>
     /// <param name="value">The value.</param>
-    /// <param name="fullName">Whether the type should be namespace-qualified.</param>
     /// <returns>The literal.</returns>
-    string Literal(Enum value, bool fullName = false);
+    string Literal(Enum value);
 
     /// <summary>
     ///     Generates a float literal.
@@ -333,7 +318,7 @@ public interface ICSharpHelper
     string Fragment(AttributeCodeFragment fragment);
 
     /// <summary>
-    ///     Generates a comma-separated argument list of values.
+    ///     Generates a comma-sepearated argument list of values.
     /// </summary>
     /// <param name="values">The values.</param>
     /// <returns>The argument list.</returns>
@@ -345,50 +330,4 @@ public interface ICSharpHelper
     /// <param name="type">The type.</param>
     /// <returns>The usings.</returns>
     IEnumerable<string> GetRequiredUsings(Type type);
-
-    /// <summary>
-    ///     Translates a node representing a statement into source code that would produce it.
-    /// </summary>
-    /// <param name="node">The node to be translated.</param>
-    /// <param name="collectedNamespaces">Any namespaces required by the translated code will be added to this set.</param>
-    /// <param name="unsafeAccessors">Any unsafe accessors needed to access private members will be added to this dictionary.</param>
-    /// <param name="constantReplacements">Collection of translations for statically known instances.</param>
-    /// <param name="memberAccessReplacements">Collection of translations for non-public member accesses.</param>
-    /// <returns>Source code that would produce <paramref name="node" />.</returns>
-    /// <remarks>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </remarks>
-    [EntityFrameworkInternal]
-    string Statement(
-        Expression node,
-        ISet<string> collectedNamespaces,
-        ISet<string> unsafeAccessors,
-        IReadOnlyDictionary<object, string>? constantReplacements = null,
-        IReadOnlyDictionary<MemberInfo, QualifiedName>? memberAccessReplacements = null);
-
-    /// <summary>
-    ///     Translates a node representing an expression into source code that would produce it.
-    /// </summary>
-    /// <param name="node">The node to be translated.</param>
-    /// <param name="collectedNamespaces">Any namespaces required by the translated code will be added to this set.</param>
-    /// <param name="unsafeAccessors">Any unsafe accessors needed to access private members will be added to this dictionary.</param>
-    /// <param name="constantReplacements">Collection of translations for statically known instances.</param>
-    /// <param name="memberAccessReplacements">Collection of translations for non-public member accesses.</param>
-    /// <returns>Source code that would produce  <paramref name="node" />.</returns>
-    /// <remarks>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </remarks>
-    [EntityFrameworkInternal]
-    string Expression(
-        Expression node,
-        ISet<string> collectedNamespaces,
-        ISet<string> unsafeAccessors,
-        IReadOnlyDictionary<object, string>? constantReplacements = null,
-        IReadOnlyDictionary<MemberInfo, QualifiedName>? memberAccessReplacements = null);
 }

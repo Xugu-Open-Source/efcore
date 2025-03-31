@@ -3,26 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class QueryFilterFuncletizationInMemoryTest(QueryFilterFuncletizationInMemoryTest.QueryFilterFuncletizationInMemoryFixture fixture)
-    : QueryFilterFuncletizationTestBase<QueryFilterFuncletizationInMemoryTest.QueryFilterFuncletizationInMemoryFixture>(fixture)
+public class QueryFilterFuncletizationInMemoryTest
+    : QueryFilterFuncletizationTestBase<QueryFilterFuncletizationInMemoryTest.QueryFilterFuncletizationInMemoryFixture>
 {
-    public override void DbContext_list_is_parameterized()
+    public QueryFilterFuncletizationInMemoryTest(
+        QueryFilterFuncletizationInMemoryFixture fixture,
+        ITestOutputHelper testOutputHelper)
+        : base(fixture)
     {
-        using var context = CreateContext();
-        // Default value of TenantIds is null InExpression over null values throws
-        Assert.Throws<ArgumentNullException>(() => context.Set<ListFilter>().ToList());
-
-        context.TenantIds = [];
-        var query = context.Set<ListFilter>().ToList();
-        Assert.Empty(query);
-
-        context.TenantIds = [1];
-        query = context.Set<ListFilter>().ToList();
-        Assert.Single(query);
-
-        context.TenantIds = [2, 3];
-        query = context.Set<ListFilter>().ToList();
-        Assert.Equal(2, query.Count);
     }
 
     public class QueryFilterFuncletizationInMemoryFixture : QueryFilterFuncletizationFixtureBase

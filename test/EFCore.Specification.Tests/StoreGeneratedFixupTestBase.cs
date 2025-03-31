@@ -7,19 +7,22 @@ using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class StoreGeneratedFixupTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : StoreGeneratedFixupTestBase<TFixture>.StoreGeneratedFixupFixtureBase, new()
 {
     protected static readonly Guid Guid77 = new("{DE390D36-DAAC-4C8B-91F7-E9F5DAA7EF01}");
     protected static readonly Guid Guid78 = new("{4C80406F-49AF-4D85-AFFB-75C146A98A70}");
 
-    protected TFixture Fixture { get; } = fixture;
+    protected StoreGeneratedFixupTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_FK_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_FK_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
@@ -38,28 +41,34 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_FK_not_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_FK_not_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Category();
-                var dependent = new Product { Category = principal };
-
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Category = principal
+                };
                 principal.Products.Add(dependent);
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
@@ -76,12 +85,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
@@ -99,12 +108,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
@@ -122,41 +131,50 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Category();
-                var dependent = new Product();
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product { Id1 = -78, Id2 = Guid78 };
                 principal.Products.Add(dependent);
 
+                MarkIdsTemporary(context, dependent, principal);
+
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Category();
-                var dependent = new Product { Category = principal };
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Category = principal
+                };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_FK_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_FK_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
@@ -175,27 +193,34 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_FK_not_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_FK_not_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Category();
-                var dependent = new Product { Category = principal };
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Category = principal
+                };
                 principal.Products.Add(dependent);
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
@@ -212,12 +237,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
@@ -235,12 +260,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
@@ -258,59 +283,62 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Category();
-                var dependent = new Product();
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product { Id1 = -78, Id2 = Guid78 };
                 principal.Products.Add(dependent);
 
+                MarkIdsTemporary(context, dependent, principal);
+
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Category();
-                var dependent = new Product { Category = principal };
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Category = principal
+                };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, Category principal, Product dependent)
+    private void AssertFixupAndSave(DbContext context, Category principal, Product dependent)
     {
         AssertFixup(
             context,
             () =>
             {
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                    context.Entry(dependent).Property(e => e.CategoryId1).CurrentValue);
-
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                    context.Entry(dependent).Property(e => e.CategoryId2).CurrentValue);
-
+                Assert.Equal(principal.Id1, dependent.CategoryId1);
+                Assert.Equal(principal.Id2, dependent.CategoryId2);
                 Assert.Same(principal, dependent.Category);
                 Assert.Equal(new[] { dependent }.ToList(), principal.Products);
                 Assert.Equal(EntityState.Added, context.Entry(principal).State);
                 Assert.Equal(EntityState.Added, context.Entry(dependent).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -326,8 +354,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_prin_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_prin_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
@@ -344,12 +372,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_prin_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_prin_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
@@ -366,12 +394,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_prin_uni_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_prin_uni_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
@@ -389,27 +417,29 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_prin_uni_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_prin_uni_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new CategoryPN();
-                var dependent = new ProductPN();
+                var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ProductPN { Id1 = -78, Id2 = Guid78 };
                 principal.Products.Add(dependent);
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_prin_uni_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_prin_uni_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
@@ -427,44 +457,40 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_prin_uni_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_prin_uni_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new CategoryPN();
-                var dependent = new ProductPN();
+                var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ProductPN { Id1 = -78, Id2 = Guid78 };
                 principal.Products.Add(dependent);
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, CategoryPN principal, ProductPN dependent)
+    private void AssertFixupAndSave(DbContext context, CategoryPN principal, ProductPN dependent)
     {
         AssertFixup(
             context,
             () =>
             {
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                    context.Entry(dependent).Property(e => e.CategoryId1).CurrentValue);
-
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                    context.Entry(dependent).Property(e => e.CategoryId2).CurrentValue);
-
+                Assert.Equal(principal.Id1, dependent.CategoryId1);
+                Assert.Equal(principal.Id2, dependent.CategoryId2);
                 Assert.Equal(new[] { dependent }.ToList(), principal.Products);
                 Assert.Equal(EntityState.Added, context.Entry(principal).State);
                 Assert.Equal(EntityState.Added, context.Entry(dependent).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -479,8 +505,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_dep_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_dep_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
@@ -497,12 +523,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_dep_uni_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_dep_uni_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
@@ -520,26 +546,33 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_dep_uni_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_dep_uni_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new CategoryDN();
-                var dependent = new ProductDN { Category = principal };
+                var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ProductDN
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Category = principal
+                };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_dep_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_dep_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
@@ -556,12 +589,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_dep_uni_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_dep_uni_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
@@ -579,43 +612,44 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_dep_uni_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_dep_uni_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new CategoryDN();
-                var dependent = new ProductDN { Category = principal };
+                var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ProductDN
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Category = principal
+                };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, CategoryDN principal, ProductDN dependent)
+    private void AssertFixupAndSave(DbContext context, CategoryDN principal, ProductDN dependent)
     {
         AssertFixup(
             context,
             () =>
             {
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                    context.Entry(dependent).Property(e => e.CategoryId1).CurrentValue);
-
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                    context.Entry(dependent).Property(e => e.CategoryId2).CurrentValue);
-
+                Assert.Equal(principal.Id1, dependent.CategoryId1);
+                Assert.Equal(principal.Id2, dependent.CategoryId2);
                 Assert.Same(principal, dependent.Category);
                 Assert.Equal(EntityState.Added, context.Entry(principal).State);
                 Assert.Equal(EntityState.Added, context.Entry(dependent).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -630,8 +664,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_many_no_navs_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_many_no_navs_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryNN { Id1 = -77, Id2 = Guid77 };
@@ -648,12 +682,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_many_no_navs_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_many_no_navs_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new CategoryNN { Id1 = -77, Id2 = Guid77 };
@@ -670,10 +704,10 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, CategoryNN principal, ProductNN dependent)
+    private void AssertFixupAndSave(DbContext context, CategoryNN principal, ProductNN dependent)
     {
         AssertFixup(
             context,
@@ -685,7 +719,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 Assert.Equal(EntityState.Added, context.Entry(dependent).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -699,8 +733,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_FK_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_FK_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
@@ -719,27 +753,34 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_FK_not_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_FK_not_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Parent();
-                var dependent = new Child { Parent = principal };
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Parent = principal
+                };
                 principal.Child = dependent;
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
@@ -756,12 +797,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
@@ -779,12 +820,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
@@ -802,41 +843,50 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Parent();
-                var dependent = new Child();
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child { Id1 = -78, Id2 = Guid78 };
                 principal.Child = dependent;
 
+                MarkIdsTemporary(context, dependent, principal);
+
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Parent();
-                var dependent = new Child { Parent = principal };
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Parent = principal
+                };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_FK_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_FK_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
@@ -855,27 +905,34 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_FK_not_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_FK_not_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Parent();
-                var dependent = new Child { Parent = principal };
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Parent = principal
+                };
                 principal.Child = dependent;
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
@@ -892,12 +949,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
@@ -915,12 +972,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
@@ -938,59 +995,62 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Parent();
-                var dependent = new Child();
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child { Id1 = -78, Id2 = Guid78 };
                 principal.Child = dependent;
 
+                MarkIdsTemporary(context, dependent, principal);
+
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new Parent();
-                var dependent = new Child { Parent = principal };
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Parent = principal
+                };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, Parent principal, Child dependent)
+    private void AssertFixupAndSave(DbContext context, Parent principal, Child dependent)
     {
         AssertFixup(
             context,
             () =>
             {
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                    context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                    context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                Assert.Equal(principal.Id1, dependent.ParentId1);
+                Assert.Equal(principal.Id2, dependent.ParentId2);
                 Assert.Same(principal, dependent.Parent);
                 Assert.Same(dependent, principal.Child);
                 Assert.Equal(EntityState.Added, context.Entry(principal).State);
                 Assert.Equal(EntityState.Added, context.Entry(dependent).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -1006,8 +1066,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_prin_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_prin_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
@@ -1024,12 +1084,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_prin_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_prin_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
@@ -1046,12 +1106,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_prin_uni_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_prin_uni_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
@@ -1069,27 +1129,29 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_prin_uni_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_prin_uni_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new ParentPN();
-                var dependent = new ChildPN();
+                var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ChildPN { Id1 = -78, Id2 = Guid78 };
                 principal.Child = dependent;
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_prin_uni_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_prin_uni_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
@@ -1107,44 +1169,40 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_prin_uni_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_prin_uni_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new ParentPN();
-                var dependent = new ChildPN();
+                var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ChildPN { Id1 = -78, Id2 = Guid78 };
                 principal.Child = dependent;
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, ParentPN principal, ChildPN dependent)
+    private void AssertFixupAndSave(DbContext context, ParentPN principal, ChildPN dependent)
     {
         AssertFixup(
             context,
             () =>
             {
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                    context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                    context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                Assert.Equal(principal.Id1, dependent.ParentId1);
+                Assert.Equal(principal.Id2, dependent.ParentId2);
                 Assert.Same(dependent, principal.Child);
                 Assert.Equal(EntityState.Added, context.Entry(principal).State);
                 Assert.Equal(EntityState.Added, context.Entry(dependent).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -1159,8 +1217,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_dep_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_dep_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
@@ -1177,12 +1235,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_dep_uni_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_dep_uni_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
@@ -1200,26 +1258,33 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_dep_uni_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_dep_uni_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new ParentDN();
-                var dependent = new ChildDN { Parent = principal };
+                var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ChildDN
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Parent = principal
+                };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_dep_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_dep_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
@@ -1236,12 +1301,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_dep_uni_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_dep_uni_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
@@ -1259,45 +1324,44 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_dep_uni_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_dep_uni_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
-                var principal = new ParentDN();
-                var dependent = new ChildDN { Parent = principal };
+                var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ChildDN
+                {
+                    Id1 = -78,
+                    Id2 = Guid78,
+                    Parent = principal
+                };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
                 context.Add(dependent);
 
-                MarkIdsTemporary(context, dependent, principal);
-
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, ParentDN principal, ChildDN dependent)
+    private void AssertFixupAndSave(DbContext context, ParentDN principal, ChildDN dependent)
     {
         AssertFixup(
             context,
             () =>
             {
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                    context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                Assert.Equal(
-                    context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                    context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                Assert.Equal(principal.Id1, dependent.ParentId1);
+                Assert.Equal(principal.Id2, dependent.ParentId2);
                 Assert.Same(principal, dependent.Parent);
                 Assert.Equal(EntityState.Added, context.Entry(principal).State);
                 Assert.Equal(EntityState.Added, context.Entry(dependent).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -1312,8 +1376,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_then_principal_one_to_one_no_navs_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_dependent_then_principal_one_to_one_no_navs_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentNN { Id1 = -77, Id2 = Guid77 };
@@ -1330,12 +1394,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(dependent);
                 context.Add(principal);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_then_dependent_one_to_one_no_navs_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_principal_then_dependent_one_to_one_no_navs_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var principal = new ParentNN { Id1 = -77, Id2 = Guid77 };
@@ -1352,10 +1416,10 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 context.Add(principal);
                 context.Add(dependent);
 
-                return AssertFixupAndSaveAsync(context, principal, dependent);
+                AssertFixupAndSave(context, principal, dependent);
             });
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, ParentNN principal, ChildNN dependent)
+    private void AssertFixupAndSave(DbContext context, ParentNN principal, ChildNN dependent)
     {
         AssertFixup(
             context,
@@ -1367,7 +1431,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 Assert.Equal(EntityState.Added, context.Entry(dependent).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -1381,9 +1445,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_FK_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_FK_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Product { Id1 = -78, Id2 = Guid78 };
@@ -1411,7 +1475,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1427,12 +1491,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_FK_not_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_FK_not_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Category();
-                var dependent = new Product();
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -1445,21 +1511,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.CategoryId1);
+                        Assert.Equal(principal.Id2, dependent.CategoryId2);
                         Assert.Same(principal, dependent.Category);
                         Assert.Equal(new[] { dependent }.ToList(), principal.Products);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1475,9 +1535,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Product { Id1 = -78, Id2 = Guid78 };
@@ -1505,11 +1565,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -1526,9 +1586,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Product { Id1 = -78, Id2 = Guid78 };
@@ -1557,11 +1617,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -1578,9 +1638,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Product { Id1 = -78, Id2 = Guid78 };
@@ -1607,7 +1667,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1623,12 +1683,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Category();
-                var dependent = new Product();
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -1649,11 +1711,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -1669,12 +1731,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Category();
-                var dependent = new Product();
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -1686,21 +1750,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.CategoryId1);
+                        Assert.Equal(principal.Id2, dependent.CategoryId2);
                         Assert.Same(principal, dependent.Category);
                         Assert.Equal(new[] { dependent }.ToList(), principal.Products);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1716,9 +1774,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_FK_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_FK_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Product { Id1 = -78, Id2 = Guid78 };
@@ -1746,7 +1804,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1762,12 +1820,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_FK_not_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_FK_not_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Category();
-                var dependent = new Product();
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -1780,21 +1840,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.CategoryId1);
+                        Assert.Equal(principal.Id2, dependent.CategoryId2);
                         Assert.Same(principal, dependent.Category);
                         Assert.Equal(new[] { dependent }.ToList(), principal.Products);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1810,9 +1864,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Product { Id1 = -78, Id2 = Guid78 };
@@ -1838,7 +1892,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1852,9 +1906,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Product { Id1 = -78, Id2 = Guid78 };
@@ -1881,7 +1935,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1897,9 +1951,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Category { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Product { Id1 = -78, Id2 = Guid78 };
@@ -1926,7 +1980,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1940,12 +1994,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Category();
-                var dependent = new Product();
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -1967,7 +2023,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -1983,12 +2039,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Category();
-                var dependent = new Product();
+                var principal = new Category { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Product { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -2007,7 +2065,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2022,9 +2080,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_prin_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_prin_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductPN { Id1 = -78, Id2 = Guid78 };
@@ -2051,11 +2109,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -2071,9 +2129,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_prin_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_prin_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductPN { Id1 = -78, Id2 = Guid78 };
@@ -2098,7 +2156,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2111,9 +2169,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_prin_uni_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_prin_uni_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductPN { Id1 = -78, Id2 = Guid78 };
@@ -2141,11 +2199,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -2161,12 +2219,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_prin_uni_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_prin_uni_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new CategoryPN();
-                var dependent = new ProductPN();
+                var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ProductPN { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -2186,11 +2246,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -2205,9 +2265,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_prin_uni_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_prin_uni_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductPN { Id1 = -78, Id2 = Guid78 };
@@ -2233,7 +2293,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2248,12 +2308,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_prin_uni_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_prin_uni_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new CategoryPN();
-                var dependent = new ProductPN();
+                var principal = new CategoryPN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ProductPN { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -2265,20 +2327,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.CategoryId1);
+                        Assert.Equal(principal.Id2, dependent.CategoryId2);
                         Assert.Equal(new[] { dependent }.ToList(), principal.Products);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2293,9 +2349,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_dep_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_dep_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductDN { Id1 = -78, Id2 = Guid78 };
@@ -2322,11 +2378,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -2342,9 +2398,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_dep_uni_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_dep_uni_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductDN { Id1 = -78, Id2 = Guid78 };
@@ -2370,7 +2426,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2385,12 +2441,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_dep_uni_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_dep_uni_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new CategoryDN();
-                var dependent = new ProductDN();
+                var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ProductDN { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -2402,20 +2460,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.CategoryId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.CategoryId1);
+                        Assert.Equal(principal.Id2, dependent.CategoryId2);
                         Assert.Same(principal, dependent.Category);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2430,9 +2482,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_dep_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_dep_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductDN { Id1 = -78, Id2 = Guid78 };
@@ -2457,7 +2509,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2470,9 +2522,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_dep_uni_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_dep_uni_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductDN { Id1 = -78, Id2 = Guid78 };
@@ -2498,7 +2550,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2511,12 +2563,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_dep_uni_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_dep_uni_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new CategoryDN();
-                var dependent = new ProductDN();
+                var principal = new CategoryDN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ProductDN { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -2534,7 +2588,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2548,9 +2602,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_many_no_navs_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_many_no_navs_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryNN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductNN { Id1 = -78, Id2 = Guid78 };
@@ -2576,11 +2630,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -2595,9 +2649,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_many_no_navs_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_many_no_navs_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new CategoryNN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ProductNN { Id1 = -78, Id2 = Guid78 };
@@ -2621,7 +2675,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2633,9 +2687,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_FK_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_FK_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Child { Id1 = -78, Id2 = Guid78 };
@@ -2663,7 +2717,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2679,12 +2733,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_FK_not_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_FK_not_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Parent();
-                var dependent = new Child();
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -2697,21 +2753,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.ParentId1);
+                        Assert.Equal(principal.Id2, dependent.ParentId2);
                         Assert.Same(principal, dependent.Parent);
                         Assert.Same(dependent, principal.Child);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2727,9 +2777,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Child { Id1 = -78, Id2 = Guid78 };
@@ -2757,11 +2807,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -2778,9 +2828,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Child { Id1 = -78, Id2 = Guid78 };
@@ -2809,11 +2859,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -2830,9 +2880,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Child { Id1 = -78, Id2 = Guid78 };
@@ -2859,7 +2909,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2875,12 +2925,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Parent();
-                var dependent = new Child();
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -2901,11 +2953,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -2921,12 +2973,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Parent();
-                var dependent = new Child();
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -2938,21 +2992,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.ParentId1);
+                        Assert.Equal(principal.Id2, dependent.ParentId2);
                         Assert.Same(principal, dependent.Parent);
                         Assert.Same(dependent, principal.Child);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -2968,9 +3016,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_FK_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_FK_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Child { Id1 = -78, Id2 = Guid78 };
@@ -2998,7 +3046,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3014,12 +3062,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_FK_not_set_both_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_FK_not_set_both_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Parent();
-                var dependent = new Child();
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -3032,21 +3082,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.ParentId1);
+                        Assert.Equal(principal.Id2, dependent.ParentId2);
                         Assert.Same(principal, dependent.Parent);
                         Assert.Same(dependent, principal.Child);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3062,9 +3106,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Child { Id1 = -78, Id2 = Guid78 };
@@ -3090,7 +3134,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3104,9 +3148,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Child { Id1 = -78, Id2 = Guid78 };
@@ -3133,7 +3177,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3149,9 +3193,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new Parent { Id1 = -77, Id2 = Guid77 };
                 var dependent = new Child { Id1 = -78, Id2 = Guid78 };
@@ -3178,7 +3222,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3192,12 +3236,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Parent();
-                var dependent = new Child();
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -3209,21 +3255,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.ParentId1);
+                        Assert.Equal(principal.Id2, dependent.ParentId2);
                         Assert.Same(principal, dependent.Parent);
                         Assert.Same(dependent, principal.Child);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3239,12 +3279,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new Parent();
-                var dependent = new Child();
+                var principal = new Parent { Id1 = -77, Id2 = Guid77 };
+                var dependent = new Child { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -3263,7 +3305,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3278,9 +3320,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_prin_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_prin_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildPN { Id1 = -78, Id2 = Guid78 };
@@ -3307,11 +3349,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -3327,9 +3369,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_prin_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_prin_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildPN { Id1 = -78, Id2 = Guid78 };
@@ -3354,7 +3396,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3367,9 +3409,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_prin_uni_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_prin_uni_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildPN { Id1 = -78, Id2 = Guid78 };
@@ -3397,11 +3439,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -3417,12 +3459,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_prin_uni_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_prin_uni_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new ParentPN();
-                var dependent = new ChildPN();
+                var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ChildPN { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -3442,11 +3486,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -3461,9 +3505,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_prin_uni_FK_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_prin_uni_FK_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildPN { Id1 = -78, Id2 = Guid78 };
@@ -3489,7 +3533,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3504,12 +3548,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_prin_uni_FK_not_set_principal_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_prin_uni_FK_not_set_principal_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new ParentPN();
-                var dependent = new ChildPN();
+                var principal = new ParentPN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ChildPN { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -3521,20 +3567,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.ParentId1);
+                        Assert.Equal(principal.Id2, dependent.ParentId2);
                         Assert.Same(dependent, principal.Child);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3549,9 +3589,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_dep_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_dep_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildDN { Id1 = -78, Id2 = Guid78 };
@@ -3578,11 +3618,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -3598,9 +3638,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_dep_uni_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_dep_uni_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildDN { Id1 = -78, Id2 = Guid78 };
@@ -3626,7 +3666,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3641,12 +3681,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_dep_uni_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_dep_uni_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new ParentDN();
-                var dependent = new ChildDN();
+                var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ChildDN { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(dependent);
 
@@ -3658,20 +3700,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     context,
                     () =>
                     {
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id1).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId1).CurrentValue);
-
-                        Assert.Equal(
-                            context.Entry(principal).Property(e => e.Id2).CurrentValue,
-                            context.Entry(dependent).Property(e => e.ParentId2).CurrentValue);
-
+                        Assert.Equal(principal.Id1, dependent.ParentId1);
+                        Assert.Equal(principal.Id2, dependent.ParentId2);
                         Assert.Same(principal, dependent.Parent);
                         Assert.Equal(EntityState.Added, context.Entry(principal).State);
                         Assert.Equal(EntityState.Added, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3686,9 +3722,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_dep_uni_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_dep_uni_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildDN { Id1 = -78, Id2 = Guid78 };
@@ -3713,7 +3749,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3726,9 +3762,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_dep_uni_FK_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_dep_uni_FK_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildDN { Id1 = -78, Id2 = Guid78 };
@@ -3754,7 +3790,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3767,12 +3803,14 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_dep_uni_FK_not_set_dependent_nav_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_dep_uni_FK_not_set_dependent_nav_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var principal = new ParentDN();
-                var dependent = new ChildDN();
+                var principal = new ParentDN { Id1 = -77, Id2 = Guid77 };
+                var dependent = new ChildDN { Id1 = -78, Id2 = Guid78 };
+
+                MarkIdsTemporary(context, dependent, principal);
 
                 context.Add(principal);
 
@@ -3790,7 +3828,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3804,9 +3842,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_dependent_but_not_principal_one_to_one_no_navs_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_dependent_but_not_principal_one_to_one_no_navs_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentNN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildNN { Id1 = -78, Id2 = Guid78 };
@@ -3832,11 +3870,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 if (EnforcesFKs)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
 
                 AssertFixup(
@@ -3851,9 +3889,9 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_principal_but_not_dependent_one_to_one_no_navs_FK_set_no_navs_set()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Add_principal_but_not_dependent_one_to_one_no_navs_FK_set_no_navs_set()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var principal = new ParentNN { Id1 = -77, Id2 = Guid77 };
                 var dependent = new ChildNN { Id1 = -78, Id2 = Guid78 };
@@ -3877,7 +3915,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                         Assert.Equal(EntityState.Detached, context.Entry(dependent).State);
                     });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertFixup(
                     context,
@@ -3889,8 +3927,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
             });
 
     [ConditionalFact]
-    public virtual Task Add_overlapping_graph_from_level()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_overlapping_graph_from_level()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var game = new Game { Id = Guid77 };
@@ -3902,12 +3940,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 context.Add(level);
 
-                return AssertFixupAndSaveAsync(context, game, level, item);
+                AssertFixupAndSave(context, game, level, item);
             });
 
     [ConditionalFact]
-    public virtual Task Add_overlapping_graph_from_game()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_overlapping_graph_from_game()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var level = new Level { Id = -77 };
@@ -3920,12 +3958,12 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 context.Add(game);
 
-                return AssertFixupAndSaveAsync(context, game, level, item);
+                AssertFixupAndSave(context, game, level, item);
             });
 
     [ConditionalFact]
-    public virtual Task Add_overlapping_graph_from_item()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Add_overlapping_graph_from_item()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var game = new Game { Id = Guid77 };
@@ -3936,7 +3974,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
                 context.Add(item);
 
-                return AssertFixupAndSaveAsync(context, game, level, item);
+                AssertFixupAndSave(context, game, level, item);
             });
 
     [ConditionalFact]
@@ -3953,15 +3991,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
         Assert.Equal(EntityState.Unchanged, internalEntry.EntityState);
     }
 
-    private async Task AssertFixupAndSaveAsync(DbContext context, Game game, Level level, Item item)
+    private void AssertFixupAndSave(DbContext context, Game game, Level level, Item item)
     {
         AssertFixup(
             context,
             () =>
             {
-                Assert.Equal(game.Id, context.Entry(level).Property(e => e.GameId).CurrentValue);
-                Assert.Equal(game.Id, context.Entry(item).Property(e => e.GameId).CurrentValue);
-                Assert.Equal(level.Id, context.Entry(item).Property(e => e.LevelId).CurrentValue);
+                Assert.Equal(game.Id, level.GameId);
+                Assert.Equal(game.Id, item.GameId);
+                Assert.Equal(level.Id, item.LevelId);
 
                 Assert.Same(game, level.Game);
                 Assert.Same(game, item.Game);
@@ -3976,7 +4014,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                 Assert.Equal(EntityState.Added, context.Entry(item).State);
             });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         AssertFixup(
             context,
@@ -4022,11 +4060,11 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     }
 
     [ConditionalFact]
-    public virtual Task Multi_level_add_replace_and_save()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Multi_level_add_replace_and_save()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var firstLevel = await context.Set<FirstLevel>().SingleAsync();
+                var firstLevel = context.Set<FirstLevel>().Single();
 
                 AddData(firstLevel);
 
@@ -4059,7 +4097,7 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
                     originalThirdLevels.Select(l => context.Entry(l).State),
                     s => Assert.Equal(EntityState.Detached, s));
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertValidFks(context, firstLevel, tempKeys: false);
             });
@@ -4228,10 +4266,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
     protected class CategoryPN
     {
+        public CategoryPN()
+        {
+            Products = new List<ProductPN>();
+        }
+
         public int Id1 { get; set; }
         public Guid Id2 { get; set; }
 
-        public ICollection<ProductPN> Products { get; } = new List<ProductPN>();
+        public ICollection<ProductPN> Products { get; }
     }
 
     protected class ProductPN
@@ -4260,10 +4303,15 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
 
     protected class Category
     {
+        public Category()
+        {
+            Products = new List<Product>();
+        }
+
         public int Id1 { get; set; }
         public Guid Id2 { get; set; }
 
-        public ICollection<Product> Products { get; } = new List<Product>();
+        public ICollection<Product> Products { get; }
     }
 
     protected class Product
@@ -4297,9 +4345,13 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
         public Level Level { get; set; }
     }
 
-    protected class Item : GameEntity;
+    protected class Item : GameEntity
+    {
+    }
 
-    protected class Actor : GameEntity;
+    protected class Actor : GameEntity
+    {
+    }
 
     protected class Game
     {
@@ -4343,8 +4395,8 @@ public abstract class StoreGeneratedFixupTestBase<TFixture>(TFixture fixture) : 
     {
     }
 
-    protected virtual Task ExecuteWithStrategyInTransactionAsync(Func<DbContext, Task> testOperation)
-        => TestHelpers.ExecuteWithStrategyInTransactionAsync(CreateContext, UseTransaction, testOperation);
+    protected virtual void ExecuteWithStrategyInTransaction(Action<DbContext> testOperation)
+        => TestHelpers.ExecuteWithStrategyInTransaction(CreateContext, UseTransaction, testOperation);
 
     protected DbContext CreateContext()
         => Fixture.CreateContext();

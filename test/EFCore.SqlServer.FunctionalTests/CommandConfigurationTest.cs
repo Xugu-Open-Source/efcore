@@ -6,8 +6,6 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public class CommandConfigurationTest : IClassFixture<CommandConfigurationTest.CommandConfigurationFixture>
 {
     public CommandConfigurationTest(CommandConfigurationFixture fixture)
@@ -30,9 +28,9 @@ public class CommandConfigurationTest : IClassFixture<CommandConfigurationTest.C
     [InlineData(50, 5)]
     [InlineData(20, 2)]
     [InlineData(2, 1)]
-    public async Task Keys_generated_in_batches(int count, int expected)
+    public void Keys_generated_in_batches(int count, int expected)
     {
-        await TestHelpers.ExecuteWithStrategyInTransactionAsync(
+        TestHelpers.ExecuteWithStrategyInTransaction(
             Fixture.CreateContext, UseTransaction,
             context =>
             {
@@ -41,7 +39,7 @@ public class CommandConfigurationTest : IClassFixture<CommandConfigurationTest.C
                     context.Set<KettleChips>().Add(new KettleChips { BestBuyDate = DateTime.Now, Name = "Doritos Locos Tacos " + i });
                 }
 
-                return context.SaveChangesAsync();
+                context.SaveChanges();
             });
 
         Assert.Equal(expected, CountSqlLinesContaining("SELECT NEXT VALUE FOR", Fixture.TestSqlLoggerFactory.Sql));
@@ -58,7 +56,7 @@ public class CommandConfigurationTest : IClassFixture<CommandConfigurationTest.C
 
     public int CountLinesContaining(string source, string searchTerm)
     {
-        var text = source.Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries);
+        var text = source.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
 
         var matchQuery = from word in text
                          where word.Contains(searchTerm)
@@ -67,8 +65,13 @@ public class CommandConfigurationTest : IClassFixture<CommandConfigurationTest.C
         return matchQuery.Count();
     }
 
-    private class ChipsContext(DbContextOptions options) : PoolableDbContext(options)
+    private class ChipsContext : PoolableDbContext
     {
+        public ChipsContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public DbSet<KettleChips> Chips { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -10,12 +10,23 @@ using IsolationLevel = System.Data.IsolationLevel;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>, IAsyncLifetime
+public abstract class TransactionTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : TransactionTestBase<TFixture>.TransactionFixtureBase, new()
 {
-    protected TFixture Fixture { get; set; } = fixture;
+    protected TransactionTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+        Fixture.Reseed();
+
+        if (TestStore.ConnectionState == ConnectionState.Closed)
+        {
+            TestStore.OpenConnection();
+        }
+
+        Fixture.ListLoggerFactory.Log.Clear();
+    }
+
+    protected TFixture Fixture { get; set; }
 
     [ConditionalTheory]
     [InlineData(true)]
@@ -49,7 +60,12 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
         using (var context = CreateContext())
         {
             Assert.Equal(
-                [-77, 1, 2],
+                new List<int>
+                {
+                    -77,
+                    1,
+                    2,
+                },
                 context.Set<TransactionCustomer>().OrderBy(c => c.Id).Select(e => e.Id).ToList());
         }
     }
@@ -87,7 +103,12 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
         using (var context = CreateContext())
         {
             Assert.Equal(
-                [-77, 1, 2],
+                new List<int>
+                {
+                    -77,
+                    1,
+                    2,
+                },
                 context.Set<TransactionCustomer>().OrderBy(c => c.Id).Select(e => e.Id).ToList());
         }
     }
@@ -124,7 +145,10 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
         using (var context = CreateContext())
         {
             Assert.Equal(
-                [1, 2],
+                new List<int>
+                {
+                    1, 2,
+                },
                 context.Set<TransactionCustomer>().OrderBy(c => c.Id).Select(e => e.Id).ToList());
         }
     }
@@ -360,13 +384,13 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
                 Assert.Equal(
                     RelationalResources.LogAmbientTransactionEnlisted(new TestLogger<TestRelationalLoggingDefinitions>())
                         .GenerateMessage("Serializable"),
-                    Fixture.ListLoggerFactory.Log.First().Message);
+                    Fixture.ListLoggerFactory.Log.Skip(3).First().Message);
             }
             else
             {
                 Assert.Equal(
                     RelationalResources.LogAmbientTransaction(new TestLogger<TestRelationalLoggingDefinitions>()).GenerateMessage(),
-                    Fixture.ListLoggerFactory.Log.First().Message);
+                    Fixture.ListLoggerFactory.Log.Skip(3).First().Message);
 
                 using var context = CreateContext();
                 context.Entry(context.Set<TransactionCustomer>().Single(c => c.Id == -77)).State = EntityState.Deleted;
@@ -498,10 +522,20 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
             }
 
             Assert.Equal(
-                [1, 2, 77],
+                new List<int>
+                {
+                    1,
+                    2,
+                    77
+                },
                 context.Set<TransactionCustomer>().OrderBy(c => c.Id).Select(e => e.Id).ToList());
             Assert.Equal(
-                [100, 200, 300],
+                new List<int>
+                {
+                    100,
+                    200,
+                    300
+                },
                 context.Set<TransactionOrder>().OrderBy(c => c.Id).Select(e => e.Id).ToList());
         }
     }
@@ -536,10 +570,15 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
             }
 
             Assert.Equal(
-                [1, 2],
+                new List<int> { 1, 2 },
                 context.Set<TransactionCustomer>().OrderBy(c => c.Id).Select(e => e.Id).ToList());
             Assert.Equal(
-                [100, 200, 300],
+                new List<int>
+                {
+                    100,
+                    200,
+                    300
+                },
                 context.Set<TransactionOrder>().OrderBy(c => c.Id).Select(e => e.Id).ToList());
         }
     }
@@ -608,7 +647,12 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
         using (var context = CreateContext())
         {
             Assert.Equal(
-                [1, 2, 77],
+                new List<int>
+                {
+                    1,
+                    2,
+                    77
+                },
                 context.Set<TransactionCustomer>().OrderBy(c => c.Id).Select(e => e.Id).ToList());
         }
     }
@@ -1566,12 +1610,12 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
                 });
         }
 
-        protected override Task SeedAsync(PoolableDbContext context)
+        protected override void Seed(PoolableDbContext context)
         {
             context.AddRange(Customers);
             context.AddRange(Orders);
 
-            return context.SaveChangesAsync();
+            context.SaveChanges();
         }
     }
 
@@ -1591,7 +1635,10 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
         public string Name { get; set; }
 
         public override bool Equals(object obj)
-            => obj is TransactionCustomer otherCustomer && (Id == otherCustomer.Id && Name == otherCustomer.Name);
+            => !(obj is TransactionCustomer otherCustomer)
+                ? false
+                : Id == otherCustomer.Id
+                && Name == otherCustomer.Name;
 
         public override string ToString()
             => "Id = " + Id + ", Name = " + Name;
@@ -1600,22 +1647,11 @@ public abstract class TransactionTestBase<TFixture>(TFixture fixture) : IClassFi
             => HashCode.Combine(Id, Name);
     }
 
-    protected class TransactionCustomer : TransactionEntity;
-
-    protected class TransactionOrder : TransactionEntity;
-
-    public async Task InitializeAsync()
+    protected class TransactionCustomer : TransactionEntity
     {
-        await Fixture.ReseedAsync();
-
-        if (TestStore.ConnectionState == ConnectionState.Closed)
-        {
-            TestStore.OpenConnection();
-        }
-
-        Fixture.ListLoggerFactory.Log.Clear();
     }
 
-    public Task DisposeAsync()
-        => Task.CompletedTask;
+    protected class TransactionOrder : TransactionEntity
+    {
+    }
 }

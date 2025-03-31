@@ -24,7 +24,9 @@ public class ArrayPropertyValues : PropertyValues
     /// </summary>
     public ArrayPropertyValues(InternalEntityEntry internalEntry, object?[] values)
         : base(internalEntry)
-        => _values = values;
+    {
+        _values = values;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -33,7 +35,7 @@ public class ArrayPropertyValues : PropertyValues
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public override object ToObject()
-        => EntityType.GetOrCreateMaterializer(MaterializerSource)(
+        => MaterializerSource.GetMaterializer(EntityType)(
             new MaterializationContext(
                 new ValueBuffer(_values),
                 InternalEntry.Context));
@@ -54,7 +56,7 @@ public class ArrayPropertyValues : PropertyValues
             {
                 if (!Properties[i].IsShadowProperty())
                 {
-                    SetValue(i, Properties[i].GetGetter().GetClrValueUsingContainingEntity(obj));
+                    SetValue(i, Properties[i].GetGetter().GetClrValue(obj));
                 }
             }
         }
@@ -97,7 +99,7 @@ public class ArrayPropertyValues : PropertyValues
 
         for (var i = 0; i < _values.Length; i++)
         {
-            SetValue(i, propertyValues[Properties[i]]);
+            SetValue(i, propertyValues[Properties[i].Name]);
         }
     }
 
@@ -108,7 +110,7 @@ public class ArrayPropertyValues : PropertyValues
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public override IReadOnlyList<IProperty> Properties
-        => _properties ??= EntityType.GetFlattenedProperties().ToList();
+        => _properties ??= EntityType.GetProperties().ToList();
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -130,8 +132,8 @@ public class ArrayPropertyValues : PropertyValues
     /// </summary>
     public override object? this[IProperty property]
     {
-        get => _values[EntityType.CheckContains(property).GetIndex()];
-        set => SetValue(EntityType.CheckContains(property).GetIndex(), value);
+        get => _values[EntityType.CheckPropertyBelongsToType(property).GetIndex()];
+        set => SetValue(EntityType.CheckPropertyBelongsToType(property).GetIndex(), value);
     }
 
     /// <summary>
@@ -163,7 +165,7 @@ public class ArrayPropertyValues : PropertyValues
                 throw new InvalidCastException(
                     CoreStrings.InvalidType(
                         property.Name,
-                        property.DeclaringType.DisplayName(),
+                        property.DeclaringEntityType.DisplayName(),
                         value.GetType().DisplayName(),
                         property.ClrType.DisplayName()));
             }
@@ -175,7 +177,7 @@ public class ArrayPropertyValues : PropertyValues
                 throw new InvalidOperationException(
                     CoreStrings.ValueCannotBeNull(
                         property.Name,
-                        property.DeclaringType.DisplayName(),
+                        property.DeclaringEntityType.DisplayName(),
                         property.ClrType.DisplayName()));
             }
         }

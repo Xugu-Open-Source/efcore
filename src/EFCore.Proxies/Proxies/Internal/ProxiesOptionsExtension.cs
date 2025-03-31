@@ -16,7 +16,6 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
 {
     private DbContextOptionsExtensionInfo? _info;
     private bool _useLazyLoadingProxies;
-    private bool _ignoreNonVirtualNavigations;
     private bool _useChangeTrackingProxies;
     private bool _checkEquality;
 
@@ -39,7 +38,6 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
     protected ProxiesOptionsExtension(ProxiesOptionsExtension copyFrom)
     {
         _useLazyLoadingProxies = copyFrom._useLazyLoadingProxies;
-        _ignoreNonVirtualNavigations = copyFrom._ignoreNonVirtualNavigations;
         _useChangeTrackingProxies = copyFrom._useChangeTrackingProxies;
         _checkEquality = copyFrom._checkEquality;
     }
@@ -77,15 +75,6 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool IgnoreNonVirtualNavigations
-        => _ignoreNonVirtualNavigations;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     public virtual bool UseChangeTrackingProxies
         => _useChangeTrackingProxies;
 
@@ -113,7 +102,7 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual ProxiesOptionsExtension WithLazyLoading(bool useLazyLoadingProxies)
+    public virtual ProxiesOptionsExtension WithLazyLoading(bool useLazyLoadingProxies = true)
     {
         var clone = Clone();
 
@@ -128,22 +117,7 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual ProxiesOptionsExtension WithIgnoreNonVirtualNavigations(bool ignoreNonVirtualNavigations)
-    {
-        var clone = Clone();
-
-        clone._ignoreNonVirtualNavigations = ignoreNonVirtualNavigations;
-
-        return clone;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual ProxiesOptionsExtension WithChangeTracking(bool useChangeTrackingProxies, bool checkEquality)
+    public virtual ProxiesOptionsExtension WithChangeTracking(bool useChangeTrackingProxies = true, bool checkEquality = true)
     {
         var clone = Clone();
 
@@ -185,9 +159,14 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
     public virtual void ApplyServices(IServiceCollection services)
         => services.AddEntityFrameworkProxies();
 
-    private sealed class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
+    private sealed class ExtensionInfo : DbContextOptionsExtensionInfo
     {
         private string? _logFragment;
+
+        public ExtensionInfo(IDbContextOptionsExtension extension)
+            : base(extension)
+        {
+        }
 
         private new ProxiesOptionsExtension Extension
             => (ProxiesOptionsExtension)base.Extension;
@@ -196,7 +175,7 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
             => false;
 
         public override string LogFragment
-            => _logFragment ??= Extension is { UseLazyLoadingProxies: true, UseChangeTrackingProxies: true }
+            => _logFragment ??= Extension.UseLazyLoadingProxies && Extension.UseChangeTrackingProxies
                 ? "using lazy loading and change tracking proxies "
                 : Extension.UseLazyLoadingProxies
                     ? "using lazy loading proxies "
@@ -208,7 +187,6 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
         {
             var hashCode = new HashCode();
             hashCode.Add(Extension.UseLazyLoadingProxies);
-            hashCode.Add(Extension.IgnoreNonVirtualNavigations);
             hashCode.Add(Extension.UseChangeTrackingProxies);
             hashCode.Add(Extension.CheckEquality);
             return hashCode.ToHashCode();
@@ -217,7 +195,6 @@ public class ProxiesOptionsExtension : IDbContextOptionsExtension
         public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other)
             => other is ExtensionInfo otherInfo
                 && Extension.UseLazyLoadingProxies == otherInfo.Extension.UseLazyLoadingProxies
-                && Extension.IgnoreNonVirtualNavigations == otherInfo.Extension.IgnoreNonVirtualNavigations
                 && Extension.UseChangeTrackingProxies == otherInfo.Extension.UseChangeTrackingProxies
                 && Extension.CheckEquality == otherInfo.Extension.CheckEquality;
 

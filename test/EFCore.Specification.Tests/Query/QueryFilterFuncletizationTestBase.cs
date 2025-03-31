@@ -7,10 +7,15 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public abstract class QueryFilterFuncletizationTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class QueryFilterFuncletizationTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : QueryFilterFuncletizationFixtureBase, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected QueryFilterFuncletizationTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     protected QueryFilterFuncletizationContext CreateContext()
         => Fixture.CreateContext();
@@ -65,15 +70,15 @@ public abstract class QueryFilterFuncletizationTestBase<TFixture>(TFixture fixtu
         var query = context.Set<ListFilter>().ToList();
         Assert.Empty(query);
 
-        context.TenantIds = [];
+        context.TenantIds = new List<int>();
         query = context.Set<ListFilter>().ToList();
         Assert.Empty(query);
 
-        context.TenantIds = [1];
+        context.TenantIds = new List<int> { 1 };
         query = context.Set<ListFilter>().ToList();
         Assert.Single(query);
 
-        context.TenantIds = [2, 3];
+        context.TenantIds = new List<int> { 2, 3 };
         query = context.Set<ListFilter>().ToList();
         Assert.Equal(2, query.Count);
     }
@@ -334,22 +339,5 @@ public abstract class QueryFilterFuncletizationTestBase<TFixture>(TFixture fixtu
 
         query = context.Set<MultiContextFilter>().ToList();
         Assert.Equal(2, query.Count);
-    }
-
-    [ConditionalFact]
-    public virtual void Using_multiple_entities_with_filters_reuses_parameters()
-    {
-        using var context = CreateContext();
-        context.Tenant = 1;
-        context.Property = false;
-
-        var query = context.Set<DeDupeFilter1>()
-            .Include(x => x.DeDupeFilter2s)
-            .Include(x => x.DeDupeFilter3s)
-            .ToList();
-
-        Assert.Single(query);
-        Assert.Single(query[0].DeDupeFilter2s);
-        Assert.Single(query[0].DeDupeFilter3s);
     }
 }

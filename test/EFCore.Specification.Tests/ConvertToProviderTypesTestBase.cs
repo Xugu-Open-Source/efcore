@@ -1,11 +1,16 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 namespace Microsoft.EntityFrameworkCore;
 
-public abstract class ConvertToProviderTypesTestBase<TFixture>(TFixture fixture) : BuiltInDataTypesTestBase<TFixture>(fixture)
+public abstract class ConvertToProviderTypesTestBase<TFixture> : BuiltInDataTypesTestBase<TFixture>
     where TFixture : BuiltInDataTypesTestBase<TFixture>.BuiltInDataTypesFixtureBase, new()
 {
+    protected ConvertToProviderTypesTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalFact]
     public virtual void Equals_method_over_enum_works()
     {
@@ -26,8 +31,7 @@ public abstract class ConvertToProviderTypesTestBase<TFixture>(TFixture fixture)
         Assert.Empty(query);
     }
 
-    public override Task Object_to_string_conversion()
-        => Task.CompletedTask;
+    public override void Object_to_string_conversion() { }
 
     public abstract class ConvertToProviderTypesFixtureBase : BuiltInDataTypesFixtureBase
     {
@@ -169,7 +173,6 @@ public abstract class ConvertToProviderTypesTestBase<TFixture>(TFixture fixture)
                 {
                     b.Property(e => e.String3).HasConversion<byte[]>();
                     b.Property(e => e.String9000).HasConversion<byte[]>();
-                    b.Property(e => e.StringUnbounded).HasConversion<byte[]>();
                     b.Property(e => e.ByteArray5).HasConversion<string>().HasMaxLength(8);
                     b.Property(e => e.ByteArray9000).HasConversion<string>().HasMaxLength(LongStringLength * 2);
                 });

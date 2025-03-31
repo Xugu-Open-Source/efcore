@@ -18,12 +18,6 @@ namespace Microsoft.Data.Sqlite
     ///     <see cref="SqliteConnection" />.
     /// </summary>
     /// <seealso href="https://docs.microsoft.com/dotnet/standard/data/sqlite/connection-strings">Connection Strings</seealso>
-#if NET5_0_OR_GREATER
-    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2112:ReflectionToRequiresUnreferencedCode",
-        Justification = "Suppressing the same warnings as suppressed in the base DbConnectionStringBuilder. See https://github.com/dotnet/runtime/issues/97057")]
-    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2113:ReflectionToRequiresUnreferencedCode",
-        Justification = "Suppressing the same warnings as suppressed in the base DbConnectionStringBuilder. See https://github.com/dotnet/runtime/issues/97057")]
-#endif
     public class SqliteConnectionStringBuilder : DbConnectionStringBuilder
     {
         private const string DataSourceKeyword = "Data Source";
@@ -37,7 +31,6 @@ namespace Microsoft.Data.Sqlite
         private const string DefaultTimeoutKeyword = "Default Timeout";
         private const string CommandTimeoutKeyword = "Command Timeout";
         private const string PoolingKeyword = "Pooling";
-        private const string VfsKeyword = "Vfs";
 
         private enum Keywords
         {
@@ -48,8 +41,7 @@ namespace Microsoft.Data.Sqlite
             ForeignKeys,
             RecursiveTriggers,
             DefaultTimeout,
-            Pooling,
-            Vfs,
+            Pooling
         }
 
         private static readonly IReadOnlyList<string> _validKeywords;
@@ -63,11 +55,10 @@ namespace Microsoft.Data.Sqlite
         private bool _recursiveTriggers;
         private int _defaultTimeout = 30;
         private bool _pooling = true;
-        private string? _vfs;
 
         static SqliteConnectionStringBuilder()
         {
-            var validKeywords = new string[9];
+            var validKeywords = new string[8];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.Mode] = ModeKeyword;
             validKeywords[(int)Keywords.Cache] = CacheKeyword;
@@ -76,10 +67,9 @@ namespace Microsoft.Data.Sqlite
             validKeywords[(int)Keywords.RecursiveTriggers] = RecursiveTriggersKeyword;
             validKeywords[(int)Keywords.DefaultTimeout] = DefaultTimeoutKeyword;
             validKeywords[(int)Keywords.Pooling] = PoolingKeyword;
-            validKeywords[(int)Keywords.Vfs] = VfsKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(12, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(11, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [ModeKeyword] = Keywords.Mode,
@@ -89,7 +79,6 @@ namespace Microsoft.Data.Sqlite
                 [RecursiveTriggersKeyword] = Keywords.RecursiveTriggers,
                 [DefaultTimeoutKeyword] = Keywords.DefaultTimeout,
                 [PoolingKeyword] = Keywords.Pooling,
-                [VfsKeyword] = Keywords.Vfs,
 
                 // aliases
                 [FilenameKeyword] = Keywords.DataSource,
@@ -229,17 +218,6 @@ namespace Microsoft.Data.Sqlite
         }
 
         /// <summary>
-        ///     Gets or sets the SQLite VFS used by the connection.
-        /// </summary>
-        /// <value>The SQLite VFS used by the connection.</value>
-        /// <seealso href="https://www.sqlite.org/vfs.html">SQLite VFS</seealso>
-        public string? Vfs
-        {
-            get => _vfs;
-            set => base[VfsKeyword] = _vfs = value;
-        }
-
-        /// <summary>
         ///     Gets or sets the value associated with the specified key.
         /// </summary>
         /// <param name="keyword">The key.</param>
@@ -291,9 +269,6 @@ namespace Microsoft.Data.Sqlite
                     case Keywords.Pooling:
                         Pooling = Convert.ToBoolean(value, CultureInfo.InvariantCulture);
                         return;
-                    case Keywords.Vfs:
-                        Vfs = Convert.ToString(value, CultureInfo.InvariantCulture);
-                        return;
 
                     default:
                         Debug.Fail("Unexpected keyword: " + keyword);
@@ -336,9 +311,15 @@ namespace Microsoft.Data.Sqlite
         }
 
         private static bool? ConvertToNullableBoolean(object value)
-            => value is null or string { Length: 0 }
-                ? null
-                : Convert.ToBoolean(value, CultureInfo.InvariantCulture);
+        {
+            if (value == null
+                || (value is string stringValue && stringValue.Length == 0))
+            {
+                return null;
+            }
+
+            return Convert.ToBoolean(value, CultureInfo.InvariantCulture);
+        }
 
         /// <summary>
         ///     Clears the contents of the builder.
@@ -437,9 +418,6 @@ namespace Microsoft.Data.Sqlite
                 case Keywords.Pooling:
                     return Pooling;
 
-                case Keywords.Vfs:
-                    return Vfs;
-
                 default:
                     Debug.Fail("Unexpected keyword: " + index);
                     return null;
@@ -485,10 +463,6 @@ namespace Microsoft.Data.Sqlite
 
                 case Keywords.Pooling:
                     _pooling = true;
-                    return;
-
-                case Keywords.Vfs:
-                    _vfs = null;
                     return;
 
                 default:

@@ -3,9 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class TestWebHostBuilder(IServiceProvider services)
+public class TestWebHostBuilder
 {
-    public IServiceProvider Services { get; } = services;
+    public TestWebHostBuilder(IServiceProvider services)
+    {
+        Services = services;
+    }
+
+    public IServiceProvider Services { get; }
 
     public TestWebHost Build()
         => new(Services);

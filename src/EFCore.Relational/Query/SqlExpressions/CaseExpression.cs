@@ -14,20 +14,16 @@ namespace Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 /// </summary>
 public class CaseExpression : SqlExpression
 {
-    private readonly List<CaseWhenClause> _whenClauses = [];
-
-    private static ConstructorInfo? _quotingConstructorWithOperand;
-    private static ConstructorInfo? _quotingConstructorWithoutOperand;
-    private static ConstructorInfo? _caseWhenClauseQuotingConstructor;
+    private readonly List<CaseWhenClause> _whenClauses = new();
 
     /// <summary>
     ///     Creates a new instance of the <see cref="CaseExpression" /> class which represents a simple CASE expression.
     /// </summary>
     /// <param name="operand">An expression to compare with <see cref="CaseWhenClause.Test" /> in <see cref="WhenClauses" />.</param>
-    /// <param name="whenClauses">A list of <see cref="CaseWhenClause" /> to compare or evaluate and get result from.</param>
+    /// <param name="whenClauses">A list of <see cref="CaseWhenClause" /> to compare and get result from.</param>
     /// <param name="elseResult">A value to return if no <see cref="WhenClauses" /> matches, if any.</param>
     public CaseExpression(
-        SqlExpression? operand,
+        SqlExpression operand,
         IReadOnlyList<CaseWhenClause> whenClauses,
         SqlExpression? elseResult = null)
         : base(whenClauses[0].Result.Type, whenClauses[0].Result.TypeMapping)
@@ -45,8 +41,10 @@ public class CaseExpression : SqlExpression
     public CaseExpression(
         IReadOnlyList<CaseWhenClause> whenClauses,
         SqlExpression? elseResult = null)
-        : this(null, whenClauses, elseResult)
+        : base(whenClauses[0].Result.Type, whenClauses[0].Result.TypeMapping)
     {
+        _whenClauses.AddRange(whenClauses);
+        ElseResult = elseResult;
     }
 
     /// <summary>
@@ -92,7 +90,9 @@ public class CaseExpression : SqlExpression
         changed |= elseResult != ElseResult;
 
         return changed
-            ? new CaseExpression(operand, whenClauses, elseResult)
+            ? operand == null
+                ? new CaseExpression(whenClauses, elseResult)
+                : new CaseExpression(operand, whenClauses, elseResult)
             : this;
     }
 
@@ -109,35 +109,10 @@ public class CaseExpression : SqlExpression
         IReadOnlyList<CaseWhenClause> whenClauses,
         SqlExpression? elseResult)
         => operand != Operand || !whenClauses.SequenceEqual(WhenClauses) || elseResult != ElseResult
-            ? new CaseExpression(operand, whenClauses, elseResult)
+            ? (operand == null
+                ? new CaseExpression(whenClauses, elseResult)
+                : new CaseExpression(operand, whenClauses, elseResult))
             : this;
-
-    /// <inheritdoc />
-    public override Expression Quote()
-    {
-        var whenClauses = NewArrayInit(
-            typeof(CaseWhenClause),
-            initializers: WhenClauses
-                .Select(
-                    c => New(
-                        _caseWhenClauseQuotingConstructor ??=
-                            typeof(CaseWhenClause).GetConstructor([typeof(SqlExpression), typeof(SqlExpression)])!,
-                        c.Test.Quote(),
-                        c.Result.Quote())));
-
-        return Operand is null
-            ? New(
-                _quotingConstructorWithoutOperand ??=
-                    typeof(CaseExpression).GetConstructor([typeof(IReadOnlyList<CaseWhenClause>), typeof(SqlExpression)])!,
-                whenClauses,
-                RelationalExpressionQuotingUtilities.QuoteOrNull(ElseResult))
-            : New(
-                _quotingConstructorWithOperand ??= typeof(CaseExpression).GetConstructor(
-                    [typeof(SqlExpression), typeof(IReadOnlyList<CaseWhenClause>), typeof(SqlExpression)])!,
-                Operand.Quote(),
-                whenClauses,
-                RelationalExpressionQuotingUtilities.QuoteOrNull(ElseResult));
-    }
 
     /// <inheritdoc />
     protected override void Print(ExpressionPrinter expressionPrinter)

@@ -3,12 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class NotificationEntitiesSqliteTest(NotificationEntitiesSqliteTest.NotificationEntitiesSqliteFixture fixture)
-    : NotificationEntitiesTestBase<
-        NotificationEntitiesSqliteTest.NotificationEntitiesSqliteFixture>(fixture)
+public class NotificationEntitiesSqliteTest : NotificationEntitiesTestBase<
+    NotificationEntitiesSqliteTest.NotificationEntitiesSqliteFixture>
 {
+    public NotificationEntitiesSqliteTest(NotificationEntitiesSqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class NotificationEntitiesSqliteFixture : NotificationEntitiesFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

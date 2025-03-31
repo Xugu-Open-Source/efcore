@@ -5,11 +5,16 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class BuiltInDataTypesInMemoryTest(BuiltInDataTypesInMemoryTest.BuiltInDataTypesInMemoryFixture fixture)
-    : BuiltInDataTypesTestBase<BuiltInDataTypesInMemoryTest.BuiltInDataTypesInMemoryFixture>(fixture)
+public class BuiltInDataTypesInMemoryTest : BuiltInDataTypesTestBase<BuiltInDataTypesInMemoryTest.BuiltInDataTypesInMemoryFixture>
 {
-    public override Task Optional_datetime_reading_null_from_database()
-        => Task.CompletedTask;
+    public BuiltInDataTypesInMemoryTest(BuiltInDataTypesInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+
+    public override void Optional_datetime_reading_null_from_database()
+    {
+    }
 
     public class BuiltInDataTypesInMemoryFixture : BuiltInDataTypesFixtureBase
     {

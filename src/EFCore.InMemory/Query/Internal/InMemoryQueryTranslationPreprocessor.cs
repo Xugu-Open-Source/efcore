@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.EntityFrameworkCore.InMemory.Internal;
+using System.Linq.Expressions;
 
 namespace Microsoft.EntityFrameworkCore.InMemory.Query.Internal;
 
@@ -36,7 +37,8 @@ public class InMemoryQueryTranslationPreprocessor : QueryTranslationPreprocessor
     {
         var result = base.Process(query);
 
-        if (result is MethodCallExpression { Method.IsGenericMethod: true } methodCallExpression
+        if (result is MethodCallExpression methodCallExpression
+            && methodCallExpression.Method.IsGenericMethod
             && (methodCallExpression.Method.GetGenericMethodDefinition() == QueryableMethods.GroupByWithKeySelector
                 || methodCallExpression.Method.GetGenericMethodDefinition() == QueryableMethods.GroupByWithKeyElementSelector))
         {
@@ -46,8 +48,4 @@ public class InMemoryQueryTranslationPreprocessor : QueryTranslationPreprocessor
 
         return result;
     }
-
-    /// <inheritdoc />
-    protected override bool IsEfConstantSupported
-        => true;
 }

@@ -22,8 +22,7 @@ public static class TypeExtensions
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public static bool IsDefaultValue(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        this Type type,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] this Type type,
         object? value)
         => (value?.Equals(type.GetDefaultValue()) != false);
 
@@ -69,7 +68,8 @@ public static class TypeExtensions
                     pi =>
                         pi.Name == defaultPropertyAttribute.MemberName
                         && pi.IsIndexerProperty()
-                        && pi.SetMethod?.GetParameters() is { Length: 2 } parameters
+                        && pi.SetMethod?.GetParameters() is ParameterInfo[] parameters
+                        && parameters.Length == 2
                         && parameters[0].ParameterType == typeof(string));
     }
 }

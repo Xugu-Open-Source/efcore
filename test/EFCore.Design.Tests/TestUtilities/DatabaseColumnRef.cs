@@ -8,7 +8,9 @@ namespace Microsoft.EntityFrameworkCore.TestUtilities;
 internal class DatabaseColumnRef : DatabaseColumn
 {
     public DatabaseColumnRef(string name)
-        => Name = name;
+    {
+        Name = name;
+    }
 
     public override DatabaseTable Table
     {

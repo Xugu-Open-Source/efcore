@@ -268,10 +268,7 @@ public class CollectionNavigationBuilder : IInfrastructure<IConventionForeignKey
             return ((EntityType)DeclaringEntityType).Builder.HasSkipNavigation(
                 navigationMember,
                 (EntityType)RelatedEntityType,
-                foreignKey.PrincipalToDependent?.ClrType,
-                ConfigurationSource.Explicit,
-                collection: true,
-                onDependent: false)!.Metadata;
+                ConfigurationSource.Explicit)!.Metadata;
         }
     }
 
@@ -323,7 +320,6 @@ public class CollectionNavigationBuilder : IInfrastructure<IConventionForeignKey
                     var skipNavigation = RelatedEntityType.FindSkipNavigation(navigationName);
                     if (skipNavigation != null)
                     {
-                        ((SkipNavigation)skipNavigation).UpdateConfigurationSource(ConfigurationSource.Explicit);
                         return skipNavigation;
                     }
                 }
@@ -332,9 +328,7 @@ public class CollectionNavigationBuilder : IInfrastructure<IConventionForeignKey
             return ((EntityType)RelatedEntityType).Builder.HasSkipNavigation(
                 navigationMember,
                 (EntityType)DeclaringEntityType,
-                ConfigurationSource.Explicit,
-                collection: true,
-                onDependent: false)!.Metadata;
+                ConfigurationSource.Explicit)!.Metadata;
         }
     }
 

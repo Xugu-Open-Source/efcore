@@ -20,7 +20,13 @@ public class UnicodeAttributeConvention : PropertyAttributeConventionBase<Unicod
     {
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Called after a property is added to the entity type with an attribute on the associated CLR property or field.
+    /// </summary>
+    /// <param name="propertyBuilder">The builder for the property.</param>
+    /// <param name="attribute">The attribute.</param>
+    /// <param name="clrMember">The member that has the attribute.</param>
+    /// <param name="context">Additional information associated with convention execution.</param>
     protected override void ProcessPropertyAdded(
         IConventionPropertyBuilder propertyBuilder,
         UnicodeAttribute attribute,

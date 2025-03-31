@@ -18,7 +18,9 @@ public class ModelCleanupConvention :
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this convention.</param>
     public ModelCleanupConvention(ProviderConventionSetBuilderDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.
@@ -93,10 +95,17 @@ public class ModelCleanupConvention :
         }
     }
 
-    private sealed class GraphAdapter(IConventionModel model) : Graph<IConventionEntityType>
+    private sealed class GraphAdapter : Graph<IConventionEntityType>
     {
+        private readonly IConventionModel _model;
+
+        public GraphAdapter(IConventionModel model)
+        {
+            _model = model;
+        }
+
         public override IEnumerable<IConventionEntityType> Vertices
-            => model.GetEntityTypes();
+            => _model.GetEntityTypes();
 
         public override IEnumerable<IConventionEntityType> GetOutgoingNeighbors(IConventionEntityType from)
             => from.GetForeignKeys().Where(fk => fk.DependentToPrincipal != null).Select(fk => fk.PrincipalEntityType)

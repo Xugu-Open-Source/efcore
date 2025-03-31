@@ -4,10 +4,14 @@
 namespace Microsoft.EntityFrameworkCore.Query;
 
 public abstract class
-    ComplexNavigationsCollectionsSharedTypeQueryTestBase<TFixture>(TFixture fixture)
-    : ComplexNavigationsCollectionsQueryTestBase<TFixture>(fixture)
+    ComplexNavigationsCollectionsSharedTypeQueryTestBase<TFixture> : ComplexNavigationsCollectionsQueryTestBase<TFixture>
     where TFixture : ComplexNavigationsSharedTypeQueryFixtureBase, new()
 {
+    protected ComplexNavigationsCollectionsSharedTypeQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public override async Task Multiple_complex_includes_self_ref(bool async)
         => Assert.Equal(
             CoreStrings.InvalidIncludeExpression("e.OneToOne_Optional_Self1"),

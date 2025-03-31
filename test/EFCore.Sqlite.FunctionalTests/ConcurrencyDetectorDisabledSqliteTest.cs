@@ -3,13 +3,15 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class ConcurrencyDetectorDisabledSqliteTest(ConcurrencyDetectorDisabledSqliteTest.ConcurrencyDetectorSqlServerFixture fixture)
-    : ConcurrencyDetectorDisabledRelationalTestBase<
-        ConcurrencyDetectorDisabledSqliteTest.ConcurrencyDetectorSqlServerFixture>(fixture)
+public class ConcurrencyDetectorDisabledSqliteTest : ConcurrencyDetectorDisabledRelationalTestBase<
+    ConcurrencyDetectorDisabledSqliteTest.ConcurrencyDetectorSqlServerFixture>
 {
-    public class ConcurrencyDetectorSqlServerFixture : ConcurrencyDetectorFixtureBase, ITestSqlLoggerFactory
+    public ConcurrencyDetectorDisabledSqliteTest(ConcurrencyDetectorSqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
+    public class ConcurrencyDetectorSqlServerFixture : ConcurrencyDetectorFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory
             => SqliteTestStoreFactory.Instance;

@@ -1,8 +1,6 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Net;
-
 namespace Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
 public class GearsOfWarData : ISetSource
@@ -110,15 +108,15 @@ public class GearsOfWarData : ISetSource
             {
                 Id = 1,
                 Name = "Delta",
-                Banner = [0x00, 0x01],
-                Banner5 = [0x04, 0x05, 0x06, 0x07, 0x08]
+                Banner = new byte[] { 0x00, 0x01 },
+                Banner5 = new byte[] { 0x04, 0x05, 0x06, 0x07, 0x08 }
             },
             new()
             {
                 Id = 2,
                 Name = "Kilo",
-                Banner = [0x02, 0x03],
-                Banner5 = [0x04, 0x05, 0x06, 0x07, 0x08]
+                Banner = new byte[] { 0x02, 0x03 },
+                Banner5 = new byte[] { 0x04, 0x05, 0x06, 0x07, 0x08 }
             }
         };
 
@@ -133,8 +131,7 @@ public class GearsOfWarData : ISetSource
                 Timeline = new DateTimeOffset(599898024001234567, new TimeSpan(1, 30, 0)),
                 Duration = new TimeSpan(1, 2, 3),
                 Date = new DateOnly(2020, 1, 1),
-                Time = new TimeOnly(15, 30, 10),
-                Difficulty = MissionDifficulty.Low
+                Time = new TimeOnly(15, 30, 10)
             },
             new()
             {
@@ -144,8 +141,7 @@ public class GearsOfWarData : ISetSource
                 Timeline = new DateTimeOffset(2, 3, 1, 8, 0, 0, new TimeSpan(-5, 0, 0)),
                 Duration = new TimeSpan(0, 1, 2, 3, 456),
                 Date = new DateOnly(1990, 11, 10),
-                Time = new TimeOnly(10, 15, 50, 500),
-                Difficulty = MissionDifficulty.Medium
+                Time = new TimeOnly(10, 15, 50, 500)
             },
             new()
             {
@@ -155,19 +151,7 @@ public class GearsOfWarData : ISetSource
                 Timeline = new DateTimeOffset(10, 5, 3, 12, 0, 0, new TimeSpan()),
                 Duration = new TimeSpan(0, 1, 0, 15, 456),
                 Date = new DateOnly(1, 1, 1),
-                Time = new TimeOnly(0, 0, 0),
-                Difficulty = MissionDifficulty.Unknown
-            },
-            new()
-            {
-                Id = 4,
-                CodeName = "Nanoseconds",
-                Rating = null,
-                Timeline = new DateTimeOffset(11, 5, 3, 12, 0, 0, 0, 200, new TimeSpan()).Add(TimeSpan.FromTicks(4) /* 400 nanoseconds */),
-                Duration = new TimeSpan(0, 2, 0, 15, 456, 200).Add(TimeSpan.FromTicks(4) /* 400 nanoseconds */),
-                Date = new DateOnly(1, 1, 1),
-                Time = new TimeOnly(0, 0, 0, 10, 200).Add(TimeSpan.FromTicks(4) /* 400 nanoseconds */),
-                Difficulty = MissionDifficulty.Unknown
+                Time = new TimeOnly(0, 0, 0)
             }
         };
 
@@ -426,13 +410,6 @@ public class GearsOfWarData : ISetSource
                 ThreatLevel = 0,
                 ThreatLevelByte = 0,
                 ThreatLevelNullableByte = null
-            },
-            new LocustCommander
-            {
-                Name = "Reyna Diaz",
-                ThreatLevel = 4,
-                ThreatLevelByte = 4,
-                ThreatLevelNullableByte = 4
             }
         };
 
@@ -444,8 +421,7 @@ public class GearsOfWarData : ISetSource
                 Id = 1,
                 Name = "Locust",
                 Eradicated = true,
-                CommanderName = "Queen Myrrah",
-                ServerAddress = IPAddress.Loopback
+                CommanderName = "Queen Myrrah"
             },
             new LocustHorde
             {
@@ -453,13 +429,6 @@ public class GearsOfWarData : ISetSource
                 Name = "Swarm",
                 Eradicated = false,
                 CommanderName = "Unknown"
-            },
-            new LocustHorde
-            {
-                Id = 3,
-                Name = "Future Locust",
-                Eradicated = null,
-                CommanderName = "Reyna Diaz"
             }
         };
 
@@ -563,14 +532,14 @@ public class GearsOfWarData : ISetSource
             gears[3]
         };
 
-        cities[0].BornGears = [gears[4]];
-        cities[1].BornGears = [gears[0]];
-        cities[2].BornGears = [gears[1]];
-        cities[3].BornGears = [gears[2], gears[3]];
-        cities[0].StationedGears = [gears[1], gears[3]];
-        cities[1].StationedGears = [gears[0]];
-        cities[2].StationedGears = [];
-        cities[3].StationedGears = [gears[2]];
+        cities[0].BornGears = new List<Gear> { gears[4] };
+        cities[1].BornGears = new List<Gear> { gears[0] };
+        cities[2].BornGears = new List<Gear> { gears[1] };
+        cities[3].BornGears = new List<Gear> { gears[2], gears[3] };
+        cities[0].StationedGears = new List<Gear> { gears[1], gears[3] };
+        cities[1].StationedGears = new List<Gear> { gears[0] };
+        cities[2].StationedGears = new List<Gear>();
+        cities[3].StationedGears = new List<Gear> { gears[2] };
 
         weapons[0].Owner = gears[4];
         weapons[0].OwnerFullName = gears[4].FullName;
@@ -613,41 +582,33 @@ public class GearsOfWarData : ISetSource
 
         ((LocustCommander)locustLeaders[3]).CommandingFaction = ((LocustHorde)factions[0]);
         ((LocustCommander)locustLeaders[5]).CommandingFaction = ((LocustHorde)factions[1]);
-        ((LocustCommander)locustLeaders[6]).CommandingFaction = ((LocustHorde)factions[2]);
 
         ((LocustHorde)factions[0]).Commander = ((LocustCommander)locustLeaders[3]);
         ((LocustHorde)factions[1]).Commander = ((LocustCommander)locustLeaders[5]);
-        ((LocustHorde)factions[2]).Commander = ((LocustCommander)locustLeaders[6]);
 
-        locustHighCommands[0].Commanders =
-        [
-            (LocustCommander)locustLeaders[3],
-            (LocustCommander)locustLeaders[5],
-            (LocustCommander)locustLeaders[6],
-        ];
+        locustHighCommands[0].Commanders = new List<LocustCommander>
+        {
+            (LocustCommander)locustLeaders[3], (LocustCommander)locustLeaders[5]
+        };
 
         ((LocustCommander)locustLeaders[3]).HighCommand = locustHighCommands[0];
         ((LocustCommander)locustLeaders[3]).HighCommandId = 1;
 
         ((LocustCommander)locustLeaders[5]).HighCommand = locustHighCommands[0];
         ((LocustCommander)locustLeaders[5]).HighCommandId = 1;
-
-        ((LocustCommander)locustLeaders[6]).HighCommand = locustHighCommands[0];
-        ((LocustCommander)locustLeaders[6]).HighCommandId = 1;
     }
 
     public static void WireUp2(
         IReadOnlyList<LocustLeader> locustLeaders,
         IReadOnlyList<Faction> factions)
     {
-        ((LocustHorde)factions[0]).Leaders =
-        [
+        ((LocustHorde)factions[0]).Leaders = new List<LocustLeader>
+        {
             locustLeaders[0],
             locustLeaders[1],
             locustLeaders[2],
             locustLeaders[3]
-        ];
-        ((LocustHorde)factions[1]).Leaders = [locustLeaders[4], locustLeaders[5]];
-        ((LocustHorde)factions[2]).Leaders = [locustLeaders[6]];
+        };
+        ((LocustHorde)factions[1]).Leaders = new List<LocustLeader> { locustLeaders[4], locustLeaders[5] };
     }
 }

@@ -5,10 +5,13 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
-#nullable disable
-
-public class NorthwindContext(DbContextOptions options) : PoolableDbContext(options)
+public class NorthwindContext : PoolableDbContext
 {
+    public NorthwindContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public virtual DbSet<Customer> Customers { get; set; }
     public virtual DbSet<Employee> Employees { get; set; }
     public virtual DbSet<Order> Orders { get; set; }
@@ -37,15 +40,6 @@ public class NorthwindContext(DbContextOptions options) : PoolableDbContext(opti
                 e.HasOne(e1 => e1.Manager).WithMany().HasForeignKey(e1 => e1.ReportsTo);
             });
 
-        modelBuilder.Entity<Customer>(
-            e =>
-            {
-                e.HasIndex(e => e.City);
-                e.HasIndex(e => e.CompanyName);
-                e.HasIndex(e => e.PostalCode);
-                e.HasIndex(e => e.Region);
-            });
-
         modelBuilder.Entity<Product>(
             e =>
             {
@@ -53,8 +47,6 @@ public class NorthwindContext(DbContextOptions options) : PoolableDbContext(opti
                 e.Ignore(p => p.QuantityPerUnit);
                 e.Ignore(p => p.ReorderLevel);
                 e.Ignore(p => p.UnitsOnOrder);
-
-                e.HasIndex(e => e.ProductName);
             });
 
         modelBuilder.Entity<Order>(
@@ -70,12 +62,14 @@ public class NorthwindContext(DbContextOptions options) : PoolableDbContext(opti
                 e.Ignore(o => o.ShipRegion);
                 e.Ignore(o => o.ShipVia);
                 e.Ignore(o => o.ShippedDate);
-
-                e.HasIndex(e => e.OrderDate);
             });
 
         modelBuilder.Entity<OrderDetail>(
-            e => e.HasKey(od => new { od.OrderID, od.ProductID }));
+            e =>
+            {
+                e.HasKey(
+                    od => new { od.OrderID, od.ProductID });
+            });
 
         modelBuilder.Entity<CustomerQuery>().HasNoKey();
         modelBuilder.Entity<OrderQuery>().HasNoKey();

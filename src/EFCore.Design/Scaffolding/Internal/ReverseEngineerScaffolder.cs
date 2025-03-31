@@ -95,6 +95,7 @@ public class ReverseEngineerScaffolder : IReverseEngineerScaffolder
         if (!string.IsNullOrEmpty(modelConnectionString))
         {
             codeOptions.ConnectionString = modelConnectionString;
+            databaseModel.RemoveAnnotation(ScaffoldingAnnotationNames.ConnectionString);
         }
 
         var model = _factory.Create(databaseModel, modelOptions);

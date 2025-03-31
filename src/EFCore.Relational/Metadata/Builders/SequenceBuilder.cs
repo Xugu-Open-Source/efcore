@@ -19,7 +19,9 @@ public class SequenceBuilder : IInfrastructure<IConventionSequenceBuilder>
     /// </summary>
     /// <param name="sequence">The <see cref="IMutableSequence" /> to configure.</param>
     public SequenceBuilder(IMutableSequence sequence)
-        => Builder = ((Sequence)sequence).Builder;
+    {
+        Builder = ((Sequence)sequence).Builder;
+    }
 
     private InternalSequenceBuilder Builder { [DebuggerStepThrough] get; }
 

@@ -140,11 +140,17 @@ public class HiLoValueGeneratorState : IDisposable
         return newValue;
     }
 
-    private sealed class HiLoValue(long low, long high)
+    private sealed class HiLoValue
     {
-        public long Low { get; } = low;
+        public HiLoValue(long low, long high)
+        {
+            Low = low;
+            High = high;
+        }
 
-        public long High { get; } = high;
+        public long Low { get; }
+
+        public long High { get; }
 
         public HiLoValue NextValue()
             => new(Low + 1, High);

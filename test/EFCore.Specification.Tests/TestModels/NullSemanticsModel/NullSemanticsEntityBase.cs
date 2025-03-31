@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.NullSemanticsModel;
 
-#nullable disable
-
 public abstract class NullSemanticsEntityBase
 {
     public int Id { get; set; }

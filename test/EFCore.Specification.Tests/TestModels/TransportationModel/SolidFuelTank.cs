@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.TransportationModel;
 
-#nullable disable
-
 public class SolidFuelTank : FuelTank
 {
     public string GrainGeometry { get; set; }

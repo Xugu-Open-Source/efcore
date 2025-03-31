@@ -5,11 +5,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class TwoDatabasesTestBase(FixtureBase fixture)
+public abstract class TwoDatabasesTestBase
 {
-    protected FixtureBase Fixture { get; } = fixture;
+    protected FixtureBase Fixture { get; }
+
+    protected TwoDatabasesTestBase(FixtureBase fixture)
+    {
+        Fixture = fixture;
+    }
 
     [ConditionalFact]
     public virtual void Can_query_from_one_connection_string_and_save_changes_to_another()
@@ -72,6 +75,7 @@ public abstract class TwoDatabasesTestBase(FixtureBase fixture)
 
     [ConditionalTheory]
     [InlineData(true, false)]
+    [InlineData(true, false)]
     [InlineData(true, true)]
     public virtual void Can_set_connection_string_in_interceptor(bool withConnectionString, bool withNullConnectionString)
     {
@@ -98,11 +102,16 @@ public abstract class TwoDatabasesTestBase(FixtureBase fixture)
         Assert.Equal(new[] { "Modified One", "Modified Two" }, context1.Foos.Select(e => e.Bar).ToList());
     }
 
-    protected class ConnectionStringConnectionInterceptor(string goodConnectionString, string dummyConnectionString)
-        : DbConnectionInterceptor
+    protected class ConnectionStringConnectionInterceptor : DbConnectionInterceptor
     {
-        private readonly string _goodConnectionString = goodConnectionString;
-        private readonly string _dummyConnectionString = dummyConnectionString;
+        private readonly string _goodConnectionString;
+        private readonly string _dummyConnectionString;
+
+        public ConnectionStringConnectionInterceptor(string goodConnectionString, string dummyConnectionString)
+        {
+            _goodConnectionString = goodConnectionString;
+            _dummyConnectionString = dummyConnectionString;
+        }
 
         public override InterceptionResult ConnectionOpening(
             DbConnection connection,
@@ -131,8 +140,13 @@ public abstract class TwoDatabasesTestBase(FixtureBase fixture)
 
     protected abstract string DummyConnectionString { get; }
 
-    protected class TwoDatabasesContext(DbContextOptions options) : DbContext(options)
+    protected class TwoDatabasesContext : DbContext
     {
+        public TwoDatabasesContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
             => modelBuilder.Entity<Foo>();
 
@@ -140,8 +154,13 @@ public abstract class TwoDatabasesTestBase(FixtureBase fixture)
             => Set<Foo>().OrderBy(e => e.Id);
     }
 
-    protected class TwoDatabasesWithDataContext(DbContextOptions options) : TwoDatabasesContext(options)
+    protected class TwoDatabasesWithDataContext : TwoDatabasesContext
     {
+        public TwoDatabasesWithDataContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

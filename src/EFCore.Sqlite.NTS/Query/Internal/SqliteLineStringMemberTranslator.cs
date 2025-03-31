@@ -33,7 +33,9 @@ public class SqliteLineStringMemberTranslator : IMemberTranslator
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public SqliteLineStringMemberTranslator(ISqlExpressionFactory sqlExpressionFactory)
-        => _sqlExpressionFactory = sqlExpressionFactory;
+    {
+        _sqlExpressionFactory = sqlExpressionFactory;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -60,7 +62,7 @@ public class SqliteLineStringMemberTranslator : IMemberTranslator
                                 functionName,
                                 new[] { instance },
                                 nullable: false,
-                                argumentsPropagateNullability: Statics.FalseArrays[1],
+                                argumentsPropagateNullability: new[] { false },
                                 returnType))
                     },
                     null)
@@ -68,7 +70,7 @@ public class SqliteLineStringMemberTranslator : IMemberTranslator
                     functionName,
                     new[] { instance },
                     nullable: true,
-                    argumentsPropagateNullability: Statics.TrueArrays[1],
+                    argumentsPropagateNullability: new[] { true },
                     returnType);
         }
 

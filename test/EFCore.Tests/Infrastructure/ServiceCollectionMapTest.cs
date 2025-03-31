@@ -255,7 +255,9 @@ public class ServiceCollectionMapTest
         Assert.Equal(ServiceLifetime.Singleton, serviceCollection[1].Lifetime);
     }
 
-    private interface IFakeService;
+    private interface IFakeService
+    {
+    }
 
     private class FakeService : IFakeService, IPatchServiceInjectionSite
     {
@@ -265,5 +267,7 @@ public class ServiceCollectionMapTest
             => Context = serviceProvider.GetService<ICurrentDbContext>().Context;
     }
 
-    private class DerivedFakeService : FakeService;
+    private class DerivedFakeService : FakeService
+    {
+    }
 }

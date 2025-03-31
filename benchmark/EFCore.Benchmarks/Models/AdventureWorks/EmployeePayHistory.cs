@@ -3,15 +3,16 @@
 
 using System;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class EmployeePayHistory
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public int BusinessEntityID { get; set; }
-    public DateTime RateChangeDate { get; set; }
-    public DateTime ModifiedDate { get; set; }
-    public byte PayFrequency { get; set; }
-    public decimal Rate { get; set; }
+    public class EmployeePayHistory
+    {
+        public int BusinessEntityID { get; set; }
+        public DateTime RateChangeDate { get; set; }
+        public DateTime ModifiedDate { get; set; }
+        public byte PayFrequency { get; set; }
+        public decimal Rate { get; set; }
 
-    public virtual Employee BusinessEntity { get; set; }
+        public virtual Employee BusinessEntity { get; set; }
+    }
 }

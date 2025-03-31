@@ -3,10 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class ConcurrencyDetectorEnabledInMemoryTest(ConcurrencyDetectorEnabledInMemoryTest.ConcurrencyDetectorInMemoryFixture fixture)
-    : ConcurrencyDetectorEnabledTestBase<
-        ConcurrencyDetectorEnabledInMemoryTest.ConcurrencyDetectorInMemoryFixture>(fixture)
+public class ConcurrencyDetectorEnabledInMemoryTest : ConcurrencyDetectorEnabledTestBase<
+    ConcurrencyDetectorEnabledInMemoryTest.ConcurrencyDetectorInMemoryFixture>
 {
+    public ConcurrencyDetectorEnabledInMemoryTest(ConcurrencyDetectorInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class ConcurrencyDetectorInMemoryFixture : ConcurrencyDetectorFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

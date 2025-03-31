@@ -19,7 +19,9 @@ public class SavedChangesEventArgs : SaveChangesEventArgs
     /// <param name="entitiesSavedCount">The number of entities saved.</param>
     public SavedChangesEventArgs(bool acceptAllChangesOnSuccess, int entitiesSavedCount)
         : base(acceptAllChangesOnSuccess)
-        => EntitiesSavedCount = entitiesSavedCount;
+    {
+        EntitiesSavedCount = entitiesSavedCount;
+    }
 
     /// <summary>
     ///     The number of entities saved.

@@ -10,13 +10,13 @@ public class CreateIndexOperationTest
     {
         var operation = new CreateIndexOperation();
 
-        operation.IsDescending = [true];
-        Assert.Throws<ArgumentException>(() => operation.Columns = ["X", "Y"]);
+        operation.IsDescending = new[] { true };
+        Assert.Throws<ArgumentException>(() => operation.Columns = new[] { "X", "Y" });
 
         operation.IsDescending = null;
 
-        operation.Columns = ["X", "Y"];
-        Assert.Throws<ArgumentException>(() => operation.IsDescending = [true]);
+        operation.Columns = new[] { "X", "Y" };
+        Assert.Throws<ArgumentException>(() => operation.IsDescending = new[] { true });
     }
 
     [ConditionalFact]
@@ -24,10 +24,10 @@ public class CreateIndexOperationTest
     {
         var operation = new CreateIndexOperation();
 
-        operation.IsDescending = [];
-        operation.Columns = ["X", "Y"];
+        operation.IsDescending = Array.Empty<bool>();
+        operation.Columns = new[] { "X", "Y" };
 
         operation.IsDescending = null;
-        operation.IsDescending = [];
+        operation.IsDescending = Array.Empty<bool>();
     }
 }

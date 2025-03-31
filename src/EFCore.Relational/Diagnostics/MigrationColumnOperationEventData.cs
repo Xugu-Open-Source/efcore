@@ -19,7 +19,9 @@ public class MigrationColumnOperationEventData : EventData
         Func<EventDefinitionBase, EventData, string> messageGenerator,
         ColumnOperation columnOperation)
         : base(eventDefinition, messageGenerator)
-        => ColumnOperation = columnOperation;
+    {
+        ColumnOperation = columnOperation;
+    }
 
     /// <summary>
     ///     Gets the column operation.

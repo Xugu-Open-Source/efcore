@@ -267,16 +267,16 @@ public class PropertyExtensionsTest
 
     private class ProductDetailsTagDetails
     {
-        public int Id { get; }
+        public int Id { get; set; }
 
-        public ProductDetailsTag Tag { get; }
+        public ProductDetailsTag Tag { get; set; }
     }
 
     private class Order
     {
         public int Id { get; set; }
 
-        public List<OrderDetails> OrderDetails { get; }
+        public List<OrderDetails> OrderDetails { get; set; }
     }
 
     private class OrderDetails

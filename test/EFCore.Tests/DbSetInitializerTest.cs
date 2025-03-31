@@ -32,7 +32,7 @@ public class DbSetInitializerTest
     {
         public IReadOnlyList<DbSetProperty> FindSets(Type contextType)
         {
-            var setterFactory = ClrPropertySetterFactory.Instance;
+            var setterFactory = new ClrPropertySetterFactory();
 
             return new[]
             {
@@ -44,15 +44,15 @@ public class DbSetInitializerTest
         }
     }
 
-    private class JustAContext(DbContextOptions options) : DbContext(options)
+    private class JustAContext : DbContext
     {
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        public JustAContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public DbSet<string> One { get; set; }
-
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         private DbSet<object> Two { get; set; }
-
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public DbSet<string> Three { get; private set; }
 
         public DbSet<string> Four

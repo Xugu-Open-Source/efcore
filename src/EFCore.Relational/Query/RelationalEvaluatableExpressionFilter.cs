@@ -21,7 +21,9 @@ public class RelationalEvaluatableExpressionFilter : EvaluatableExpressionFilter
         EvaluatableExpressionFilterDependencies dependencies,
         RelationalEvaluatableExpressionFilterDependencies relationalDependencies)
         : base(dependencies)
-        => RelationalDependencies = relationalDependencies;
+    {
+        RelationalDependencies = relationalDependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.

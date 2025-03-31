@@ -6,10 +6,15 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public abstract class NorthwindChangeTrackingQueryTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class NorthwindChangeTrackingQueryTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected NorthwindChangeTrackingQueryTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     [ConditionalFact]
     public virtual void Entity_reverts_when_state_set_to_unchanged()

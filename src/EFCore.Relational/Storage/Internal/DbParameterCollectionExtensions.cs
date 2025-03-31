@@ -196,7 +196,8 @@ public static class DbParameterCollectionExtensions
                 {
                     var isNullProperty = type.GetRuntimeProperty("IsNull");
                     if (isNullProperty != null
-                        && isNullProperty.GetValue(parameterValue) is true)
+                        && isNullProperty.GetValue(parameterValue) is bool isNull
+                        && isNull)
                     {
                         builder.Append("''");
                     }

@@ -53,7 +53,7 @@ public interface IRelationalTypeMappingSource : ITypeMappingSource
     /// <remarks>
     ///     Note: Only call this method if there is no <see cref="IProperty" />
     ///     or <see cref="IModel" /> available, otherwise call <see cref="FindMapping(IProperty)" />
-    ///     or <see cref="FindMapping(Type, IModel, CoreTypeMapping)" />
+    ///     or <see cref="FindMapping(Type, IModel)" />
     /// </remarks>
     /// <param name="type">The CLR type.</param>
     /// <returns>The type mapping, or <see langword="null" /> if none was found.</returns>
@@ -68,9 +68,8 @@ public interface IRelationalTypeMappingSource : ITypeMappingSource
     /// </remarks>
     /// <param name="type">The CLR type.</param>
     /// <param name="model">The model.</param>
-    /// <param name="elementMapping">The element mapping to use, if known.</param>
     /// <returns>The type mapping, or <see langword="null" /> if none was found.</returns>
-    new RelationalTypeMapping? FindMapping(Type type, IModel model, CoreTypeMapping? elementMapping = null);
+    new RelationalTypeMapping? FindMapping(Type type, IModel model);
 
     /// <summary>
     ///     Finds the type mapping for a given database type name.

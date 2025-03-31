@@ -1,18 +1,26 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+#nullable enable
+
+using System.Transactions;
+
 namespace Microsoft.EntityFrameworkCore.Update;
 
-public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.MismatchedKeyTypesSqlServerFixture fixture)
-    : IClassFixture<MismatchedKeyTypesSqlServerTest.MismatchedKeyTypesSqlServerFixture>
+public class MismatchedKeyTypesSqlServerTest : IClassFixture<MismatchedKeyTypesSqlServerTest.MismatchedKeyTypesSqlServerFixture>
 {
-    public MismatchedKeyTypesSqlServerFixture Fixture { get; } = fixture;
+    public MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    public MismatchedKeyTypesSqlServerFixture Fixture { get; }
 
     [ConditionalFact] // Issue #28392
     public virtual void Can_update_and_delete_with_bigint_FK_and_int_PK()
     {
+        using var _ = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         using var context = new MismatchedKeyTypesContext(Fixture);
-        context.Database.BeginTransaction();
 
         var principalEmpty = LoadAndValidateEmpty();
         var principalPopulated = LoadAndValidatePopulated(2);
@@ -84,8 +92,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
     [ConditionalFact] // Issue #28392
     public virtual void Can_update_and_delete_with_tinyint_FK_and_smallint_PK()
     {
+        using var _ = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         using var context = new MismatchedKeyTypesContext(Fixture);
-        context.Database.BeginTransaction();
 
         var principalEmpty = LoadAndValidateEmpty();
         var principalPopulated = LoadAndValidatePopulated(2);
@@ -157,8 +165,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
     [ConditionalFact] // Issue #28392
     public virtual void Can_update_and_delete_with_string_FK_and_GUID_PK()
     {
+        using var _ = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         using var context = new MismatchedKeyTypesContext(Fixture);
-        context.Database.BeginTransaction();
 
         var principalEmpty = LoadAndValidateEmpty();
         var principalPopulated = LoadAndValidatePopulated(2);
@@ -230,8 +238,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
     [ConditionalFact] // Issue #28392
     public virtual void Can_update_and_delete_composite_keys_mismatched_in_store()
     {
+        using var _ = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         using var context = new MismatchedKeyTypesContext(Fixture);
-        context.Database.BeginTransaction();
 
         var principalEmpty = LoadAndValidateEmpty();
         var principalPopulated = LoadAndValidatePopulated(2);
@@ -303,8 +311,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
     [ConditionalFact]
     public virtual void Queries_work_but_SaveChanges_fails_when_composite_keys_incompatible_in_store()
     {
+        using var _ = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         using var context = new MismatchedKeyTypesContext(Fixture);
-        context.Database.BeginTransaction();
 
         context.Database.ExecuteSqlRaw(
             @"INSERT INTO PrincipalBadComposite (Id1, Id2, Id3)
@@ -331,8 +339,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
     [ConditionalFact]
     public virtual void Queries_work_but_SaveChanges_fails_when_keys_incompatible_in_store()
     {
+        using var _ = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         using var context = new MismatchedKeyTypesContext(Fixture);
-        context.Database.BeginTransaction();
 
         context.Database.ExecuteSqlRaw(
             @"INSERT INTO PrincipalBad (Id)
@@ -353,11 +361,16 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
         Assert.Equal(
             RelationalStrings.StoredKeyTypesNotConvertable(
                 nameof(OptionalSingleBad.PrincipalId), "uniqueidentifier", "bigint", nameof(PrincipalBad.Id)),
-            Assert.Throws<InvalidOperationException>(() => context.SaveChanges()).Message);
+            Assert.Throws<TargetInvocationException>(() => context.SaveChanges()).InnerException!.Message);
     }
 
-    protected class MismatchedKeyTypesContextNoFks(MismatchedKeyTypesSqlServerFixture fixture) : MismatchedKeyTypesContext(fixture)
+    protected class MismatchedKeyTypesContextNoFks : MismatchedKeyTypesContext
     {
+        public MismatchedKeyTypesContextNoFks(MismatchedKeyTypesSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<PrincipalIntLong>(
@@ -436,9 +449,14 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
         }
     }
 
-    protected class MismatchedKeyTypesContext(MismatchedKeyTypesSqlServerFixture fixture) : DbContext
+    protected class MismatchedKeyTypesContext : DbContext
     {
-        public MismatchedKeyTypesSqlServerFixture Fixture { get; } = fixture;
+        public MismatchedKeyTypesContext(MismatchedKeyTypesSqlServerFixture fixture)
+        {
+            Fixture = fixture;
+        }
+
+        public MismatchedKeyTypesSqlServerFixture Fixture { get; }
 
         public DbSet<PrincipalIntLong> IntLongs
             => Set<PrincipalIntLong>();
@@ -525,8 +543,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
 
         public OptionalSingleIntLong? OptionalSingle { get; set; }
         public RequiredSingleIntLong? RequiredSingle { get; set; }
-        public List<OptionalManyIntLong> OptionalMany { get; } = [];
-        public List<RequiredManyIntLong> RequiredMany { get; } = [];
+        public List<OptionalManyIntLong> OptionalMany { get; } = new();
+        public List<RequiredManyIntLong> RequiredMany { get; } = new();
     }
 
     protected class OptionalSingleIntLong
@@ -567,8 +585,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
 
         public OptionalSingleShortByte? OptionalSingle { get; set; }
         public RequiredSingleShortByte? RequiredSingle { get; set; }
-        public List<OptionalManyShortByte> OptionalMany { get; } = [];
-        public List<RequiredManyShortByte> RequiredMany { get; } = [];
+        public List<OptionalManyShortByte> OptionalMany { get; } = new();
+        public List<RequiredManyShortByte> RequiredMany { get; } = new();
     }
 
     protected class OptionalSingleShortByte
@@ -609,8 +627,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
 
         public OptionalSingleStringGuid? OptionalSingle { get; set; }
         public RequiredSingleStringGuid? RequiredSingle { get; set; }
-        public List<OptionalManyStringGuid> OptionalMany { get; } = [];
-        public List<RequiredManyStringGuid> RequiredMany { get; } = [];
+        public List<OptionalManyStringGuid> OptionalMany { get; } = new();
+        public List<RequiredManyStringGuid> RequiredMany { get; } = new();
     }
 
     protected class OptionalSingleStringGuid
@@ -653,8 +671,8 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
 
         public OptionalSingleComposite? OptionalSingle { get; set; }
         public RequiredSingleComposite? RequiredSingle { get; set; }
-        public List<OptionalManyComposite> OptionalMany { get; } = [];
-        public List<RequiredManyComposite> RequiredMany { get; } = [];
+        public List<OptionalManyComposite> OptionalMany { get; } = new();
+        public List<RequiredManyComposite> RequiredMany { get; } = new();
     }
 
     protected class OptionalSingleComposite
@@ -731,9 +749,21 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
         public int? PrincipalId3 { get; set; }
     }
 
-    public class MismatchedKeyTypesSqlServerFixture : IAsyncLifetime
+    public class MismatchedKeyTypesSqlServerFixture : IDisposable
     {
-        public async Task SeedAsync()
+        public MismatchedKeyTypesSqlServerFixture()
+        {
+            Store = SqlServerTestStore.CreateInitialized("MismatchedKeyTypes");
+
+            using (var context = new MismatchedKeyTypesContextNoFks(this))
+            {
+                context.Database.EnsureClean();
+            }
+
+            Seed();
+        }
+
+        public void Seed()
         {
             using var context = new MismatchedKeyTypesContext(this);
 
@@ -779,30 +809,13 @@ public class MismatchedKeyTypesSqlServerTest(MismatchedKeyTypesSqlServerTest.Mis
                     Id3 = -1
                 });
 
-            await context.SaveChangesAsync();
+            context.SaveChanges();
         }
 
-        public SqlServerTestStore Store { get; set; } = null!;
+        public SqlServerTestStore Store { get; set; }
 
-        public async Task InitializeAsync()
-        {
-            Store = await SqlServerTestStore.CreateInitializedAsync("MismatchedKeyTypes");
-
-            using (var context = new MismatchedKeyTypesContextNoFks(this))
-            {
-                context.Database.EnsureClean();
-            }
-
-            await SeedAsync();
-        }
-
-        public async Task DisposeAsync()
-        {
-            if (Store != null)
-            {
-                await Store.DisposeAsync();
-            }
-        }
+        public void Dispose()
+            => Store.Dispose();
     }
 
     private class TemporaryByteValueGenerator : ValueGenerator<int>

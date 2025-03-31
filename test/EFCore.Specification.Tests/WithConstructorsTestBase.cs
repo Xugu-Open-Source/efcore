@@ -12,12 +12,15 @@ using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 #pragma warning disable IDE0052 // Remove unread private members
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class WithConstructorsTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : WithConstructorsTestBase<TFixture>.WithConstructorsFixtureBase, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected WithConstructorsTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     protected DbContext CreateContext()
         => Fixture.CreateContext();
@@ -27,9 +30,10 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
     }
 
     [ConditionalFact]
-    public virtual Task Query_and_update_using_constructors_with_property_parameters()
-        => TestHelpers.ExecuteWithStrategyInTransactionAsync(
-            CreateContext, UseTransaction, async context =>
+    public virtual void Query_and_update_using_constructors_with_property_parameters()
+        => TestHelpers.ExecuteWithStrategyInTransaction(
+            CreateContext, UseTransaction,
+            context =>
             {
                 var blog = context.Set<Blog>().Include(e => e.Posts).Single();
 
@@ -52,10 +56,11 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
                 var newBlog = context.Add(new Blog("Cats", 100)).Entity;
                 newBlog.AddPost(new Post("Baxter is a cat.", "With dog friends."));
 
-                await context.SaveChangesAsync();
-            }, async context =>
+                context.SaveChanges();
+            },
+            context =>
             {
-                var blogs = await context.Set<Blog>().Include(e => e.Posts).OrderBy(e => e.Title).ToListAsync();
+                var blogs = context.Set<Blog>().Include(e => e.Posts).OrderBy(e => e.Title).ToList();
 
                 Assert.Equal(2, blogs.Count);
 
@@ -481,17 +486,22 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         using (var context = CreateContext())
         {
             post = context.Set<LazyPropertyPost>().OrderBy(e => e.Id).First();
+
             Assert.NotNull(post.GetLoader());
+
             context.Entry(post).State = EntityState.Detached;
+
+            Assert.Null(post.GetLoader());
         }
 
-        Assert.NotNull(post.GetLoader());
         Assert.Null(post.LazyPropertyBlog);
 
         using (var context = CreateContext())
         {
             context.Attach(post);
+
             Assert.NotNull(post.GetLoader());
+
             Assert.NotNull(post.LazyPropertyBlog);
             Assert.Contains(post, post.LazyPropertyBlog.LazyPropertyPosts);
         }
@@ -550,17 +560,22 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         using (var context = CreateContext())
         {
             post = context.Set<LazyFieldPost>().OrderBy(e => e.Id).First();
+
             Assert.NotNull(post.GetLoader());
+
             context.Entry(post).State = EntityState.Detached;
+
+            Assert.Null(post.GetLoader());
         }
 
-        Assert.NotNull(post.GetLoader());
         Assert.Null(post.LazyFieldBlog);
 
         using (var context = CreateContext())
         {
             context.Attach(post);
+
             Assert.NotNull(post.GetLoader());
+
             Assert.NotNull(post.LazyFieldBlog);
             Assert.Contains(post, post.LazyFieldBlog.LazyFieldPosts);
         }
@@ -770,12 +785,18 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
             => ((List<Post>)Posts).Add(post);
     }
 
-    protected class BlogQuery(
-        string title,
-        int? monthlyRevenue)
+    protected class BlogQuery
     {
-        public string Title { get; } = title;
-        public int? MonthlyRevenue { get; set; } = monthlyRevenue;
+        public BlogQuery(
+            string title,
+            int? monthlyRevenue)
+        {
+            Title = title;
+            MonthlyRevenue = monthlyRevenue;
+        }
+
+        public string Title { get; }
+        public int? MonthlyRevenue { get; set; }
     }
 
     protected class Post
@@ -797,7 +818,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
             string content,
             Blog blog = null)
             : this(0, title, content)
-            => Blog = blog;
+        {
+            Blog = blog;
+        }
 
         public string Title { get; }
         public string Content { get; set; }
@@ -888,7 +911,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private HasEntityType(IEntityType entityType)
-            => _entityType = entityType;
+        {
+            _entityType = entityType;
+        }
 
         public int Id { get; set; }
 
@@ -917,7 +942,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private HasEntityTypePc(IEntityType entityType)
-            => _entityType = entityType;
+        {
+            _entityType = entityType;
+        }
 
         public int Id { get; set; }
 
@@ -950,7 +977,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private HasStateManager(IStateManager stateManager)
-            => _stateManager = stateManager;
+        {
+            _stateManager = stateManager;
+        }
 
         public int Id { get; set; }
 
@@ -980,7 +1009,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private HasStateManagerPc(IStateManager stateManager)
-            => _stateManager = stateManager;
+        {
+            _stateManager = stateManager;
+        }
 
         public int Id { get; set; }
 
@@ -1014,7 +1045,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyBlog(ILazyLoader loader)
-            => _loader = loader;
+        {
+            _loader = loader;
+        }
 
         public int Id { get; set; }
 
@@ -1037,7 +1070,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyPost(ILazyLoader loader)
-            => _loader = loader;
+        {
+            _loader = loader;
+        }
 
         public int Id { get; set; }
 
@@ -1217,7 +1252,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyPcBlog(ILazyLoader loader)
-            => _loader = loader;
+        {
+            _loader = loader;
+        }
 
         private ILazyLoader Loader
         {
@@ -1254,7 +1291,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyPcPost(ILazyLoader loader)
-            => _loader = loader;
+        {
+            _loader = loader;
+        }
 
         private ILazyLoader Loader
         {
@@ -1291,7 +1330,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyPcsBlog(Action<object, string> lazyLoader)
-            => _loader = lazyLoader;
+        {
+            _loader = lazyLoader;
+        }
 
         private Action<object, string> LazyLoader
         {
@@ -1328,7 +1369,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyPcsPost(Action<object, string> lazyLoader)
-            => _loader = lazyLoader;
+        {
+            _loader = lazyLoader;
+        }
 
         private Action<object, string> LazyLoader
         {
@@ -1368,7 +1411,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyPocoBlog(Action<object, string> lazyLoader)
-            => _loader = lazyLoader;
+        {
+            _loader = lazyLoader;
+        }
 
         public int Id { get; set; }
 
@@ -1391,7 +1436,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyPocoPost(Action<object, string> lazyLoader)
-            => _loader = lazyLoader;
+        {
+            _loader = lazyLoader;
+        }
 
         public int Id { get; set; }
 
@@ -1414,7 +1461,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyAsyncPocoBlog(Func<object, CancellationToken, string, Task> lazyLoader)
-            => _loader = lazyLoader;
+        {
+            _loader = lazyLoader;
+        }
 
         public int Id { get; set; }
 
@@ -1443,7 +1492,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyAsyncPocoPost(Func<object, CancellationToken, string, Task> lazyLoader)
-            => _loader = lazyLoader;
+        {
+            _loader = lazyLoader;
+        }
 
         public int Id { get; set; }
 
@@ -1469,7 +1520,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyAsyncBlog(ILazyLoader loader)
-            => _loader = loader;
+        {
+            _loader = loader;
+        }
 
         public int Id { get; set; }
 
@@ -1498,7 +1551,9 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         }
 
         private LazyAsyncPost(ILazyLoader loader)
-            => _loader = loader;
+        {
+            _loader = loader;
+        }
 
         public int Id { get; set; }
 
@@ -1540,9 +1595,17 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
         public int? MonthlyRevenue { get; init; }
     }
 
-    public class OtherContext : DbContext;
+    public class OtherContext : DbContext
+    {
+    }
 
-    public class WithConstructorsContext(DbContextOptions options) : PoolableDbContext(options);
+    public class WithConstructorsContext : PoolableDbContext
+    {
+        public WithConstructorsContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+    }
 
     public abstract class WithConstructorsFixtureBase : SharedStoreFixtureBase<WithConstructorsContext>
     {
@@ -1602,12 +1665,29 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
             modelBuilder.Entity<LazyPsBlog>();
             modelBuilder.Entity<LazyAsyncPsBlog>();
             modelBuilder.Entity<LazyPcsBlog>();
+
             modelBuilder.Entity<BlogAsImmutableRecord>();
-            modelBuilder.Entity<LazyFieldBlog>();
-            modelBuilder.Entity<LazyFieldPost>();
+
+            // Manually configure service fields since there is no public API yet
+
+            var bindingFactories = context.GetService<IParameterBindingFactories>();
+
+            var blogServiceProperty = modelBuilder.Entity<LazyFieldBlog>().Metadata.AddServiceProperty(
+                typeof(LazyFieldBlog).GetRuntimeFields().Single(f => f.Name == "_loader"));
+
+            blogServiceProperty.ParameterBinding =
+                (ServiceParameterBinding)bindingFactories.FindFactory(typeof(ILazyLoader), "_loader")
+                    .Bind(blogServiceProperty.DeclaringEntityType, typeof(ILazyLoader), "_loader");
+
+            var postServiceProperty = modelBuilder.Entity<LazyFieldPost>().Metadata.AddServiceProperty(
+                typeof(LazyFieldPost).GetRuntimeFields().Single(f => f.Name == "_loader"));
+
+            postServiceProperty.ParameterBinding =
+                (ServiceParameterBinding)bindingFactories.FindFactory(typeof(ILazyLoader), "_loader")
+                    .Bind(postServiceProperty.DeclaringEntityType, typeof(ILazyLoader), "_loader");
         }
 
-        protected override Task SeedAsync(WithConstructorsContext context)
+        protected override void Seed(WithConstructorsContext context)
         {
             var blog = new Blog("Puppies");
 
@@ -1708,7 +1788,7 @@ public abstract class WithConstructorsTestBase<TFixture>(TFixture fixture) : ICl
 
             context.Add(lazyPcsBlog);
 
-            return context.SaveChangesAsync();
+            context.SaveChanges();
         }
     }
 }

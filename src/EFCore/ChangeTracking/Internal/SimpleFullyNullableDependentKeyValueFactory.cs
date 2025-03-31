@@ -47,7 +47,6 @@ public class SimpleFullyNullableDependentKeyValueFactory<TKey> : DependentKeyVal
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    [Obsolete]
     public virtual bool TryCreateFromBuffer(in ValueBuffer valueBuffer, [NotNullWhen(true)] out TKey? key)
     {
         key = (TKey)_propertyAccessors.ValueBufferGetter!(valueBuffer);
@@ -62,7 +61,7 @@ public class SimpleFullyNullableDependentKeyValueFactory<TKey> : DependentKeyVal
     /// </summary>
     public override bool TryCreateFromCurrentValues(IUpdateEntry entry, [NotNullWhen(true)] out TKey? key)
     {
-        key = ((Func<InternalEntityEntry, TKey>)_propertyAccessors.CurrentValueGetter)((InternalEntityEntry)entry);
+        key = ((Func<IUpdateEntry, TKey>)_propertyAccessors.CurrentValueGetter)(entry);
         return key != null;
     }
 
@@ -74,7 +73,7 @@ public class SimpleFullyNullableDependentKeyValueFactory<TKey> : DependentKeyVal
     /// </summary>
     public virtual bool TryCreateFromPreStoreGeneratedCurrentValues(IUpdateEntry entry, [NotNullWhen(true)] out TKey? key)
     {
-        key = ((Func<InternalEntityEntry, TKey>)_propertyAccessors.PreStoreGeneratedCurrentValueGetter)((InternalEntityEntry)entry);
+        key = ((Func<IUpdateEntry, TKey>)_propertyAccessors.PreStoreGeneratedCurrentValueGetter)(entry);
         return key != null;
     }
 
@@ -86,7 +85,7 @@ public class SimpleFullyNullableDependentKeyValueFactory<TKey> : DependentKeyVal
     /// </summary>
     public override bool TryCreateFromOriginalValues(IUpdateEntry entry, [NotNullWhen(true)] out TKey? key)
     {
-        key = ((Func<InternalEntityEntry, TKey>)_propertyAccessors.OriginalValueGetter!)((InternalEntityEntry)entry);
+        key = ((Func<IUpdateEntry, TKey>)_propertyAccessors.OriginalValueGetter!)(entry);
         return key != null;
     }
 
@@ -98,7 +97,7 @@ public class SimpleFullyNullableDependentKeyValueFactory<TKey> : DependentKeyVal
     /// </summary>
     public virtual bool TryCreateFromRelationshipSnapshot(IUpdateEntry entry, [NotNullWhen(true)] out TKey? key)
     {
-        key = ((Func<InternalEntityEntry, TKey>)_propertyAccessors.RelationshipSnapshotGetter)((InternalEntityEntry)entry);
+        key = ((Func<IUpdateEntry, TKey>)_propertyAccessors.RelationshipSnapshotGetter)(entry);
         return key != null;
     }
 }

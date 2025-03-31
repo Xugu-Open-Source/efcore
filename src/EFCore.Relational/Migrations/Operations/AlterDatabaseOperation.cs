@@ -21,5 +21,7 @@ public class AlterDatabaseOperation : DatabaseOperation, IAlterMigrationOperatio
     IMutableAnnotatable IAlterMigrationOperation.OldAnnotations
         => OldDatabase;
 
-    private sealed class CreateDatabaseOperation : DatabaseOperation;
+    private sealed class CreateDatabaseOperation : DatabaseOperation
+    {
+    }
 }

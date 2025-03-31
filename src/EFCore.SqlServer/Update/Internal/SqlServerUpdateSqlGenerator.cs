@@ -47,9 +47,9 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
         out bool requiresTransaction)
     {
         // If no database-generated columns need to be read back, just do a simple INSERT (default behavior).
-        // If there are generated columns but we can use OUTPUT without INTO (i.e. no triggers), we can do a simple INSERT ... OUTPUT,
-        // which is also the default behavior, doesn't require a transaction and is the most efficient.
-        if (command.ColumnModifications.All(o => !o.IsRead) || CanUseOutputClause(command))
+        // If there are generated columns but there are no triggers defined on the table, we can do a simple INSERT ... OUTPUT
+        // (without INTO), which is also the default behavior, doesn't require a transaction and is the most efficient.
+        if (command.ColumnModifications.All(o => !o.IsRead) || !HasAnyTriggers(command))
         {
             return AppendInsertReturningOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
         }
@@ -64,7 +64,7 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
                 !o.IsKey
                 || !o.IsRead
                 || o.Property?.GetValueGenerationStrategy(table) == SqlServerValueGenerationStrategy.IdentityColumn)
-            ? AppendInsertAndSelectOperation(commandStringBuilder, command, commandPosition, out requiresTransaction)
+            ? AppendInsertAndSelectOperations(commandStringBuilder, command, commandPosition, out requiresTransaction)
             : AppendInsertSingleRowWithOutputInto(
                 commandStringBuilder,
                 command,
@@ -107,10 +107,10 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
             int commandPosition,
             out bool requiresTransaction)
         // We normally do a simple UPDATE with an OUTPUT clause (either for the generated columns, or for "1" for concurrency checking).
-        // However, if OUTPUT (without INTO) isn't supported (e.g. there are triggers), we do UPDATE+SELECT.
-        => CanUseOutputClause(command)
-            ? AppendUpdateReturningOperation(commandStringBuilder, command, commandPosition, out requiresTransaction)
-            : AppendUpdateAndSelectOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
+        // However, if there are triggers defined, OUTPUT (without INTO) is not supported, so we do UPDATE+SELECT.
+        => HasAnyTriggers(command)
+            ? AppendUpdateAndSelectOperation(commandStringBuilder, command, commandPosition, out requiresTransaction)
+            : AppendUpdateReturningOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -142,7 +142,8 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
         string name,
         string? schema)
     {
-        if (columnModification.JsonPath is not (null or "$"))
+        if (columnModification.JsonPath != null
+            && columnModification.JsonPath != "$")
         {
             stringBuilder.Append("JSON_MODIFY(");
             updateSqlGeneratorHelper.DelimitIdentifier(stringBuilder, columnModification.ColumnName);
@@ -152,9 +153,26 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
             stringBuilder.Append(columnModification.JsonPath);
             stringBuilder.Append("', ");
 
-            if (columnModification.Property is { IsPrimitiveCollection: false })
+            if (columnModification.Property != null)
             {
+                var needsTypeConversion = columnModification.Property.ClrType.IsNumeric()
+                    || columnModification.Property.ClrType == typeof(bool);
+
+                if (needsTypeConversion)
+                {
+                    stringBuilder.Append("CAST(");
+                }
+
+                stringBuilder.Append("JSON_VALUE(");
                 base.AppendUpdateColumnValue(updateSqlGeneratorHelper, columnModification, stringBuilder, name, schema);
+                stringBuilder.Append(", '$[0]')");
+
+                if (needsTypeConversion)
+                {
+                    stringBuilder.Append(" AS ");
+                    stringBuilder.Append(columnModification.Property.GetRelationalTypeMapping().StoreType);
+                    stringBuilder.Append(")");
+                }
             }
             else
             {
@@ -183,10 +201,10 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
             int commandPosition,
             out bool requiresTransaction)
         // We normally do a simple DELETE, with an OUTPUT clause emitting "1" for concurrency checking.
-        // However, if OUTPUT (without INTO) isn't supported (e.g. there are triggers), we do DELETE+SELECT.
-        => CanUseOutputClause(command)
-            ? AppendDeleteReturningOperation(commandStringBuilder, command, commandPosition, out requiresTransaction)
-            : AppendDeleteAndSelectOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
+        // However, if there are triggers defined, OUTPUT (without INTO) is not supported, so we do UPDATE+SELECT.
+        => HasAnyTriggers(command)
+            ? AppendDeleteAndSelectOperation(commandStringBuilder, command, commandPosition, out requiresTransaction)
+            : AppendDeleteReturningOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -288,7 +306,7 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
         {
             requiresTransaction = modificationCommands.Count > 1;
 
-            if (!writableOperations.Any(o => o is { IsRead: true, IsKey: true }))
+            if (!writableOperations.Any(o => o.IsRead && o.IsKey))
             {
                 foreach (var modification in modificationCommands)
                 {
@@ -311,8 +329,9 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
         }
 
         // We default to using MERGE ... OUTPUT (without INTO), projecting back a synthetic _Position column to know the order back
-        // at the client and propagate database-generated values correctly.
-        if (CanUseOutputClause(firstCommand))
+        // at the client and propagate database-generated values correctly. However, if any triggers are defined, OUTPUT without INTO
+        // doesn't work.
+        if (!HasAnyTriggers(firstCommand))
         {
             // MERGE ... OUTPUT returns rows whose ordering isn't guaranteed. So this technique projects back a position int with each row,
             // to allow mapping the rows back for value propagation.
@@ -320,7 +339,7 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
                 commandStringBuilder, modificationCommands, writeOperations, readOperations, out requiresTransaction);
         }
 
-        // We can't use the OUTPUT (without INTO) clause (e.g. triggers are defined).
+        // We have a trigger, so can't use a simple OUTPUT clause.
         // If we have an IDENTITY column, then multiple batched SELECT+INSERTs are faster up to a certain threshold (4), and then
         // MERGE ... OUTPUT INTO is faster.
         if (modificationCommands.Count < MergeIntoMinimumThreshold
@@ -334,7 +353,7 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
 
             foreach (var command in modificationCommands)
             {
-                AppendInsertAndSelectOperation(commandStringBuilder, command, commandPosition++, out _);
+                AppendInsertAndSelectOperations(commandStringBuilder, command, commandPosition++, out _);
             }
 
             return ResultSetMapping.LastInResultSet;
@@ -976,6 +995,9 @@ public class SqlServerUpdateSqlGenerator : UpdateAndSelectSqlGenerator, ISqlServ
             .Append("@@ROWCOUNT = ")
             .Append(expectedRowsAffected.ToString(CultureInfo.InvariantCulture));
 
-    private static bool CanUseOutputClause(IReadOnlyModificationCommand command)
-        => command.Table?.IsSqlOutputClauseUsed() == true;
+    private static bool HasAnyTriggers(IReadOnlyModificationCommand command)
+        // Data seeding doesn't provide any entries, so we we don't know if the table has triggers; assume it does to generate SQL
+        // that works everywhere.
+        => command.Entries.Count == 0
+            || command.Table!.Triggers.Any();
 }

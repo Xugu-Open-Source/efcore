@@ -3,35 +3,23 @@
 
 using System.Runtime.InteropServices;
 using Microsoft.EntityFrameworkCore.Design.Internal;
-using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
 namespace Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 
 [Collection(nameof(ModelCodeGeneratorTestCollection))]
-public abstract class ModelCodeGeneratorTestBase(ModelCodeGeneratorTestFixture fixture, ITestOutputHelper output)
+public abstract class ModelCodeGeneratorTestBase
 {
-    protected Task TestAsync(
-        Action<ModelBuilder> buildModel,
-        ModelCodeGenerationOptions options,
-        Action<ScaffoldedModel> assertScaffold,
-        Action<IModel> assertModel,
-        bool skipBuild = false)
+    private readonly ModelCodeGeneratorTestFixture _fixture;
+    private readonly ITestOutputHelper _output;
+
+    protected ModelCodeGeneratorTestBase(ModelCodeGeneratorTestFixture fixture, ITestOutputHelper output)
     {
-        var modelBuilder = SqlServerTestHelpers.Instance.CreateConventionBuilder(addServices: AddModelServices);
-        buildModel(modelBuilder);
-
-        var model = modelBuilder.FinalizeModel(designTime: true, skipValidation: true);
-
-        var services = CreateServices();
-        AddScaffoldingServices(services);
-
-        var serviceProvider = services.BuildServiceProvider(validateScopes: true);
-
-        return TestAsync(serviceProvider, model, options, assertScaffold, assertModel, skipBuild);
+        _fixture = fixture;
+        _output = output;
     }
 
-    protected Task TestAsync(
-        Func<IServiceProvider, IModel> buildModel,
+    protected async Task TestAsync(
+        Action<ModelBuilder> buildModel,
         ModelCodeGenerationOptions options,
         Action<ScaffoldedModel> assertScaffold,
         Action<IModel> assertModel,
@@ -39,23 +27,17 @@ public abstract class ModelCodeGeneratorTestBase(ModelCodeGeneratorTestFixture f
     {
         var designServices = new ServiceCollection();
         AddModelServices(designServices);
+
+        var modelBuilder = SqlServerTestHelpers.Instance.CreateConventionBuilder(customServices: designServices);
+        buildModel(modelBuilder);
+
+        var model = modelBuilder.FinalizeModel(designTime: true, skipValidation: true);
+
         var services = CreateServices();
         AddScaffoldingServices(services);
-        var serviceProvider = services.BuildServiceProvider(validateScopes: true);
-        var model = buildModel(serviceProvider);
 
-        return TestAsync(serviceProvider, model, options, assertScaffold, assertModel, skipBuild);
-    }
-
-    protected async Task TestAsync(
-        IServiceProvider serviceProvider,
-        IModel model,
-        ModelCodeGenerationOptions options,
-        Action<ScaffoldedModel> assertScaffold,
-        Action<IModel> assertModel,
-        bool skipBuild = false)
-    {
-        var generators = serviceProvider.GetServices<IModelCodeGenerator>();
+        var generators = services.BuildServiceProvider(validateScopes: true)
+            .GetServices<IModelCodeGenerator>();
         var generator = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
             || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
             || Random.Shared.Next() % 12 != 0
@@ -65,7 +47,7 @@ public abstract class ModelCodeGeneratorTestBase(ModelCodeGeneratorTestFixture f
         options.ModelNamespace ??= "TestNamespace";
         options.ContextName = "TestDbContext";
         options.ConnectionString = "Initial Catalog=TestDatabase";
-        options.ProjectDir = fixture.ProjectDir;
+        options.ProjectDir = _fixture.ProjectDir;
 
         var scaffoldedModel = generator.GenerateModel(
             model,
@@ -104,68 +86,25 @@ public abstract class ModelCodeGeneratorTestBase(ModelCodeGeneratorTestFixture f
         }
     }
 
-    protected static DatabaseModel BuildModelWithColumn(string storeType, string sql, object expected)
-    {
-        var dbModel = new DatabaseModel
-        {
-            Tables =
-            {
-                new DatabaseTable
-                {
-                    Database = new DatabaseModel(),
-                    Name = "Table",
-                    Columns =
-                    {
-                        new DatabaseColumn
-                        {
-                            Name = "Column",
-                            StoreType = storeType,
-                            DefaultValueSql = sql,
-                            DefaultValue = expected
-                        }
-                    }
-                }
-            }
-        };
-
-        var table = dbModel.Tables.Single();
-        table.Database = dbModel;
-        table.Columns.Single().Table = table;
-
-        return dbModel;
-    }
-
     protected IServiceCollection CreateServices()
     {
         var testAssembly = MockAssembly.Create();
-        var reporter = new TestOperationReporter(output);
-        var services = new DesignTimeServicesBuilder(testAssembly, testAssembly, reporter, [])
+        var reporter = new TestOperationReporter(_output);
+        var services = new DesignTimeServicesBuilder(testAssembly, testAssembly, reporter, new string[0])
             .CreateServiceCollection("Microsoft.EntityFrameworkCore.SqlServer");
         return services;
     }
 
-    protected virtual IServiceCollection AddModelServices(IServiceCollection services)
-        => services;
+    protected virtual void AddModelServices(IServiceCollection services)
+    {
+    }
 
-    protected virtual IServiceCollection AddScaffoldingServices(IServiceCollection services)
-        => services;
+    protected virtual void AddScaffoldingServices(IServiceCollection services)
+    {
+    }
 
     protected static void AssertFileContents(
         string expectedCode,
         ScaffoldedFile file)
-        => Assert.Equal(expectedCode, file.Code.TrimEnd(), ignoreLineEndingDifferences: true);
-
-    protected static void AssertContains(
-        string expected,
-        string actual)
-    {
-        // Normalize line endings to Environment.Newline
-        expected = expected
-            .Replace("\r\n", "\n")
-            .Replace("\n\r", "\n")
-            .Replace("\r", "\n")
-            .Replace("\n", Environment.NewLine);
-
-        Assert.Contains(expected, actual);
-    }
+        => Assert.Equal(expectedCode, file.Code, ignoreLineEndingDifferences: true);
 }

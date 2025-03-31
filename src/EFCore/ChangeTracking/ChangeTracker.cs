@@ -59,17 +59,12 @@ public class ChangeTracker : IResettableService
     ///     automatically by methods of <see cref="DbContext" /> and related classes.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         The default value is true. This ensures the context is aware of any changes to tracked entity instances
-    ///         before performing operations such as <see cref="DbContext.SaveChanges()" /> or returning change tracking
-    ///         information. If you disable automatic detect changes then you must ensure that
-    ///         <see cref="DetectChanges()" /> is called when entity instances have been modified.
-    ///         Failure to do so may result in some changes not being persisted during
-    ///         <see cref="DbContext.SaveChanges()" /> or out-of-date change tracking information being returned.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     The default value is true. This ensures the context is aware of any changes to tracked entity instances
+    ///     before performing operations such as <see cref="DbContext.SaveChanges()" /> or returning change tracking
+    ///     information. If you disable automatic detect changes then you must ensure that
+    ///     <see cref="DetectChanges()" /> is called when entity instances have been modified.
+    ///     Failure to do so may result in some changes not being persisted during
+    ///     <see cref="DbContext.SaveChanges()" /> or out-of-date change tracking information being returned.
     /// </remarks>
     public virtual bool AutoDetectChangesEnabled { get; set; } = true;
 
@@ -113,14 +108,9 @@ public class ChangeTracker : IResettableService
     ///     value is <see cref="CascadeTiming.Immediate" />.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Dependent/child entities are only deleted automatically when the relationship
-    ///         is configured with <see cref="DeleteBehavior.Cascade" />. This is set by default
-    ///         for required relationships.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     Dependent/child entities are only deleted automatically when the relationship
+    ///     is configured with <see cref="DeleteBehavior.Cascade" />. This is set by default
+    ///     for required relationships.
     /// </remarks>
     public virtual CascadeTiming DeleteOrphansTiming
     {
@@ -134,14 +124,9 @@ public class ChangeTracker : IResettableService
     ///     as <see cref="EntityState.Deleted" />. The default value is<see cref="CascadeTiming.Immediate" />.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Dependent/child entities are only deleted automatically when the relationship
-    ///         is configured with <see cref="DeleteBehavior.Cascade" />. This is set by default
-    ///         for required relationships.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     Dependent/child entities are only deleted automatically when the relationship
+    ///     is configured with <see cref="DeleteBehavior.Cascade" />. This is set by default
+    ///     for required relationships.
     /// </remarks>
     public virtual CascadeTiming CascadeDeleteTiming
     {
@@ -155,21 +140,13 @@ public class ChangeTracker : IResettableService
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///         Consider using the methods of <see cref="DbSet{TEntity}.Local" /> for faster lookup of tracked entities by key, foreign key,
-    ///         or property value.
-    ///     </para>
-    ///     <para>
     ///         This method calls <see cref="DetectChanges" /> to ensure all entries returned reflect up-to-date state.
-    ///         Since detecting changes can be slow, consider temporarily setting <see cref="AutoDetectChangesEnabled" /> to prevent
-    ///         detecting changes in situations where the state is known to be up-to-date.
+    ///         Use <see cref="AutoDetectChangesEnabled" /> to prevent DetectChanges from being called automatically.
     ///     </para>
     ///     <para>
     ///         Note that modification of entity state while iterating over the returned enumeration may result in
     ///         an <see cref="InvalidOperationException" /> indicating that the collection was modified while enumerating.
     ///         To avoid this, create a defensive copy using <see cref="Enumerable.ToList{TSource}" /> or similar before iterating.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
     ///     </para>
     /// </remarks>
     /// <returns>An entry for each entity being tracked.</returns>
@@ -184,25 +161,6 @@ public class ChangeTracker : IResettableService
     ///     Gets an <see cref="EntityEntry" /> for all entities of a given type being tracked by the context.
     ///     The entries provide access to change tracking information and operations for each entity.
     /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         Consider using the methods of <see cref="DbSet{TEntity}.Local" /> for faster lookup of tracked entities by key, foreign key,
-    ///         or property value.
-    ///     </para>
-    ///     <para>
-    ///         This method calls <see cref="DetectChanges" /> to ensure all entries returned reflect up-to-date state.
-    ///         Since detecting changes can be slow, consider temporarily setting <see cref="AutoDetectChangesEnabled" /> to prevent
-    ///         detecting changes in situations where the state is known to be up-to-date.
-    ///     </para>
-    ///     <para>
-    ///         Note that modification of entity state while iterating over the returned enumeration may result in
-    ///         an <see cref="InvalidOperationException" /> indicating that the collection was modified while enumerating.
-    ///         To avoid this, create a defensive copy using <see cref="Enumerable.ToList{TSource}" /> or similar before iterating.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
-    /// </remarks>
     /// <typeparam name="TEntity">The type of entities to get entries for.</typeparam>
     /// <returns>An entry for each entity of the given type that is being tracked.</returns>
     public virtual IEnumerable<EntityEntry<TEntity>> Entries<TEntity>()
@@ -229,14 +187,8 @@ public class ChangeTracker : IResettableService
     ///     or <see cref="DbContext.SaveChangesAsync(CancellationToken)" /> is called.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         This method calls <see cref="DetectChanges" /> to ensure the returned value is accurate.
-    ///         Since detecting changes can be slow, consider temporarily setting <see cref="AutoDetectChangesEnabled" /> to prevent
-    ///         detecting changes in situations where the state is known to be up-to-date.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     Note that this method calls <see cref="DetectChanges" /> unless
+    ///     <see cref="AutoDetectChangesEnabled" /> has been set to <see langword="false" />.
     /// </remarks>
     /// <returns><see langword="true" /> if there are changes to save, otherwise <see langword="false" />.</returns>
     public virtual bool HasChanges()
@@ -257,9 +209,6 @@ public class ChangeTracker : IResettableService
     ///     <see cref="DbContext.SaveChanges()" /> and when returning change tracking information). You typically only need to
     ///     call this method if you have disabled <see cref="AutoDetectChangesEnabled" />.
     /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    /// </remarks>
     public virtual void DetectChanges()
     {
         if (!_model.SkipDetectChanges)
@@ -294,9 +243,6 @@ public class ChangeTracker : IResettableService
     ///     <para>
     ///         If an entity is discovered that is already tracked by the context, that entity is not processed (and its
     ///         navigation properties are not traversed).
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
     ///     </para>
     /// </remarks>
     /// <param name="rootEntity">The entity to begin traversal from.</param>
@@ -344,9 +290,6 @@ public class ChangeTracker : IResettableService
     ///         allows the callback to decide when traversal will end, but the onus is then on the caller to ensure that
     ///         traversal will not enter an infinite loop.
     ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
     /// </remarks>
     /// <param name="rootEntity">The entity to begin traversal from.</param>
     /// <param name="state">An arbitrary state object passed to the callback.</param>
@@ -393,11 +336,6 @@ public class ChangeTracker : IResettableService
     ///     An event fired when an entity is about to be tracked by the context, either because it is returned
     ///     from a tracking query, or because it is being attached or added to the context.
     /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
-    /// </remarks>
     public event EventHandler<EntityTrackingEventArgs> Tracking
     {
         add => StateManager.Tracking += value;
@@ -408,11 +346,6 @@ public class ChangeTracker : IResettableService
     ///     An event fired when an entity is tracked by the context, either because it was returned
     ///     from a tracking query, or because it was attached or added to the context.
     /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
-    /// </remarks>
     public event EventHandler<EntityTrackedEventArgs> Tracked
     {
         add => StateManager.Tracked += value;
@@ -424,13 +357,8 @@ public class ChangeTracker : IResettableService
     ///     from one <see cref="EntityState" /> to another.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Note that this event does not fire for entities when they are first tracked by the context.
-    ///         Use the <see cref="Tracking" /> event to get notified when the context begins tracking an entity.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     Note that this event does not fire for entities when they are first tracked by the context.
+    ///     Use the <see cref="Tracking" /> event to get notified when the context begins tracking an entity.
     /// </remarks>
     public event EventHandler<EntityStateChangingEventArgs> StateChanging
     {
@@ -443,13 +371,8 @@ public class ChangeTracker : IResettableService
     ///     from one <see cref="EntityState" /> to another.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Note that this event does not fire for entities when they are first tracked by the context.
-    ///         Use the <see cref="Tracked" /> event to get notified when the context begins tracking an entity.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     Note that this event does not fire for entities when they are first tracked by the context.
+    ///     Use the <see cref="Tracked" /> event to get notified when the context begins tracking an entity.
     /// </remarks>
     public event EventHandler<EntityStateChangedEventArgs> StateChanged
     {
@@ -463,13 +386,8 @@ public class ChangeTracker : IResettableService
     ///     executing <see cref="DbContext.SaveChanges()" /> or <see cref="DbContext.SaveChangesAsync(System.Threading.CancellationToken)" />.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         <see cref="AutoDetectChangesEnabled" /> is set to <see langword="false" /> for the duration of the event to prevent an infinite
-    ///         loop of recursive automatic calls.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     <see cref="AutoDetectChangesEnabled" /> is set to <see langword="false" /> for the duration of the event to prevent an infinite
+    ///     loop of recursive automatic calls.
     /// </remarks>
     public event EventHandler<DetectEntityChangesEventArgs> DetectingEntityChanges
     {
@@ -483,13 +401,8 @@ public class ChangeTracker : IResettableService
     ///     executing <see cref="DbContext.SaveChanges()" /> or <see cref="DbContext.SaveChangesAsync(System.Threading.CancellationToken)" />.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         <see cref="AutoDetectChangesEnabled" /> is set to <see langword="false" /> for the duration of the event to prevent an infinite
-    ///         loop of recursive automatic calls.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     <see cref="AutoDetectChangesEnabled" /> is set to <see langword="false" /> for the duration of the event to prevent an infinite
+    ///     loop of recursive automatic calls.
     /// </remarks>
     public event EventHandler<DetectedEntityChangesEventArgs> DetectedEntityChanges
     {
@@ -503,13 +416,8 @@ public class ChangeTracker : IResettableService
     ///     executing <see cref="DbContext.SaveChanges()" /> or <see cref="DbContext.SaveChangesAsync(System.Threading.CancellationToken)" />.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         <see cref="AutoDetectChangesEnabled" /> is set to <see langword="false" /> for the duration of the event to prevent an infinite
-    ///         loop of recursive automatic calls.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     <see cref="AutoDetectChangesEnabled" /> is set to <see langword="false" /> for the duration of the event to prevent an infinite
+    ///     loop of recursive automatic calls.
     /// </remarks>
     public event EventHandler<DetectChangesEventArgs> DetectingAllChanges
     {
@@ -523,13 +431,8 @@ public class ChangeTracker : IResettableService
     ///     executing <see cref="DbContext.SaveChanges()" /> or <see cref="DbContext.SaveChangesAsync(System.Threading.CancellationToken)" />.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         <see cref="AutoDetectChangesEnabled" /> is set to <see langword="false" /> for the duration of the event to prevent an infinite
-    ///         loop of recursive automatic calls.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
+    ///     <see cref="AutoDetectChangesEnabled" /> is set to <see langword="false" /> for the duration of the event to prevent an infinite
+    ///     loop of recursive automatic calls.
     /// </remarks>
     public event EventHandler<DetectedChangesEventArgs> DetectedAllChanges
     {
@@ -549,12 +452,8 @@ public class ChangeTracker : IResettableService
     ///         to manually force the deletes to have at a time controlled by the application.
     ///     </para>
     ///     <para>
-    ///         This method calls <see cref="DetectChanges" /> to ensure the returned value is accurate.
-    ///         Since detecting changes can be slow, consider temporarily setting <see cref="AutoDetectChangesEnabled" /> to prevent
-    ///         detecting changes in situations where the state is known to be up-to-date.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
+    ///         If <see cref="AutoDetectChangesEnabled" /> is <see langword="true" /> then this method
+    ///         will call <see cref="DetectChanges" />.
     ///     </para>
     /// </remarks>
     public virtual void CascadeChanges()
@@ -602,12 +501,9 @@ public class ChangeTracker : IResettableService
     ///     <para>
     ///         Note that this method does not generate <see cref="StateChanged" /> events since entities are not individually detached.
     ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
-    ///     </para>
     /// </remarks>
     public virtual void Clear()
-        => StateManager.Clear(resetting: false);
+        => StateManager.Clear();
 
     /// <summary>
     ///     <para>
@@ -616,9 +512,6 @@ public class ChangeTracker : IResettableService
     ///     <para>
     ///         Warning: Do not rely on the format of the debug strings.
     ///         They are designed for debugging only and may change arbitrarily between releases.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-change-tracking">EF Core change tracking</see> for more information and examples.
     ///     </para>
     /// </summary>
     public virtual DebugView DebugView

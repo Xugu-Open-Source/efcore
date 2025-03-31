@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Conventions.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.EntityFrameworkCore.Storage.Internal;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 using Microsoft.EntityFrameworkCore.Update.Internal;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -83,9 +82,7 @@ public class EntityFrameworkServicesBuilder
             { typeof(IMemoryCache), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IEvaluatableExpressionFilter), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(INavigationExpansionExtensibilityHelper), new ServiceCharacteristics(ServiceLifetime.Singleton) },
-            { typeof(ILiftableConstantFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IExceptionDetector), new ServiceCharacteristics(ServiceLifetime.Singleton) },
-            { typeof(IJsonValueReaderWriterSource), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IProviderConventionSetBuilder), new ServiceCharacteristics(ServiceLifetime.Scoped) },
             { typeof(IConventionSetBuilder), new ServiceCharacteristics(ServiceLifetime.Scoped) },
             { typeof(IDiagnosticsLogger<>), new ServiceCharacteristics(ServiceLifetime.Scoped) },
@@ -125,10 +122,7 @@ public class EntityFrameworkServicesBuilder
             { typeof(IQueryTranslationPostprocessorFactory), new ServiceCharacteristics(ServiceLifetime.Scoped) },
             { typeof(IShapedQueryCompilingExpressionVisitorFactory), new ServiceCharacteristics(ServiceLifetime.Scoped) },
             { typeof(IDbContextLogger), new ServiceCharacteristics(ServiceLifetime.Scoped) },
-            { typeof(IAdHocMapper), new ServiceCharacteristics(ServiceLifetime.Scoped) },
-            { typeof(ILiftableConstantProcessor), new ServiceCharacteristics(ServiceLifetime.Scoped) },
             { typeof(ILazyLoader), new ServiceCharacteristics(ServiceLifetime.Transient) },
-            { typeof(ILazyLoaderFactory), new ServiceCharacteristics(ServiceLifetime.Scoped) },
             { typeof(IParameterBindingFactory), new ServiceCharacteristics(ServiceLifetime.Singleton, multipleRegistrations: true) },
             { typeof(ITypeMappingSourcePlugin), new ServiceCharacteristics(ServiceLifetime.Singleton, multipleRegistrations: true) },
             {
@@ -154,7 +148,9 @@ public class EntityFrameworkServicesBuilder
     /// </remarks>
     /// <param name="serviceCollection">The collection to which services will be registered.</param>
     public EntityFrameworkServicesBuilder(IServiceCollection serviceCollection)
-        => ServiceCollectionMap = new ServiceCollectionMap(serviceCollection);
+    {
+        ServiceCollectionMap = new ServiceCollectionMap(serviceCollection);
+    }
 
     /// <summary>
     ///     Access to the underlying <see cref="ServiceCollectionMap" />.
@@ -286,14 +282,12 @@ public class EntityFrameworkServicesBuilder
         TryAdd<IDesignTimeModel>(p => new DesignTimeModel(GetContextServices(p)));
         TryAdd(p => GetContextServices(p).CurrentContext);
         TryAdd<IDbContextOptions>(p => GetContextServices(p).ContextOptions);
-        TryAdd<IResettableService, ILazyLoaderFactory>(p => p.GetRequiredService<ILazyLoaderFactory>());
         TryAdd<IResettableService, IStateManager>(p => p.GetRequiredService<IStateManager>());
         TryAdd<IResettableService, IDbContextTransactionManager>(p => p.GetRequiredService<IDbContextTransactionManager>());
         TryAdd<IEvaluatableExpressionFilter, EvaluatableExpressionFilter>();
         TryAdd<IValueConverterSelector, ValueConverterSelector>();
         TryAdd<IConstructorBindingFactory, ConstructorBindingFactory>();
-        TryAdd<ILazyLoaderFactory, LazyLoaderFactory>();
-        TryAdd<ILazyLoader>(p => p.GetRequiredService<ILazyLoaderFactory>().Create());
+        TryAdd<ILazyLoader, LazyLoader>();
         TryAdd<IParameterBindingFactories, ParameterBindingFactories>();
         TryAdd<IMemberClassifier, MemberClassifier>();
         TryAdd<IPropertyParameterBindingFactory, PropertyParameterBindingFactory>();
@@ -307,10 +301,6 @@ public class EntityFrameworkServicesBuilder
         TryAdd<IQueryTranslationPostprocessorFactory, QueryTranslationPostprocessorFactory>();
         TryAdd<INavigationExpansionExtensibilityHelper, NavigationExpansionExtensibilityHelper>();
         TryAdd<IExceptionDetector, ExceptionDetector>();
-        TryAdd<IAdHocMapper, AdHocMapper>();
-        TryAdd<IJsonValueReaderWriterSource, JsonValueReaderWriterSource>();
-        TryAdd<ILiftableConstantFactory, LiftableConstantFactory>();
-        TryAdd<ILiftableConstantProcessor, LiftableConstantProcessor>();
 
         TryAdd(
             p => p.GetService<IDbContextOptions>()?.FindExtension<CoreOptionsExtension>()?.DbContextLogger
@@ -331,12 +321,11 @@ public class EntityFrameworkServicesBuilder
             .AddDependencySingleton<ModelCacheKeyFactoryDependencies>()
             .AddDependencySingleton<ValueConverterSelectorDependencies>()
             .AddDependencySingleton<EntityMaterializerSourceDependencies>()
+            .AddDependencySingleton<ShapedQueryCompilingExpressionVisitorDependencies>()
             .AddDependencySingleton<EvaluatableExpressionFilterDependencies>()
             .AddDependencySingleton<RuntimeModelDependencies>()
             .AddDependencySingleton<ModelRuntimeInitializerDependencies>()
             .AddDependencySingleton<NavigationExpansionExtensibilityHelperDependencies>()
-            .AddDependencySingleton<JsonValueReaderWriterSourceDependencies>()
-            .AddDependencySingleton<LiftableConstantExpressionDependencies>()
             .AddDependencyScoped<ProviderConventionSetBuilderDependencies>()
             .AddDependencyScoped<QueryCompilationContextDependencies>()
             .AddDependencyScoped<StateManagerDependencies>()
@@ -346,12 +335,10 @@ public class EntityFrameworkServicesBuilder
             .AddDependencyScoped<QueryableMethodTranslatingExpressionVisitorDependencies>()
             .AddDependencyScoped<QueryTranslationPreprocessorDependencies>()
             .AddDependencyScoped<QueryTranslationPostprocessorDependencies>()
-            .AddDependencyScoped<ShapedQueryCompilingExpressionVisitorDependencies>()
             .AddDependencyScoped<ValueGeneratorSelectorDependencies>()
             .AddDependencyScoped<DatabaseDependencies>()
             .AddDependencyScoped<ModelDependencies>()
-            .AddDependencyScoped<ModelCreationDependencies>()
-            .AddDependencyScoped<AdHocMapperDependencies>();
+            .AddDependencyScoped<ModelCreationDependencies>();
 
         ServiceCollectionMap.TryAddSingleton<IRegisteredServices>(
             new RegisteredServices(ServiceCollectionMap.ServiceCollection.Select(s => s.ServiceType)));
@@ -439,7 +426,7 @@ public class EntityFrameworkServicesBuilder
     /// <returns>This builder, such that further calls can be chained.</returns>
     public virtual EntityFrameworkServicesBuilder TryAdd
         <TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
-            Func<IServiceProvider, TImplementation> factory)
+        Func<IServiceProvider, TImplementation> factory)
         where TService : class
         where TImplementation : class, TService
         => TryAdd(typeof(TService), typeof(TImplementation), factory);

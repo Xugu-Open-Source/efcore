@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.InheritanceRelationshipsModel;
 
-#nullable disable
-
 public class BaseCollectionOnBase
 {
     public int Id { get; set; }

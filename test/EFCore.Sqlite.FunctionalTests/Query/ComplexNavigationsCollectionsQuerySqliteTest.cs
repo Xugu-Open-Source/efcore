@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore.Sqlite.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class ComplexNavigationsCollectionsQuerySqliteTest(ComplexNavigationsQuerySqliteFixture fixture)
-    : ComplexNavigationsCollectionsQueryRelationalTestBase<ComplexNavigationsQuerySqliteFixture>(fixture)
+public class ComplexNavigationsCollectionsQuerySqliteTest
+    : ComplexNavigationsCollectionsQueryRelationalTestBase<ComplexNavigationsQuerySqliteFixture>
 {
+    public ComplexNavigationsCollectionsQuerySqliteTest(ComplexNavigationsQuerySqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public override async Task Complex_query_with_let_collection_projection_FirstOrDefault_with_ToList_on_inner_and_outer(bool async)
         => Assert.Equal(
             SqliteStrings.ApplyNotSupported,

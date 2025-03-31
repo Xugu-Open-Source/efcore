@@ -3,11 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class GraphUpdatesSqlServerHiLoTest(GraphUpdatesSqlServerHiLoTest.SqlServerFixture fixture)
-    : GraphUpdatesSqlServerTestBase<GraphUpdatesSqlServerHiLoTest.SqlServerFixture>(fixture)
+public class GraphUpdatesSqlServerHiLoTest : GraphUpdatesSqlServerTestBase<GraphUpdatesSqlServerHiLoTest.SqlServerFixture>
 {
+    public GraphUpdatesSqlServerHiLoTest(SqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
         => facade.UseTransaction(transaction.GetDbTransaction());
 

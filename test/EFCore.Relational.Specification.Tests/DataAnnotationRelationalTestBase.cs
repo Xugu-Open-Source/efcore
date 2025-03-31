@@ -6,11 +6,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class DataAnnotationRelationalTestBase<TFixture>(TFixture fixture) : DataAnnotationTestBase<TFixture>(fixture)
+public abstract class DataAnnotationRelationalTestBase<TFixture> : DataAnnotationTestBase<TFixture>
     where TFixture : DataAnnotationRelationalTestBase<TFixture>.DataAnnotationRelationalFixtureBase, new()
 {
+    protected DataAnnotationRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalFact]
     public virtual void ForeignKey_to_ForeignKey_on_many_to_many()
     {
@@ -60,33 +63,33 @@ public abstract class DataAnnotationRelationalTestBase<TFixture>(TFixture fixtur
     }
 
     [ConditionalFact]
-    public virtual Task Table_can_configure_TPT_with_Owned()
-        => ExecuteWithStrategyInTransactionAsync(
+    public virtual void Table_can_configure_TPT_with_Owned()
+        => ExecuteWithStrategyInTransaction(
             context =>
             {
                 var model = context.Model;
 
-                var animalType = model.FindEntityType(typeof(Animal))!;
+                var animalType = model.FindEntityType(typeof(Animal));
                 Assert.Equal("Animals", animalType.GetTableMappings().Single().Table.Name);
 
-                var petType = model.FindEntityType(typeof(Pet))!;
+                var petType = model.FindEntityType(typeof(Pet));
                 Assert.Equal("Pets", petType.GetTableMappings().Last().Table.Name);
 
-                var tagNavigation = petType.FindNavigation(nameof(Pet.Tag))!;
+                var tagNavigation = petType.FindNavigation(nameof(Pet.Tag));
                 var ownership = tagNavigation.ForeignKey;
                 Assert.True(ownership.IsRequiredDependent);
 
                 var petTagType = ownership.DeclaringEntityType;
                 Assert.Equal("Pets", petTagType.GetTableMappings().Single().Table.Name);
 
-                var tagIdProperty = petTagType.FindProperty(nameof(PetTag.TagId))!;
+                var tagIdProperty = petTagType.FindProperty(nameof(PetTag.TagId));
                 Assert.False(tagIdProperty.IsNullable);
                 Assert.All(tagIdProperty.GetTableColumnMappings(), m => Assert.False(m.Column.IsNullable));
 
-                var catType = model.FindEntityType(typeof(Cat))!;
+                var catType = model.FindEntityType(typeof(Cat));
                 Assert.Equal("Cats", catType.GetTableMappings().Last().Table.Name);
 
-                var dogType = model.FindEntityType(typeof(Dog))!;
+                var dogType = model.FindEntityType(typeof(Dog));
                 Assert.Equal("Dogs", dogType.GetTableMappings().Last().Table.Name);
 
                 var petFood = new PetFood { FoodName = "Fish" };
@@ -100,10 +103,11 @@ public abstract class DataAnnotationRelationalTestBase<TFixture>(TFixture fixtur
                         FavoritePetFood = petFood
                     });
 
-                return context.SaveChangesAsync();
-            }, async context =>
+                context.SaveChanges();
+            },
+            context =>
             {
-                var cat = await context.Set<Cat>().SingleAsync();
+                var cat = context.Set<Cat>().Single();
                 Assert.Equal("Felis catus", cat.Species);
                 Assert.Equal(2u, cat.Tag.TagId);
             });

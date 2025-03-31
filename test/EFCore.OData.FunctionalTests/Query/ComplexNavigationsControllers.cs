@@ -8,9 +8,14 @@ using Microsoft.EntityFrameworkCore.TestModels.ComplexNavigationsModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class LevelOneController(ComplexNavigationsODataContext context) : TestODataController, IDisposable
+public class LevelOneController : TestODataController, IDisposable
 {
-    private readonly ComplexNavigationsODataContext _context = context;
+    private readonly ComplexNavigationsODataContext _context;
+
+    public LevelOneController(ComplexNavigationsODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -31,9 +36,14 @@ public class LevelOneController(ComplexNavigationsODataContext context) : TestOD
     }
 }
 
-public class LevelTwoController(ComplexNavigationsODataContext context) : TestODataController, IDisposable
+public class LevelTwoController : TestODataController, IDisposable
 {
-    private readonly ComplexNavigationsODataContext _context = context;
+    private readonly ComplexNavigationsODataContext _context;
+
+    public LevelTwoController(ComplexNavigationsODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -54,9 +64,14 @@ public class LevelTwoController(ComplexNavigationsODataContext context) : TestOD
     }
 }
 
-public class LevelThreeController(ComplexNavigationsODataContext context) : TestODataController, IDisposable
+public class LevelThreeController : TestODataController, IDisposable
 {
-    private readonly ComplexNavigationsODataContext _context = context;
+    private readonly ComplexNavigationsODataContext _context;
+
+    public LevelThreeController(ComplexNavigationsODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -77,9 +92,14 @@ public class LevelThreeController(ComplexNavigationsODataContext context) : Test
     }
 }
 
-public class LevelFourController(ComplexNavigationsODataContext context) : TestODataController, IDisposable
+public class LevelFourController : TestODataController, IDisposable
 {
-    private readonly ComplexNavigationsODataContext _context = context;
+    private readonly ComplexNavigationsODataContext _context;
+
+    public LevelFourController(ComplexNavigationsODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]

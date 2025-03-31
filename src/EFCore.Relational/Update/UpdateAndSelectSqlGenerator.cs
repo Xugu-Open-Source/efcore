@@ -29,7 +29,7 @@ namespace Microsoft.EntityFrameworkCore.Update;
 public abstract class UpdateAndSelectSqlGenerator : UpdateSqlGenerator
 {
     /// <summary>
-    ///     Initializes a new instance of this class.
+    ///     Initializes a new instance of the this class.
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     protected UpdateAndSelectSqlGenerator(UpdateSqlGeneratorDependencies dependencies)
@@ -43,7 +43,7 @@ public abstract class UpdateAndSelectSqlGenerator : UpdateSqlGenerator
         IReadOnlyModificationCommand command,
         int commandPosition,
         out bool requiresTransaction)
-        => AppendInsertAndSelectOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
+        => AppendInsertAndSelectOperations(commandStringBuilder, command, commandPosition, out requiresTransaction);
 
     /// <summary>
     ///     Appends SQL for inserting a row to the commands being built, via an INSERT followed by an optional SELECT to retrieve any
@@ -54,7 +54,7 @@ public abstract class UpdateAndSelectSqlGenerator : UpdateSqlGenerator
     /// <param name="commandPosition">The ordinal of this command in the batch.</param>
     /// <param name="requiresTransaction">Returns whether the SQL appended must be executed in a transaction to work correctly.</param>
     /// <returns>The <see cref="ResultSetMapping" /> for the command.</returns>
-    protected virtual ResultSetMapping AppendInsertAndSelectOperation(
+    protected virtual ResultSetMapping AppendInsertAndSelectOperations(
         StringBuilder commandStringBuilder,
         IReadOnlyModificationCommand command,
         int commandPosition,
@@ -67,7 +67,7 @@ public abstract class UpdateAndSelectSqlGenerator : UpdateSqlGenerator
         var writeOperations = operations.Where(o => o.IsWrite).ToList();
         var readOperations = operations.Where(o => o.IsRead).ToList();
 
-        AppendInsertCommand(commandStringBuilder, name, schema, writeOperations, readOperations: []);
+        AppendInsertCommand(commandStringBuilder, name, schema, writeOperations, readOperations: Array.Empty<IColumnModification>());
 
         if (readOperations.Count > 0)
         {
@@ -114,7 +114,7 @@ public abstract class UpdateAndSelectSqlGenerator : UpdateSqlGenerator
         var conditionOperations = operations.Where(o => o.IsCondition).ToList();
         var readOperations = operations.Where(o => o.IsRead).ToList();
 
-        AppendUpdateCommand(commandStringBuilder, name, schema, writeOperations, [], conditionOperations);
+        AppendUpdateCommand(commandStringBuilder, name, schema, writeOperations, Array.Empty<IColumnModification>(), conditionOperations);
 
         if (readOperations.Count > 0)
         {
@@ -160,7 +160,7 @@ public abstract class UpdateAndSelectSqlGenerator : UpdateSqlGenerator
 
         requiresTransaction = false;
 
-        AppendDeleteCommand(commandStringBuilder, name, schema, [], conditionOperations);
+        AppendDeleteCommand(commandStringBuilder, name, schema, Array.Empty<IColumnModification>(), conditionOperations);
 
         return AppendSelectAffectedCountCommand(commandStringBuilder, name, schema, commandPosition);
     }
@@ -246,10 +246,13 @@ public abstract class UpdateAndSelectSqlGenerator : UpdateSqlGenerator
                 .AppendJoin(
                     operations, (sb, v) =>
                     {
-                        if (v is { IsKey: true, IsRead: false })
+                        if (v.IsKey)
                         {
-                            AppendWhereCondition(sb, v, v.UseOriginalValueParameter);
-                            return true;
+                            if (!v.IsRead)
+                            {
+                                AppendWhereCondition(sb, v, v.UseOriginalValueParameter);
+                                return true;
+                            }
                         }
 
                         if (IsIdentityOperation(v))
@@ -269,7 +272,7 @@ public abstract class UpdateAndSelectSqlGenerator : UpdateSqlGenerator
     /// <param name="modification">The column modification.</param>
     /// <returns><see langword="true" /> if the given modification represents an auto-incrementing column.</returns>
     protected virtual bool IsIdentityOperation(IColumnModification modification)
-        => modification is { IsKey: true, IsRead: true };
+        => modification.IsKey && modification.IsRead;
 
     /// <summary>
     ///     Appends a <c>WHERE</c> condition checking rows affected.

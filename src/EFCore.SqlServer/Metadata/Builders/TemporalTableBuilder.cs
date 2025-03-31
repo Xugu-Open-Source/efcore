@@ -21,7 +21,9 @@ public class TemporalTableBuilder
     /// </summary>
     [EntityFrameworkInternal]
     public TemporalTableBuilder(EntityTypeBuilder entityTypeBuilder)
-        => _entityTypeBuilder = entityTypeBuilder;
+    {
+        _entityTypeBuilder = entityTypeBuilder;
+    }
 
     /// <summary>
     ///     Configures a history table for the entity mapped to a temporal table.

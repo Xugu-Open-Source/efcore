@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
-#nullable disable
-
 public class LocustCommander : LocustLeader
 {
     public LocustHorde CommandingFaction { get; set; }

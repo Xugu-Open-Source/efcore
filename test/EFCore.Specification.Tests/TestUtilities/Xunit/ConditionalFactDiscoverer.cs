@@ -9,8 +9,13 @@ namespace Microsoft.EntityFrameworkCore.TestUtilities.Xunit;
 ///     Used dynamically from <see cref="ConditionalFactAttribute" />.
 ///     Make sure to update that class if you move this type.
 /// </summary>
-public class ConditionalFactDiscoverer(IMessageSink messageSink) : FactDiscoverer(messageSink)
+public class ConditionalFactDiscoverer : FactDiscoverer
 {
+    public ConditionalFactDiscoverer(IMessageSink messageSink)
+        : base(messageSink)
+    {
+    }
+
     protected override IXunitTestCase CreateTestCase(
         ITestFrameworkDiscoveryOptions discoveryOptions,
         ITestMethod testMethod,

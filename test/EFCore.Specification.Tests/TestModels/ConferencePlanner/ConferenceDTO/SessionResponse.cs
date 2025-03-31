@@ -3,11 +3,9 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ConferencePlanner.ConferenceDTO;
 
-#nullable disable
-
 public class SessionResponse : Session
 {
     public Track Track { get; set; }
 
-    public List<Speaker> Speakers { get; set; } = [];
+    public List<Speaker> Speakers { get; set; } = new();
 }

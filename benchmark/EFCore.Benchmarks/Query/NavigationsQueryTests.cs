@@ -8,57 +8,55 @@ using BenchmarkDotNet.Attributes;
 using Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
 using Xunit;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Query;
-
-[DisplayName(nameof(NavigationsQueryTests))]
-public abstract class NavigationsQueryTests
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Query
 {
-    private AdventureWorksContextBase _context;
-    private IQueryable<Store> _query;
-
-    protected virtual int QueriesPerIteration
-        => 10;
-
-    protected virtual int UnfilteredCount
-        => 466;
-
-    [Params(true, false)]
-    public bool Async { get; set; }
-
-    [Params(true, false)]
-    public bool Filter { get; set; }
-
-    protected abstract AdventureWorksContextBase CreateContext();
-
-    [GlobalSetup]
-    public virtual void InitializeContext()
+    [DisplayName(nameof(NavigationsQueryTests))]
+    public abstract class NavigationsQueryTests
     {
-        _context = CreateContext();
-        _query = Filter
-            ? _context.Store.Where(s => s.SalesPerson.Bonus > 3000)
-            : _context.Store.Where(s => s.SalesPerson.Bonus >= 0);
-    }
+        private AdventureWorksContextBase _context;
+        private IQueryable<Store> _query;
 
-    [GlobalCleanup]
-    public virtual void CleanupContext()
-    {
-        Assert.Equal(Filter ? UnfilteredCount : 701, _query.Count());
+        protected virtual int QueriesPerIteration => 10;
+        protected virtual int UnfilteredCount => 466;
 
-        _context.Dispose();
-    }
+        [Params(true, false)]
+        public bool Async { get; set; }
 
-    [Benchmark]
-    public virtual async Task PredicateAcrossOptionalNavigation()
-    {
-        for (var i = 0; i < QueriesPerIteration; i++)
+        [Params(true, false)]
+        public bool Filter { get; set; }
+
+        protected abstract AdventureWorksContextBase CreateContext();
+
+        [GlobalSetup]
+        public virtual void InitializeContext()
         {
-            if (Async)
+            _context = CreateContext();
+            _query = Filter
+                ? _context.Store.Where(s => s.SalesPerson.Bonus > 3000)
+                : _context.Store.Where(s => s.SalesPerson.Bonus >= 0);
+        }
+
+        [GlobalCleanup]
+        public virtual void CleanupContext()
+        {
+            Assert.Equal(Filter ? UnfilteredCount : 701, _query.Count());
+
+            _context.Dispose();
+        }
+
+        [Benchmark]
+        public virtual async Task PredicateAcrossOptionalNavigation()
+        {
+            for (var i = 0; i < QueriesPerIteration; i++)
             {
-                await _query.ToListAsync();
-            }
-            else
-            {
-                _query.ToList();
+                if (Async)
+                {
+                    await _query.ToListAsync();
+                }
+                else
+                {
+                    _query.ToList();
+                }
             }
         }
     }

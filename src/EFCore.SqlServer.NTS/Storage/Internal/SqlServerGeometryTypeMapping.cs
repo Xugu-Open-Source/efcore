@@ -6,7 +6,6 @@ using System.Data.SqlTypes;
 using System.Text;
 using JetBrains.Annotations;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.SqlServer.Storage.Json;
 using Microsoft.EntityFrameworkCore.SqlServer.Storage.ValueConversion.Internal;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
@@ -23,7 +22,7 @@ public class SqlServerGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMap
     where TGeometry : Geometry
 {
     private static readonly MethodInfo _getSqlBytes
-        = typeof(SqlDataReader).GetRuntimeMethod(nameof(SqlDataReader.GetSqlBytes), [typeof(int)])!;
+        = typeof(SqlDataReader).GetRuntimeMethod(nameof(SqlDataReader.GetSqlBytes), new[] { typeof(int) })!;
 
     private static Action<DbParameter, SqlDbType>? _sqlDbTypeSetter;
     private static Action<DbParameter, string>? _udtTypeNameSetter;
@@ -42,9 +41,10 @@ public class SqlServerGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMap
             new GeometryValueConverter<TGeometry>(
                 CreateReader(geometryServices, IsGeography(storeType)),
                 CreateWriter(IsGeography(storeType))),
-            storeType,
-            SqlServerJsonGeometryWktReaderWriter.Instance)
-        => _isGeography = IsGeography(storeType);
+            storeType)
+    {
+        _isGeography = IsGeography(storeType);
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -56,7 +56,9 @@ public class SqlServerGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMap
         RelationalTypeMappingParameters parameters,
         ValueConverter<TGeometry, SqlBytes>? converter)
         : base(parameters, converter)
-        => _isGeography = IsGeography(StoreType);
+    {
+        _isGeography = IsGeography(StoreType);
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -132,7 +134,7 @@ public class SqlServerGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMap
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected override Type WktReaderType
+    protected override Type WKTReaderType
         => typeof(WKTReader);
 
     /// <summary>

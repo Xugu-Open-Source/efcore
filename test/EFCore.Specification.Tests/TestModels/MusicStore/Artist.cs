@@ -5,8 +5,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Microsoft.EntityFrameworkCore.TestModels.MusicStore;
 
-#nullable disable
-
 public class Artist
 {
     public int ArtistId { get; set; }

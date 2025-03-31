@@ -4,6 +4,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -19,8 +20,8 @@ public class ObservableHashSetTest
             new ObservableHashSet<int>().Comparer);
 
         Assert.Same(
-            ReferenceEqualityComparer.Instance,
-            new ObservableHashSet<object>(ReferenceEqualityComparer.Instance).Comparer);
+            LegacyReferenceEqualityComparer.Instance,
+            new ObservableHashSet<object>(LegacyReferenceEqualityComparer.Instance).Comparer);
 
         var testData1 = CreateTestData();
 
@@ -31,8 +32,8 @@ public class ObservableHashSetTest
 
         var testData2 = CreateTestData().Cast<object>();
 
-        var rh2 = new HashSet<object>(testData2, ReferenceEqualityComparer.Instance);
-        var ohs2 = new ObservableHashSet<object>(testData2, ReferenceEqualityComparer.Instance);
+        var rh2 = new HashSet<object>(testData2, LegacyReferenceEqualityComparer.Instance);
+        var ohs2 = new ObservableHashSet<object>(testData2, LegacyReferenceEqualityComparer.Instance);
         Assert.Equal(rh2.OrderBy(i => i), ohs2.OrderBy(i => i));
         Assert.Same(rh2.Comparer, ohs2.Comparer);
     }
@@ -46,7 +47,7 @@ public class ObservableHashSetTest
         var collectionChanged = 0;
         var currentCount = 0;
         var countChange = 1;
-        string[] adding = [];
+        var adding = Array.Empty<string>();
 
         hashSet.PropertyChanging += (s, a) => AssertCountChanging(hashSet, s, a, currentCount, ref countChanging);
         hashSet.PropertyChanged += (s, a) => AssertCountChanged(hashSet, s, a, ref currentCount, countChange, ref countChanged);
@@ -58,7 +59,7 @@ public class ObservableHashSetTest
             collectionChanged++;
         };
 
-        adding = ["Palmer"];
+        adding = new[] { "Palmer" };
         Assert.True(hashSet.Add("Palmer"));
 
         Assert.Equal(1, countChanging);
@@ -66,7 +67,7 @@ public class ObservableHashSetTest
         Assert.Equal(1, collectionChanged);
         Assert.Equal(new[] { "Palmer" }, hashSet);
 
-        adding = ["Carmack"];
+        adding = new[] { "Carmack" };
         Assert.True(hashSet.Add("Carmack"));
 
         Assert.Equal(2, countChanging);
@@ -175,7 +176,7 @@ public class ObservableHashSetTest
         var collectionChanged = 0;
         var currentCount = 2;
         var countChange = -1;
-        string[] removing = [];
+        var removing = Array.Empty<string>();
 
         hashSet.PropertyChanging += (s, a) => AssertCountChanging(hashSet, s, a, currentCount, ref countChanging);
         hashSet.PropertyChanged += (s, a) => AssertCountChanged(hashSet, s, a, ref currentCount, countChange, ref countChanged);
@@ -187,7 +188,7 @@ public class ObservableHashSetTest
             collectionChanged++;
         };
 
-        removing = ["Palmer"];
+        removing = new[] { "Palmer" };
         Assert.True(hashSet.Remove("Palmer"));
 
         Assert.Equal(1, countChanging);
@@ -195,7 +196,7 @@ public class ObservableHashSetTest
         Assert.Equal(1, collectionChanged);
         Assert.Equal(new[] { "Carmack" }, hashSet);
 
-        removing = ["Carmack"];
+        removing = new[] { "Carmack" };
         Assert.True(hashSet.Remove("Carmack"));
 
         Assert.Equal(2, countChanging);
@@ -370,7 +371,7 @@ public class ObservableHashSetTest
         Assert.Equal(1, collectionChanged);
         Assert.Equal(new[] { "Abrash", "Brendan", "Nate" }, hashSet.OrderBy(i => i));
 
-        hashSet.SymmetricExceptWith([]);
+        hashSet.SymmetricExceptWith(Array.Empty<string>());
 
         Assert.Equal(1, countChanging);
         Assert.Equal(1, countChanged);

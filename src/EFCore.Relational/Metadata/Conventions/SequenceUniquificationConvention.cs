@@ -45,12 +45,13 @@ public class SequenceUniquificationConvention : IModelFinalizingConvention
     {
         var model = modelBuilder.Metadata;
         var modelSequences =
-            (IReadOnlyDictionary<(string Name, string? Schema), ISequence>?)model[RelationalAnnotationNames.Sequences];
+            (SortedDictionary<(string Name, string? Schema), ISequence>?)model[RelationalAnnotationNames.Sequences];
+
         if (modelSequences != null)
         {
             var maxLength = model.GetMaxIdentifierLength();
             var toReplace = modelSequences
-                .Where(s => s.Key.Name.Length > maxLength).OrderBy(s => s.Key).ToList();
+                .Where(s => s.Key.Name.Length > maxLength).ToList();
 
             foreach (var ((name, schema), sequence) in toReplace)
             {

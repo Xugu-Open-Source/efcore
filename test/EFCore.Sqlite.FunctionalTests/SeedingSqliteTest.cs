@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public class SeedingSqliteTest : SeedingTestBase
 {
     protected override TestStore TestStore
@@ -13,8 +11,13 @@ public class SeedingSqliteTest : SeedingTestBase
     protected override SeedingContext CreateContextWithEmptyDatabase(string testId)
         => new SeedingSqliteContext(testId);
 
-    protected class SeedingSqliteContext(string testId) : SeedingContext(testId)
+    protected class SeedingSqliteContext : SeedingContext
     {
+        public SeedingSqliteContext(string testId)
+            : base(testId)
+        {
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseSqlite(($"Data Source = Seeds{TestId}.db"));
     }

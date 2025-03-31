@@ -59,7 +59,7 @@ public class BatchExecutorTest
     private static FakeDbConnection SetupConnection(TestContext context)
     {
         var dataReader = new FakeDbDataReader(
-            ["RowsAffected"], new List<object[]> { new object[] { 1 } });
+            new[] { "RowsAffected" }, new List<object[]> { new object[] { 1 } });
 
         var connection = new FakeDbConnection(
             "A=B", new FakeCommandExecutor(
@@ -70,12 +70,17 @@ public class BatchExecutorTest
         return connection;
     }
 
-    private class TestContext() : DbContext(FakeRelationalTestHelpers.Instance.CreateOptions(_serviceProvider))
+    private class TestContext : DbContext
     {
         private static readonly IServiceProvider _serviceProvider
             = FakeRelationalOptionsExtension.AddEntityFrameworkRelationalDatabase(
                     new ServiceCollection())
                 .BuildServiceProvider(validateScopes: true);
+
+        public TestContext()
+            : base(FakeRelationalTestHelpers.Instance.CreateOptions(_serviceProvider))
+        {
+        }
 
         public DbSet<Foo> Foos { get; set; }
         public DbSet<Bar> Bars { get; set; }

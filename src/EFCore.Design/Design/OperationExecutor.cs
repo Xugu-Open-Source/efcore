@@ -16,10 +16,9 @@ namespace Microsoft.EntityFrameworkCore.Design;
 /// </remarks>
 public class OperationExecutor : MarshalByRefObject
 {
-    private readonly string _project;
     private readonly string _projectDir;
-    private readonly string _targetAssemblyName;
-    private readonly string _startupTargetAssemblyName;
+    private readonly string _targetName;
+    private readonly string _startupTargetName;
     private readonly string? _rootNamespace;
     private readonly string? _language;
     private readonly bool _nullable;
@@ -39,7 +38,6 @@ public class OperationExecutor : MarshalByRefObject
     ///     <para>The arguments supported by <paramref name="args" /> are:</para>
     ///     <para><c>targetName</c>--The assembly name of the target project.</para>
     ///     <para><c>startupTargetName</c>--The assembly name of the startup project.</para>
-    ///     <para><c>project</c>--The target project.</para>
     ///     <para><c>projectDir</c>--The target project's root directory.</para>
     ///     <para><c>rootNamespace</c>--The target project's root namespace.</para>
     ///     <para><c>language</c>--The programming language to be used to generate classes.</para>
@@ -54,9 +52,8 @@ public class OperationExecutor : MarshalByRefObject
         Check.NotNull(args, nameof(args));
 
         _reporter = new OperationReporter(reportHandler);
-        _targetAssemblyName = (string)args["targetName"]!;
-        _startupTargetAssemblyName = (string)args["startupTargetName"]!;
-        _project = (string)args["project"]!;
+        _targetName = (string)args["targetName"]!;
+        _startupTargetName = (string)args["startupTargetName"]!;
         _projectDir = (string)args["projectDir"]!;
         _rootNamespace = (string?)args["rootNamespace"];
         _language = (string?)args["language"];
@@ -80,12 +77,12 @@ public class OperationExecutor : MarshalByRefObject
             {
                 try
                 {
-                    return Assembly.Load(new AssemblyName(_targetAssemblyName));
+                    return Assembly.Load(new AssemblyName(_targetName));
                 }
                 catch (Exception ex)
                 {
                     throw new OperationException(
-                        DesignStrings.UnreferencedAssembly(_targetAssemblyName, _startupTargetAssemblyName),
+                        DesignStrings.UnreferencedAssembly(_targetName, _startupTargetName),
                         ex);
                 }
             }
@@ -96,13 +93,9 @@ public class OperationExecutor : MarshalByRefObject
 
     private Assembly StartupAssembly
         => _startupAssembly
-            ??= Assembly.Load(new AssemblyName(_startupTargetAssemblyName));
+            ??= Assembly.Load(new AssemblyName(_startupTargetName));
 
-    /// <summary>
-    ///     Exposes the underlying operations for testing.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual MigrationsOperations MigrationsOperations
+    private MigrationsOperations MigrationsOperations
         => _migrationsOperations
             ??= new MigrationsOperations(
                 _reporter,
@@ -114,28 +107,19 @@ public class OperationExecutor : MarshalByRefObject
                 _nullable,
                 _designArgs);
 
-    /// <summary>
-    ///     Exposes the underlying operations for testing.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual DbContextOperations ContextOperations
+    private DbContextOperations ContextOperations
         => _contextOperations
             ??= new DbContextOperations(
                 _reporter,
                 Assembly,
                 StartupAssembly,
-                _project,
                 _projectDir,
                 _rootNamespace,
                 _language,
                 _nullable,
                 _designArgs);
 
-    /// <summary>
-    ///     Exposes the underlying operations for testing.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual DatabaseOperations DatabaseOperations
+    private DatabaseOperations DatabaseOperations
         => _databaseOperations
             ??= new DatabaseOperations(
                 _reporter,
@@ -180,9 +164,8 @@ public class OperationExecutor : MarshalByRefObject
             var outputDir = (string?)args["outputDir"];
             var contextType = (string?)args["contextType"];
             var @namespace = (string?)args["namespace"];
-            var dryRun = (bool?)args["dryRun"]!;
 
-            Execute(() => executor.AddMigrationImpl(name, outputDir, contextType, @namespace, dryRun == true));
+            Execute(() => executor.AddMigrationImpl(name, outputDir, contextType, @namespace));
         }
     }
 
@@ -190,12 +173,16 @@ public class OperationExecutor : MarshalByRefObject
         string name,
         string? outputDir,
         string? contextType,
-        string? @namespace,
-        bool dryRun)
+        string? @namespace)
     {
         Check.NotEmpty(name, nameof(name));
 
-        var files = MigrationsOperations.AddMigration(name, outputDir, contextType, @namespace, dryRun);
+        var files = MigrationsOperations.AddMigration(
+            name,
+            outputDir,
+            contextType,
+            @namespace);
+
         return new Hashtable
         {
             ["MigrationFile"] = files.MigrationFile,
@@ -383,15 +370,14 @@ public class OperationExecutor : MarshalByRefObject
 
             var contextType = (string?)args["contextType"];
             var force = (bool)args["force"]!;
-            var dryRun = (bool?)args["dryRun"]!;
 
-            Execute(() => executor.RemoveMigrationImpl(contextType, force, dryRun == true));
+            Execute(() => executor.RemoveMigrationImpl(contextType, force));
         }
     }
 
-    private IDictionary RemoveMigrationImpl(string? contextType, bool force, bool dryRun)
+    private IDictionary RemoveMigrationImpl(string? contextType, bool force)
     {
-        var files = MigrationsOperations.RemoveMigration(contextType, force, dryRun);
+        var files = MigrationsOperations.RemoveMigration(contextType, force);
 
         return new Hashtable
         {
@@ -507,7 +493,7 @@ public class OperationExecutor : MarshalByRefObject
     }
 
     /// <summary>
-    ///     Represents an operation to generate optimized code for a DbContext.
+    ///     Represents an operation to generate a compiled model from the DbContext.
     /// </summary>
     public class OptimizeContext : OperationBase
     {
@@ -517,11 +503,8 @@ public class OperationExecutor : MarshalByRefObject
         /// <remarks>
         ///     <para>The arguments supported by <paramref name="args" /> are:</para>
         ///     <para><c>outputDir</c>--The directory to put files in. Paths are relative to the project directory.</para>
-        ///     <para><c>modelNamespace</c>--The namespace of the generated model.</para>
-        ///     <para><c>contextType</c>--The <see cref="DbContext" /> type to use.</para>
-        ///     <para><c>suffix</c>--The suffix to add to all the generated files.</para>
-        ///     <para><c>scaffoldModel</c>--Whether to generate a compiled model from the DbContext.</para>
-        ///     <para><c>precompileQueries</c>--Whether to generate code for precompiled queries.</para>
+        ///     <para><c>modelNamespace</c>--Specify to override the namespace of the generated model.</para>
+        ///     <para><c>contextType</c>--The <see cref="DbContext" /> to use.</para>
         /// </remarks>
         /// <param name="executor">The operation executor.</param>
         /// <param name="resultHandler">The <see cref="IOperationResultHandler" />.</param>
@@ -538,32 +521,13 @@ public class OperationExecutor : MarshalByRefObject
             var outputDir = (string?)args["outputDir"];
             var modelNamespace = (string?)args["modelNamespace"];
             var contextType = (string?)args["contextType"];
-            var suffix = (string?)args["suffix"];
-            var scaffoldModel = (bool)(args["scaffoldModel"] ?? true);
-            var precompileQueries = (bool)(args["precompileQueries"] ?? false);
-            var nativeAot = (bool)(args["nativeAot"] ?? false);
 
-            Execute(
-                () => executor.OptimizeContextImpl(
-                    outputDir,
-                    modelNamespace,
-                    contextType,
-                    suffix,
-                    scaffoldModel,
-                    precompileQueries,
-                    nativeAot));
+            Execute(() => executor.OptimizeContextImpl(outputDir, modelNamespace, contextType));
         }
     }
 
-    private IReadOnlyList<string> OptimizeContextImpl(
-        string? outputDir,
-        string? modelNamespace,
-        string? contextType,
-        string? suffix,
-        bool scaffoldModel,
-        bool precompileQueries,
-        bool nativeAot)
-        => ContextOperations.Optimize(outputDir, modelNamespace, contextType, suffix, scaffoldModel, precompileQueries, nativeAot);
+    private void OptimizeContextImpl(string? outputDir, string? modelNamespace, string? contextType)
+        => ContextOperations.Optimize(outputDir, modelNamespace, contextType);
 
     /// <summary>
     ///     Represents an operation to scaffold a <see cref="DbContext" /> and entity types for a database.
@@ -720,39 +684,6 @@ public class OperationExecutor : MarshalByRefObject
         => ContextOperations.ScriptDbContext(contextType);
 
     /// <summary>
-    ///     Represents an operation to check if there are any pending migrations.
-    /// </summary>
-    public class HasPendingModelChanges : OperationBase
-    {
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="HasPendingModelChanges" /> class.
-        /// </summary>
-        /// <remarks>
-        ///     <para>The arguments supported by <paramref name="args" /> are:</para>
-        ///     <para><c>contextType</c>--The <see cref="DbContext" /> to use.</para>
-        /// </remarks>
-        /// <param name="executor">The operation executor.</param>
-        /// <param name="resultHandler">The <see cref="IOperationResultHandler" />.</param>
-        /// <param name="args">The operation arguments.</param>
-        public HasPendingModelChanges(
-            OperationExecutor executor,
-            IOperationResultHandler resultHandler,
-            IDictionary args)
-            : base(resultHandler)
-        {
-            Check.NotNull(executor, nameof(executor));
-            Check.NotNull(args, nameof(args));
-
-            var contextType = (string?)args["contextType"];
-
-            Execute(() => executor.HasPendingModelChangesImpl(contextType));
-        }
-    }
-
-    private void HasPendingModelChangesImpl(string? contextType)
-        => MigrationsOperations.HasPendingModelChanges(contextType);
-
-    /// <summary>
     ///     Represents an operation.
     /// </summary>
     public abstract class OperationBase : MarshalByRefObject
@@ -764,7 +695,9 @@ public class OperationExecutor : MarshalByRefObject
         /// </summary>
         /// <param name="resultHandler">The <see cref="IOperationResultHandler" />.</param>
         protected OperationBase(IOperationResultHandler resultHandler)
-            => _resultHandler = resultHandler;
+        {
+            _resultHandler = resultHandler;
+        }
 
         /// <summary>
         ///     Executes an action passing exceptions to the <see cref="IOperationResultHandler" />.

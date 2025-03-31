@@ -52,7 +52,7 @@ public interface IStoredProcedureMapping : ITableMappingBase
     /// <param name="options">Options for generating the string.</param>
     /// <param name="indent">The number of indent spaces to use before each new line.</param>
     /// <returns>A human-readable representation.</returns>
-    string ITableMappingBase.ToDebugString(MetadataDebugStringOptions options, int indent)
+    string ToDebugString(MetadataDebugStringOptions options = MetadataDebugStringOptions.ShortDefault, int indent = 0)
     {
         var builder = new StringBuilder();
         var indentString = new string(' ', indent);
@@ -65,21 +65,15 @@ public interface IStoredProcedureMapping : ITableMappingBase
             builder.Append("StoredProcedureMapping: ");
         }
 
-        builder.Append(TypeBase.DisplayName()).Append(" - ");
+        builder.Append(EntityType.DisplayName()).Append(" - ");
 
         builder.Append(StoreStoredProcedure.Name);
 
         builder.Append(" Type:").Append(StoredProcedureIdentifier.StoreObjectType);
 
-        if (IncludesDerivedTypes != null)
+        if (IncludesDerivedTypes)
         {
-            builder.Append(' ');
-            if (!IncludesDerivedTypes.Value)
-            {
-                builder.Append('!');
-            }
-
-            builder.Append("IncludesDerivedTypes");
+            builder.Append(" IncludesDerivedTypes");
         }
 
         if (!singleLine && (options & MetadataDebugStringOptions.IncludeAnnotations) != 0)

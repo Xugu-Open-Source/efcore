@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
-#nullable disable
-
 public class EntityLeaf : EntityBranch
 {
     public virtual bool? IsGreen { get; set; }

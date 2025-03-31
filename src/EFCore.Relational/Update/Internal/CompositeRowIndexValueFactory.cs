@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Microsoft.EntityFrameworkCore.Update.Internal;
 
 /// <summary>
@@ -33,11 +35,8 @@ public class CompositeRowIndexValueFactory : CompositeRowValueFactory, IRowIndex
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool TryCreateIndexValue(
-        object?[] keyValues,
-        out object?[]? key,
-        out bool hasNullValue)
-        => TryCreateDependentKeyValue(keyValues, out key, out hasNullValue);
+    public virtual bool TryCreateIndexValue(object?[] keyValues, [NotNullWhen(true)] out object?[]? key)
+        => TryCreateDependentKeyValue(keyValues, out key);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -45,11 +44,8 @@ public class CompositeRowIndexValueFactory : CompositeRowValueFactory, IRowIndex
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool TryCreateIndexValue(
-        IDictionary<string, object?> keyValues,
-        out object?[]? key,
-        out bool hasNullValue)
-        => TryCreateDependentKeyValue(keyValues, out key, out hasNullValue);
+    public virtual bool TryCreateIndexValue(IDictionary<string, object?> keyValues, [NotNullWhen(true)] out object?[]? key)
+        => TryCreateDependentKeyValue(keyValues, out key);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -60,9 +56,8 @@ public class CompositeRowIndexValueFactory : CompositeRowValueFactory, IRowIndex
     public virtual bool TryCreateIndexValue(
         IReadOnlyModificationCommand command,
         bool fromOriginalValues,
-        out object?[]? keyValue,
-        out bool hasNullValue)
-        => TryCreateDependentKeyValue(command, fromOriginalValues, out keyValue, out hasNullValue);
+        [NotNullWhen(true)] out object?[]? key)
+        => TryCreateDependentKeyValue(command, fromOriginalValues, out key);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -70,12 +65,10 @@ public class CompositeRowIndexValueFactory : CompositeRowValueFactory, IRowIndex
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual (object? Value, bool HasNullValue) CreateEquatableIndexValue(
-        IReadOnlyModificationCommand command,
-        bool fromOriginalValues = false)
-        => TryCreateIndexValue(command, fromOriginalValues, out var keyValue, out var hasNullValue)
-            ? (new EquatableKeyValue<object?[]>(_index, keyValue, EqualityComparer), hasNullValue)
-            : (null, true);
+    public virtual object? CreateEquatableIndexValue(IReadOnlyModificationCommand command, bool fromOriginalValues = false)
+        => TryCreateDependentKeyValue(command, fromOriginalValues, out var keyValue)
+            ? new EquatableKeyValue<object?[]>(_index, keyValue, EqualityComparer)
+            : null;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -83,10 +76,8 @@ public class CompositeRowIndexValueFactory : CompositeRowValueFactory, IRowIndex
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual (object?[]? Value, bool HasNullValue) CreateIndexValue(
-        IReadOnlyModificationCommand command,
-        bool fromOriginalValues = false)
-        => TryCreateIndexValue(command, fromOriginalValues, out var keyValue, out var hasNullValue)
-            ? (keyValue, hasNullValue)
-            : (null, true);
+    public virtual object[]? CreateIndexValue(IReadOnlyModificationCommand command, bool fromOriginalValues = false)
+        => TryCreateIndexValue(command, fromOriginalValues, out var keyValue)
+            ? (object[])keyValue
+            : null;
 }

@@ -22,7 +22,9 @@ public class KeyEventData : EventData
         Func<EventDefinitionBase, EventData, string> messageGenerator,
         IReadOnlyKey key)
         : base(eventDefinition, messageGenerator)
-        => Key = key;
+    {
+        Key = key;
+    }
 
     /// <summary>
     ///     The foreign key.

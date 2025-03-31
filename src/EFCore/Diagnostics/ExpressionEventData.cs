@@ -23,7 +23,9 @@ public class ExpressionEventData : EventData
         Func<EventDefinitionBase, EventData, string> messageGenerator,
         Expression expression)
         : base(eventDefinition, messageGenerator)
-        => Expression = expression;
+    {
+        Expression = expression;
+    }
 
     /// <summary>
     ///     The <see cref="Expression" />.

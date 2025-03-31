@@ -14,16 +14,13 @@ namespace Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 /// </summary>
 public class SqlUnaryExpression : SqlExpression
 {
-    private static ConstructorInfo? _quotingConstructor;
-
     private static readonly ISet<ExpressionType> AllowedOperators = new HashSet<ExpressionType>
     {
         ExpressionType.Equal,
         ExpressionType.NotEqual,
         ExpressionType.Convert,
         ExpressionType.Not,
-        ExpressionType.Negate,
-        ExpressionType.OnesComplement
+        ExpressionType.Negate
     };
 
     internal static bool IsValidOperator(ExpressionType operatorType)
@@ -80,44 +77,23 @@ public class SqlUnaryExpression : SqlExpression
             : this;
 
     /// <inheritdoc />
-    public override Expression Quote()
-        => New(
-            _quotingConstructor ??= typeof(SqlUnaryExpression).GetConstructor(
-                [typeof(ExpressionType), typeof(SqlExpression), typeof(Type), typeof(RelationalTypeMapping)])!,
-            Constant(OperatorType),
-            Operand.Quote(),
-            Constant(Type),
-            RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
-
-    /// <inheritdoc />
     protected override void Print(ExpressionPrinter expressionPrinter)
     {
-        switch (this)
+        if (OperatorType == ExpressionType.Convert
+            && TypeMapping != null)
         {
-            case { OperatorType: ExpressionType.Convert, TypeMapping: not null }:
-                expressionPrinter.Append("CAST(");
-                expressionPrinter.Visit(Operand);
-                expressionPrinter.Append(" AS ");
-                expressionPrinter.Append(TypeMapping.StoreType);
-                expressionPrinter.Append(")");
-                break;
-
-            case { OperatorType: ExpressionType.Equal }:
-                expressionPrinter.Visit(Operand);
-                expressionPrinter.Append(" IS NULL");
-                break;
-
-            case { OperatorType: ExpressionType.NotEqual }:
-                expressionPrinter.Visit(Operand);
-                expressionPrinter.Append(" IS NOT NULL");
-                break;
-
-            default:
-                expressionPrinter.Append(OperatorType.ToString());
-                expressionPrinter.Append("(");
-                expressionPrinter.Visit(Operand);
-                expressionPrinter.Append(")");
-                break;
+            expressionPrinter.Append("CAST(");
+            expressionPrinter.Visit(Operand);
+            expressionPrinter.Append(" AS ");
+            expressionPrinter.Append(TypeMapping.StoreType);
+            expressionPrinter.Append(")");
+        }
+        else
+        {
+            expressionPrinter.Append(OperatorType.ToString());
+            expressionPrinter.Append("(");
+            expressionPrinter.Visit(Operand);
+            expressionPrinter.Append(")");
         }
     }
 

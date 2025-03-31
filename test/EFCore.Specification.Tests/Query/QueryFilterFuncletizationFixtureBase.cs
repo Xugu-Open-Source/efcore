@@ -11,6 +11,6 @@ public abstract class QueryFilterFuncletizationFixtureBase : SharedStoreFixtureB
     protected override bool UsePooling
         => false;
 
-    protected override Task SeedAsync(QueryFilterFuncletizationContext context)
-        => QueryFilterFuncletizationContext.SeedDataAsync(context);
+    protected override void Seed(QueryFilterFuncletizationContext context)
+        => QueryFilterFuncletizationContext.SeedData(context);
 }

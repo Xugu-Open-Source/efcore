@@ -215,23 +215,8 @@ public class InheritanceData : ISetSource
             {
                 Genus = PlantGenus.Daisy,
                 Species = "Bellis perennis",
-                Name = "Common daisy",
-                AdditionalInfo =
-                    new AdditionalDaisyInfo
-                    {
-                        Nickname = "Lawn daisy", LeafStructure = new DaisyLeafStructure { NumLeaves = 5, AreLeavesBig = true }
-                    }
+                Name = "Common daisy"
             },
-            new Daisy
-            {
-                Genus = PlantGenus.Daisy,
-                Species = "Bellis annua",
-                Name = "Annual daisy",
-                AdditionalInfo = new AdditionalDaisyInfo
-                {
-                    Nickname = "European daisy", LeafStructure = new DaisyLeafStructure { NumLeaves = 8, AreLeavesBig = false }
-                }
-            }
         };
 
     public static void WireUp(

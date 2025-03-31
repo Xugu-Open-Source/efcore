@@ -3,10 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class EntitySplittingSqlServerTest(ITestOutputHelper testOutputHelper) : EntitySplittingTestBase(testOutputHelper)
+public class EntitySplittingSqlServerTest : EntitySplittingTestBase
 {
+    public EntitySplittingSqlServerTest(ITestOutputHelper testOutputHelper)
+        : base(testOutputHelper)
+    {
+    }
+
     [ConditionalFact]
     public virtual async Task Can_roundtrip_with_triggers()
     {
@@ -26,15 +29,18 @@ public class EntitySplittingSqlServerTest(ITestOutputHelper testOutputHelper) : 
                     });
             },
             sensitiveLogEnabled: false,
-            seed: c => c.Database.ExecuteSqlRawAsync(
-                @"
+            seed: c =>
+            {
+                c.Database.ExecuteSqlRaw(
+                    @"
 CREATE OR ALTER TRIGGER [MeterReadingsDetails_Trigger]
 ON [MeterReadingDetails]
 FOR INSERT, UPDATE, DELETE AS
 BEGIN
 	IF @@ROWCOUNT = 0
 		return
-END"));
+END");
+            });
 
         await using (var context = CreateContext())
         {
@@ -46,7 +52,7 @@ END"));
 
             await context.SaveChangesAsync();
 
-            Assert.DoesNotContain(TestSqlLoggerFactory.Log, l => l.Level == LogLevel.Warning);
+            Assert.Empty(TestSqlLoggerFactory.Log.Where(l => l.Level == LogLevel.Warning));
         }
 
         await using (var context = CreateContext())
@@ -63,7 +69,7 @@ END"));
         await base.Can_roundtrip();
 
         AssertSql(
-            """
+"""
 @p0='2' (Nullable = true)
 
 SET IMPLICIT_TRANSACTIONS OFF;
@@ -73,7 +79,7 @@ OUTPUT INSERTED.[Id]
 VALUES (@p0);
 """,
             //
-            """
+"""
 @p1='1'
 @p2='100' (Size = 4000)
 @p3=NULL (Size = 4000)
@@ -84,7 +90,7 @@ INSERT INTO [MeterReadingDetails] ([Id], [CurrentRead], [PreviousRead])
 VALUES (@p1, @p2, @p3);
 """,
             //
-            """
+"""
 SELECT TOP(2) [m].[Id], [m0].[CurrentRead], [m0].[PreviousRead], [m].[ReadingStatus]
 FROM [MeterReadings] AS [m]
 INNER JOIN [MeterReadingDetails] AS [m0] ON [m].[Id] = [m0].[Id]

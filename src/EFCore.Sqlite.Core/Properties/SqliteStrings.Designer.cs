@@ -52,15 +52,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
                 entityType1, property1, entityType2, property2, columnName, table);
 
         /// <summary>
-        ///     Cannot use table '{table}' for entity type '{entityType}' since it is being used for entity type '{otherEntityType}' and entity type '{entityTypeWithSqlReturningClause}' is configured to use the SQL RETURNING clause, but entity type '{entityTypeWithoutSqlReturningClause}' is not.
-        /// </summary>
-        public static string IncompatibleSqlReturningClauseMismatch(object? table, object? entityType, object? otherEntityType, object? entityTypeWithSqlReturningClause, object? entityTypeWithoutSqlReturningClause)
-            => string.Format(
-                GetString("IncompatibleSqlReturningClauseMismatch", nameof(table), nameof(entityType), nameof(otherEntityType), nameof(entityTypeWithSqlReturningClause), nameof(entityTypeWithoutSqlReturningClause)),
-                table, entityType, otherEntityType, entityTypeWithSqlReturningClause, entityTypeWithoutSqlReturningClause);
-
-        /// <summary>
-        ///     SQLite does not support this migration operation ('{operation}'). See https://go.microsoft.com/fwlink/?LinkId=723262 for more information and examples.
+        ///     SQLite does not support this migration operation ('{operation}'). See http://go.microsoft.com/fwlink/?LinkId=723262 for more information and examples.
         /// </summary>
         public static string InvalidMigrationOperation(object? operation)
             => string.Format(
@@ -68,7 +60,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
                 operation);
 
         /// <summary>
-        ///     Generating idempotent scripts for migrations is not currently supported for SQLite. See https://go.microsoft.com/fwlink/?LinkId=723262 for more information and examples.
+        ///     Generating idempotent scripts for migrations is not currently supported for SQLite. See http://go.microsoft.com/fwlink/?LinkId=723262 for more information and examples.
         /// </summary>
         public static string MigrationScriptGenerationNotSupported
             => GetString("MigrationScriptGenerationNotSupported");
@@ -82,21 +74,13 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
                 type);
 
         /// <summary>
-        ///     SQLite version {sqliteVersion} is being used, but version 3.38.0 or higher is required for querying into JSON collections.
-        /// </summary>
-        public static string QueryingIntoJsonCollectionsNotSupported(object? sqliteVersion)
-            => string.Format(
-                GetString("QueryingIntoJsonCollectionsNotSupported", nameof(sqliteVersion)),
-                sqliteVersion);
-
-        /// <summary>
-        ///     SQLite does not support sequences. See https://go.microsoft.com/fwlink/?LinkId=723262 for more information and examples.
+        ///     SQLite does not support sequences. See http://go.microsoft.com/fwlink/?LinkId=723262 for more information and examples.
         /// </summary>
         public static string SequencesNotSupported
             => GetString("SequencesNotSupported");
 
         /// <summary>
-        ///     SQLite does not support stored procedures, but one has been configured on entity type '{entityType}'. See https://go.microsoft.com/fwlink/?LinkId=723262 for more information and examples.
+        ///     SQLite does not support stored procedures, but one has been configured on entity type '{entityType}'. See http://go.microsoft.com/fwlink/?LinkId=723262 for more information and examples.
         /// </summary>
         public static string StoredProceduresNotSupported(object? entityType)
             => string.Format(
@@ -174,31 +158,6 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
                             level,
                             SqliteEventId.ForeignKeyReferencesMissingTableWarning,
                             _resourceManager.GetString("LogForeignKeyScaffoldErrorPrincipalTableNotFound")!)));
-            }
-
-            return (EventDefinition<string?, string?, string?>)definition;
-        }
-
-        /// <summary>
-        ///     The column '{columnName}' on table '{tableName}' should map to a property of type '{type}', but its values are in an incompatible format. Using a different type.
-        /// </summary>
-        public static EventDefinition<string?, string?, string?> LogFormatWarning(IDiagnosticsLogger logger)
-        {
-            var definition = ((Diagnostics.Internal.SqliteLoggingDefinitions)logger.Definitions).LogFormatWarning;
-            if (definition == null)
-            {
-                definition = NonCapturingLazyInitializer.EnsureInitialized(
-                    ref ((Diagnostics.Internal.SqliteLoggingDefinitions)logger.Definitions).LogFormatWarning,
-                    logger,
-                    static logger => new EventDefinition<string?, string?, string?>(
-                        logger.Options,
-                        SqliteEventId.FormatWarning,
-                        LogLevel.Warning,
-                        "SqliteEventId.FormatWarning",
-                        level => LoggerMessage.Define<string?, string?, string?>(
-                            level,
-                            SqliteEventId.FormatWarning,
-                            _resourceManager.GetString("LogFormatWarning")!)));
             }
 
             return (EventDefinition<string?, string?, string?>)definition;
@@ -355,31 +314,6 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         }
 
         /// <summary>
-        ///     Querying table '{tableName}' to determine an appropriate CLR type for each column.
-        /// </summary>
-        public static EventDefinition<string?> LogInferringTypes(IDiagnosticsLogger logger)
-        {
-            var definition = ((Diagnostics.Internal.SqliteLoggingDefinitions)logger.Definitions).LogInferringTypes;
-            if (definition == null)
-            {
-                definition = NonCapturingLazyInitializer.EnsureInitialized(
-                    ref ((Diagnostics.Internal.SqliteLoggingDefinitions)logger.Definitions).LogInferringTypes,
-                    logger,
-                    static logger => new EventDefinition<string?>(
-                        logger.Options,
-                        SqliteEventId.InferringTypes,
-                        LogLevel.Debug,
-                        "SqliteEventId.InferringTypes",
-                        level => LoggerMessage.Define<string?>(
-                            level,
-                            SqliteEventId.InferringTypes,
-                            _resourceManager.GetString("LogInferringTypes")!)));
-            }
-
-            return (EventDefinition<string?>)definition;
-        }
-
-        /// <summary>
         ///     Unable to find a table in the database matching the selected table '{table}'.
         /// </summary>
         public static EventDefinition<string?> LogMissingTable(IDiagnosticsLogger logger)
@@ -402,31 +336,6 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
             }
 
             return (EventDefinition<string?>)definition;
-        }
-
-        /// <summary>
-        ///     The column '{columnName}' on table '{tableName}' should map to a property of type '{type}', but its values are out of range. Using a different type.
-        /// </summary>
-        public static EventDefinition<string?, string?, string?> LogOutOfRangeWarning(IDiagnosticsLogger logger)
-        {
-            var definition = ((Diagnostics.Internal.SqliteLoggingDefinitions)logger.Definitions).LogOutOfRangeWarning;
-            if (definition == null)
-            {
-                definition = NonCapturingLazyInitializer.EnsureInitialized(
-                    ref ((Diagnostics.Internal.SqliteLoggingDefinitions)logger.Definitions).LogOutOfRangeWarning,
-                    logger,
-                    static logger => new EventDefinition<string?, string?, string?>(
-                        logger.Options,
-                        SqliteEventId.OutOfRangeWarning,
-                        LogLevel.Warning,
-                        "SqliteEventId.OutOfRangeWarning",
-                        level => LoggerMessage.Define<string?, string?, string?>(
-                            level,
-                            SqliteEventId.OutOfRangeWarning,
-                            _resourceManager.GetString("LogOutOfRangeWarning")!)));
-            }
-
-            return (EventDefinition<string?, string?, string?>)definition;
         }
 
         /// <summary>

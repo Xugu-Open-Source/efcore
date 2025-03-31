@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Internal;
 
@@ -53,7 +54,7 @@ public class Key : ConventionAnnotatable, IMutableKey, IConventionKey, IRuntimeK
     public virtual EntityType DeclaringEntityType
     {
         [DebuggerStepThrough]
-        get => (EntityType)Properties[0].DeclaringType;
+        get => Properties[0].DeclaringEntityType;
     }
 
     /// <summary>
@@ -65,10 +66,7 @@ public class Key : ConventionAnnotatable, IMutableKey, IConventionKey, IRuntimeK
     public virtual InternalKeyBuilder Builder
     {
         [DebuggerStepThrough]
-        get => _builder
-            ?? throw new InvalidOperationException(
-                CoreStrings.ObjectRemovedFromModel(
-                    Property.Format(Properties.Select(p => p.Name))));
+        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
     /// <summary>
@@ -157,8 +155,19 @@ public class Key : ConventionAnnotatable, IMutableKey, IConventionKey, IRuntimeK
             ref _identityMapFactory, this, static key =>
             {
                 key.EnsureReadOnly();
-                return IdentityMapFactoryFactory.Create(key);
+                return new IdentityMapFactoryFactory().Create(key);
             });
+
+    private static readonly MethodInfo _createPrincipalKeyValueFactoryMethod = typeof(Key).GetTypeInfo()
+        .GetDeclaredMethod(nameof(CreatePrincipalKeyValueFactory))!;
+
+    [UsedImplicitly]
+    private IPrincipalKeyValueFactory<TKey> CreatePrincipalKeyValueFactory<TKey>()
+        where TKey : notnull
+    {
+        EnsureReadOnly();
+        return new KeyValueFactoryFactory().Create<TKey>(this);
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -330,17 +339,11 @@ public class Key : ConventionAnnotatable, IMutableKey, IConventionKey, IRuntimeK
 
     IPrincipalKeyValueFactory<TKey> IKey.GetPrincipalKeyValueFactory<TKey>()
         => (IPrincipalKeyValueFactory<TKey>)NonCapturingLazyInitializer.EnsureInitialized(
-            ref _principalKeyValueFactory, this, static key =>
-            {
-                key.EnsureReadOnly();
-                return KeyValueFactoryFactory.Create(key);
-            });
+            ref _principalKeyValueFactory, this, static key => key.CreatePrincipalKeyValueFactory<TKey>());
 
     IPrincipalKeyValueFactory IKey.GetPrincipalKeyValueFactory()
         => (IPrincipalKeyValueFactory)NonCapturingLazyInitializer.EnsureInitialized(
-            ref _principalKeyValueFactory, this, static key =>
-            {
-                key.EnsureReadOnly();
-                return KeyValueFactoryFactory.Create(key);
-            });
+            ref _principalKeyValueFactory, (IKey)this, static key => _createPrincipalKeyValueFactoryMethod
+                .MakeGenericMethod(key.GetKeyType())
+                .Invoke(key, new object[0])!);
 }

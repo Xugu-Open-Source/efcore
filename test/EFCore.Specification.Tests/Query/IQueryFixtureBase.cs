@@ -16,11 +16,14 @@ public interface IQueryFixtureBase
 
     IReadOnlyDictionary<Type, object> EntityAsserters { get; }
 
-    ListLoggerFactory ListLoggerFactory { get; }
-
-    private class DefaultSetSource(DbContext context) : ISetSource
+    private class DefaultSetSource : ISetSource
     {
-        private readonly DbContext _context = context;
+        private readonly DbContext _context;
+
+        public DefaultSetSource(DbContext context)
+        {
+            _context = context;
+        }
 
         public IQueryable<TEntity> Set<TEntity>()
             where TEntity : class

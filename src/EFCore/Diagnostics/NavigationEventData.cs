@@ -22,7 +22,9 @@ public class NavigationEventData : EventData, INavigationBaseEventData
         Func<EventDefinitionBase, EventData, string> messageGenerator,
         IReadOnlyNavigation navigation)
         : base(eventDefinition, messageGenerator)
-        => Navigation = navigation;
+    {
+        Navigation = navigation;
+    }
 
     /// <summary>
     ///     The navigation.

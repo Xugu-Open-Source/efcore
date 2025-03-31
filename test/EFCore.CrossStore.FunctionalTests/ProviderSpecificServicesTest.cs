@@ -41,20 +41,11 @@ public class ProviderSpecificServicesTest
             Assert.Throws<InvalidOperationException>(() => context.Database.GetDbConnection()).Message);
     }
 
-    [ConditionalFact]
-    public void Throws_with_multiple_providers_new_when_no_provider()
+    private class ConstructorTestContext1A : DbContext
     {
-        var options = new DbContextOptionsBuilder()
-            .UseCosmos("serviceEndPoint", "authKeyOrResourceToken", "databaseName")
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-
-        var context = new DbContext(options);
-
-        Assert.Equal(
-            CoreStrings.MultipleProvidersConfigured("'Microsoft.EntityFrameworkCore.Cosmos', 'Microsoft.EntityFrameworkCore.InMemory'"),
-            Assert.Throws<InvalidOperationException>(() => context.Model).Message);
+        public ConstructorTestContext1A(DbContextOptions options)
+            : base(options)
+        {
+        }
     }
-
-    private class ConstructorTestContext1A(DbContextOptions options) : DbContext(options);
 }

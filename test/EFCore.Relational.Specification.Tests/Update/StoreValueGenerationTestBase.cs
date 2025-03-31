@@ -5,11 +5,21 @@ using Microsoft.EntityFrameworkCore.TestModels.StoreValueGenerationModel;
 
 namespace Microsoft.EntityFrameworkCore.Update;
 
-#nullable disable
+#nullable enable
 
-public abstract class StoreValueGenerationTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>, IAsyncLifetime
+public abstract class StoreValueGenerationTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : StoreValueGenerationFixtureBase
 {
+    protected StoreValueGenerationTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+
+        fixture.CleanData();
+        fixture.Seed();
+
+        ClearLog();
+    }
+
     #region Single operation
 
     [ConditionalTheory]
@@ -152,7 +162,7 @@ public abstract class StoreValueGenerationTestBase<TFixture>(TFixture fixture) :
             };
 
         StoreValueGenerationData first;
-        StoreValueGenerationData second;
+        StoreValueGenerationData? second;
 
         switch (firstOperationType)
         {
@@ -358,12 +368,12 @@ public abstract class StoreValueGenerationTestBase<TFixture>(TFixture fixture) :
         bool withSameEntityType)
         => 1;
 
-    protected TFixture Fixture { get; } = fixture;
+    protected TFixture Fixture { get; }
 
     protected StoreValueGenerationContext CreateContext()
         => Fixture.CreateContext();
 
-    public static IEnumerable<object[]> IsAsyncData = new object[][] { [false], [true] };
+    public static IEnumerable<object[]> IsAsyncData = new[] { new object[] { false }, new object[] { true } };
 
     protected virtual void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
@@ -377,15 +387,4 @@ public abstract class StoreValueGenerationTestBase<TFixture>(TFixture fixture) :
         None,
         All
     }
-
-    public async Task InitializeAsync()
-    {
-        Fixture.CleanData();
-        await Fixture.SeedAsync();
-
-        ClearLog();
-    }
-
-    public Task DisposeAsync()
-        => Task.CompletedTask;
 }

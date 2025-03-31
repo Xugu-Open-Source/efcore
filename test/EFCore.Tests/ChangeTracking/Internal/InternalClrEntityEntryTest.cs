@@ -82,17 +82,17 @@ public class InternalClrEntityEntryTest : InternalEntityEntryTestBase<
         entry.SetTemporaryValue(keyProperty, -1);
 
         Assert.NotNull(entry[keyProperty]);
-        Assert.Equal(-1, entity.Id);
+        Assert.Equal(0, entity.Id);
         Assert.Equal(-1, entry[keyProperty]);
 
         entry.SetEntityState(EntityState.Detached);
 
-        Assert.Equal(-1, entity.Id);
+        Assert.Equal(0, entity.Id);
         Assert.Equal(-1, entry[keyProperty]);
 
         entry.SetEntityState(EntityState.Added);
 
-        Assert.Equal(-1, entity.Id);
+        Assert.Equal(0, entity.Id);
         Assert.Equal(-1, entry[keyProperty]);
     }
 
@@ -125,7 +125,7 @@ public class InternalClrEntityEntryTest : InternalEntityEntryTestBase<
         entry.AcceptChanges();
 
         Assert.Equal(
-            entityState is EntityState.Deleted or EntityState.Detached
+            entityState == EntityState.Deleted || entityState == EntityState.Detached
                 ? EntityState.Detached
                 : EntityState.Unchanged,
             entry.EntityState);
@@ -138,13 +138,13 @@ public class InternalClrEntityEntryTest : InternalEntityEntryTestBase<
         {
             Assert.Equal("Pickle", entry[valueProperty]);
             Assert.Equal(
-                entityState is EntityState.Detached or EntityState.Deleted ? "Cheese" : "Pickle",
+                entityState == EntityState.Detached || entityState == EntityState.Deleted ? "Cheese" : "Pickle",
                 entry.GetOriginalValue(valueProperty));
         }
     }
 
     [ConditionalFact]
-    public void Setting_an_explicit_value_on_the_entity_does_not_mark_property_as_temporary()
+    public void Setting_an_explicit_value_on_the_entity_marks_property_as_not_temporary()
     {
         using var context = new KClrContext();
         var entry = context.Entry(new SomeEntity()).GetInfrastructure();
@@ -166,11 +166,11 @@ public class InternalClrEntityEntryTest : InternalEntityEntryTestBase<
         entry.SetEntityState(EntityState.Unchanged); // Does not throw
 
         var nameProperty = entry.EntityType.FindProperty(nameof(SomeEntity.Name));
-        Assert.False(entry.HasExplicitValue(nameProperty));
+        Assert.True(entry.HasDefaultValue(nameProperty));
 
         entity.Name = "Name";
 
-        Assert.True(entry.HasExplicitValue(nameProperty));
+        Assert.False(entry.HasDefaultValue(nameProperty));
     }
 
     [ConditionalFact]

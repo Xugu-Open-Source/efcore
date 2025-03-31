@@ -22,5 +22,7 @@ public class DatabaseOperationsTest
             args: null);
     }
 
-    public class TestContext : DbContext;
+    private class TestContext : DbContext
+    {
+    }
 }

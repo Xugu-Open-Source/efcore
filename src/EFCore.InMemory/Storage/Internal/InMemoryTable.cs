@@ -23,7 +23,6 @@ public class InMemoryTable<TKey> : IInMemoryTable
     private readonly Dictionary<TKey, object?[]> _rows;
     private readonly IList<(int, ValueConverter)>? _valueConverters;
     private readonly IList<(int, ValueComparer)>? _valueComparers;
-    private readonly int _propertyCount;
 
     private Dictionary<int, IInMemoryIntegerValueGenerator>? _integerGenerators;
 
@@ -39,15 +38,14 @@ public class InMemoryTable<TKey> : IInMemoryTable
         bool sensitiveLoggingEnabled,
         bool nullabilityCheckEnabled)
     {
+        EntityType = entityType;
         BaseTable = baseTable;
         _keyValueFactory = entityType.FindPrimaryKey()!.GetPrincipalKeyValueFactory<TKey>();
         _sensitiveLoggingEnabled = sensitiveLoggingEnabled;
         _nullabilityCheckEnabled = nullabilityCheckEnabled;
         _rows = new Dictionary<TKey, object?[]>(_keyValueFactory.EqualityComparer);
-        var properties = entityType.GetFlattenedProperties().ToList();
-        _propertyCount = properties.Count;
 
-        foreach (var property in properties)
+        foreach (var property in entityType.GetProperties())
         {
             var converter = property.GetValueConverter()
                 ?? property.FindTypeMapping()?.Converter;
@@ -74,6 +72,14 @@ public class InMemoryTable<TKey> : IInMemoryTable
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual IInMemoryTable? BaseTable { get; }
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public virtual IEntityType EntityType { get; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -124,11 +130,13 @@ public class InMemoryTable<TKey> : IInMemoryTable
     {
         var rows = _rows.Values.ToList();
         var rowCount = rows.Count;
+        var properties = EntityType.GetProperties().ToList();
+        var propertyCount = properties.Count;
 
         for (var rowIndex = 0; rowIndex < rowCount; rowIndex++)
         {
-            var snapshotRow = new object?[_propertyCount];
-            Array.Copy(rows[rowIndex], snapshotRow, _propertyCount);
+            var snapshotRow = new object?[propertyCount];
+            Array.Copy(rows[rowIndex], snapshotRow, propertyCount);
 
             if (_valueConverters != null)
             {
@@ -163,7 +171,7 @@ public class InMemoryTable<TKey> : IInMemoryTable
     /// </summary>
     public virtual void Create(IUpdateEntry entry, IDiagnosticsLogger<DbLoggerCategory.Update> updateLogger)
     {
-        var properties = entry.EntityType.GetFlattenedProperties().ToList();
+        var properties = entry.EntityType.GetProperties().ToList();
         var row = new object?[properties.Count];
         var nullabilityErrors = new List<IProperty>();
 
@@ -171,7 +179,7 @@ public class InMemoryTable<TKey> : IInMemoryTable
         {
             var propertyValue = SnapshotValue(properties[index], properties[index].GetKeyValueComparer(), entry);
 
-            row[properties[index].GetIndex()] = propertyValue;
+            row[index] = propertyValue;
             HasNullabilityError(properties[index], propertyValue, nullabilityErrors);
         }
 
@@ -197,12 +205,12 @@ public class InMemoryTable<TKey> : IInMemoryTable
 
         if (_rows.TryGetValue(key, out var row))
         {
-            var properties = entry.EntityType.GetFlattenedProperties().ToList();
+            var properties = entry.EntityType.GetProperties().ToList();
             var concurrencyConflicts = new Dictionary<IProperty, object?>();
 
             for (var index = 0; index < properties.Count; index++)
             {
-                IsConcurrencyConflict(entry, properties[index], row[properties[index].GetIndex()], concurrencyConflicts);
+                IsConcurrencyConflict(entry, properties[index], row[index], concurrencyConflicts);
             }
 
             if (concurrencyConflicts.Count > 0)
@@ -229,32 +237,29 @@ public class InMemoryTable<TKey> : IInMemoryTable
         object? rowValue,
         Dictionary<IProperty, object?> concurrencyConflicts)
     {
-        if (!property.IsConcurrencyToken)
+        if (property.IsConcurrencyToken)
         {
-            return false;
+            var comparer = property.GetKeyValueComparer();
+            var originalValue = entry.GetOriginalValue(property);
+
+            var converter = property.GetValueConverter()
+                ?? property.FindTypeMapping()?.Converter;
+
+            if (converter != null)
+            {
+                rowValue = converter.ConvertFromProvider(rowValue);
+            }
+
+            if ((comparer != null && !comparer.Equals(rowValue, originalValue))
+                || (comparer == null && !StructuralComparisons.StructuralEqualityComparer.Equals(rowValue, originalValue)))
+            {
+                concurrencyConflicts.Add(property, rowValue);
+
+                return true;
+            }
         }
 
-        var comparer = property.GetKeyValueComparer()
-            ?? StructuralComparisons.StructuralEqualityComparer;
-
-        var originalValue = entry.GetOriginalValue(property);
-
-        var converter = property.GetValueConverter()
-            ?? property.FindTypeMapping()?.Converter;
-
-        if (converter != null)
-        {
-            rowValue = converter.ConvertFromProvider(rowValue);
-        }
-
-        if (comparer.Equals(rowValue, originalValue))
-        {
-            return false;
-        }
-
-        concurrencyConflicts.Add(property, rowValue);
-
-        return true;
+        return false;
     }
 
     /// <summary>
@@ -269,7 +274,7 @@ public class InMemoryTable<TKey> : IInMemoryTable
 
         if (_rows.TryGetValue(key, out var row))
         {
-            var properties = entry.EntityType.GetFlattenedProperties().ToList();
+            var properties = entry.EntityType.GetProperties().ToList();
             var comparers = GetKeyComparers(properties);
             var valueBuffer = new object?[properties.Count];
             var concurrencyConflicts = new Dictionary<IProperty, object?>();
@@ -277,20 +282,19 @@ public class InMemoryTable<TKey> : IInMemoryTable
 
             for (var index = 0; index < valueBuffer.Length; index++)
             {
-                var propertyIndex = properties[index].GetIndex();
-                if (IsConcurrencyConflict(entry, properties[index], row[propertyIndex], concurrencyConflicts))
+                if (IsConcurrencyConflict(entry, properties[index], row[index], concurrencyConflicts))
                 {
                     continue;
                 }
 
-                if (HasNullabilityError(properties[index], row[propertyIndex], nullabilityErrors))
+                if (HasNullabilityError(properties[index], row[index], nullabilityErrors))
                 {
                     continue;
                 }
 
                 valueBuffer[index] = entry.IsModified(properties[index])
                     ? SnapshotValue(properties[index], comparers[index], entry)
-                    : row[propertyIndex];
+                    : row[index];
             }
 
             if (concurrencyConflicts.Count > 0)

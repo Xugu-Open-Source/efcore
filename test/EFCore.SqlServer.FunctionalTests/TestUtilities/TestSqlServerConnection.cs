@@ -6,9 +6,14 @@ using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class TestSqlServerConnection(RelationalConnectionDependencies dependencies) : SqlServerConnection(dependencies)
+public class TestSqlServerConnection : SqlServerConnection
 {
-    public int ErrorNumber { get; set; } = 64;
+    public TestSqlServerConnection(RelationalConnectionDependencies dependencies)
+        : base(dependencies)
+    {
+    }
+
+    public int ErrorNumber { get; set; } = -2;
     public Queue<bool?> OpenFailures { get; } = new();
     public int OpenCount { get; set; }
     public Queue<bool?> CommitFailures { get; } = new();

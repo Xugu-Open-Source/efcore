@@ -19,7 +19,8 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            if (ex is CommandException or CommandParsingException)
+            if (ex is CommandException
+                || ex is CommandParsingException)
             {
                 Reporter.WriteVerbose(ex.ToString());
             }

@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
-#nullable disable
-
 public class LocustHighCommand
 {
     public int Id { get; set; }

@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
@@ -28,7 +27,6 @@ public class BackingFieldConvention :
     IPropertyAddedConvention,
     INavigationAddedConvention,
     ISkipNavigationAddedConvention,
-    IComplexPropertyAddedConvention,
     IModelFinalizingConvention
 {
     /// <summary>
@@ -36,14 +34,20 @@ public class BackingFieldConvention :
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this convention.</param>
     public BackingFieldConvention(ProviderConventionSetBuilderDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.
     /// </summary>
     protected virtual ProviderConventionSetBuilderDependencies Dependencies { get; }
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Called after a property is added to the entity type.
+    /// </summary>
+    /// <param name="propertyBuilder">The builder for the property.</param>
+    /// <param name="context">Additional information associated with convention execution.</param>
     public virtual void ProcessPropertyAdded(
         IConventionPropertyBuilder propertyBuilder,
         IConventionContext<IConventionPropertyBuilder> context)
@@ -60,12 +64,6 @@ public class BackingFieldConvention :
         IConventionSkipNavigationBuilder skipNavigationBuilder,
         IConventionContext<IConventionSkipNavigationBuilder> context)
         => DiscoverField(skipNavigationBuilder);
-
-    /// <inheritdoc />
-    public virtual void ProcessComplexPropertyAdded(
-        IConventionComplexPropertyBuilder propertyBuilder,
-        IConventionContext<IConventionComplexPropertyBuilder> context)
-        => DiscoverField(propertyBuilder);
 
     /// <inheritdoc />
     public virtual void ProcessModelFinalizing(
@@ -90,8 +88,7 @@ public class BackingFieldConvention :
         }
     }
 
-    private static void DiscoverField<TBuilder>(IConventionPropertyBaseBuilder<TBuilder> conventionPropertyBaseBuilder)
-        where TBuilder : IConventionPropertyBaseBuilder<TBuilder>
+    private static void DiscoverField(IConventionPropertyBaseBuilder conventionPropertyBaseBuilder)
     {
         if (ConfigurationSource.Convention.Overrides(conventionPropertyBaseBuilder.Metadata.GetFieldInfoConfigurationSource()))
         {
@@ -113,12 +110,12 @@ public class BackingFieldConvention :
             return null;
         }
 
-        var typeBase = propertyBase.DeclaringType;
-        var type = typeBase.ClrType;
-        var baseTypes = (typeBase as IConventionEntityType)?.GetAllBaseTypes().ToArray();
+        var entityType = (IConventionEntityType)propertyBase.DeclaringType;
+        var type = entityType.ClrType;
+        var baseTypes = entityType.GetAllBaseTypes().ToArray();
         while (type != null)
         {
-            var fieldInfo = TryMatchFieldName(propertyBase, typeBase, type);
+            var fieldInfo = TryMatchFieldName(propertyBase, entityType, type);
             if (fieldInfo != null
                 && (propertyBase.PropertyInfo != null || propertyBase.Name == fieldInfo.GetSimpleMemberName()))
             {
@@ -126,7 +123,7 @@ public class BackingFieldConvention :
             }
 
             type = type.BaseType;
-            typeBase = baseTypes?.FirstOrDefault(et => et.ClrType == type);
+            entityType = baseTypes.FirstOrDefault(et => et.ClrType == type);
         }
 
         return null;
@@ -134,7 +131,7 @@ public class BackingFieldConvention :
 
     private static FieldInfo? TryMatchFieldName(
         IConventionPropertyBase propertyBase,
-        IConventionTypeBase? entityType,
+        IConventionEntityType? entityType,
         Type entityClrType)
     {
         var propertyName = propertyBase.Name;

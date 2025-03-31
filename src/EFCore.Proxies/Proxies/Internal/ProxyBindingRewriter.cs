@@ -79,44 +79,30 @@ public class ProxyBindingRewriter : IModelFinalizingConvention
                 {
                     if (!navigationBase.IsShadowProperty())
                     {
-                        if (_options.UseChangeTrackingProxies)
+                        if (navigationBase.PropertyInfo == null)
                         {
-                            if (navigationBase.PropertyInfo == null)
-                            {
-                                throw new InvalidOperationException(
-                                    ProxiesStrings.FieldProperty(navigationBase.Name, entityType.DisplayName()));
-                            }
+                            throw new InvalidOperationException(
+                                ProxiesStrings.FieldProperty(navigationBase.Name, entityType.DisplayName()));
+                        }
 
-                            if (navigationBase.PropertyInfo.SetMethod?.IsReallyVirtual() == false)
+                        if (_options.UseChangeTrackingProxies
+                            && navigationBase.PropertyInfo.SetMethod?.IsReallyVirtual() == false)
+                        {
+                            throw new InvalidOperationException(
+                                ProxiesStrings.NonVirtualProperty(navigationBase.Name, entityType.DisplayName()));
+                        }
+
+                        if (_options.UseLazyLoadingProxies)
+                        {
+                            if (!navigationBase.PropertyInfo.GetMethod!.IsReallyVirtual()
+                                && (!(navigationBase is INavigation navigation
+                                    && navigation.ForeignKey.IsOwnership)))
                             {
                                 throw new InvalidOperationException(
                                     ProxiesStrings.NonVirtualProperty(navigationBase.Name, entityType.DisplayName()));
                             }
-                        }
 
-                        if (_options.UseLazyLoadingProxies
-                            && navigationBase.LazyLoadingEnabled)
-                        {
-                            if (navigationBase.PropertyInfo == null
-                                || !navigationBase.PropertyInfo.GetMethod!.IsReallyVirtual())
-                            {
-                                if (!_options.IgnoreNonVirtualNavigations
-                                    && navigationBase is not INavigation { ForeignKey.IsOwnership: true })
-                                {
-                                    if (navigationBase.PropertyInfo == null)
-                                    {
-                                        throw new InvalidOperationException(
-                                            ProxiesStrings.FieldProperty(navigationBase.Name, entityType.DisplayName()));
-                                    }
-
-                                    throw new InvalidOperationException(
-                                        ProxiesStrings.NonVirtualProperty(navigationBase.Name, entityType.DisplayName()));
-                                }
-                            }
-                            else
-                            {
-                                navigationBase.SetPropertyAccessMode(PropertyAccessMode.Field);
-                            }
+                            navigationBase.SetPropertyAccessMode(PropertyAccessMode.Field);
                         }
                     }
                 }

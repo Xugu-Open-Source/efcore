@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
-#nullable disable
-
 public class CustomerQueryWithQueryFilter
 {
     public string CompanyName { get; set; }

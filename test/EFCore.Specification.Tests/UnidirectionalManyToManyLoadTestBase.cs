@@ -1,12 +1,10 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Collections.ObjectModel;
 using Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
 namespace Microsoft.EntityFrameworkCore;
-
-#nullable disable
 
 public abstract partial class ManyToManyLoadTestBase<TFixture>
 {
@@ -33,7 +31,7 @@ public abstract partial class ManyToManyLoadTestBase<TFixture>
     {
         using var context = Fixture.CreateContext();
 
-        context.ChangeTracker.QueryTrackingBehavior = queryTrackingBehavior;
+        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
         var left = context.Set<UnidirectionalEntityOne>().Find(3);
 
@@ -723,14 +721,20 @@ public abstract partial class ManyToManyLoadTestBase<TFixture>
             context.Entry(left).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await collectionEntry.LoadAsync();
-        }
-        else
-        {
-            collectionEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(left.TwoSkip), nameof(UnidirectionalEntityOne)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await collectionEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        collectionEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -750,7 +754,9 @@ public abstract partial class ManyToManyLoadTestBase<TFixture>
             context.Entry(left).State = EntityState.Detached;
         }
 
-        var query = collectionEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(left.TwoSkip), nameof(UnidirectionalEntityOne)),
+            Assert.Throws<InvalidOperationException>(() => collectionEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -888,7 +894,7 @@ public abstract partial class ManyToManyLoadTestBase<TFixture>
             Assert.Contains(left, context.Entry(right).Collection("UnidirectionalEntityOne").CurrentValue!.Cast<object>());
             foreach (var three in context.Entry(right).Collection<UnidirectionalEntityThree>("UnidirectionalEntityThree").CurrentValue!)
             {
-                Assert.True(three.Id is 11 or 13);
+                Assert.True(three.Id == 11 || three.Id == 13);
                 Assert.Contains(right, three.TwoSkipFull);
             }
         }

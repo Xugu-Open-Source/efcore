@@ -57,8 +57,13 @@ public class QuerySqlGeneratorTest
                 new RelationalSqlGenerationHelper(
                     new RelationalSqlGenerationHelperDependencies())));
 
-    private class DummyQuerySqlGenerator(QuerySqlGeneratorDependencies dependencies) : QuerySqlGenerator(dependencies)
+    private class DummyQuerySqlGenerator : QuerySqlGenerator
     {
+        public DummyQuerySqlGenerator(QuerySqlGeneratorDependencies dependencies)
+            : base(dependencies)
+        {
+        }
+
         public new void CheckComposableSql(string sql)
             => base.CheckComposableSql(sql);
     }

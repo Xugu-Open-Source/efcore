@@ -7,9 +7,14 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable AccessToDisposedClosure
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixture) : QueryTestBase<TFixture>(fixture)
+public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture> : QueryTestBase<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
+    protected NorthwindAsNoTrackingQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalTheory]
     [InlineData(false, false)]
     [InlineData(false, true)]
@@ -19,10 +24,12 @@ public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixt
         => useParam
             ? AssertQuery(
                 async,
-                ss => ss.Set<Customer>().AsTracking(QueryTrackingBehavior.NoTracking))
+                ss => ss.Set<Customer>().AsTracking(QueryTrackingBehavior.NoTracking),
+                entryCount: 0)
             : AssertQuery(
                 async,
-                ss => ss.Set<Customer>().AsNoTracking());
+                ss => ss.Set<Customer>().AsNoTracking(),
+                entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -33,7 +40,8 @@ public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixt
                   join o in ss.Set<Order>().AsNoTracking()
                       on c.CustomerID equals o.CustomerID
                   where c.CustomerID == "ALFKI"
-                  select o);
+                  select o,
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -44,7 +52,8 @@ public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixt
                   from o in ss.Set<Order>().AsNoTracking()
                   where c.CustomerID == o.CustomerID
                   select new { c, o },
-            elementSorter: e => (e.c.CustomerID, e.o.OrderID));
+            elementSorter: e => (e.c.CustomerID, e.o.OrderID),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -62,7 +71,8 @@ public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixt
                       ocid = o.CustomerID,
                       o
                   },
-            elementSorter: e => (e.CustomerID, e.o.OrderID));
+            elementSorter: e => (e.CustomerID, e.o.OrderID),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -74,7 +84,8 @@ public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixt
                        on c.CustomerID equals o.CustomerID
                    where c.CustomerID == "ALFKI"
                    select new { c, o }).AsNoTracking(),
-            elementSorter: e => (e.c.CustomerID, e.o.OrderID));
+            elementSorter: e => (e.c.CustomerID, e.o.OrderID),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -106,14 +117,16 @@ public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixt
             ss => ss.Set<Order>()
                 .Include(o => o.Customer)
                 .Include(o => o.OrderDetails)
-                .AsNoTracking());
+                .AsNoTracking(),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public virtual Task Applied_after_navigation_expansion(bool async)
         => AssertQuery(
             async,
-            ss => ss.Set<Order>().Where(o => o.Customer.City != "London").AsNoTracking());
+            ss => ss.Set<Order>().Where(o => o.Customer.City != "London").AsNoTracking(),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -122,14 +135,16 @@ public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixt
             async,
             ss => ss.Set<Employee>()
                 .Where(e => EF.Property<string>(e, "Title") == "Sales Representative")
-                .AsNoTracking());
+                .AsNoTracking(),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public virtual Task Query_fast_path_when_ctor_binding(bool async)
         => AssertQuery(
             async,
-            ss => ss.Set<Customer>().AsNoTracking());
+            ss => ss.Set<Customer>().AsNoTracking(),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -139,7 +154,8 @@ public abstract class NorthwindAsNoTrackingQueryTestBase<TFixture>(TFixture fixt
             ss => (from e in ss.Set<Employee>()
                    from c in ss.Set<Customer>()
                    select new { c, e }).AsNoTracking(),
-            elementSorter: e => (e.c.CustomerID, e.e.EmployeeID));
+            elementSorter: e => (e.c.CustomerID, e.e.EmployeeID),
+            entryCount: 0);
 
     protected NorthwindContext CreateContext()
         => Fixture.CreateContext();

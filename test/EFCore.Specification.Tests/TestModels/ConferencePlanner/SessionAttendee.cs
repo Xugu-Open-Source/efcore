@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ConferencePlanner;
 
-#nullable disable
-
 public class SessionAttendee
 {
     public int SessionId { get; set; }

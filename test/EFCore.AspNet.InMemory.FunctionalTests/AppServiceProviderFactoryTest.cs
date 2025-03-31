@@ -21,7 +21,9 @@ public class AppServiceProviderFactoryTest
         var factory = new TestAppServiceProviderFactory(
             MockAssembly.Create(programType));
 
-        var services = factory.Create(["arg1"]);
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", null);
+        Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", null);
+        var services = factory.Create(new[] { "arg1" });
 
         Assert.NotNull(services.GetRequiredService<TestService>());
     }
@@ -61,16 +63,20 @@ public class AppServiceProviderFactoryTest
     {
         var factory = new TestAppServiceProviderFactory(
             MockAssembly.Create(
-                [typeof(ProgramWithNoHostBuilder)],
+                new[] { typeof(ProgramWithNoHostBuilder) },
                 new MockMethodInfo(typeof(ProgramWithNoHostBuilder), InjectHostIntoDiagnostics)));
 
-        var services = factory.Create(["arg1"]);
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", null);
+        Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", null);
+        var services = factory.Create(new[] { "arg1" });
 
         Assert.NotNull(services.GetRequiredService<TestService>());
     }
 
     private static void InjectHostIntoDiagnostics(object[] args)
     {
+        Assert.Equal("Development", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+        Assert.Equal("Development", Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"));
         Assert.Single(args);
         Assert.Equal((string[])args[0], new[] { "arg1", "--applicationName", "MockAssembly" });
 
@@ -81,10 +87,14 @@ public class AppServiceProviderFactoryTest
             new TestWebHost(BuildTestServiceProvider()));
     }
 
-    private class ProgramWithNoHostBuilder;
+    private class ProgramWithNoHostBuilder
+    {
+    }
 
     private static void ValidateEnvironmentAndArgs(string[] args)
     {
+        Assert.Equal("Development", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+        Assert.Equal("Development", Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"));
         Assert.Equal(args, new[] { "arg1" });
     }
 
@@ -93,7 +103,9 @@ public class AppServiceProviderFactoryTest
             .AddScoped<TestService>()
             .BuildServiceProvider(validateScopes: true);
 
-    private class TestService;
+    private class TestService
+    {
+    }
 
     [ConditionalFact]
     public void Create_works_when_no_BuildWebHost()
@@ -101,12 +113,14 @@ public class AppServiceProviderFactoryTest
         var factory = new TestAppServiceProviderFactory(
             MockAssembly.Create(typeof(ProgramWithoutBuildWebHost)));
 
-        var services = factory.Create([]);
+        var services = factory.Create(Array.Empty<string>());
 
         Assert.NotNull(services);
     }
 
-    private class ProgramWithoutBuildWebHost;
+    private class ProgramWithoutBuildWebHost
+    {
+    }
 
     [ConditionalFact]
     public void Create_works_when_BuildWebHost_throws()
@@ -116,7 +130,7 @@ public class AppServiceProviderFactoryTest
             MockAssembly.Create(typeof(ProgramWithThrowingBuildWebHost)),
             reporter);
 
-        var services = factory.Create([]);
+        var services = factory.Create(Array.Empty<string>());
 
         Assert.NotNull(services);
         Assert.Contains(
@@ -131,17 +145,32 @@ public class AppServiceProviderFactoryTest
     }
 }
 
-public class TestAppServiceProviderFactory(Assembly startupAssembly, IOperationReporter reporter = null)
-    : AppServiceProviderFactory(startupAssembly, reporter ?? new TestOperationReporter());
-
-public class TestWebHost(IServiceProvider services)
+public class TestAppServiceProviderFactory : AppServiceProviderFactory
 {
-    public IServiceProvider Services { get; } = services;
+    public TestAppServiceProviderFactory(Assembly startupAssembly, IOperationReporter reporter = null)
+        : base(startupAssembly, reporter ?? new TestOperationReporter())
+    {
+    }
 }
 
-public class TestWebHostBuilder(IServiceProvider services)
+public class TestWebHost
 {
-    public IServiceProvider Services { get; } = services;
+    public TestWebHost(IServiceProvider services)
+    {
+        Services = services;
+    }
+
+    public IServiceProvider Services { get; }
+}
+
+public class TestWebHostBuilder
+{
+    public TestWebHostBuilder(IServiceProvider services)
+    {
+        Services = services;
+    }
+
+    public IServiceProvider Services { get; }
 
     public TestWebHost Build()
         => new(Services);
@@ -149,7 +178,7 @@ public class TestWebHostBuilder(IServiceProvider services)
 
 public class TestOperationReporter : IOperationReporter
 {
-    private readonly List<string> _messages = [];
+    private readonly List<string> _messages = new();
 
     public IReadOnlyList<string> Messages
         => _messages;

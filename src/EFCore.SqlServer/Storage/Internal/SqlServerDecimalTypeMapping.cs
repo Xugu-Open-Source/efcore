@@ -3,7 +3,6 @@
 
 using System.Data;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
@@ -23,14 +22,6 @@ public class SqlServerDecimalTypeMapping : DecimalTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public static new SqlServerDecimalTypeMapping Default { get; } = new("decimal(18, 2)", precision: 18, scale: 2);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     public SqlServerDecimalTypeMapping(
         string storeType,
         DbType? dbType = System.Data.DbType.Decimal,
@@ -40,7 +31,7 @@ public class SqlServerDecimalTypeMapping : DecimalTypeMapping
         StoreTypePostfix storeTypePostfix = StoreTypePostfix.PrecisionAndScale)
         : this(
             new RelationalTypeMappingParameters(
-                    new CoreTypeMappingParameters(typeof(decimal), jsonValueReaderWriter: JsonDecimalReaderWriter.Instance),
+                    new CoreTypeMappingParameters(typeof(decimal)),
                     storeType,
                     storeTypePostfix,
                     dbType)
@@ -56,7 +47,9 @@ public class SqlServerDecimalTypeMapping : DecimalTypeMapping
     /// </summary>
     protected SqlServerDecimalTypeMapping(RelationalTypeMappingParameters parameters, SqlDbType? sqlDbType)
         : base(parameters)
-        => _sqlDbType = sqlDbType;
+    {
+        _sqlDbType = sqlDbType;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -99,12 +92,12 @@ public class SqlServerDecimalTypeMapping : DecimalTypeMapping
 
         if (Precision.HasValue)
         {
-            parameter.Precision = (byte)Precision.Value;
+            parameter.Precision = unchecked((byte)Precision.Value);
         }
 
         if (Scale.HasValue)
         {
-            parameter.Scale = (byte)Scale.Value;
+            parameter.Scale = unchecked((byte)Scale.Value);
         }
     }
 }

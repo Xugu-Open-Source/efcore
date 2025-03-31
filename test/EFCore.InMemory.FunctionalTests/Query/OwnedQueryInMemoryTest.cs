@@ -3,23 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class OwnedQueryInMemoryTest(OwnedQueryInMemoryTest.OwnedQueryInMemoryFixture fixture)
-    : OwnedQueryTestBase<OwnedQueryInMemoryTest.OwnedQueryInMemoryFixture>(fixture)
+public class OwnedQueryInMemoryTest : OwnedQueryTestBase<OwnedQueryInMemoryTest.OwnedQueryInMemoryFixture>
 {
-    public override Task Contains_over_owned_collection(bool async)
-        => Assert.ThrowsAsync<InvalidOperationException>(() => base.Contains_over_owned_collection(async));
-
-    public override Task ElementAt_over_owned_collection(bool async)
-        => AssertTranslationFailed(() => base.ElementAt_over_owned_collection(async));
-
-    public override Task ElementAtOrDefault_over_owned_collection(bool async)
-        => AssertTranslationFailed(() => base.ElementAt_over_owned_collection(async));
-
-    public override Task FirstOrDefault_over_owned_collection(bool async)
-        => Assert.ThrowsAsync<NullReferenceException>(() => base.FirstOrDefault_over_owned_collection(async));
-
-    public override Task OrderBy_ElementAt_over_owned_collection(bool async)
-        => AssertTranslationFailed(() => base.OrderBy_ElementAt_over_owned_collection(async));
+    public OwnedQueryInMemoryTest(OwnedQueryInMemoryFixture fixture, ITestOutputHelper testOutputHelper)
+        : base(fixture)
+    {
+        //TestLoggerFactory.TestOutputHelper = testOutputHelper;
+    }
 
     public class OwnedQueryInMemoryFixture : OwnedQueryFixtureBase
     {

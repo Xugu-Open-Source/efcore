@@ -159,7 +159,7 @@ public class CustomValueGeneratorTest
     }
 
     private readonly string[] _names =
-    [
+    {
         "Jamie Vardy",
         "Danny Drinkwater",
         "Andy King",
@@ -168,7 +168,7 @@ public class CustomValueGeneratorTest
         "Wes Morgan",
         "Robert Huth",
         "Leonardo Ulloa"
-    ];
+    };
 
     private static long ToCounter(Guid guid)
     {
@@ -192,23 +192,25 @@ public class CustomValueGeneratorTest
         return BitConverter.ToInt64(counterBytes, 0);
     }
 
-    private class CustomInMemoryValueGeneratorSelector(
-        ValueGeneratorSelectorDependencies dependencies,
-        IInMemoryDatabase inMemoryDatabase) : InMemoryValueGeneratorSelector(dependencies, inMemoryDatabase)
+    private class CustomInMemoryValueGeneratorSelector : InMemoryValueGeneratorSelector
     {
         private readonly ValueGeneratorFactory _factory = new CustomValueGeneratorFactory();
 
-        public override bool TryCreate(IProperty property, ITypeBase typeBase, out ValueGenerator valueGenerator)
+        public CustomInMemoryValueGeneratorSelector(
+            ValueGeneratorSelectorDependencies dependencies,
+            IInMemoryDatabase inMemoryDatabase)
+            : base(dependencies, inMemoryDatabase)
         {
-            valueGenerator = _factory.Create(property, typeBase);
-            return true;
         }
+
+        public override ValueGenerator Create(IProperty property, IEntityType entityType)
+            => _factory.Create(property, entityType);
     }
 
     private class CustomGuidValueGenerator : ValueGenerator<Guid>
     {
         public static Guid[] SpecialGuids { get; } =
-        [
+        {
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
@@ -217,7 +219,7 @@ public class CustomValueGeneratorTest
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid()
-        ];
+        };
 
         private int _counter = -1;
 
@@ -241,7 +243,7 @@ public class CustomValueGeneratorTest
 
     private class CustomValueGeneratorFactory : ValueGeneratorFactory
     {
-        public override ValueGenerator Create(IProperty property, ITypeBase typeBase)
+        public override ValueGenerator Create(IProperty property, IEntityType entityType)
         {
             if (property.ClrType == typeof(Guid))
             {
@@ -251,7 +253,7 @@ public class CustomValueGeneratorTest
             }
 
             return property.ClrType == typeof(string)
-                && property.DeclaringType.ClrType == typeof(SomeEntity)
+                && property.DeclaringEntityType.ClrType == typeof(SomeEntity)
                     ? new SomeEntityStringValueGenerator()
                     : null;
         }

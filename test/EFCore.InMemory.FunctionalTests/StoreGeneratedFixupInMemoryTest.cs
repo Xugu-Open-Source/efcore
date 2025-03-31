@@ -5,10 +5,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class StoreGeneratedFixupInMemoryTest(StoreGeneratedFixupInMemoryTest.StoreGeneratedFixupInMemoryFixture fixture)
-    : StoreGeneratedFixupTestBase<
-        StoreGeneratedFixupInMemoryTest.StoreGeneratedFixupInMemoryFixture>(fixture)
+public class StoreGeneratedFixupInMemoryTest : StoreGeneratedFixupTestBase<
+    StoreGeneratedFixupInMemoryTest.StoreGeneratedFixupInMemoryFixture>
 {
+    public StoreGeneratedFixupInMemoryTest(StoreGeneratedFixupInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public override void Temporary_value_equals_database_generated_value()
     {
         // In-memory doesn't use real store-generated values.
@@ -31,10 +35,10 @@ public class StoreGeneratedFixupInMemoryTest(StoreGeneratedFixupInMemoryTest.Sto
         Assert.Equal(tempValue, entry.Property(e => e.Id).CurrentValue);
     }
 
-    protected override async Task ExecuteWithStrategyInTransactionAsync(Func<DbContext, Task> testOperation)
+    protected override void ExecuteWithStrategyInTransaction(Action<DbContext> testOperation)
     {
-        await base.ExecuteWithStrategyInTransactionAsync(testOperation);
-        await Fixture.ReseedAsync();
+        base.ExecuteWithStrategyInTransaction(testOperation);
+        Fixture.Reseed();
     }
 
     protected override bool EnforcesFKs
@@ -144,6 +148,20 @@ public class StoreGeneratedFixupInMemoryTest(StoreGeneratedFixupInMemoryTest.Sto
                 });
 
             modelBuilder.Entity<ProductNN>(
+                b =>
+                {
+                    b.Property(e => e.Id1).ValueGeneratedNever();
+                    b.Property(e => e.Id2).ValueGeneratedNever();
+                });
+
+            modelBuilder.Entity<Category>(
+                b =>
+                {
+                    b.Property(e => e.Id1).ValueGeneratedNever();
+                    b.Property(e => e.Id2).ValueGeneratedNever();
+                });
+
+            modelBuilder.Entity<Product>(
                 b =>
                 {
                     b.Property(e => e.Id1).ValueGeneratedNever();

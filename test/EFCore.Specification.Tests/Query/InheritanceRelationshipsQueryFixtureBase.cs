@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore.TestModels.InheritanceRelationshipsModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public abstract class InheritanceRelationshipsQueryFixtureBase : SharedStoreFixtureBase<InheritanceRelationshipsContext>,
     IQueryFixtureBase
 {
@@ -563,8 +561,8 @@ public abstract class InheritanceRelationshipsQueryFixtureBase : SharedStoreFixt
             .IsRequired(false);
     }
 
-    protected override Task SeedAsync(InheritanceRelationshipsContext context)
-        => InheritanceRelationshipsContext.SeedAsync(context);
+    protected override void Seed(InheritanceRelationshipsContext context)
+        => InheritanceRelationshipsContext.Seed(context);
 
     public override InheritanceRelationshipsContext CreateContext()
     {

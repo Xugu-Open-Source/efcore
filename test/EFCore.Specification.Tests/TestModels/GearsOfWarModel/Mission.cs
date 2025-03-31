@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
-#nullable disable
-
 public class Mission
 {
     public int Id { get; set; }
@@ -15,7 +13,6 @@ public class Mission
     public TimeSpan Duration { get; set; }
     public DateOnly Date { get; set; }
     public TimeOnly Time { get; set; }
-    public MissionDifficulty Difficulty { get; set; }
 
     public virtual ICollection<SquadMission> ParticipatingSquads { get; set; }
 }

@@ -24,7 +24,9 @@ public class ManyToManyJoinEntityTypeConvention :
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this convention.</param>
     public ManyToManyJoinEntityTypeConvention(ProviderConventionSetBuilderDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.
@@ -97,7 +99,9 @@ public class ManyToManyJoinEntityTypeConvention :
         var inverseSkipNavigation = skipNavigation.Inverse;
         return skipNavigation.ForeignKey == null
             && skipNavigation.IsCollection
-            && inverseSkipNavigation is { ForeignKey: null, IsCollection: true };
+            && inverseSkipNavigation != null
+            && inverseSkipNavigation.ForeignKey == null
+            && inverseSkipNavigation.IsCollection;
     }
 
     /// <summary>

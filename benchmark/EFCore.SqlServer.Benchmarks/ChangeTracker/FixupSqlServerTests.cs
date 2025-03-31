@@ -5,19 +5,24 @@ using Microsoft.EntityFrameworkCore.Benchmarks.Models.Orders;
 
 #pragma warning disable CA1034 // Nested types should not be visible
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.ChangeTracker;
-
-public class FixupSqlServerTests : FixupTests
+namespace Microsoft.EntityFrameworkCore.Benchmarks.ChangeTracker
 {
-    public class ChildVariations : ChildVariationsBase
+    public class FixupSqlServerTests : FixupTests
     {
-        public override OrdersFixtureBase CreateFixture()
-            => new OrdersSqlServerFixture("Perf_ChangeTracker_Fixup");
-    }
+        public class ChildVariations : ChildVariationsBase
+        {
+            public override OrdersFixtureBase CreateFixture()
+            {
+                return new OrdersSqlServerFixture("Perf_ChangeTracker_Fixup");
+            }
+        }
 
-    public class ParentVariations : ParentVariationsBase
-    {
-        public override OrdersFixtureBase CreateFixture()
-            => new OrdersSqlServerFixture("Perf_ChangeTracker_Fixup");
+        public class ParentVariations : ParentVariationsBase
+        {
+            public override OrdersFixtureBase CreateFixture()
+            {
+                return new OrdersSqlServerFixture("Perf_ChangeTracker_Fixup");
+            }
+        }
     }
 }

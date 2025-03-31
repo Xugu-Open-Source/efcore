@@ -9,37 +9,41 @@ public class FromSqlQuerySqliteTest : FromSqlQueryTestBase<NorthwindQuerySqliteF
 {
     public FromSqlQuerySqliteTest(NorthwindQuerySqliteFixture<NoopModelCustomizer> fixture, ITestOutputHelper testOutputHelper)
         : base(fixture)
-        => Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
-
-    public override async Task FromSqlRaw_queryable_composed(bool async)
     {
-        await base.FromSqlRaw_queryable_composed(async);
+        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+    }
 
-        AssertSql(
-            """
+    public override async Task<string> FromSqlRaw_queryable_composed(bool async)
+    {
+        var queryString = await base.FromSqlRaw_queryable_composed(async);
+
+        var expected =
+"""
 SELECT "m"."CustomerID", "m"."Address", "m"."City", "m"."CompanyName", "m"."ContactName", "m"."ContactTitle", "m"."Country", "m"."Fax", "m"."Phone", "m"."PostalCode", "m"."Region"
 FROM (
     SELECT * FROM "Customers"
 ) AS "m"
-WHERE instr("m"."ContactName", 'z') > 0
-""");
+WHERE 'z' = '' OR instr("m"."ContactName", 'z') > 0
+""";
+
+        Assert.Equal(expected, queryString, ignoreLineEndingDifferences: true);
+
+        return queryString;
     }
 
-    public override async Task<string?> FromSqlRaw_queryable_with_parameters_and_closure(bool async)
+    public override async Task<string> FromSqlRaw_queryable_with_parameters_and_closure(bool async)
     {
         var queryString = await base.FromSqlRaw_queryable_with_parameters_and_closure(async);
 
         Assert.Equal(
-            """
-.param set p0 'London'
-.param set @contactTitle 'Sales Representative'
+            @".param set p0 'London'
+.param set @__contactTitle_1 'Sales Representative'
 
-SELECT "m"."CustomerID", "m"."Address", "m"."City", "m"."CompanyName", "m"."ContactName", "m"."ContactTitle", "m"."Country", "m"."Fax", "m"."Phone", "m"."PostalCode", "m"."Region"
+SELECT ""m"".""CustomerID"", ""m"".""Address"", ""m"".""City"", ""m"".""CompanyName"", ""m"".""ContactName"", ""m"".""ContactTitle"", ""m"".""Country"", ""m"".""Fax"", ""m"".""Phone"", ""m"".""PostalCode"", ""m"".""Region""
 FROM (
-    SELECT * FROM "Customers" WHERE "City" = @p0
-) AS "m"
-WHERE "m"."ContactTitle" = @contactTitle
-""", queryString, ignoreLineEndingDifferences: true);
+    SELECT * FROM ""Customers"" WHERE ""City"" = @p0
+) AS ""m""
+WHERE ""m"".""ContactTitle"" = @__contactTitle_1", queryString, ignoreLineEndingDifferences: true);
 
         return queryString;
     }
@@ -65,7 +69,7 @@ WHERE "m"."ContactTitle" = @contactTitle
         await base.FromSqlRaw_composed_with_common_table_expression(async);
 
         AssertSql(
-            """
+"""
 SELECT "m"."CustomerID", "m"."Address", "m"."City", "m"."CompanyName", "m"."ContactName", "m"."ContactTitle", "m"."Country", "m"."Fax", "m"."Phone", "m"."PostalCode", "m"."Region"
 FROM (
     WITH "Customers2" AS (
@@ -73,7 +77,7 @@ FROM (
     )
     SELECT * FROM "Customers2"
 ) AS "m"
-WHERE instr("m"."ContactName", 'z') > 0
+WHERE 'z' = '' OR instr("m"."ContactName", 'z') > 0
 """);
     }
 

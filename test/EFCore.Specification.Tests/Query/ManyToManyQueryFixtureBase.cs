@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public abstract class ManyToManyQueryFixtureBase : SharedStoreFixtureBase<ManyToManyContext>, IQueryFixtureBase
 {
     protected override string StoreName
@@ -644,9 +642,9 @@ public abstract class ManyToManyQueryFixtureBase : SharedStoreFixtureBase<ManyTo
     public virtual bool UseGeneratedKeys
         => false;
 
-    protected override Task SeedAsync(ManyToManyContext context)
+    protected override void Seed(ManyToManyContext context)
     {
         new ManyToManyData(context, UseGeneratedKeys);
-        return context.SaveChangesAsync();
+        context.SaveChanges();
     }
 }

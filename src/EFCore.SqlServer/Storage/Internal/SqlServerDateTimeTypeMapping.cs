@@ -3,7 +3,6 @@
 
 using System.Data;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
@@ -24,7 +23,7 @@ public class SqlServerDateTimeTypeMapping : DateTimeTypeMapping
     // Note: this array will be accessed using the precision as an index
     // so the order of the entries in this array is important
     private readonly string[] _dateTime2Formats =
-    [
+    {
         "'{0:yyyy-MM-ddTHH:mm:ssK}'",
         "'{0:yyyy-MM-ddTHH:mm:ss.fK}'",
         "'{0:yyyy-MM-ddTHH:mm:ss.ffK}'",
@@ -33,15 +32,7 @@ public class SqlServerDateTimeTypeMapping : DateTimeTypeMapping
         "'{0:yyyy-MM-ddTHH:mm:ss.fffffK}'",
         "'{0:yyyy-MM-ddTHH:mm:ss.ffffffK}'",
         "'{0:yyyy-MM-ddTHH:mm:ss.fffffffK}'"
-    ];
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public static new SqlServerDateTimeTypeMapping Default { get; } = new("datetime2");
+    };
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -56,7 +47,7 @@ public class SqlServerDateTimeTypeMapping : DateTimeTypeMapping
         StoreTypePostfix storeTypePostfix = StoreTypePostfix.Precision)
         : this(
             new RelationalTypeMappingParameters(
-                new CoreTypeMappingParameters(typeof(DateTime), jsonValueReaderWriter: JsonDateTimeReaderWriter.Instance),
+                new CoreTypeMappingParameters(typeof(DateTime)),
                 storeType,
                 storeTypePostfix,
                 dbType),
@@ -72,7 +63,9 @@ public class SqlServerDateTimeTypeMapping : DateTimeTypeMapping
     /// </summary>
     protected SqlServerDateTimeTypeMapping(RelationalTypeMappingParameters parameters, SqlDbType? sqlDbType)
         : base(parameters)
-        => _sqlDbType = sqlDbType;
+    {
+        _sqlDbType = sqlDbType;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -99,7 +92,7 @@ public class SqlServerDateTimeTypeMapping : DateTimeTypeMapping
         }
         else if (DbType == System.Data.DbType.Date)
         {
-            // Workaround for SqlClient issue: https://github.com/dotnet/runtime/issues/22386
+            // Workaround for a SQLClient bug
             ((SqlParameter)parameter).SqlDbType = SqlDbType.Date;
         }
 
@@ -111,9 +104,8 @@ public class SqlServerDateTimeTypeMapping : DateTimeTypeMapping
 
         if (Precision.HasValue)
         {
-            // SQL Server accepts a scale, but in EF a scale along isn't supported (without precision).
-            // So the actual value is contained as precision in scale, but sent as Scale to SQL Server.
-            parameter.Scale = (byte)Precision.Value;
+            // Workaround for inconsistent definition of precision/scale between EF and SQLClient for VarTime types
+            parameter.Scale = unchecked((byte)Precision.Value);
         }
     }
 
@@ -132,11 +124,30 @@ public class SqlServerDateTimeTypeMapping : DateTimeTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override string SqlLiteralFormatString
-        => StoreType switch
+    {
+        get
         {
-            "date" => DateFormatConst,
-            "datetime" => DateTimeFormatConst,
-            "smalldatetime" => SmallDateTimeFormatConst,
-            _ => _dateTime2Formats[Precision is >= 0 and <= 7 ? Precision.Value : 7]
-        };
+            switch (StoreType)
+            {
+                case "date":
+                    return DateFormatConst;
+                case "datetime":
+                    return DateTimeFormatConst;
+                case "smalldatetime":
+                    return SmallDateTimeFormatConst;
+                default:
+                    if (Precision.HasValue)
+                    {
+                        var precision = Precision.Value;
+                        if (precision <= 7
+                            && precision >= 0)
+                        {
+                            return _dateTime2Formats[precision];
+                        }
+                    }
+
+                    return _dateTime2Formats[7];
+            }
+        }
+    }
 }

@@ -3,12 +3,12 @@
 
 using Microsoft.EntityFrameworkCore.Benchmarks.Models.Orders;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Query;
-
-public class RawSqlQuerySqlServerTests : RawSqlQueryTests
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Query
 {
-    protected override string StoredProcedureCreationScript
-        => @"CREATE PROCEDURE dbo.SearchProducts
+    public class RawSqlQuerySqlServerTests : RawSqlQueryTests
+    {
+        protected override string StoredProcedureCreationScript
+            => @"CREATE PROCEDURE dbo.SearchProducts
                     @minPrice decimal(18, 2),
                     @maxPrice decimal(18, 2)
                 AS
@@ -16,6 +16,9 @@ public class RawSqlQuerySqlServerTests : RawSqlQueryTests
                     SELECT * FROM dbo.Products WHERE CurrentPrice >= @minPrice AND CurrentPrice <= @maxPrice
                 END";
 
-    protected override OrdersFixtureBase CreateFixture()
-        => new OrdersSqlServerFixture("Perf_Query_RawSql");
+        protected override OrdersFixtureBase CreateFixture()
+        {
+            return new OrdersSqlServerFixture("Perf_Query_RawSql");
+        }
+    }
 }

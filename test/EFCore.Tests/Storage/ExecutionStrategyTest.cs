@@ -12,7 +12,9 @@ public class ExecutionStrategyTest : IDisposable
     private readonly DbContext Context;
 
     public ExecutionStrategyTest()
-        => Context = CreateContext();
+    {
+        Context = CreateContext();
+    }
 
     public void Dispose()
         => Context.Dispose();

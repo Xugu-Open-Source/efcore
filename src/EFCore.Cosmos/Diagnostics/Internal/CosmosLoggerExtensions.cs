@@ -25,36 +25,10 @@ public static class CosmosLoggerExtensions
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public static void SyncNotSupported(
-        this IDiagnosticsLogger<DbLoggerCategory.Database> diagnostics)
-    {
-        var definition = CosmosResources.LogSyncNotSupported(diagnostics);
-
-        if (diagnostics.ShouldLog(definition))
-        {
-            definition.Log(diagnostics);
-        }
-
-        if (diagnostics.NeedsEventData(definition, out var diagnosticSourceEnabled, out var simpleLogEnabled))
-        {
-            var eventData = new EventData(
-                definition,
-                (d, p) => ((EventDefinition)d).GenerateMessage());
-
-            diagnostics.DispatchEventData(definition, eventData, diagnosticSourceEnabled, simpleLogEnabled);
-        }
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     public static void ExecutingSqlQuery(
         this IDiagnosticsLogger<DbLoggerCategory.Database.Command> diagnostics,
         string containerId,
-        PartitionKey? partitionKeyValue,
+        string? partitionKey,
         CosmosSqlQuery cosmosSqlQuery)
     {
         var definition = CosmosResources.LogExecutingSqlQuery(diagnostics);
@@ -66,7 +40,7 @@ public static class CosmosLoggerExtensions
             definition.Log(
                 diagnostics,
                 containerId,
-                logSensitiveData ? partitionKeyValue?.ToString() : "?",
+                logSensitiveData ? partitionKey : "?",
                 FormatParameters(cosmosSqlQuery.Parameters, logSensitiveData && cosmosSqlQuery.Parameters.Count > 0),
                 Environment.NewLine,
                 cosmosSqlQuery.Query);
@@ -78,7 +52,7 @@ public static class CosmosLoggerExtensions
                 definition,
                 ExecutingSqlQuery,
                 containerId,
-                partitionKeyValue,
+                partitionKey,
                 cosmosSqlQuery.Parameters.Select(p => (p.Name, p.Value)).ToList(),
                 cosmosSqlQuery.Query,
                 diagnostics.ShouldLogSensitiveData());
@@ -93,8 +67,8 @@ public static class CosmosLoggerExtensions
         var p = (CosmosQueryEventData)payload;
         return d.GenerateMessage(
             p.ContainerId,
-            p.LogSensitiveData ? p.PartitionKeyValue.ToString() : "?",
-            FormatParameters(p.Parameters, p is { LogSensitiveData: true, Parameters.Count: > 0 }),
+            p.LogSensitiveData ? p.PartitionKey : "?",
+            FormatParameters(p.Parameters, p.LogSensitiveData && p.Parameters.Count > 0),
             Environment.NewLine,
             p.QuerySql);
     }
@@ -108,7 +82,7 @@ public static class CosmosLoggerExtensions
     public static void ExecutingReadItem(
         this IDiagnosticsLogger<DbLoggerCategory.Database.Command> diagnostics,
         string containerId,
-        PartitionKey partitionKeyValue,
+        string? partitionKey,
         string resourceId)
     {
         var definition = CosmosResources.LogExecutingReadItem(diagnostics);
@@ -116,11 +90,7 @@ public static class CosmosLoggerExtensions
         if (diagnostics.ShouldLog(definition))
         {
             var logSensitiveData = diagnostics.ShouldLogSensitiveData();
-            definition.Log(
-                diagnostics,
-                logSensitiveData ? resourceId : "?",
-                containerId,
-                logSensitiveData ? partitionKeyValue.ToString() : "?");
+            definition.Log(diagnostics, logSensitiveData ? resourceId : "?", containerId, logSensitiveData ? partitionKey : "?");
         }
 
         if (diagnostics.NeedsEventData(definition, out var diagnosticSourceEnabled, out var simpleLogEnabled))
@@ -130,7 +100,7 @@ public static class CosmosLoggerExtensions
                 ExecutingReadItem,
                 resourceId,
                 containerId,
-                partitionKeyValue,
+                partitionKey,
                 diagnostics.ShouldLogSensitiveData());
 
             diagnostics.DispatchEventData(definition, eventData, diagnosticSourceEnabled, simpleLogEnabled);
@@ -141,9 +111,7 @@ public static class CosmosLoggerExtensions
     {
         var d = (EventDefinition<string, string, string?>)definition;
         var p = (CosmosReadItemEventData)payload;
-        return d.GenerateMessage(
-            p.LogSensitiveData ? p.ResourceId : "?",
-            p.ContainerId, p.LogSensitiveData ? p.PartitionKeyValue.ToString() : "?");
+        return d.GenerateMessage(p.LogSensitiveData ? p.ResourceId : "?", p.ContainerId, p.LogSensitiveData ? p.PartitionKey : "?");
     }
 
     /// <summary>
@@ -158,7 +126,7 @@ public static class CosmosLoggerExtensions
         double requestCharge,
         string activityId,
         string containerId,
-        PartitionKey? partitionKeyValue,
+        string? partitionKey,
         CosmosSqlQuery cosmosSqlQuery)
     {
         var definition = CosmosResources.LogExecutedReadNext(diagnostics);
@@ -177,7 +145,7 @@ public static class CosmosLoggerExtensions
                     requestCharge,
                     activityId,
                     containerId,
-                    logSensitiveData ? partitionKeyValue?.ToString() : "?",
+                    logSensitiveData ? partitionKey : "?",
                     FormatParameters(cosmosSqlQuery.Parameters, logSensitiveData && cosmosSqlQuery.Parameters.Count > 0),
                     Environment.NewLine,
                     cosmosSqlQuery.Query));
@@ -192,7 +160,7 @@ public static class CosmosLoggerExtensions
                 requestCharge,
                 activityId,
                 containerId,
-                partitionKeyValue,
+                partitionKey,
                 cosmosSqlQuery.Parameters.Select(p => (p.Name, p.Value)).ToList(),
                 cosmosSqlQuery.Query,
                 diagnostics.ShouldLogSensitiveData());
@@ -214,8 +182,8 @@ public static class CosmosLoggerExtensions
                 p.RequestCharge,
                 p.ActivityId,
                 p.ContainerId,
-                p.LogSensitiveData ? p.PartitionKeyValue.ToString() : "?",
-                FormatParameters(p.Parameters, p is { LogSensitiveData: true, Parameters.Count: > 0 }),
+                p.LogSensitiveData ? p.PartitionKey : "?",
+                FormatParameters(p.Parameters, p.LogSensitiveData && p.Parameters.Count > 0),
                 Environment.NewLine,
                 p.QuerySql));
     }
@@ -233,7 +201,7 @@ public static class CosmosLoggerExtensions
         string activityId,
         string resourceId,
         string containerId,
-        PartitionKey partitionKeyValue)
+        string? partitionKey)
     {
         var definition = CosmosResources.LogExecutedReadItem(diagnostics);
 
@@ -247,7 +215,7 @@ public static class CosmosLoggerExtensions
                 activityId,
                 containerId,
                 logSensitiveData ? resourceId : "?",
-                logSensitiveData ? partitionKeyValue.ToString() : "?");
+                logSensitiveData ? partitionKey : "?");
         }
 
         if (diagnostics.NeedsEventData(definition, out var diagnosticSourceEnabled, out var simpleLogEnabled))
@@ -260,7 +228,7 @@ public static class CosmosLoggerExtensions
                 activityId,
                 containerId,
                 resourceId,
-                partitionKeyValue,
+                partitionKey,
                 diagnostics.ShouldLogSensitiveData());
 
             diagnostics.DispatchEventData(definition, eventData, diagnosticSourceEnabled, simpleLogEnabled);
@@ -277,7 +245,7 @@ public static class CosmosLoggerExtensions
             p.ActivityId,
             p.ContainerId,
             p.LogSensitiveData ? p.ResourceId : "?",
-            p.LogSensitiveData ? p.PartitionKeyValue.ToString() : "?");
+            p.LogSensitiveData ? p.PartitionKey : "?");
     }
 
     /// <summary>
@@ -293,7 +261,7 @@ public static class CosmosLoggerExtensions
         string activityId,
         string resourceId,
         string containerId,
-        PartitionKey partitionKeyValue)
+        string? partitionKey)
     {
         var definition = CosmosResources.LogExecutedCreateItem(diagnostics);
 
@@ -307,7 +275,7 @@ public static class CosmosLoggerExtensions
                 activityId,
                 containerId,
                 logSensitiveData ? resourceId : "?",
-                logSensitiveData ? partitionKeyValue.ToString() : "?");
+                logSensitiveData ? partitionKey : "?");
         }
 
         if (diagnostics.NeedsEventData(definition, out var diagnosticSourceEnabled, out var simpleLogEnabled))
@@ -320,7 +288,7 @@ public static class CosmosLoggerExtensions
                 activityId,
                 containerId,
                 resourceId,
-                partitionKeyValue,
+                partitionKey,
                 diagnostics.ShouldLogSensitiveData());
 
             diagnostics.DispatchEventData(definition, eventData, diagnosticSourceEnabled, simpleLogEnabled);
@@ -337,7 +305,7 @@ public static class CosmosLoggerExtensions
             p.ActivityId,
             p.ContainerId,
             p.LogSensitiveData ? p.ResourceId : "?",
-            p.LogSensitiveData ? p.PartitionKeyValue.ToString() : "?");
+            p.LogSensitiveData ? p.PartitionKey : "?");
     }
 
     /// <summary>
@@ -353,7 +321,7 @@ public static class CosmosLoggerExtensions
         string activityId,
         string resourceId,
         string containerId,
-        PartitionKey partitionKeyValue)
+        string? partitionKey)
     {
         var definition = CosmosResources.LogExecutedDeleteItem(diagnostics);
 
@@ -367,7 +335,7 @@ public static class CosmosLoggerExtensions
                 activityId,
                 containerId,
                 logSensitiveData ? resourceId : "?",
-                logSensitiveData ? partitionKeyValue.ToString() : "?");
+                logSensitiveData ? partitionKey : "?");
         }
 
         if (diagnostics.NeedsEventData(definition, out var diagnosticSourceEnabled, out var simpleLogEnabled))
@@ -380,7 +348,7 @@ public static class CosmosLoggerExtensions
                 activityId,
                 containerId,
                 resourceId,
-                partitionKeyValue,
+                partitionKey,
                 diagnostics.ShouldLogSensitiveData());
 
             diagnostics.DispatchEventData(definition, eventData, diagnosticSourceEnabled, simpleLogEnabled);
@@ -397,7 +365,7 @@ public static class CosmosLoggerExtensions
             p.ActivityId,
             p.ContainerId,
             p.LogSensitiveData ? p.ResourceId : "?",
-            p.LogSensitiveData ? p.PartitionKeyValue.ToString() : "?");
+            p.LogSensitiveData ? p.PartitionKey : "?");
     }
 
     /// <summary>
@@ -413,7 +381,7 @@ public static class CosmosLoggerExtensions
         string activityId,
         string resourceId,
         string containerId,
-        PartitionKey partitionKeyValue)
+        string? partitionKey)
     {
         var definition = CosmosResources.LogExecutedReplaceItem(diagnostics);
 
@@ -427,7 +395,7 @@ public static class CosmosLoggerExtensions
                 activityId,
                 containerId,
                 logSensitiveData ? resourceId : "?",
-                logSensitiveData ? partitionKeyValue.ToString() : "?");
+                logSensitiveData ? partitionKey : "?");
         }
 
         if (diagnostics.NeedsEventData(definition, out var diagnosticSourceEnabled, out var simpleLogEnabled))
@@ -440,7 +408,7 @@ public static class CosmosLoggerExtensions
                 activityId,
                 containerId,
                 resourceId,
-                partitionKeyValue,
+                partitionKey,
                 diagnostics.ShouldLogSensitiveData());
 
             diagnostics.DispatchEventData(definition, eventData, diagnosticSourceEnabled, simpleLogEnabled);
@@ -457,62 +425,7 @@ public static class CosmosLoggerExtensions
             p.ActivityId,
             p.ContainerId,
             p.LogSensitiveData ? p.ResourceId : "?",
-            p.LogSensitiveData ? p.PartitionKeyValue.ToString() : "?");
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public static void NoPartitionKeyDefined(
-        this IDiagnosticsLogger<DbLoggerCategory.Model.Validation> diagnostics,
-        IEntityType entityType)
-    {
-        var definition = CosmosResources.LogNoPartitionKeyDefined(diagnostics);
-
-        if (diagnostics.ShouldLog(definition))
-        {
-            definition.Log(diagnostics, entityType.DisplayName());
-        }
-
-        if (diagnostics.NeedsEventData(definition, out var diagnosticSourceEnabled, out var simpleLogEnabled))
-        {
-            var eventData = new EntityTypeEventData(
-                definition,
-                (d, p) => ((EventDefinition<string>)d).GenerateMessage(((EntityTypeEventData)p).EntityType.DisplayName()),
-                entityType);
-            diagnostics.DispatchEventData(definition, eventData, diagnosticSourceEnabled, simpleLogEnabled);
-        }
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public static void PrimaryKeyValueNotSet(
-        this IDiagnosticsLogger<DbLoggerCategory.Update> diagnostics,
-        IProperty property)
-    {
-        var definition = CosmosResources.LogPrimaryKeyValueNotSet(diagnostics);
-
-        if (diagnostics.ShouldLog(definition))
-        {
-            definition.Log(diagnostics, property.DeclaringType.DisplayName(), property.Name);
-        }
-
-        if (diagnostics.NeedsEventData(definition, out var diagnosticSourceEnabled, out var simpleLogEnabled))
-        {
-            var eventData = new PropertyEventData(
-                definition,
-                (d, p) => ((EventDefinition<string, string>)d).GenerateMessage(
-                    ((PropertyEventData)p).Property.DeclaringType.DisplayName(), ((PropertyEventData)p).Property.Name),
-                property);
-            diagnostics.DispatchEventData(definition, eventData, diagnosticSourceEnabled, simpleLogEnabled);
-        }
+            p.LogSensitiveData ? p.PartitionKey : "?");
     }
 
     private static string FormatParameters(IReadOnlyList<(string Name, object? Value)> parameters, bool shouldLogParameterValues)

@@ -1,14 +1,19 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.EntityFrameworkCore.Internal;
+
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract partial class ProxyGraphUpdatesTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : ProxyGraphUpdatesTestBase<TFixture>.ProxyGraphUpdatesFixtureBase, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected ProxyGraphUpdatesTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     protected abstract bool DoesLazyLoading { get; }
     protected abstract bool DoesChangeTracking { get; }
@@ -391,12 +396,12 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                 {
                     e.AlternateId = RootAK;
 
-                    e.RequiredChildren = new ObservableHashSet<Required1>(ReferenceEqualityComparer.Instance)
+                    e.RequiredChildren = new ObservableHashSet<Required1>(LegacyReferenceEqualityComparer.Instance)
                     {
                         context.CreateProxy<Required1>(
                             e =>
                             {
-                                e.Children = new ObservableHashSet<Required2>(ReferenceEqualityComparer.Instance)
+                                e.Children = new ObservableHashSet<Required2>(LegacyReferenceEqualityComparer.Instance)
                                 {
                                     context.Set<Required2>().CreateProxy(), context.Set<Required2>().CreateProxy()
                                 };
@@ -404,36 +409,36 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                         context.CreateProxy<Required1>(
                             e =>
                             {
-                                e.Children = new ObservableHashSet<Required2>(ReferenceEqualityComparer.Instance)
+                                e.Children = new ObservableHashSet<Required2>(LegacyReferenceEqualityComparer.Instance)
                                 {
                                     context.Set<Required2>().CreateProxy(), context.Set<Required2>().CreateProxy()
                                 };
                             })
                     };
 
-                    e.OptionalChildren = new ObservableHashSet<Optional1>(ReferenceEqualityComparer.Instance)
+                    e.OptionalChildren = new ObservableHashSet<Optional1>(LegacyReferenceEqualityComparer.Instance)
                     {
                         context.Set<Optional1>().CreateProxy(
                             e =>
                             {
-                                e.Children = new ObservableHashSet<Optional2>(ReferenceEqualityComparer.Instance)
+                                e.Children = new ObservableHashSet<Optional2>(LegacyReferenceEqualityComparer.Instance)
                                 {
                                     context.Set<Optional2>().CreateProxy(), context.Set<Optional2>().CreateProxy()
                                 };
 
                                 e.CompositeChildren =
-                                    new ObservableHashSet<OptionalComposite2>(ReferenceEqualityComparer.Instance);
+                                    new ObservableHashSet<OptionalComposite2>(LegacyReferenceEqualityComparer.Instance);
                             }),
                         context.Set<Optional1>().CreateProxy(
                             e =>
                             {
-                                e.Children = new ObservableHashSet<Optional2>(ReferenceEqualityComparer.Instance)
+                                e.Children = new ObservableHashSet<Optional2>(LegacyReferenceEqualityComparer.Instance)
                                 {
                                     context.Set<Optional2>().CreateProxy(), context.Set<Optional2>().CreateProxy()
                                 };
 
                                 e.CompositeChildren =
-                                    new ObservableHashSet<OptionalComposite2>(ReferenceEqualityComparer.Instance);
+                                    new ObservableHashSet<OptionalComposite2>(LegacyReferenceEqualityComparer.Instance);
                             })
                     };
 
@@ -467,21 +472,21 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                             e.DerivedRoot = context.Set<Root>().CreateProxy();
                         });
 
-                    e.RequiredChildrenAk = new ObservableHashSet<RequiredAk1>(ReferenceEqualityComparer.Instance)
+                    e.RequiredChildrenAk = new ObservableHashSet<RequiredAk1>(LegacyReferenceEqualityComparer.Instance)
                     {
                         context.Set<RequiredAk1>().CreateProxy(
                             e =>
                             {
                                 e.AlternateId = Guid.NewGuid();
 
-                                e.Children = new ObservableHashSet<RequiredAk2>(ReferenceEqualityComparer.Instance)
+                                e.Children = new ObservableHashSet<RequiredAk2>(LegacyReferenceEqualityComparer.Instance)
                                 {
                                     context.Set<RequiredAk2>().CreateProxy(e => e.AlternateId = Guid.NewGuid()),
                                     context.Set<RequiredAk2>().CreateProxy(e => e.AlternateId = Guid.NewGuid())
                                 };
 
                                 e.CompositeChildren =
-                                    new ObservableHashSet<RequiredComposite2>(ReferenceEqualityComparer.Instance)
+                                    new ObservableHashSet<RequiredComposite2>(LegacyReferenceEqualityComparer.Instance)
                                     {
                                         context.Set<RequiredComposite2>().CreateProxy(), context.Set<RequiredComposite2>().CreateProxy()
                                     };
@@ -491,34 +496,34 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                             {
                                 e.AlternateId = Guid.NewGuid();
 
-                                e.Children = new ObservableHashSet<RequiredAk2>(ReferenceEqualityComparer.Instance)
+                                e.Children = new ObservableHashSet<RequiredAk2>(LegacyReferenceEqualityComparer.Instance)
                                 {
                                     context.Set<RequiredAk2>().CreateProxy(e => e.AlternateId = Guid.NewGuid()),
                                     context.Set<RequiredAk2>().CreateProxy(e => e.AlternateId = Guid.NewGuid())
                                 };
 
                                 e.CompositeChildren =
-                                    new ObservableHashSet<RequiredComposite2>(ReferenceEqualityComparer.Instance)
+                                    new ObservableHashSet<RequiredComposite2>(LegacyReferenceEqualityComparer.Instance)
                                     {
                                         context.Set<RequiredComposite2>().CreateProxy(), context.Set<RequiredComposite2>().CreateProxy()
                                     };
                             })
                     };
 
-                    e.OptionalChildrenAk = new ObservableHashSet<OptionalAk1>(ReferenceEqualityComparer.Instance)
+                    e.OptionalChildrenAk = new ObservableHashSet<OptionalAk1>(LegacyReferenceEqualityComparer.Instance)
                     {
                         context.Set<OptionalAk1>().CreateProxy(
                             e =>
                             {
                                 e.AlternateId = Guid.NewGuid();
 
-                                e.Children = new ObservableHashSet<OptionalAk2>(ReferenceEqualityComparer.Instance)
+                                e.Children = new ObservableHashSet<OptionalAk2>(LegacyReferenceEqualityComparer.Instance)
                                 {
                                     context.Set<OptionalAk2>().CreateProxy(e => e.AlternateId = Guid.NewGuid()),
                                     context.Set<OptionalAk2>().CreateProxy(e => e.AlternateId = Guid.NewGuid())
                                 };
                                 e.CompositeChildren =
-                                    new ObservableHashSet<OptionalComposite2>(ReferenceEqualityComparer.Instance)
+                                    new ObservableHashSet<OptionalComposite2>(LegacyReferenceEqualityComparer.Instance)
                                     {
                                         context.Set<OptionalComposite2>().CreateProxy(), context.Set<OptionalComposite2>().CreateProxy()
                                     };
@@ -528,14 +533,14 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                             {
                                 e.AlternateId = Guid.NewGuid();
 
-                                e.Children = new ObservableHashSet<OptionalAk2>(ReferenceEqualityComparer.Instance)
+                                e.Children = new ObservableHashSet<OptionalAk2>(LegacyReferenceEqualityComparer.Instance)
                                 {
                                     context.Set<OptionalAk2>().CreateProxy(e => e.AlternateId = Guid.NewGuid()),
                                     context.Set<OptionalAk2>().CreateProxy(e => e.AlternateId = Guid.NewGuid())
                                 };
 
                                 e.CompositeChildren =
-                                    new ObservableHashSet<OptionalComposite2>(ReferenceEqualityComparer.Instance)
+                                    new ObservableHashSet<OptionalComposite2>(LegacyReferenceEqualityComparer.Instance)
                                     {
                                         context.Set<OptionalComposite2>().CreateProxy(), context.Set<OptionalComposite2>().CreateProxy()
                                     };
@@ -596,7 +601,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                             e.DerivedRoot = context.CreateProxy<Root>();
                         });
 
-                    e.RequiredCompositeChildren = new ObservableHashSet<RequiredComposite1>(ReferenceEqualityComparer.Instance)
+                    e.RequiredCompositeChildren = new ObservableHashSet<RequiredComposite1>(LegacyReferenceEqualityComparer.Instance)
                     {
                         context.Set<RequiredComposite1>().CreateProxy(
                             e =>
@@ -604,7 +609,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                                 e.Id = 1;
 
                                 e.CompositeChildren =
-                                    new ObservableHashSet<OptionalOverlapping2>(ReferenceEqualityComparer.Instance)
+                                    new ObservableHashSet<OptionalOverlapping2>(LegacyReferenceEqualityComparer.Instance)
                                     {
                                         context.CreateProxy<OptionalOverlapping2>(e => e.Id = 1),
                                         context.CreateProxy<OptionalOverlapping2>(e => e.Id = 2)
@@ -616,7 +621,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                                 e.Id = 2;
 
                                 e.CompositeChildren =
-                                    new ObservableHashSet<OptionalOverlapping2>(ReferenceEqualityComparer.Instance)
+                                    new ObservableHashSet<OptionalOverlapping2>(LegacyReferenceEqualityComparer.Instance)
                                     {
                                         context.CreateProxy<OptionalOverlapping2>(e => e.Id = 3),
                                         context.CreateProxy<OptionalOverlapping2>(e => e.Id = 4)
@@ -625,7 +630,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
                     };
                 });
 
-        protected override Task SeedAsync(DbContext context)
+        protected override void Seed(DbContext context)
         {
             var tracker = new KeyValueEntityTracker();
 
@@ -645,7 +650,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
             dependent.Parent = parent;
             context.Add(dependent);
 
-            return context.SaveChangesAsync();
+            context.SaveChanges();
         }
 
         public class KeyValueEntityTracker
@@ -676,12 +681,12 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
     protected Expression<Func<Root, bool>> IsTheRoot
         => r => r.AlternateId == Fixture.RootAK;
 
-    protected Task<Root> LoadRootAsync(DbContext context)
-        => context.Set<Root>().SingleAsync(IsTheRoot);
+    protected Root LoadRoot(DbContext context)
+        => context.Set<Root>().Single(IsTheRoot);
 
-    protected Task<Root> LoadRequiredGraphAsync(DbContext context)
+    protected Root LoadRequiredGraph(DbContext context)
         => QueryRequiredGraph(context)
-            .SingleAsync(IsTheRoot);
+            .Single(IsTheRoot);
 
     protected IOrderedQueryable<Root> QueryRequiredGraph(DbContext context)
         => context.Set<Root>()
@@ -689,9 +694,9 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
             .Include(e => e.RequiredSingle).ThenInclude(e => e.Single)
             .OrderBy(e => e.Id);
 
-    protected Task<Root> LoadOptionalGraphAsync(DbContext context)
+    protected Root LoadOptionalGraph(DbContext context)
         => QueryOptionalGraph(context)
-            .SingleAsync(IsTheRoot);
+            .Single(IsTheRoot);
 
     protected IOrderedQueryable<Root> QueryOptionalGraph(DbContext context)
         => context.Set<Root>()
@@ -702,9 +707,9 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
             .Include(e => e.OptionalSingleMoreDerived).ThenInclude(e => e.Single)
             .OrderBy(e => e.Id);
 
-    protected Task<Root> LoadRequiredNonPkGraphAsync(DbContext context)
+    protected Root LoadRequiredNonPkGraph(DbContext context)
         => QueryRequiredNonPkGraph(context)
-            .SingleAsync(IsTheRoot);
+            .Single(IsTheRoot);
 
     protected IOrderedQueryable<Root> QueryRequiredNonPkGraph(DbContext context)
         => context.Set<Root>()
@@ -716,9 +721,9 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
             .Include(e => e.RequiredNonPkSingleMoreDerived).ThenInclude(e => e.DerivedRoot)
             .OrderBy(e => e.Id);
 
-    protected Task<Root> LoadRequiredAkGraphAsync(DbContext context)
+    protected Root LoadRequiredAkGraph(DbContext context)
         => QueryRequiredAkGraph(context)
-            .SingleAsync(IsTheRoot);
+            .Single(IsTheRoot);
 
     protected IOrderedQueryable<Root> QueryRequiredAkGraph(DbContext context)
         => context.Set<Root>()
@@ -728,9 +733,9 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
             .Include(e => e.RequiredSingleAk).ThenInclude(e => e.SingleComposite)
             .OrderBy(e => e.Id);
 
-    protected Task<Root> LoadOptionalAkGraphAsync(DbContext context)
+    protected Root LoadOptionalAkGraph(DbContext context)
         => QueryOptionalAkGraph(context)
-            .SingleAsync(IsTheRoot);
+            .Single(IsTheRoot);
 
     protected IOrderedQueryable<Root> QueryOptionalAkGraph(DbContext context)
         => context.Set<Root>()
@@ -742,9 +747,9 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
             .Include(e => e.OptionalSingleAkMoreDerived).ThenInclude(e => e.Single)
             .OrderBy(e => e.Id);
 
-    protected Task<Root> LoadRequiredNonPkAkGraphAsync(DbContext context)
+    protected Root LoadRequiredNonPkAkGraph(DbContext context)
         => QueryRequiredNonPkAkGraph(context)
-            .SingleAsync(IsTheRoot);
+            .Single(IsTheRoot);
 
     protected IOrderedQueryable<Root> QueryRequiredNonPkAkGraph(DbContext context)
         => context.Set<Root>()
@@ -756,9 +761,9 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
             .Include(e => e.RequiredNonPkSingleAkMoreDerived).ThenInclude(e => e.DerivedRoot)
             .OrderBy(e => e.Id);
 
-    protected Task<Root> LoadOptionalOneToManyGraphAsync(DbContext context)
+    protected Root LoadOptionalOneToManyGraph(DbContext context)
         => QueryOptionalOneToManyGraph(context)
-            .SingleAsync(IsTheRoot);
+            .Single(IsTheRoot);
 
     protected IOrderedQueryable<Root> QueryOptionalOneToManyGraph(DbContext context)
         => context.Set<Root>()
@@ -768,9 +773,9 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
             .Include(e => e.OptionalChildrenAk).ThenInclude(e => e.CompositeChildren)
             .OrderBy(e => e.Id);
 
-    protected Task<Root> LoadRequiredCompositeGraphAsync(DbContext context)
+    protected Root LoadRequiredCompositeGraph(DbContext context)
         => QueryRequiredCompositeGraph(context)
-            .SingleAsync(IsTheRoot);
+            .Single(IsTheRoot);
 
     protected IOrderedQueryable<Root> QueryRequiredCompositeGraph(DbContext context)
         => context.Set<Root>()
@@ -781,7 +786,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
     {
         var newEntities = new HashSet<object>(actualEntries.Select(ne => ne.Entity));
         var missingEntities = expectedEntries.Select(e => e.Entity).Where(e => !newEntities.Contains(e)).ToList();
-        Assert.Equal([], missingEntities);
+        Assert.Equal(Array.Empty<object>(), missingEntities);
         Assert.Equal(expectedEntries.Count, actualEntries.Count);
     }
 
@@ -796,10 +801,10 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         public virtual Guid AlternateId { get; set; }
 
         public virtual IEnumerable<Required1> RequiredChildren { get; set; }
-            = new ObservableHashSet<Required1>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<Required1>(LegacyReferenceEqualityComparer.Instance);
 
         public virtual IEnumerable<Optional1> OptionalChildren { get; set; }
-            = new ObservableHashSet<Optional1>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<Optional1>(LegacyReferenceEqualityComparer.Instance);
 
         public virtual RequiredSingle1 RequiredSingle { get; set; }
 
@@ -816,10 +821,10 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         public virtual OptionalSingle1MoreDerived OptionalSingleMoreDerived { get; set; }
 
         public virtual IEnumerable<RequiredAk1> RequiredChildrenAk { get; set; }
-            = new ObservableHashSet<RequiredAk1>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<RequiredAk1>(LegacyReferenceEqualityComparer.Instance);
 
         public virtual IEnumerable<OptionalAk1> OptionalChildrenAk { get; set; }
-            = new ObservableHashSet<OptionalAk1>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<OptionalAk1>(LegacyReferenceEqualityComparer.Instance);
 
         public virtual RequiredSingleAk1 RequiredSingleAk { get; set; }
 
@@ -836,7 +841,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         public virtual OptionalSingleAk1MoreDerived OptionalSingleAkMoreDerived { get; set; }
 
         public virtual IEnumerable<RequiredComposite1> RequiredCompositeChildren { get; set; }
-            = new ObservableHashSet<RequiredComposite1>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<RequiredComposite1>(LegacyReferenceEqualityComparer.Instance);
 
         public override bool Equals(object obj)
         {
@@ -861,7 +866,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         public virtual Root Parent { get; set; }
 
         public virtual IEnumerable<Required2> Children { get; set; }
-            = new ObservableHashSet<Required2>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<Required2>(LegacyReferenceEqualityComparer.Instance);
 
         public override bool Equals(object obj)
         {
@@ -960,10 +965,10 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         public virtual Root Parent { get; set; }
 
         public virtual IEnumerable<Optional2> Children { get; set; }
-            = new ObservableHashSet<Optional2>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<Optional2>(LegacyReferenceEqualityComparer.Instance);
 
         public virtual ICollection<OptionalComposite2> CompositeChildren { get; set; }
-            = new ObservableHashSet<OptionalComposite2>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<OptionalComposite2>(LegacyReferenceEqualityComparer.Instance);
 
         public override bool Equals(object obj)
         {
@@ -1318,10 +1323,10 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         public virtual Root Parent { get; set; }
 
         public virtual IEnumerable<RequiredAk2> Children { get; set; }
-            = new ObservableHashSet<RequiredAk2>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<RequiredAk2>(LegacyReferenceEqualityComparer.Instance);
 
         public virtual IEnumerable<RequiredComposite2> CompositeChildren { get; set; }
-            = new ObservableHashSet<RequiredComposite2>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<RequiredComposite2>(LegacyReferenceEqualityComparer.Instance);
 
         public override bool Equals(object obj)
         {
@@ -1402,7 +1407,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         }
 
         public virtual ICollection<OptionalOverlapping2> CompositeChildren { get; set; }
-            = new ObservableHashSet<OptionalOverlapping2>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<OptionalOverlapping2>(LegacyReferenceEqualityComparer.Instance);
 
         public override int GetHashCode()
             => Id;
@@ -1499,10 +1504,10 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         public virtual Root Parent { get; set; }
 
         public virtual IEnumerable<OptionalAk2> Children { get; set; }
-            = new ObservableHashSet<OptionalAk2>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<OptionalAk2>(LegacyReferenceEqualityComparer.Instance);
 
         public virtual ICollection<OptionalComposite2> CompositeChildren { get; set; }
-            = new ObservableHashSet<OptionalComposite2>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<OptionalComposite2>(LegacyReferenceEqualityComparer.Instance);
 
         public override bool Equals(object obj)
         {
@@ -1951,7 +1956,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
         public virtual int Status { get; set; }
 
         public virtual ICollection<BadOrder> BadOrders { get; set; }
-            = new ObservableHashSet<BadOrder>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<BadOrder>(LegacyReferenceEqualityComparer.Instance);
     }
 
     public class BadOrder
@@ -2017,18 +2022,18 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>(TFixture fixtu
     public record RecordPerson : RecordBase
     {
         public virtual ICollection<RecordCar> Vehicles { get; }
-            = new ObservableHashSet<RecordCar>(ReferenceEqualityComparer.Instance);
+            = new ObservableHashSet<RecordCar>(LegacyReferenceEqualityComparer.Instance);
     }
 
     protected DbContext CreateContext()
         => Fixture.CreateContext();
 
-    protected virtual Task ExecuteWithStrategyInTransactionAsync(
-        Func<DbContext, Task> testOperation,
-        Func<DbContext, Task> nestedTestOperation1 = null,
-        Func<DbContext, Task> nestedTestOperation2 = null,
-        Func<DbContext, Task> nestedTestOperation3 = null)
-        => TestHelpers.ExecuteWithStrategyInTransactionAsync(
+    protected virtual void ExecuteWithStrategyInTransaction(
+        Action<DbContext> testOperation,
+        Action<DbContext> nestedTestOperation1 = null,
+        Action<DbContext> nestedTestOperation2 = null,
+        Action<DbContext> nestedTestOperation3 = null)
+        => TestHelpers.ExecuteWithStrategyInTransaction(
             CreateContext, UseTransaction,
             testOperation, nestedTestOperation1, nestedTestOperation2, nestedTestOperation3);
 

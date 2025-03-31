@@ -3,8 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels;
 
-public abstract class MonsterContext(DbContextOptions options) : PoolableDbContext(options)
+public abstract class MonsterContext : PoolableDbContext
 {
+    protected MonsterContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public abstract IQueryable<ICustomer> Customers { get; }
     public abstract IQueryable<IBarcode> Barcodes { get; }
     public abstract IQueryable<IIncorrectScan> IncorrectScans { get; }
@@ -37,7 +42,7 @@ public abstract class MonsterContext(DbContextOptions options) : PoolableDbConte
     public abstract IQueryable<IDriver> Drivers { get; }
     public abstract IQueryable<ILicense> Licenses { get; }
 
-    public abstract Task SeedUsingFKs();
-    public abstract Task SeedUsingNavigations(bool dependentNavs, bool principalNavs);
-    public abstract Task SeedUsingNavigationsWithDeferredAdd();
+    public abstract void SeedUsingFKs();
+    public abstract void SeedUsingNavigations(bool dependentNavs, bool principalNavs);
+    public abstract void SeedUsingNavigationsWithDeferredAdd();
 }

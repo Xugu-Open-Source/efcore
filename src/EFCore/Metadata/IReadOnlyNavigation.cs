@@ -42,6 +42,15 @@ public interface IReadOnlyNavigation : IReadOnlyNavigationBase
     }
 
     /// <summary>
+    ///     Gets a value indicating whether the navigation property is a collection property.
+    /// </summary>
+    new bool IsCollection
+    {
+        [DebuggerStepThrough]
+        get => !IsOnDependent && !ForeignKey.IsUnique;
+    }
+
+    /// <summary>
     ///     Gets the foreign key that defines the relationship this navigation property will navigate.
     /// </summary>
     IReadOnlyForeignKey ForeignKey { get; }
@@ -88,7 +97,7 @@ public interface IReadOnlyNavigation : IReadOnlyNavigationBase
     bool IReadOnlyNavigationBase.IsCollection
     {
         [DebuggerStepThrough]
-        get => !IsOnDependent && !ForeignKey.IsUnique;
+        get => IsCollection;
     }
 
     /// <summary>
@@ -139,15 +148,6 @@ public interface IReadOnlyNavigation : IReadOnlyNavigationBase
             if (IsCollection)
             {
                 builder.Append(" Collection");
-            }
-            else if ((IsOnDependent && ForeignKey.IsRequired)
-                || (!IsOnDependent && ForeignKey.IsRequiredDependent))
-            {
-                builder.Append(" Required");
-            }
-            else
-            {
-                builder.Append(" Optional");
             }
 
             builder.Append(IsOnDependent ? " ToPrincipal " : " ToDependent ");

@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore.Sqlite.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class ComplexNavigationsQuerySqliteTest(ComplexNavigationsQuerySqliteFixture fixture)
-    : ComplexNavigationsQueryRelationalTestBase<ComplexNavigationsQuerySqliteFixture>(fixture)
+public class ComplexNavigationsQuerySqliteTest : ComplexNavigationsQueryRelationalTestBase<ComplexNavigationsQuerySqliteFixture>
 {
+    public ComplexNavigationsQuerySqliteTest(ComplexNavigationsQuerySqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public override async Task Let_let_contains_from_outer_let(bool async)
         => Assert.Equal(
             SqliteStrings.ApplyNotSupported,
@@ -41,21 +43,15 @@ public class ComplexNavigationsQuerySqliteTest(ComplexNavigationsQuerySqliteFixt
                 "Microsoft.EntityFrameworkCore.Query.ComplexNavigationsQueryTestBase<Microsoft.EntityFrameworkCore.Query.ComplexNavigationsQuerySqliteFixture>",
                 "ClientMethodNullableInt"));
 
-    public override async Task Correlated_projection_with_first(bool async)
+    public override async Task GroupJoin_with_subquery_on_inner(bool async)
         => Assert.Equal(
             SqliteStrings.ApplyNotSupported,
             (await Assert.ThrowsAsync<InvalidOperationException>(
-                () => base.Correlated_projection_with_first(async))).Message);
+                () => base.GroupJoin_with_subquery_on_inner(async))).Message);
 
-    public override async Task Multiple_select_many_in_projection(bool async)
+    public override async Task GroupJoin_with_subquery_on_inner_and_no_DefaultIfEmpty(bool async)
         => Assert.Equal(
             SqliteStrings.ApplyNotSupported,
             (await Assert.ThrowsAsync<InvalidOperationException>(
-                () => base.Multiple_select_many_in_projection(async))).Message);
-
-    public override async Task Single_select_many_in_projection_with_take(bool async)
-        => Assert.Equal(
-            SqliteStrings.ApplyNotSupported,
-            (await Assert.ThrowsAsync<InvalidOperationException>(
-                () => base.Single_select_many_in_projection_with_take(async))).Message);
+                () => base.GroupJoin_with_subquery_on_inner_and_no_DefaultIfEmpty(async))).Message);
 }

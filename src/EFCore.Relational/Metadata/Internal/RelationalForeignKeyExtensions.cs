@@ -233,20 +233,6 @@ public static class RelationalForeignKeyExtensions
             return null;
         }
 
-        if (foreignKey.PrincipalEntityType.GetMappingStrategy() == RelationalAnnotationNames.TpcMappingStrategy
-            && foreignKey.PrincipalEntityType.GetDerivedTypes().Any(et => StoreObjectIdentifier.Create(et, StoreObjectType.Table) != null))
-        {
-            logger?.ForeignKeyTpcPrincipalWarning((IForeignKey)foreignKey);
-            return null;
-        }
-
-        if (storeObject == principalStoreObject
-            && propertyNames.SequenceEqual(principalPropertyNames))
-        {
-            // Redundant FK
-            return null;
-        }
-
         var rootForeignKey = foreignKey;
 
         // Limit traversal to avoid getting stuck in a cycle (validation will throw for these later)
@@ -288,23 +274,35 @@ public static class RelationalForeignKeyExtensions
             rootForeignKey = linkedForeignKey;
         }
 
-        var onDependentMainFragment = foreignKey.DeclaringEntityType.IsMainFragment(storeObject);
-        var onPrincipalMainFragment = foreignKey.PrincipalEntityType.IsMainFragment(principalStoreObject);
+        if (foreignKey.PrincipalEntityType.GetMappingStrategy() == RelationalAnnotationNames.TpcMappingStrategy
+            && foreignKey.PrincipalEntityType.GetDerivedTypes().Any(et => StoreObjectIdentifier.Create(et, StoreObjectType.Table) != null))
+        {
+            logger?.ForeignKeyTpcPrincipalWarning((IForeignKey)foreignKey);
+            return null;
+        }
+
+        if (storeObject == principalStoreObject
+            && propertyNames.SequenceEqual(principalPropertyNames))
+        {
+            // Redundant FK
+            return null;
+        }
+
         if (foreignKey.PrincipalKey.IsPrimaryKey()
             && foreignKey.DeclaringEntityType.FindPrimaryKey() is IKey pk
             && foreignKey.Properties.SequenceEqual(pk.Properties))
         {
             if (!foreignKey.PrincipalEntityType.IsAssignableFrom(foreignKey.DeclaringEntityType)
-                && (!onDependentMainFragment
-                    || !onPrincipalMainFragment)
+                && (StoreObjectIdentifier.Create(foreignKey.DeclaringEntityType, StoreObjectType.Table) != storeObject
+                    || StoreObjectIdentifier.Create(foreignKey.PrincipalEntityType, StoreObjectType.Table) != principalStoreObject)
                 && ShareAnyFragments(foreignKey.DeclaringEntityType, foreignKey.PrincipalEntityType))
             {
-                // Only create table-sharing linking FKs between the main fragments
+                // Row-internal FK
                 return null;
             }
 
             if (foreignKey.PrincipalEntityType == foreignKey.DeclaringEntityType
-                && !onPrincipalMainFragment)
+                && StoreObjectIdentifier.Create(foreignKey.PrincipalEntityType, StoreObjectType.Table) != principalStoreObject)
             {
                 // Only create entity-splitting linking FKs to the main fragment
                 return null;
@@ -312,12 +310,12 @@ public static class RelationalForeignKeyExtensions
         }
 
         if (foreignKey.DeclaringEntityType.GetMappingStrategy() == RelationalAnnotationNames.TptMappingStrategy
-            && !onDependentMainFragment
+            && StoreObjectIdentifier.Create(foreignKey.DeclaringEntityType, StoreObjectType.Table) != storeObject
             && foreignKey.DeclaringEntityType.FindPrimaryKey() is IKey primaryKey
             && foreignKey.Properties.SequenceEqual(primaryKey.Properties))
         {
             // The identifying FK constraint is needed to be created only on the table that corresponds
-            // to the least derived mapped entity type
+            // to the declaring entity type
             return null;
         }
 
@@ -333,44 +331,10 @@ public static class RelationalForeignKeyExtensions
         return Uniquifier.Truncate(baseName, foreignKey.DeclaringEntityType.Model.GetMaxIdentifierLength());
 
         static bool ShareAnyFragments(IReadOnlyEntityType entityType1, IReadOnlyEntityType entityType2)
-        {
-            var commonTables = GetMappedStoreObjects(entityType1, StoreObjectType.Table);
-            commonTables.IntersectWith(GetMappedStoreObjects(entityType2, StoreObjectType.Table));
-            return commonTables.Any();
-        }
-
-        static HashSet<StoreObjectIdentifier> GetMappedStoreObjects(
-            IReadOnlyTypeBase type,
-            StoreObjectType storeObjectType)
-            => AddMappedStoreObjects(type, storeObjectType, []);
-
-        static HashSet<StoreObjectIdentifier> AddMappedStoreObjects(
-            IReadOnlyTypeBase type,
-            StoreObjectType storeObjectType,
-            HashSet<StoreObjectIdentifier> storeObjects)
-        {
-            var mainStoreObject = StoreObjectIdentifier.Create(type, storeObjectType);
-            if (mainStoreObject != null)
-            {
-                storeObjects.Add(mainStoreObject.Value);
-                storeObjects.UnionWith(type.GetMappingFragments(StoreObjectType.Table).Select(f => f.StoreObject));
-                return storeObjects;
-            }
-
-            if (storeObjectType is StoreObjectType.Function or StoreObjectType.SqlQuery)
-            {
-                return storeObjects;
-            }
-
-            if (type is IReadOnlyEntityType entityType)
-            {
-                foreach (var derivedType in entityType.GetDirectlyDerivedTypes())
-                {
-                    AddMappedStoreObjects(derivedType, storeObjectType, storeObjects);
-                }
-            }
-
-            return storeObjects;
-        }
+            => new[] { StoreObjectIdentifier.Create(entityType1, StoreObjectType.Table)!.Value }
+                .Concat(entityType1.GetMappingFragments(StoreObjectType.Table).Select(f => f.StoreObject))
+                .Intersect(
+                    new[] { StoreObjectIdentifier.Create(entityType2, StoreObjectType.Table)!.Value }
+                        .Concat(entityType2.GetMappingFragments(StoreObjectType.Table).Select(f => f.StoreObject))).Any();
     }
 }

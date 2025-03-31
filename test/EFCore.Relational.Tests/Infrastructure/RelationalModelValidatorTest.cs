@@ -112,14 +112,15 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
     [ConditionalFact]
     public virtual void Ignores_bool_with_default_value_false()
     {
-        var modelBuilder = CreateConventionModelBuilder();
+        var modelBuilder = CreateConventionlessModelBuilder();
         var model = modelBuilder.Model;
 
         var entityType = model.AddEntityType(typeof(E));
-        entityType.FindProperty("ImNot")!.SetDefaultValue(false);
-        entityType.FindProperty("ImNotUsed")!.SetDefaultValue(false);
+        SetPrimaryKey(entityType);
+        entityType.AddProperty("ImNot", typeof(bool?)).SetDefaultValue(false);
+        entityType.AddProperty("ImNotUsed", typeof(bool)).SetDefaultValue(false);
 
-        var property = entityType.FindProperty("ImBool")!;
+        var property = entityType.AddProperty("ImBool", typeof(bool));
         property.SetDefaultValue(false);
         property.ValueGenerated = ValueGenerated.OnAdd;
 
@@ -129,138 +130,43 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
     }
 
     [ConditionalFact]
-    public virtual void Bool_with_true_default_value_okay_because_sentinel_set_to_true()
+    public virtual void Detects_bool_with_default_value_not_false()
     {
-        var modelBuilder = CreateConventionModelBuilder();
+        var modelBuilder = CreateConventionlessModelBuilder();
         var model = modelBuilder.Model;
 
         var entityType = model.AddEntityType(typeof(E));
-        entityType.FindProperty("ImNot")!.SetDefaultValue(true);
-        entityType.FindProperty("ImNotUsed")!.SetDefaultValue(true);
+        SetPrimaryKey(entityType);
+        entityType.AddProperty("ImNot", typeof(bool?)).SetDefaultValue(true);
+        entityType.AddProperty("ImNotUsed", typeof(bool)).SetDefaultValue(true);
 
-        var property = entityType.FindProperty("ImBool")!;
+        var property = entityType.AddProperty("ImBool", typeof(bool));
         property.SetDefaultValue(true);
         property.ValueGenerated = ValueGenerated.OnAdd;
 
-        Assert.True((bool)property.Sentinel!);
-
-        Assert.DoesNotContain(LoggerFactory.Log, l => l.Level == LogLevel.Warning);
-    }
-
-    [ConditionalFact] // Issue #28509
-    public virtual void Bool_with_default_value_and_nullable_backing_field_is_fine()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        var model = modelBuilder.Model;
-
-        var entityType = model.AddEntityType(typeof(E2));
-        var property = entityType.FindProperty("ImBool")!;
-        property.SetField("_imBool");
-        property.SetDefaultValue(true);
-        property.ValueGenerated = ValueGenerated.OnAdd;
-
-        Assert.DoesNotContain(LoggerFactory.Log, l => l.Level == LogLevel.Warning);
+        VerifyWarning(
+            RelationalResources.LogBoolWithDefaultWarning(new TestLogger<TestRelationalLoggingDefinitions>())
+                .GenerateMessage("ImBool", "E"), modelBuilder);
     }
 
     [ConditionalFact]
     public virtual void Detects_bool_with_default_expression()
     {
-        var modelBuilder = CreateConventionModelBuilder();
+        var modelBuilder = CreateConventionlessModelBuilder();
         var model = modelBuilder.Model;
 
         var entityType = model.AddEntityType(typeof(E));
-        entityType.FindProperty("ImNot")!.SetDefaultValueSql("TRUE");
-        var property = entityType.FindProperty("ImBool")!;
+        SetPrimaryKey(entityType);
+        entityType.AddProperty("ImNot", typeof(bool?)).SetDefaultValueSql("TRUE");
+        entityType.AddProperty("ImNotUsed", typeof(bool)).SetDefaultValueSql("TRUE");
+
+        var property = entityType.AddProperty("ImBool", typeof(bool));
         property.SetDefaultValueSql("TRUE");
         property.ValueGenerated = ValueGenerated.OnAddOrUpdate;
 
         VerifyWarning(
             RelationalResources.LogBoolWithDefaultWarning(new TestLogger<TestRelationalLoggingDefinitions>())
-                .GenerateMessage("bool", "ImBool", "E", "False", "bool"), modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Ignores_enum_with_default_value_matching_CLR_default()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        var model = modelBuilder.Model;
-
-        var entityType = model.AddEntityType(typeof(WithEnum));
-        var defaultEnum = entityType.FindProperty(nameof(WithEnum.EnumWithDefaultConstraint))!;
-        defaultEnum!.SetDefaultValue(X.A);
-        defaultEnum.Sentinel = X.A;
-        var nullableEnum = entityType.FindProperty(nameof(WithEnum.NullableEnum))!;
-        nullableEnum.SetDefaultValue(X.B);
-        nullableEnum.Sentinel = X.B;
-
-        Validate(modelBuilder);
-
-        Assert.DoesNotContain(LoggerFactory.Log, l => l.Level == LogLevel.Warning);
-    }
-
-    [ConditionalFact]
-    public virtual void Detects_enum_with_database_default_not_set_to_CLR_default()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        var model = modelBuilder.Model;
-
-        var entityType = model.AddEntityType(typeof(WithEnum));
-        entityType.FindProperty(nameof(WithEnum.EnumWithDefaultConstraint))!.SetDefaultValue(X.B);
-        entityType.FindProperty(nameof(WithEnum.NullableEnum))!.SetDefaultValue(X.B);
-
-        Validate(modelBuilder);
-
-        VerifyWarning(
-            RelationalResources.LogBoolWithDefaultWarning(new TestLogger<TestRelationalLoggingDefinitions>())
-                .GenerateMessage("X", "EnumWithDefaultConstraint", "WithEnum", "0", "X"), modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Enum_with_database_default_not_set_to_CLR_default_okay_if_sentinel_set()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        var model = modelBuilder.Model;
-
-        var entityType = model.AddEntityType(typeof(WithEnum));
-        var property = entityType.FindProperty(nameof(WithEnum.EnumWithDefaultConstraint))!;
-        property.SetDefaultValue(X.B);
-        property.Sentinel = X.B;
-        entityType.FindProperty(nameof(WithEnum.NullableEnum))!.SetDefaultValue(X.B);
-
-        Validate(modelBuilder);
-
-        Assert.DoesNotContain(LoggerFactory.Log, l => l.Level == LogLevel.Warning);
-    }
-
-    [ConditionalFact]
-    public virtual void Enum_with_database_default_not_set_to_CLR_default_and_nullable_backing_field_is_fine()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        var model = modelBuilder.Model;
-
-        var entityType = model.AddEntityType(typeof(WithEnum2));
-        entityType.FindProperty(nameof(WithEnum2.EnumWithDefaultConstraint))!.SetDefaultValue(X.B);
-
-        Validate(modelBuilder);
-
-        Assert.DoesNotContain(LoggerFactory.Log, l => l.Level == LogLevel.Warning);
-    }
-
-    [ConditionalFact]
-    public virtual void Detects_enum_with_default_expression()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        var model = modelBuilder.Model;
-
-        var entityType = model.AddEntityType(typeof(WithEnum));
-        entityType.FindProperty(nameof(WithEnum.EnumWithDefaultConstraint))!.SetDefaultValueSql("SQL");
-        entityType.FindProperty(nameof(WithEnum.NullableEnum))!.SetDefaultValueSql("SQL");
-
-        Validate(modelBuilder);
-
-        VerifyWarning(
-            RelationalResources.LogBoolWithDefaultWarning(new TestLogger<TestRelationalLoggingDefinitions>())
-                .GenerateMessage("X", "EnumWithDefaultConstraint", "WithEnum", "0", "X"), modelBuilder);
+                .GenerateMessage("ImBool", "E"), modelBuilder);
     }
 
     [ConditionalFact]
@@ -271,10 +177,10 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
 
         var entityA = model.AddEntityType(typeof(A));
         SetPrimaryKey(entityA);
-        entityA.FindProperty("Id")!.SetDefaultValue(1);
+        entityA.FindProperty("Id").SetDefaultValue(1);
         AddProperties(entityA);
 
-        entityA.FindProperty("Id")!.SetDefaultValue(1);
+        entityA.FindProperty("Id").SetDefaultValue(1);
 
         VerifyWarning(
             RelationalResources.LogKeyHasDefaultValue(
@@ -515,26 +421,22 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
     }
 
     [ConditionalFact]
-    public virtual void Passes_on_shared_columns_with_shared_table()
+    public virtual void Passes_on_not_configured_shared_columns_with_shared_table()
     {
         var modelBuilder = CreateConventionModelBuilder();
 
         modelBuilder.Entity<A>().HasOne<B>().WithOne(b => b.A).HasForeignKey<A>(a => a.Id).HasPrincipalKey<B>(b => b.Id).IsRequired();
         modelBuilder.Entity<A>().Property(a => a.P0).HasColumnName(nameof(A.P0));
-        modelBuilder.Entity<A>().Property(a => a.P3).HasColumnName(nameof(A.P3))
-            .HasConversion(e => (long?)e, e => (int?)e);
         modelBuilder.Entity<A>().Property(a => a.P1).IsRequired();
         modelBuilder.Entity<A>().ToTable("Table");
         modelBuilder.Entity<B>().Property(b => b.P0).HasColumnName(nameof(A.P0)).HasColumnType("someInt");
-        modelBuilder.Entity<B>().Property(b => b.P3).HasColumnName(nameof(A.P3))
-            .HasConversion(e => (long)e, e => (int?)e);
         modelBuilder.Entity<B>().ToTable("Table");
 
         Validate(modelBuilder);
     }
 
     [ConditionalFact]
-    public virtual void Throws_on_nullable_shared_columns_with_shared_table_with_dependents()
+    public virtual void Throws_on_not_configured_shared_columns_with_shared_table_with_dependents()
     {
         var modelBuilder = CreateConventionModelBuilder();
 
@@ -548,7 +450,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
     }
 
     [ConditionalFact]
-    public virtual void Warns_on_no_required_columns_with_shared_table()
+    public virtual void Warns_on_not_configured_shared_columns_with_shared_table()
     {
         var modelBuilder = CreateConventionModelBuilder();
 
@@ -591,7 +493,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
     }
 
     [ConditionalFact]
-    public virtual void Passes_for_incompatible_shared_columns_in_shared_table_with_different_provider_types()
+    public virtual void Detects_incompatible_shared_columns_in_shared_table_with_different_provider_types()
     {
         var modelBuilder = CreateConventionModelBuilder();
 
@@ -600,57 +502,6 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         modelBuilder.Entity<A>().ToTable("Table");
         modelBuilder.Entity<B>().Property(b => b.P0).HasColumnName(nameof(A.P0)).HasColumnType("someInt");
         modelBuilder.Entity<B>().ToTable("Table");
-
-        Validate(modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Detects_incompatible_shared_columns_in_shared_table_with_different_provider_types_for_unique_indexes()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<A>().HasOne<B>().WithOne(b => b.A).HasForeignKey<A>(a => a.Id).HasPrincipalKey<B>(b => b.Id).IsRequired();
-        modelBuilder.Entity<A>().Property(a => a.P0).HasColumnName(nameof(A.P0)).HasColumnType("someInt").HasConversion<long>();
-        modelBuilder.Entity<A>().ToTable("Table");
-        modelBuilder.Entity<B>().Property(b => b.P0).HasColumnName(nameof(A.P0)).HasColumnType("someInt");
-        modelBuilder.Entity<B>().ToTable("Table");
-        modelBuilder.Entity<A>().HasIndex(a => a.P0).IsUnique();
-
-        VerifyError(
-            RelationalStrings.DuplicateColumnNameProviderTypeMismatch(
-                nameof(A), nameof(A.P0), nameof(B), nameof(B.P0), nameof(B.P0), "Table", "long", "int"),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Detects_incompatible_shared_columns_in_shared_table_with_different_provider_types_for_keys()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<A>().HasOne<B>().WithOne(b => b.A).HasForeignKey<A>(a => a.Id).HasPrincipalKey<B>(b => b.Id).IsRequired();
-        modelBuilder.Entity<A>().Property(a => a.P0).HasColumnName(nameof(A.P0)).HasColumnType("someInt").HasConversion<long>();
-        modelBuilder.Entity<A>().ToTable("Table");
-        modelBuilder.Entity<B>().Property(b => b.P0).HasColumnName(nameof(A.P0)).HasColumnType("someInt");
-        modelBuilder.Entity<B>().ToTable("Table");
-        modelBuilder.Entity<A>().HasAlternateKey(a => a.P0);
-
-        VerifyError(
-            RelationalStrings.DuplicateColumnNameProviderTypeMismatch(
-                nameof(A), nameof(A.P0), nameof(B), nameof(B.P0), nameof(B.P0), "Table", "long", "int"),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Detects_incompatible_shared_columns_in_shared_table_with_different_provider_types_for_foreign_keys()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<A>().HasOne<B>().WithOne(b => b.A).HasForeignKey<A>(a => a.Id).HasPrincipalKey<B>(b => b.Id).IsRequired();
-        modelBuilder.Entity<A>().Property(a => a.P0).HasColumnName(nameof(A.P0)).HasColumnType("someInt").HasConversion<long>();
-        modelBuilder.Entity<A>().ToTable("Table");
-        modelBuilder.Entity<B>().Property(b => b.P0).HasColumnName(nameof(A.P0)).HasColumnType("someInt");
-        modelBuilder.Entity<B>().ToTable("Table");
-        modelBuilder.Entity<A>().HasOne<B>().WithOne().HasForeignKey<A>(a => a.P0).HasPrincipalKey<B>(b => b.Id);
 
         VerifyError(
             RelationalStrings.DuplicateColumnNameProviderTypeMismatch(
@@ -729,7 +580,9 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         modelBuilder.Entity<A>().HasOne<B>().WithOne().HasForeignKey<B>(a => a.Id).HasPrincipalKey<A>(b => b.Id).IsRequired();
         modelBuilder.Entity<B>().ToTable("Table");
 
-        VerifyError(CoreStrings.IdentifyingRelationshipCycle("A -> B"), modelBuilder);
+        VerifyError(
+            CoreStrings.IdentifyingRelationshipCycle("A -> B"),
+            modelBuilder);
     }
 
     [ConditionalFact]
@@ -1395,7 +1248,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
 
         // Should throw. Issue #23144.
         Assert.Contains(
-            "No exception was thrown",
+            "(No exception was thrown)",
             Assert.Throws<ThrowsException>(
                 () => VerifyError(
                     RelationalStrings.DuplicateForeignKeyTableMismatch(
@@ -1921,10 +1774,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         modelBuilder.Entity<Cat>()
             .Property<byte[]>("Version").IsRowVersion().HasColumnName("Version");
 
-        var model = Validate(modelBuilder);
-
-        var animalType = model.FindEntityType(typeof(Animal))!;
-        Assert.Null(animalType.GetDeclaredProperties().SingleOrDefault(p => p.IsConcurrencyToken));
+        Validate(modelBuilder);
     }
 
     [ConditionalFact]
@@ -1950,10 +1800,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         modelBuilder.Entity<Cat>()
             .Property<byte[]>("Version").IsRowVersion().HasColumnName("Version");
 
-        var model = Validate(modelBuilder);
-
-        var animalType = model.FindEntityType(typeof(Animal))!;
-        Assert.Null(animalType.GetDeclaredProperties().SingleOrDefault(p => p.IsConcurrencyToken));
+        Validate(modelBuilder);
     }
 
     [ConditionalFact]
@@ -1970,7 +1817,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         var model = Validate(modelBuilder);
 
         var animalType = model.FindEntityType(typeof(Animal));
-        Assert.DoesNotContain(animalType.GetProperties(), p => p.IsConcurrencyToken);
+        Assert.Empty(animalType.GetProperties().Where(p => p.IsConcurrencyToken));
     }
 
     [ConditionalFact]
@@ -1987,7 +1834,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         var personType = model.FindEntityType(typeof(Person))!;
         var concurrencyProperty = personType.GetDeclaredProperties().Single(p => p.IsConcurrencyToken);
         Assert.Equal("Version", concurrencyProperty.GetColumnName());
-        Assert.Equal(typeof(ulong), concurrencyProperty.ClrType);
+        Assert.Equal(typeof(byte[]), concurrencyProperty.ClrType);
     }
 
     [ConditionalFact]
@@ -2023,7 +1870,8 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         Assert.Null(animalType.GetDeclaredProperties().SingleOrDefault(p => p.IsConcurrencyToken));
 
         var dogType = model.FindEntityType(typeof(Dog))!;
-        Assert.Null(dogType.GetDeclaredProperties().SingleOrDefault(p => p.IsConcurrencyToken));
+        var concurrencyProperty = dogType.GetDeclaredProperties().Single(p => p.IsConcurrencyToken);
+        Assert.Equal("Version", concurrencyProperty.GetColumnName());
     }
 
     [ConditionalFact]
@@ -2036,10 +1884,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
             pb => pb.Property<byte[]>("Version").IsRowVersion());
         modelBuilder.Entity<Dog>().Ignore(d => d.FavoritePerson);
 
-        var model = Validate(modelBuilder);
-
-        var dogType = model.FindEntityType(typeof(Dog))!;
-        Assert.Null(dogType.GetDeclaredProperties().SingleOrDefault(p => p.IsConcurrencyToken));
+        Validate(modelBuilder);
     }
 
     [ConditionalFact]
@@ -2488,43 +2333,6 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
     }
 
     [ConditionalFact]
-    public virtual void Detects_owned_table_sharing_on_abstract_class_with_TPC()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<LivingBeing>()
-            .UseTpcMappingStrategy()
-            .OwnsOne(b => b.Details);
-
-        modelBuilder.Entity<Animal>();
-
-        VerifyError(
-            RelationalStrings.UnmappedNonTPHOwner("LivingBeing", "Details", "OwnedEntity", "Table"),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Detects_owned_view_sharing_on_abstract_class_with_TPT()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<LivingBeing>()
-            .UseTptMappingStrategy()
-            .OwnsOne(
-                b => b.Details, ob =>
-                {
-                    ob.ToTable((string)null);
-                });
-
-        modelBuilder.Entity<Animal>()
-            .ToView("Animal");
-
-        VerifyError(
-            RelationalStrings.UnmappedNonTPHOwner("LivingBeing", "Details", "OwnedEntity", "View"),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
     public virtual void Detects_linking_relationship_on_derived_type_in_TPC()
     {
         var modelBuilder = CreateConventionModelBuilder();
@@ -2720,7 +2528,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
 
         var methodInfo
             = typeof(TestMethods)
-                .GetRuntimeMethod(nameof(TestMethods.MethodA), []);
+                .GetRuntimeMethod(nameof(TestMethods.MethodA), Array.Empty<Type>());
 
         modelBuilder.HasDbFunction(methodInfo);
 
@@ -2754,7 +2562,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
 
         var methodInfo
             = typeof(TestMethods)
-                .GetRuntimeMethod(nameof(TestMethods.MethodA), []);
+                .GetRuntimeMethod(nameof(TestMethods.MethodA), Array.Empty<Type>());
 
         var function = modelBuilder.HasDbFunction(methodInfo).Metadata;
 
@@ -3561,7 +3369,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         modelBuilder.Entity<Animal>().ToTable((string)null);
         modelBuilder.Entity<Animal>()
             .HasIndex(
-                [nameof(Animal.Id), nameof(Animal.Name)],
+                new[] { nameof(Animal.Id), nameof(Animal.Name) },
                 "IX_AllPropertiesNotMapped");
 
         var definition = RelationalResources
@@ -3583,7 +3391,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         modelBuilder.Entity<Animal>().ToTable((string)null);
         modelBuilder.Entity<Cat>().ToTable("Cats")
             .HasIndex(
-                [nameof(Cat.Identity), nameof(Animal.Name)],
+                new[] { nameof(Cat.Identity), nameof(Animal.Name) },
                 "IX_MixOfMappedAndUnmappedProperties");
 
         Validate(modelBuilder);
@@ -3618,7 +3426,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         modelBuilder.Entity<Animal>();
         modelBuilder.Entity<Cat>().ToTable((string)null)
             .HasIndex(
-                [nameof(Cat.Identity), nameof(Animal.Name)],
+                new[] { nameof(Cat.Identity), nameof(Animal.Name) },
                 "IX_MixOfMappedAndUnmappedProperties");
 
         var definition = RelationalResources
@@ -3645,9 +3453,9 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
 
         Validate(modelBuilder);
 
-        Assert.DoesNotContain(
-            LoggerFactory.Log,
-            l => l.Level != LogLevel.Trace && l.Level != LogLevel.Debug);
+        Assert.Empty(
+            LoggerFactory.Log
+                .Where(l => l.Level != LogLevel.Trace && l.Level != LogLevel.Debug));
     }
 
     [ConditionalFact]
@@ -3683,7 +3491,7 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         modelBuilder.Entity<Cat>().ToTable("Cats");
         modelBuilder.Entity<Cat>()
             .HasIndex(
-                [nameof(Animal.Name), nameof(Cat.Identity)],
+                new[] { nameof(Animal.Name), nameof(Cat.Identity) },
                 "IX_MappedToDifferentTables");
 
         var definition = RelationalResources
@@ -3802,19 +3610,6 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         Assert.Equal(ValueGenerated.OnAdd, keyProperties[1].ValueGenerated);
     }
 
-    [ConditionalFact]
-    public void Detects_trigger_on_TPH_non_root()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<Animal>();
-        modelBuilder.Entity<Cat>().ToTable(tb => tb.HasTrigger("SomeTrigger"));
-
-        VerifyWarning(
-            RelationalResources.LogTriggerOnNonRootTphEntity(new TestLogger<TestRelationalLoggingDefinitions>())
-                .GenerateMessage("Cat", "Animal"), modelBuilder);
-    }
-
     private class TpcBase
     {
         public int Id { get; set; }
@@ -3845,17 +3640,26 @@ public partial class RelationalModelValidatorTest : ModelValidatorTest
         entityType.SetDiscriminatorValue(entityType.Name);
     }
 
-    public class TestDecimalToLongConverter() : ValueConverter<decimal, long>(convertToProviderExpression, convertFromProviderExpression)
+    public class TestDecimalToLongConverter : ValueConverter<decimal, long>
     {
         private static readonly Expression<Func<decimal, long>> convertToProviderExpression = d => (long)(d * 100);
         private static readonly Expression<Func<long, decimal>> convertFromProviderExpression = l => l / 100m;
+
+        public TestDecimalToLongConverter()
+            : base(convertToProviderExpression, convertFromProviderExpression)
+        {
+        }
     }
 
-    public class TestDecimalToDecimalConverter()
-        : ValueConverter<decimal, decimal>(convertToProviderExpression, convertFromProviderExpression)
+    public class TestDecimalToDecimalConverter : ValueConverter<decimal, decimal>
     {
         private static readonly Expression<Func<decimal, decimal>> convertToProviderExpression = d => d * 100m;
         private static readonly Expression<Func<decimal, decimal>> convertFromProviderExpression = l => l / 100m;
+
+        public TestDecimalToDecimalConverter()
+            : base(convertToProviderExpression, convertFromProviderExpression)
+        {
+        }
     }
 
     private class BaseTestMethods

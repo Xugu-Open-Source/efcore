@@ -19,17 +19,17 @@ public class TableMappingBase<TColumnMapping> : Annotatable, ITableMappingBase
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public TableMappingBase(
-        ITypeBase typeBase,
+        IEntityType entityType,
         TableBase table,
-        bool? includesDerivedTypes)
+        bool includesDerivedTypes)
     {
-        TypeBase = typeBase;
+        EntityType = entityType;
         Table = table;
         IncludesDerivedTypes = includesDerivedTypes;
     }
 
     /// <inheritdoc />
-    public virtual ITypeBase TypeBase { get; }
+    public virtual IEntityType EntityType { get; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -55,7 +55,7 @@ public class TableMappingBase<TColumnMapping> : Annotatable, ITableMappingBase
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected virtual List<TColumnMapping> ColumnMappings { get; }
-        = [];
+        = new();
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -77,31 +77,13 @@ public class TableMappingBase<TColumnMapping> : Annotatable, ITableMappingBase
     }
 
     /// <inheritdoc />
-    public virtual bool? IncludesDerivedTypes { get; }
+    public virtual bool IncludesDerivedTypes { get; }
 
     /// <inheritdoc />
     public virtual bool? IsSharedTablePrincipal { get; set; }
 
     /// <inheritdoc />
-    public virtual bool? IsSplitEntityTypePrincipal { get; init; }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual void SetIsSharedTablePrincipal(bool isSharedTablePrincipal)
-        => throw new NotImplementedException();
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override string ToString()
-        => ((ITableMappingBase)this).ToDebugString(MetadataDebugStringOptions.SingleLineDefault);
+    public virtual bool? IsSplitEntityTypePrincipal { get; set; }
 
     IEnumerable<IColumnMappingBase> ITableMappingBase.ColumnMappings
     {

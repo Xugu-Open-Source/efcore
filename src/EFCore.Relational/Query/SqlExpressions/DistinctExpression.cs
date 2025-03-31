@@ -14,8 +14,6 @@ namespace Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 /// </summary>
 public class DistinctExpression : SqlExpression
 {
-    private static ConstructorInfo? _quotingConstructor;
-
     /// <summary>
     ///     Creates a new instance of the <see cref="DistinctExpression" /> class.
     /// </summary>
@@ -55,12 +53,6 @@ public class DistinctExpression : SqlExpression
             ? new DistinctExpression(operand)
             : this;
     }
-
-    /// <inheritdoc />
-    public override Expression Quote()
-        => New(
-            _quotingConstructor ??= typeof(DistinctExpression).GetConstructor([typeof(SqlExpression)])!,
-            Operand.Quote());
 
     /// <inheritdoc />
     protected override void Print(ExpressionPrinter expressionPrinter)

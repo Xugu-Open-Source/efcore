@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Text;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 // ReSharper disable once CheckNamespace
@@ -135,12 +134,9 @@ public static class RelationalForeignKeyExtensions
     /// <param name="foreignKey">The foreign key.</param>
     /// <returns>The foreign key constraints to which the foreign key is mapped.</returns>
     public static IEnumerable<IForeignKeyConstraint> GetMappedConstraints(this IForeignKey foreignKey)
-    {
-        foreignKey.DeclaringEntityType.Model.EnsureRelationalModel();
-        return (IEnumerable<IForeignKeyConstraint>?)foreignKey.FindRuntimeAnnotationValue(
+        => (IEnumerable<IForeignKeyConstraint>?)foreignKey.FindRuntimeAnnotationValue(
                 RelationalAnnotationNames.ForeignKeyMappings)
             ?? Enumerable.Empty<IForeignKeyConstraint>();
-    }
 
     /// <summary>
     ///     <para>
@@ -158,14 +154,9 @@ public static class RelationalForeignKeyExtensions
         this IReadOnlyForeignKey foreignKey,
         in StoreObjectIdentifier storeObject)
     {
-        if (foreignKey.PrincipalEntityType.GetTableName() is not { } principalTableName)
-        {
-            return null;
-        }
-
         var foreignKeyName = foreignKey.GetConstraintName(
             storeObject,
-            StoreObjectIdentifier.Table(principalTableName, foreignKey.PrincipalEntityType.GetSchema()));
+            StoreObjectIdentifier.Table(foreignKey.PrincipalEntityType.GetTableName()!, foreignKey.PrincipalEntityType.GetSchema()));
         var rootForeignKey = foreignKey;
 
         // Limit traversal to avoid getting stuck in a cycle (validation will throw for these later)
@@ -177,16 +168,11 @@ public static class RelationalForeignKeyExtensions
                          .FindRowInternalForeignKeys(storeObject)
                          .SelectMany(fk => fk.PrincipalEntityType.GetForeignKeys()))
             {
-                principalTableName = otherForeignKey.PrincipalEntityType.GetTableName();
-
-                if (principalTableName is null)
-                {
-                    return null;
-                }
-
                 if (otherForeignKey.GetConstraintName(
                         storeObject,
-                        StoreObjectIdentifier.Table(principalTableName, otherForeignKey.PrincipalEntityType.GetSchema()))
+                        StoreObjectIdentifier.Table(
+                            otherForeignKey.PrincipalEntityType.GetTableName()!,
+                            otherForeignKey.PrincipalEntityType.GetSchema()))
                     == foreignKeyName)
                 {
                     linkedForeignKey = otherForeignKey;
@@ -217,9 +203,12 @@ public static class RelationalForeignKeyExtensions
     {
         var entityType = foreignKey.DeclaringEntityType;
         var primaryKey = entityType.FindPrimaryKey();
-        if (primaryKey == null
-            || entityType.IsMappedToJson()
-            || !foreignKey.PrincipalKey.IsPrimaryKey()
+        if (primaryKey == null || entityType.IsMappedToJson())
+        {
+            return false;
+        }
+
+        if (!foreignKey.PrincipalKey.IsPrimaryKey()
             || foreignKey.PrincipalEntityType.IsAssignableFrom(foreignKey.DeclaringEntityType)
             || !foreignKey.Properties.SequenceEqual(primaryKey.Properties)
             || !IsMapped(foreignKey, storeObject))
@@ -274,7 +263,7 @@ public static class RelationalForeignKeyExtensions
 
     /// <summary>
     ///     <para>
-    ///         Finds the first <see cref="IForeignKey" /> that is mapped to the same constraint in a shared table-like object.
+    ///         Finds the first <see cref="IConventionForeignKey" /> that is mapped to the same constraint in a shared table-like object.
     ///     </para>
     ///     <para>
     ///         This method is typically used by database providers (and other extensions). It is generally

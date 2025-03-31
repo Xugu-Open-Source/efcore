@@ -29,13 +29,12 @@ public class ServiceProperty : PropertyBase, IMutableServiceProperty, IConventio
         string name,
         PropertyInfo? propertyInfo,
         FieldInfo? fieldInfo,
-        Type serviceType,
         EntityType declaringEntityType,
         ConfigurationSource configurationSource)
         : base(name, propertyInfo, fieldInfo, configurationSource)
     {
         DeclaringEntityType = declaringEntityType;
-        ClrType = serviceType;
+        ClrType = (propertyInfo?.PropertyType ?? fieldInfo?.FieldType)!;
 
         _builder = new InternalServicePropertyBuilder(this, declaringEntityType.Model.Builder);
     }
@@ -78,7 +77,7 @@ public class ServiceProperty : PropertyBase, IMutableServiceProperty, IConventio
     public virtual InternalServicePropertyBuilder Builder
     {
         [DebuggerStepThrough]
-        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel(Name));
+        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
     /// <summary>
@@ -165,12 +164,6 @@ public class ServiceProperty : PropertyBase, IMutableServiceProperty, IConventio
 
     private void UpdateParameterBindingConfigurationSource(ConfigurationSource configurationSource)
         => _parameterBindingConfigurationSource = configurationSource.Max(_parameterBindingConfigurationSource);
-
-    /// <summary>
-    ///     Gets the sentinel value that indicates that this property is not set.
-    /// </summary>
-    public virtual object? Sentinel
-        => null;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

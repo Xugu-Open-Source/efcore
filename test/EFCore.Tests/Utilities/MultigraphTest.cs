@@ -195,7 +195,7 @@ public class MultigraphTest
         graph.AddEdge(vertexOne, vertexThree, edgeTwo);
 
         Assert.Equal(
-            [vertexTwo, vertexOne, vertexThree],
+            new[] { vertexTwo, vertexOne, vertexThree },
             graph.TopologicalSort().ToArray());
     }
 
@@ -220,7 +220,7 @@ public class MultigraphTest
         graph.AddEdge(vertexThree, vertexTwo, edgeThree);
 
         Assert.Equal(
-            [vertexOne, vertexThree, vertexTwo],
+            new[] { vertexOne, vertexThree, vertexTwo },
             graph.TopologicalSort().ToArray());
     }
 
@@ -238,7 +238,7 @@ public class MultigraphTest
         graph.AddEdge(vertexOne, vertexOne, edgeOne);
 
         Assert.Equal(
-            [vertexOne],
+            new[] { vertexOne },
             graph.TopologicalSort(
                 (from, to, edges) =>
                     (from == vertexOne)
@@ -268,7 +268,7 @@ public class MultigraphTest
         graph.AddEdge(vertexThree, vertexOne, edgeThree);
 
         Assert.Equal(
-            [vertexOne, vertexTwo, vertexThree],
+            new[] { vertexOne, vertexTwo, vertexThree },
             graph.TopologicalSort(
                 (from, to, edges) =>
                     (from == vertexThree)
@@ -308,7 +308,7 @@ public class MultigraphTest
         graph.AddEdge(vertexFive, vertexOne, edgeSix);
 
         Assert.Equal(
-            [vertexTwo, vertexThree, vertexOne, vertexFour, vertexFive],
+            new[] { vertexTwo, vertexThree, vertexOne, vertexFour, vertexFive },
             graph.TopologicalSort(
                 (from, to, edges) =>
                 {
@@ -412,7 +412,7 @@ public class MultigraphTest
         graph.AddEdge(vertexTwo, vertexFour, edgeTwo);
 
         Assert.Equal(
-            [vertexOne, vertexTwo, vertexThree, vertexFour],
+            new[] { vertexOne, vertexTwo, vertexThree, vertexFour },
             graph.TopologicalSort().ToArray());
     }
 
@@ -436,7 +436,7 @@ public class MultigraphTest
         graph.AddEdge(vertexTwo, vertexFour, edgeTwo);
 
         Assert.Equal(
-            [vertexTwo, vertexOne, vertexFour, vertexThree],
+            new[] { vertexTwo, vertexOne, vertexFour, vertexThree },
             graph.TopologicalSort().ToArray());
     }
 
@@ -859,7 +859,7 @@ public class MultigraphTest
         graph.AddEdge(vertexTwo, vertexFour, edgeTwo);
 
         Assert.Equal(
-            [vertexOne, vertexTwo, vertexThree, vertexFour],
+            new[] { vertexOne, vertexTwo, vertexThree, vertexFour },
             graph.BatchingTopologicalSort().Single().ToArray());
     }
 
@@ -883,7 +883,7 @@ public class MultigraphTest
         graph.AddEdge(vertexTwo, vertexFour, edgeTwo);
 
         Assert.Equal(
-            [vertexTwo, vertexOne, vertexFour, vertexThree],
+            new[] { vertexTwo, vertexOne, vertexFour, vertexThree },
             graph.BatchingTopologicalSort().Single().ToArray());
     }
 
@@ -910,8 +910,8 @@ public class MultigraphTest
 
         Assert.Collection(
             batches,
-            b => Assert.Equal([vertexOne, vertexTwo], b.ToArray()),
-            b => Assert.Equal([vertexThree, vertexFour], b.ToArray()));
+            b => Assert.Equal(new[] { vertexOne, vertexTwo }, b.ToArray()),
+            b => Assert.Equal(new[] { vertexThree, vertexFour }, b.ToArray()));
     }
 
     private static IMutableModel CreateModel()

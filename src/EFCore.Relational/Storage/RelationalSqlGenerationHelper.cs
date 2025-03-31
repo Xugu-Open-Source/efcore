@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Text;
-using System.Text.Json;
 
 namespace Microsoft.EntityFrameworkCore.Storage;
 
@@ -29,11 +28,13 @@ namespace Microsoft.EntityFrameworkCore.Storage;
 public class RelationalSqlGenerationHelper : ISqlGenerationHelper
 {
     /// <summary>
-    ///     Initializes a new instance of this class.
+    ///     Initializes a new instance of the this class.
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     public RelationalSqlGenerationHelper(RelationalSqlGenerationHelperDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.
@@ -74,7 +75,9 @@ public class RelationalSqlGenerationHelper : ISqlGenerationHelper
     ///     A valid name based on the candidate name.
     /// </returns>
     public virtual string GenerateParameterName(string name)
-        => name.StartsWith('@') ? name : "@" + name;
+        => name.StartsWith("@", StringComparison.Ordinal)
+            ? name
+            : "@" + name;
 
     /// <summary>
     ///     Writes a valid parameter name for the given candidate name.
@@ -175,32 +178,6 @@ public class RelationalSqlGenerationHelper : ISqlGenerationHelper
         }
 
         DelimitIdentifier(builder, name);
-    }
-
-    /// <summary>
-    ///     Generates the escaped SQL representation of an identifier (column name, table name, etc.).
-    /// </summary>
-    /// <param name="identifier">The identifier to be escaped.</param>
-    /// <returns>The generated string.</returns>
-    public virtual string EscapeJsonPathElement(string identifier)
-        => JsonEncodedText.Encode(identifier).Value;
-
-    /// <summary>
-    ///     Writes the delimited SQL representation of an element in a JSON path.
-    /// </summary>
-    /// <param name="pathElement">The JSON path element to delimit.</param>
-    /// <returns>The generated string.</returns>
-    public virtual string DelimitJsonPathElement(string pathElement)
-    {
-        for (var i = 0; i < pathElement.Length; i++)
-        {
-            if (!char.IsAsciiLetterOrDigit(pathElement[i]))
-            {
-                return $"\"{EscapeJsonPathElement(pathElement)}\"";
-            }
-        }
-
-        return pathElement;
     }
 
     /// <summary>

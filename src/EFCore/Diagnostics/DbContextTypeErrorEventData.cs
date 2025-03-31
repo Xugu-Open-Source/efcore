@@ -25,7 +25,9 @@ public class DbContextTypeErrorEventData : DbContextTypeEventData, IErrorEventDa
         Type contextType,
         Exception exception)
         : base(eventDefinition, messageGenerator, contextType)
-        => Exception = exception;
+    {
+        Exception = exception;
+    }
 
     /// <summary>
     ///     The exception that triggered this event.

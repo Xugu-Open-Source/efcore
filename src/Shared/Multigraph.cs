@@ -9,7 +9,7 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
     where TVertex : notnull
 {
     private readonly IComparer<TVertex>? _secondarySortComparer;
-    private readonly HashSet<TVertex> _vertices = [];
+    private readonly HashSet<TVertex> _vertices = new();
     private readonly Dictionary<TVertex, Dictionary<TVertex, object?>> _successorMap = new();
     private readonly Dictionary<TVertex, Dictionary<TVertex, object?>> _predecessorMap = new();
 
@@ -72,7 +72,7 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
         {
             if (edges is not List<Edge> edgeList)
             {
-                edgeList = [(Edge)edges!];
+                edgeList = new List<Edge> { (Edge)edges! };
                 successorEdges[to] = edgeList;
             }
 
@@ -93,7 +93,7 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
         {
             if (edges is not List<Edge> edgeList)
             {
-                edgeList = [(Edge)edges!];
+                edgeList = new List<Edge> { (Edge)edges! };
                 predecessorEdges[from] = edgeList;
             }
 
@@ -134,7 +134,7 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
 
         return batches.Count == 1
             ? batches[0]
-            : [];
+            : Array.Empty<TVertex>();
     }
 
     protected virtual string? ToString(TVertex vertex)
@@ -144,14 +144,14 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
         => BatchingTopologicalSort(null, null);
 
     public IReadOnlyList<List<TVertex>> BatchingTopologicalSort(
-        Func<TVertex, TVertex, IEnumerable<TEdge>, bool>? canBreakEdges,
+        Func<TVertex, TVertex, IEnumerable<TEdge>, bool>? tryBreakEdge,
         Func<IReadOnlyList<Tuple<TVertex, TVertex, IEnumerable<TEdge>>>, string>? formatCycle,
         Func<string, string>? formatException = null)
-        => TopologicalSortCore(withBatching: true, canBreakEdges, formatCycle, formatException);
+        => TopologicalSortCore(withBatching: true, tryBreakEdge, formatCycle, formatException);
 
     private IReadOnlyList<List<TVertex>> TopologicalSortCore(
         bool withBatching,
-        Func<TVertex, TVertex, IEnumerable<TEdge>, bool>? canBreakEdges,
+        Func<TVertex, TVertex, IEnumerable<TEdge>, bool>? tryBreakEdge,
         Func<IReadOnlyList<Tuple<TVertex, TVertex, IEnumerable<TEdge>>>, string>? formatCycle,
         Func<string, string>? formatException = null)
     {
@@ -197,7 +197,7 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
                 // If we detected in the last roots pass that a batch boundary is required, close the current batch and start a new one.
                 if (batchBoundaryRequired)
                 {
-                    currentBatch = [];
+                    currentBatch = new List<TVertex>();
                     result.Add(currentBatch);
                     currentBatchSet.Clear();
 
@@ -238,7 +238,7 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
 
                 while ((candidateIndex < candidateVertices.Count)
                        && !broken
-                       && canBreakEdges != null)
+                       && tryBreakEdge != null)
                 {
                     var candidateVertex = candidateVertices[candidateIndex];
                     if (predecessorCounts[candidateVertex] == 0)
@@ -253,7 +253,7 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
                             neighbor => predecessorCounts.TryGetValue(neighbor, out var neighborPredecessors)
                                 && neighborPredecessors > 0);
 
-                    if (canBreakEdges(incomingNeighbor, candidateVertex, GetEdges(incomingNeighbor, candidateVertex)))
+                    if (tryBreakEdge(incomingNeighbor, candidateVertex, GetEdges(incomingNeighbor, candidateVertex)))
                     {
                         var removed = _successorMap[incomingNeighbor].Remove(candidateVertex);
                         Check.DebugAssert(removed, "Candidate vertex not found in successor map");
@@ -333,7 +333,7 @@ internal class Multigraph<TVertex, TEdge> : Graph<TVertex>
                 && _predecessorMap[vertex].Any(
                     kv =>
                         (kv.Value is Edge { RequiresBatchingBoundary: true }
-                            || kv.Value is IEnumerable<Edge> edges && edges.Any(e => e.RequiresBatchingBoundary))
+                         || kv.Value is IEnumerable<Edge> edges && edges.Any(e => e.RequiresBatchingBoundary))
                         && currentBatchSet.Contains(kv.Key)))
             {
                 batchBoundaryRequired = true;

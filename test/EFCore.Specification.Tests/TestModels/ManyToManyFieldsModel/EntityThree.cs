@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ManyToManyFieldsModel;
 
-#nullable disable
-
 public class EntityThree
 {
     public int Id;

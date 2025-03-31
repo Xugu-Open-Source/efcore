@@ -3,6 +3,11 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class InheritanceRelationshipsQueryInMemoryTest(InheritanceRelationshipsQueryInMemoryFixture fixture)
-    : InheritanceRelationshipsQueryTestBase<
-        InheritanceRelationshipsQueryInMemoryFixture>(fixture);
+public class InheritanceRelationshipsQueryInMemoryTest : InheritanceRelationshipsQueryTestBase<
+    InheritanceRelationshipsQueryInMemoryFixture>
+{
+    public InheritanceRelationshipsQueryInMemoryTest(InheritanceRelationshipsQueryInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+}

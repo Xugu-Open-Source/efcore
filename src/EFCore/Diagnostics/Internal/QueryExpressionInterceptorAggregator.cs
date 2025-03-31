@@ -15,10 +15,14 @@ public class QueryExpressionInterceptorAggregator : InterceptorAggregator<IQuery
     protected override IQueryExpressionInterceptor CreateChain(IEnumerable<IQueryExpressionInterceptor> interceptors)
         => new CompositeQueryExpressionInterceptor(interceptors);
 
-    private sealed class CompositeQueryExpressionInterceptor(IEnumerable<IQueryExpressionInterceptor> interceptors)
-        : IQueryExpressionInterceptor
+    private sealed class CompositeQueryExpressionInterceptor : IQueryExpressionInterceptor
     {
-        private readonly IQueryExpressionInterceptor[] _interceptors = interceptors.ToArray();
+        private readonly IQueryExpressionInterceptor[] _interceptors;
+
+        public CompositeQueryExpressionInterceptor(IEnumerable<IQueryExpressionInterceptor> interceptors)
+        {
+            _interceptors = interceptors.ToArray();
+        }
 
         public Expression QueryCompilationStarting(
             Expression queryExpression,

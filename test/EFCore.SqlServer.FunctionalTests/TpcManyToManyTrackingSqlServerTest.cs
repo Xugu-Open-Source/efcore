@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class TpcManyToManyTrackingSqlServerTest(TpcManyToManyTrackingSqlServerTest.TpcManyToManyTrackingSqlServerFixture fixture)
-    : ManyToManyTrackingSqlServerTestBase<TpcManyToManyTrackingSqlServerTest.TpcManyToManyTrackingSqlServerFixture>(fixture)
+public class TpcManyToManyTrackingSqlServerTest
+    : ManyToManyTrackingSqlServerTestBase<TpcManyToManyTrackingSqlServerTest.TpcManyToManyTrackingSqlServerFixture>
 {
+    public TpcManyToManyTrackingSqlServerTest(TpcManyToManyTrackingSqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class TpcManyToManyTrackingSqlServerFixture : ManyToManyTrackingSqlServerFixtureBase
     {
         protected override string StoreName

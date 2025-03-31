@@ -15,10 +15,14 @@ public class IdentityResolutionInterceptorAggregator : InterceptorAggregator<IId
     protected override IIdentityResolutionInterceptor CreateChain(IEnumerable<IIdentityResolutionInterceptor> interceptors)
         => new CompositeIdentityResolutionInterceptor(interceptors);
 
-    private sealed class CompositeIdentityResolutionInterceptor(IEnumerable<IIdentityResolutionInterceptor> interceptors)
-        : IIdentityResolutionInterceptor
+    private sealed class CompositeIdentityResolutionInterceptor : IIdentityResolutionInterceptor
     {
-        private readonly IIdentityResolutionInterceptor[] _interceptors = interceptors.ToArray();
+        private readonly IIdentityResolutionInterceptor[] _interceptors;
+
+        public CompositeIdentityResolutionInterceptor(IEnumerable<IIdentityResolutionInterceptor> interceptors)
+        {
+            _interceptors = interceptors.ToArray();
+        }
 
         public void UpdateTrackedInstance(IdentityResolutionInterceptionData interceptionData, EntityEntry existingEntry, object newEntity)
         {

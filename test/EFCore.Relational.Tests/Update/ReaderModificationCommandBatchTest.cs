@@ -37,7 +37,7 @@ public class ReaderModificationCommandBatchTest
             });
 
         var entry2 = CreateEntry(EntityState.Modified);
-        var property2 = entry2.EntityType.FindProperty("Name")!;
+        var property2 = entry1.EntityType.FindProperty("Name")!;
         var command2 = CreateModificationCommand(
             "T2",
             null,
@@ -53,7 +53,8 @@ public class ReaderModificationCommandBatchTest
                     false, true, false, false, true)
             });
 
-        var batch = new ModificationCommandBatchFake { ShouldBeValid = true };
+        var batch = new ModificationCommandBatchFake();
+        batch.ShouldBeValid = true;
         Assert.True(batch.TryAddCommand(command1));
         Assert.True(batch.TryAddCommand(command2));
         batch.Complete(moreBatchesExpected: false);
@@ -96,7 +97,7 @@ RETURNING 1;
             });
 
         var entry2 = CreateEntry(EntityState.Modified);
-        var property2 = entry2.EntityType.FindProperty("Name")!;
+        var property2 = entry1.EntityType.FindProperty("Name")!;
         var command2 = CreateModificationCommand(
             "T2",
             null,
@@ -268,7 +269,7 @@ RETURNING 1;
 
         var connection = CreateConnection(
             CreateFakeDataReader(
-                ["Col1"], new List<object[]> { new object[] { 42 } }));
+                new[] { "Col1" }, new List<object[]> { new object[] { 42 } }));
 
         var batch = new ModificationCommandBatchFake();
         batch.TryAddCommand(command);
@@ -292,7 +293,7 @@ RETURNING 1;
 
         var connection = CreateConnection(
             CreateFakeDataReader(
-                ["Col1", "Col2"], new List<object[]> { new object[] { 42, "FortyTwo" } }));
+                new[] { "Col1", "Col2" }, new List<object[]> { new object[] { 42, "FortyTwo" } }));
 
         var batch = new ModificationCommandBatchFake();
         batch.TryAddCommand(command);
@@ -315,7 +316,7 @@ RETURNING 1;
 
         var connection = CreateConnection(
             CreateFakeDataReader(
-                ["Col2"], new List<object[]> { new object[] { "FortyTwo" } }));
+                new[] { "Col2" }, new List<object[]> { new object[] { "FortyTwo" } }));
 
         var batch = new ModificationCommandBatchFake();
         batch.TryAddCommand(command);
@@ -338,7 +339,7 @@ RETURNING 1;
 
         var connection = CreateConnection(
             CreateFakeDataReader(
-                ["Col1"],
+                new[] { "Col1" },
                 new List<object[]> { new object[] { 42 }, new object[] { 43 } }));
 
         var batch = new ModificationCommandBatchFake();
@@ -362,7 +363,7 @@ RETURNING 1;
 
         var connection = CreateConnection(
             CreateFakeDataReader(
-                ["Col1"], new List<object[]> { new object[] { 42 } }));
+                new[] { "Col1" }, new List<object[]> { new object[] { 42 } }));
 
         var batch = new ModificationCommandBatchFake();
         batch.TryAddCommand(command);
@@ -387,7 +388,7 @@ RETURNING 1;
         command.AddEntry(entry, true);
 
         var connection = CreateConnection(
-            CreateFakeDataReader(["Col1"], new List<object[]>()));
+            CreateFakeDataReader(new[] { "Col1" }, new List<object[]>()));
 
         var batch = new ModificationCommandBatchFake();
         batch.TryAddCommand(command);
@@ -698,7 +699,7 @@ RETURNING 1;
     private static FakeDbDataReader CreateFakeDataReader(string[] columnNames = null, IList<object[]> results = null)
     {
         results ??= new List<object[]> { new object[] { 1 } };
-        columnNames ??= ["RowsAffected"];
+        columnNames ??= new[] { "RowsAffected" };
 
         return new FakeDbDataReader(columnNames, results);
     }
@@ -756,7 +757,9 @@ RETURNING 1;
             => _fakeSqlGenerator ?? throw new InvalidOperationException("Not using FakeSqlGenerator");
     }
 
-    private class FakeDbContext : DbContext;
+    private class FakeDbContext : DbContext
+    {
+    }
 
     private const string ConnectionString = "Fake Connection String";
 

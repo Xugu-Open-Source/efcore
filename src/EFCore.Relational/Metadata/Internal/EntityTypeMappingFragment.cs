@@ -47,10 +47,7 @@ public class EntityTypeMappingFragment :
     public virtual InternalEntityTypeMappingFragmentBuilder Builder
     {
         [DebuggerStepThrough]
-        get => _builder
-            ?? throw new InvalidOperationException(
-                CoreStrings.ObjectRemovedFromModel(
-                    StoreObject.DisplayName()));
+        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
     /// <summary>

@@ -13,18 +13,6 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 /// </summary>
 public class TemporaryValuesFactoryFactory : SidecarValuesFactoryFactory
 {
-    private TemporaryValuesFactoryFactory()
-    {
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public static new readonly TemporaryValuesFactoryFactory Instance = new();
-
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -33,14 +21,14 @@ public class TemporaryValuesFactoryFactory : SidecarValuesFactoryFactory
     /// </summary>
     protected override Expression CreateSnapshotExpression(
         [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)] Type? entityType,
-        Expression? parameter,
+        ParameterExpression parameter,
         Type[] types,
-        IList<IPropertyBase?> propertyBases)
+        IList<IPropertyBase> propertyBases)
     {
         var constructorExpression = Expression.Convert(
             Expression.New(
                 Snapshot.CreateSnapshotType(types).GetDeclaredConstructor(types)!,
-                types.Select(Expression.Default).ToArray()),
+                types.Select(e => Expression.Default(e)).ToArray()),
             typeof(ISnapshot));
 
         return constructorExpression;

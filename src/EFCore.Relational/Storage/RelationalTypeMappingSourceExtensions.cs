@@ -56,12 +56,16 @@ public static class RelationalTypeMappingSourceExtensions
 
         var mapping = typeMappingSource.FindMapping(property);
 
-        return mapping
-            ?? throw new InvalidOperationException(
-                RelationalStrings.UnsupportedPropertyType(
-                    property.DeclaringType.DisplayName(),
-                    property.Name,
-                    property.ClrType.ShortDisplayName()));
+        if (mapping != null)
+        {
+            return mapping;
+        }
+
+        throw new InvalidOperationException(
+            RelationalStrings.UnsupportedPropertyType(
+                property.DeclaringEntityType.DisplayName(),
+                property.Name,
+                property.ClrType.ShortDisplayName()));
     }
 
     /// <summary>
@@ -77,7 +81,12 @@ public static class RelationalTypeMappingSourceExtensions
         Check.NotNull(clrType, nameof(clrType));
 
         var mapping = typeMappingSource.FindMapping(clrType);
-        return mapping ?? throw new InvalidOperationException(RelationalStrings.UnsupportedType(clrType.ShortDisplayName()));
+        if (mapping != null)
+        {
+            return mapping;
+        }
+
+        throw new InvalidOperationException(RelationalStrings.UnsupportedType(clrType.ShortDisplayName()));
     }
 
     /// <summary>
@@ -95,7 +104,12 @@ public static class RelationalTypeMappingSourceExtensions
         Check.NotNull(clrType, nameof(clrType));
 
         var mapping = typeMappingSource.FindMapping(clrType, model);
-        return mapping ?? throw new InvalidOperationException(RelationalStrings.UnsupportedType(clrType.ShortDisplayName()));
+        if (mapping != null)
+        {
+            return mapping;
+        }
+
+        throw new InvalidOperationException(RelationalStrings.UnsupportedType(clrType.ShortDisplayName()));
     }
 
     /// <summary>
@@ -115,6 +129,11 @@ public static class RelationalTypeMappingSourceExtensions
         Check.NotNull(typeName, nameof(typeName));
 
         var mapping = typeMappingSource.FindMapping(typeName);
-        return mapping ?? throw new InvalidOperationException(RelationalStrings.UnsupportedStoreType(typeName));
+        if (mapping != null)
+        {
+            return mapping;
+        }
+
+        throw new InvalidOperationException(RelationalStrings.UnsupportedStoreType(typeName));
     }
 }

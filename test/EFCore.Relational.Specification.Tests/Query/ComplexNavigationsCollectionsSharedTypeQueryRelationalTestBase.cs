@@ -3,14 +3,16 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public abstract class
-    ComplexNavigationsCollectionsSharedTypeQueryRelationalTestBase<TFixture>(TFixture fixture)
-    : ComplexNavigationsCollectionsSharedTypeQueryTestBase<
-        TFixture>(fixture)
+    ComplexNavigationsCollectionsSharedTypeQueryRelationalTestBase<TFixture> : ComplexNavigationsCollectionsSharedTypeQueryTestBase<
+        TFixture>
     where TFixture : ComplexNavigationsSharedTypeQueryRelationalFixtureBase, new()
 {
+    protected ComplexNavigationsCollectionsSharedTypeQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public override async Task SelectMany_with_navigation_and_Distinct_projecting_columns_including_join_key(bool async)
         => Assert.Equal(
             RelationalStrings.InsufficientInformationToIdentifyElementOfCollectionJoin,

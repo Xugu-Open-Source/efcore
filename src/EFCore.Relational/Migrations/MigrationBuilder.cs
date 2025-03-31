@@ -19,7 +19,9 @@ public class MigrationBuilder
     /// </summary>
     /// <param name="activeProvider">The name of the database provider being used.</param>
     public MigrationBuilder(string? activeProvider)
-        => ActiveProvider = activeProvider;
+    {
+        ActiveProvider = activeProvider;
+    }
 
     /// <summary>
     ///     The name of the database provider being used.
@@ -29,7 +31,7 @@ public class MigrationBuilder
     /// <summary>
     ///     The list of <see cref="MigrationOperation" />s being built.
     /// </summary>
-    public virtual List<MigrationOperation> Operations { get; } = [];
+    public virtual List<MigrationOperation> Operations { get; } = new();
 
     /// <summary>
     ///     Builds an <see cref="AddColumnOperation" /> to add a new column to a table.
@@ -149,11 +151,11 @@ public class MigrationBuilder
         => AddForeignKey(
             name,
             table,
-            [Check.NotEmpty(column, nameof(column))],
+            new[] { Check.NotEmpty(column, nameof(column)) },
             principalTable,
             schema,
             principalSchema,
-            principalColumn != null ? [principalColumn] : null,
+            principalColumn != null ? new[] { principalColumn } : null,
             onUpdate,
             onDelete);
 
@@ -230,7 +232,7 @@ public class MigrationBuilder
         => AddPrimaryKey(
             name,
             table,
-            [Check.NotEmpty(column, nameof(column))],
+            new[] { Check.NotEmpty(column, nameof(column)) },
             schema);
 
     /// <summary>
@@ -285,7 +287,7 @@ public class MigrationBuilder
         => AddUniqueConstraint(
             name,
             table,
-            [Check.NotEmpty(column, nameof(column))],
+            new[] { Check.NotEmpty(column, nameof(column)) },
             schema);
 
     /// <summary>
@@ -616,7 +618,7 @@ public class MigrationBuilder
         => CreateIndex(
             name,
             table,
-            [Check.NotEmpty(column, nameof(column))],
+            new[] { Check.NotEmpty(column, nameof(column)) },
             schema,
             unique,
             filter,
@@ -1231,15 +1233,12 @@ public class MigrationBuilder
     ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
     /// </remarks>
     /// <param name="name">The name of the sequence.</param>
-    /// <param name="startValue">
-    ///     The value at which the sequence will start. If <see langword="null" /> (the default), the sequence restarts based
-    ///     on the configuration used during creation.
-    /// </param>
+    /// <param name="startValue">The value at which the sequence will start, defaulting to 1.</param>
     /// <param name="schema">The schema that contains the sequence, or <see langword="null" /> to use the default schema.</param>
     /// <returns>A builder to allow annotations to be added to the operation.</returns>
     public virtual OperationBuilder<RestartSequenceOperation> RestartSequence(
         string name,
-        long? startValue = null,
+        long startValue = 1L,
         string? schema = null)
     {
         Check.NotEmpty(name, nameof(name));
@@ -1294,7 +1293,7 @@ public class MigrationBuilder
         string column,
         object? value,
         string? schema = null)
-        => InsertData(table, [Check.NotEmpty(column, nameof(column))], [value], schema);
+        => InsertData(table, new[] { Check.NotEmpty(column, nameof(column)) }, new[] { value }, schema);
 
     /// <summary>
     ///     Builds an <see cref="InsertDataOperation" /> to insert a single seed data value for a single column.
@@ -1316,9 +1315,9 @@ public class MigrationBuilder
         string? schema = null)
         => InsertData(
             table,
-            [Check.NotEmpty(column, nameof(column))],
-            [Check.NotEmpty(columnType, nameof(columnType))],
-            [value], schema);
+            new[] { Check.NotEmpty(column, nameof(column)) },
+            new[] { Check.NotEmpty(columnType, nameof(columnType)) },
+            new[] { value }, schema);
 
     /// <summary>
     ///     Builds an <see cref="InsertDataOperation" /> to insert a single row of seed data values.
@@ -1376,7 +1375,7 @@ public class MigrationBuilder
         string? schema = null)
         => InsertDataInternal(
             table,
-            [Check.NotEmpty(column, nameof(column))],
+            new[] { Check.NotEmpty(column, nameof(column)) },
             null,
             ToMultidimensionalArray(Check.NotNull(values, nameof(values)), firstDimension: true),
             schema);
@@ -1401,8 +1400,8 @@ public class MigrationBuilder
         string? schema = null)
         => InsertDataInternal(
             table,
-            [Check.NotEmpty(column, nameof(column))],
-            [Check.NotEmpty(columnType, nameof(columnType))],
+            new[] { Check.NotEmpty(column, nameof(column)) },
+            new[] { Check.NotEmpty(columnType, nameof(columnType)) },
             ToMultidimensionalArray(Check.NotNull(values, nameof(values)), firstDimension: true),
             schema);
 
@@ -1494,7 +1493,7 @@ public class MigrationBuilder
         string keyColumn,
         object? keyValue,
         string? schema = null)
-        => DeleteData(table, [Check.NotNull(keyColumn, nameof(keyValue))], [keyValue], schema);
+        => DeleteData(table, new[] { Check.NotNull(keyColumn, nameof(keyValue)) }, new[] { keyValue }, schema);
 
     /// <summary>
     ///     Builds a <see cref="DeleteDataOperation" /> to delete a single row of seed data.
@@ -1518,9 +1517,9 @@ public class MigrationBuilder
         string? schema = null)
         => DeleteData(
             table,
-            [Check.NotNull(keyColumn, nameof(keyValue))],
-            [Check.NotNull(keyColumnType, nameof(keyColumnType))],
-            [keyValue],
+            new[] { Check.NotNull(keyColumn, nameof(keyValue)) },
+            new[] { Check.NotNull(keyColumnType, nameof(keyColumnType)) },
+            new[] { keyValue },
             schema);
 
     /// <summary>
@@ -1592,7 +1591,7 @@ public class MigrationBuilder
         string? schema = null)
         => DeleteData(
             table,
-            [Check.NotEmpty(keyColumn, nameof(keyColumn))],
+            new[] { Check.NotEmpty(keyColumn, nameof(keyColumn)) },
             ToMultidimensionalArray(Check.NotNull(keyValues, nameof(keyValues)), firstDimension: true),
             schema);
 
@@ -1618,8 +1617,8 @@ public class MigrationBuilder
         string? schema = null)
         => DeleteData(
             table,
-            [Check.NotEmpty(keyColumn, nameof(keyColumn))],
-            [Check.NotEmpty(keyColumnType, nameof(keyColumnType))],
+            new[] { Check.NotEmpty(keyColumn, nameof(keyColumn)) },
+            new[] { Check.NotEmpty(keyColumnType, nameof(keyColumnType)) },
             ToMultidimensionalArray(Check.NotNull(keyValues, nameof(keyValues)), firstDimension: true),
             schema);
 
@@ -1723,8 +1722,8 @@ public class MigrationBuilder
             table,
             keyColumn,
             keyValue,
-            [Check.NotEmpty(column, nameof(column))],
-            [value],
+            new[] { Check.NotEmpty(column, nameof(column)) },
+            new[] { value },
             schema);
 
     /// <summary>
@@ -1749,8 +1748,8 @@ public class MigrationBuilder
         string? schema = null)
         => UpdateData(
             table,
-            [Check.NotEmpty(keyColumn, nameof(keyColumn))],
-            [keyValue],
+            new[] { Check.NotEmpty(keyColumn, nameof(keyColumn)) },
+            new[] { keyValue },
             columns,
             values,
             schema);
@@ -1780,8 +1779,8 @@ public class MigrationBuilder
             table,
             keyColumns,
             keyValues,
-            [Check.NotEmpty(column, nameof(column))],
-            [value],
+            new[] { Check.NotEmpty(column, nameof(column)) },
+            new[] { value },
             schema);
 
     /// <summary>
@@ -1874,7 +1873,7 @@ public class MigrationBuilder
             table,
             keyColumn,
             keyValues,
-            [Check.NotEmpty(column, nameof(column))],
+            new[] { Check.NotEmpty(column, nameof(column)) },
             ToMultidimensionalArray(Check.NotNull(values, nameof(values)), firstDimension: true),
             schema);
 
@@ -1903,7 +1902,7 @@ public class MigrationBuilder
         string? schema = null)
         => UpdateData(
             table,
-            [Check.NotEmpty(keyColumn, nameof(keyColumn))],
+            new[] { Check.NotEmpty(keyColumn, nameof(keyColumn)) },
             ToMultidimensionalArray(Check.NotNull(keyValues, nameof(keyValues)), firstDimension: true),
             columns,
             values,
@@ -1937,7 +1936,7 @@ public class MigrationBuilder
             table,
             keyColumns,
             keyValues,
-            [Check.NotEmpty(column, nameof(column))],
+            new[] { Check.NotEmpty(column, nameof(column)) },
             ToMultidimensionalArray(Check.NotNull(values, nameof(values)), firstDimension: true),
             schema);
 

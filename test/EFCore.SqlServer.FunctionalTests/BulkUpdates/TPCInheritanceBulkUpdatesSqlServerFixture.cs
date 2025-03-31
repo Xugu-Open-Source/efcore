@@ -3,13 +3,11 @@
 
 namespace Microsoft.EntityFrameworkCore.BulkUpdates;
 
-#nullable disable
-
 public class TPCInheritanceBulkUpdatesSqlServerFixture : TPCInheritanceBulkUpdatesFixture
 {
     protected override ITestStoreFactory TestStoreFactory
         => SqlServerTestStoreFactory.Instance;
 
-    public override bool UseGeneratedKeys
+    protected override bool UseGeneratedKeys
         => false;
 }

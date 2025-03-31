@@ -5,9 +5,7 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class SequenceEndToEndTest : IAsyncLifetime
+public class SequenceEndToEndTest : IDisposable
 {
     [ConditionalFact]
     public void Can_use_sequence_end_to_end()
@@ -269,12 +267,17 @@ public class SequenceEndToEndTest : IAsyncLifetime
         context.SaveChanges();
     }
 
-    private class BronieContext(IServiceProvider serviceProvider, string databaseName) : DbContext
+    private class BronieContext : DbContext
     {
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
-        private readonly string _databaseName = databaseName;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly string _databaseName;
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        public BronieContext(IServiceProvider serviceProvider, string databaseName)
+        {
+            _serviceProvider = serviceProvider;
+            _databaseName = databaseName;
+        }
+
         public DbSet<Pegasus> Pegasuses { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -367,13 +370,19 @@ public class SequenceEndToEndTest : IAsyncLifetime
         context.SaveChanges();
     }
 
-    private class NullableBronieContext(IServiceProvider serviceProvider, string databaseName, bool useSequence) : DbContext
+    private class NullableBronieContext : DbContext
     {
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
-        private readonly string _databaseName = databaseName;
-        private readonly bool _useSequence = useSequence;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly string _databaseName;
+        private readonly bool _useSequence;
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        public NullableBronieContext(IServiceProvider serviceProvider, string databaseName, bool useSequence)
+        {
+            _serviceProvider = serviceProvider;
+            _databaseName = databaseName;
+            _useSequence = useSequence;
+        }
+
         public DbSet<Unicon> Unicons { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -403,11 +412,13 @@ public class SequenceEndToEndTest : IAsyncLifetime
         public string Name { get; set; }
     }
 
-    protected SqlServerTestStore TestStore { get; private set; }
+    public SequenceEndToEndTest()
+    {
+        TestStore = SqlServerTestStore.CreateInitialized("SequenceEndToEndTest");
+    }
 
-    public async Task InitializeAsync()
-        => TestStore = await SqlServerTestStore.CreateInitializedAsync("SequenceEndToEndTest");
+    protected SqlServerTestStore TestStore { get; }
 
-    public async Task DisposeAsync()
-        => await TestStore.DisposeAsync();
+    public void Dispose()
+        => TestStore.Dispose();
 }

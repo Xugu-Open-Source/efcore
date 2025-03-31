@@ -25,7 +25,9 @@ public class UniquifiedPropertyEventData : PropertyEventData
         IReadOnlyProperty property,
         string basePropertyName)
         : base(eventDefinition, messageGenerator, property)
-        => BasePropertyName = basePropertyName;
+    {
+        BasePropertyName = basePropertyName;
+    }
 
     /// <summary>
     ///     The property name that was uniquified.

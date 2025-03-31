@@ -8,9 +8,7 @@ using Microsoft.EntityFrameworkCore.TestModels;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, IAsyncLifetime
+public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, IDisposable
     where TFixture : MonsterFixupTestBase<TFixture>.MonsterFixupFixtureBase, new()
 {
     protected MonsterFixupTestBase(TFixture fixture)
@@ -25,9 +23,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     protected DbContextOptions Options { get; }
 
     [ConditionalFact]
-    public virtual async Task Can_build_monster_model_and_seed_data_using_FKs()
+    public virtual void Can_build_monster_model_and_seed_data_using_FKs()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingFKs());
+        CreateAndSeedDatabase(context => context.SeedUsingFKs());
 
         SimpleVerification();
         FkVerification();
@@ -35,9 +33,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public virtual async Task Can_build_monster_model_and_seed_data_using_all_navigations()
+    public virtual void Can_build_monster_model_and_seed_data_using_all_navigations()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingNavigations(dependentNavs: true, principalNavs: true));
+        CreateAndSeedDatabase(context => context.SeedUsingNavigations(dependentNavs: true, principalNavs: true));
 
         SimpleVerification();
         FkVerification();
@@ -45,9 +43,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task Can_build_monster_model_and_seed_data_using_dependent_navigations()
+    public virtual void Can_build_monster_model_and_seed_data_using_dependent_navigations()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingNavigations(dependentNavs: true, principalNavs: false));
+        CreateAndSeedDatabase(context => context.SeedUsingNavigations(dependentNavs: true, principalNavs: false));
 
         SimpleVerification();
         FkVerification();
@@ -55,9 +53,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task Can_build_monster_model_and_seed_data_using_principal_navigations()
+    public virtual void Can_build_monster_model_and_seed_data_using_principal_navigations()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingNavigations(dependentNavs: false, principalNavs: true));
+        CreateAndSeedDatabase(context => context.SeedUsingNavigations(dependentNavs: false, principalNavs: true));
 
         SimpleVerification();
         FkVerification();
@@ -65,9 +63,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task Can_build_monster_model_and_seed_data_using_navigations_with_deferred_add()
+    public virtual void Can_build_monster_model_and_seed_data_using_navigations_with_deferred_add()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingNavigationsWithDeferredAdd());
+        CreateAndSeedDatabase(context => context.SeedUsingNavigationsWithDeferredAdd());
 
         SimpleVerification();
         FkVerification();
@@ -75,9 +73,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task One_to_many_fixup_happens_when_FKs_change_test()
+    public virtual void One_to_many_fixup_happens_when_FKs_change_test()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingFKs());
+        CreateAndSeedDatabase(context => context.SeedUsingFKs());
 
         using (var context = CreateContext())
         {
@@ -165,9 +163,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task One_to_many_fixup_happens_when_reference_changes()
+    public virtual void One_to_many_fixup_happens_when_reference_changes()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingFKs());
+        CreateAndSeedDatabase(context => context.SeedUsingFKs());
 
         using (var context = CreateContext())
         {
@@ -255,9 +253,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task One_to_many_fixup_happens_when_collection_changes()
+    public virtual void One_to_many_fixup_happens_when_collection_changes()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingFKs());
+        CreateAndSeedDatabase(context => context.SeedUsingFKs());
 
         using (var context = CreateContext())
         {
@@ -334,9 +332,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task One_to_one_fixup_happens_when_FKs_change_test()
+    public virtual void One_to_one_fixup_happens_when_FKs_change_test()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingFKs());
+        CreateAndSeedDatabase(context => context.SeedUsingFKs());
 
         using (var context = CreateContext())
         {
@@ -418,9 +416,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task One_to_one_fixup_happens_when_reference_change_test()
+    public virtual void One_to_one_fixup_happens_when_reference_change_test()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingFKs());
+        CreateAndSeedDatabase(context => context.SeedUsingFKs());
 
         using (var context = CreateContext())
         {
@@ -502,9 +500,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task Composite_fixup_happens_when_FKs_change_test()
+    public virtual void Composite_fixup_happens_when_FKs_change_test()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingFKs());
+        CreateAndSeedDatabase(context => context.SeedUsingFKs());
 
         using (var context = CreateContext())
         {
@@ -605,9 +603,9 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     }
 
     [ConditionalFact]
-    public async Task Fixup_with_binary_keys_happens_when_FKs_or_navigations_change_test()
+    public virtual void Fixup_with_binary_keys_happens_when_FKs_or_navigations_change_test()
     {
-        await CreateAndSeedDatabase(async context => await context.SeedUsingFKs());
+        CreateAndSeedDatabase(context => context.SeedUsingFKs());
 
         using (var context = CreateContext())
         {
@@ -1278,11 +1276,11 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
         Assert.Same(order3, orderLine6.Order);
 
         Assert.Equal(
-            [orderLine2, orderLine1],
+            new[] { orderLine2, orderLine1 },
             order1.OrderLines.OrderBy(e => e.Quantity).ToArray());
 
         Assert.Equal(
-            [orderLine3, orderLine4, orderLine5],
+            new[] { orderLine3, orderLine4, orderLine5 },
             order2.OrderLines.OrderBy(e => e.Quantity).ToArray());
 
         Assert.Same(orderLine6, order3.OrderLines.Single());
@@ -1303,7 +1301,7 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
         Assert.Same(product1, productReview1.Product);
         Assert.Same(product1, productReview2.Product);
         Assert.Equal(
-            [productReview1, productReview2],
+            new[] { productReview1, productReview2 },
             product1.Reviews.OrderBy(r => r.Review).ToArray());
 
         Assert.Same(product2, productReview3.Product);
@@ -1324,7 +1322,7 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
             : context.ProductPhotos.Single(e => e.Photo[0] == 105);
 
         Assert.Equal(
-            [productPhoto1, productPhoto2],
+            new[] { productPhoto1, productPhoto2 },
             product1.Photos.OrderBy(r => r.Photo.First()).ToArray());
 
         Assert.Same(productPhoto3, product3.Photos.Single());
@@ -1399,17 +1397,14 @@ public abstract class MonsterFixupTestBase<TFixture> : IClassFixture<TFixture>, 
     protected bool UseDetectChanges
         => Fixture.UseDetectChanges;
 
-    protected Task CreateAndSeedDatabase(Func<MonsterContext, Task> seed)
-        => TestStore.InitializeAsync(Fixture.ServiceProvider, CreateContext, c => seed((MonsterContext)c));
+    protected void CreateAndSeedDatabase(Action<MonsterContext> seed)
+        => TestStore.Initialize(Fixture.ServiceProvider, CreateContext, c => seed((MonsterContext)c));
 
     protected MonsterContext CreateContext()
         => Fixture.CreateContext(Options);
 
-    public Task InitializeAsync()
-        => Task.CompletedTask;
-
-    public virtual async Task DisposeAsync()
-        => await TestStore.DisposeAsync();
+    public virtual void Dispose()
+        => TestStore.Dispose();
 
     public abstract class MonsterFixupFixtureBase : ServiceProviderFixtureBase
     {

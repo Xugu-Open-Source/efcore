@@ -5,7 +5,7 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.UpdatesModel;
 
-public class UpdatesContext(DbContextOptions options) : PoolableDbContext(options)
+public class UpdatesContext : PoolableDbContext
 {
     public DbSet<Category> Categories { get; set; } = null!;
     public DbSet<Product> Products { get; set; } = null!;
@@ -16,7 +16,12 @@ public class UpdatesContext(DbContextOptions options) : PoolableDbContext(option
     public DbSet<ProductTableView> ProductTableView { get; set; } = null!;
     public DbSet<Rodney> Trotters { get; set; } = null!;
 
-    public static Task SeedAsync(UpdatesContext context)
+    public UpdatesContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
+    public static void Seed(UpdatesContext context)
     {
         var productId1 = new Guid("984ade3c-2f7b-4651-a351-642e92ab7146");
         var productId2 = new Guid("0edc9136-7eed-463b-9b97-bdb9648ab877");
@@ -29,8 +34,7 @@ public class UpdatesContext(DbContextOptions options) : PoolableDbContext(option
                 Id = productId1,
                 Name = "Apple Cider",
                 Price = 1.49M,
-                DependentId = 778,
-                IsPrimary = true
+                DependentId = 778
             });
         context.Add(
             new Product
@@ -38,10 +42,9 @@ public class UpdatesContext(DbContextOptions options) : PoolableDbContext(option
                 Id = productId2,
                 Name = "Apple Cobler",
                 Price = 2.49M,
-                DependentId = 778,
-                IsPrimary = false
+                DependentId = 778
             });
 
-        return context.SaveChangesAsync();
+        context.SaveChanges();
     }
 }

@@ -60,10 +60,10 @@ if [ -n "${BASH:-}" ] || [ -n "${ZSH_VERSION:-}" ] ; then
     hash -r 2>/dev/null
 fi
 
-echo -e "${_MAGENTA}Enabled the .NET Core environment. Execute 'deactivate' to exit.${_RESET}"
+echo "${_MAGENTA}Enabled the .NET Core environment. Execute 'deactivate' to exit.${_RESET}"
 
 if [ ! -f "$DOTNET_ROOT/dotnet" ]; then
-    echo -e "${_YELLOW}.NET Core has not been installed yet. Run $DIR/restore.sh to install it.${_RESET}"
+    echo "${_YELLOW}.NET Core has not been installed yet. Run $DIR/restore.sh to install it.${_RESET}"
 else
-    echo -e "dotnet = $DOTNET_ROOT/dotnet"
+    echo "dotnet = $DOTNET_ROOT/dotnet"
 fi

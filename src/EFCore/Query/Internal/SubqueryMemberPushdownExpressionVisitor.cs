@@ -11,8 +11,8 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal;
 /// </summary>
 public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
 {
-    private static readonly List<MethodInfo> SupportedMethods =
-    [
+    private static readonly List<MethodInfo> SupportedMethods = new()
+    {
         QueryableMethods.FirstWithPredicate,
         QueryableMethods.FirstWithoutPredicate,
         QueryableMethods.FirstOrDefaultWithPredicate,
@@ -24,10 +24,10 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
         QueryableMethods.LastWithPredicate,
         QueryableMethods.LastWithoutPredicate,
         QueryableMethods.LastOrDefaultWithPredicate,
-        QueryableMethods.LastOrDefaultWithoutPredicate,
-        QueryableMethods.ElementAt,
-        QueryableMethods.ElementAtOrDefault
-    ];
+        QueryableMethods.LastOrDefaultWithoutPredicate
+        //QueryableMethodProvider.ElementAtMethodInfo,
+        //QueryableMethodProvider.ElementAtOrDefaultMethodInfo
+    };
 
     private static readonly IDictionary<MethodInfo, MethodInfo> PredicateLessMethodInfo = new Dictionary<MethodInfo, MethodInfo>
     {
@@ -48,7 +48,9 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public SubqueryMemberPushdownExpressionVisitor(IModel model)
-        => _model = model;
+    {
+        _model = model;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -59,7 +61,8 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
     protected override Expression VisitMember(MemberExpression memberExpression)
     {
         var innerExpression = Visit(memberExpression.Expression);
-        if (innerExpression is MethodCallExpression { Method.IsGenericMethod: true } methodCallExpression
+        if (innerExpression is MethodCallExpression methodCallExpression
+            && methodCallExpression.Method.IsGenericMethod
             && SupportedMethods.Contains(methodCallExpression.Method.GetGenericMethodDefinition()))
         {
             return PushdownMember(
@@ -70,7 +73,7 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
 
                     return nullable && !memberAccessExpression.Type.IsNullableType()
                         ? Expression.Convert(memberAccessExpression, memberAccessExpression.Type.MakeNullable())
-                        : memberAccessExpression;
+                        : (Expression)memberAccessExpression;
                 },
                 memberExpression.Type);
         }
@@ -90,7 +93,8 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
         {
             source = Visit(source);
 
-            if (source is MethodCallExpression { Method.IsGenericMethod: true } innerMethodCall
+            if (source is MethodCallExpression innerMethodCall
+                && innerMethodCall.Method.IsGenericMethod
                 && SupportedMethods.Contains(innerMethodCall.Method.GetGenericMethodDefinition()))
             {
                 return PushdownMember(
@@ -116,7 +120,8 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
         {
             source = Visit(source);
 
-            if (source is MethodCallExpression { Method.IsGenericMethod: true } innerMethodCall
+            if (source is MethodCallExpression innerMethodCall
+                && innerMethodCall.Method.IsGenericMethod
                 && SupportedMethods.Contains(innerMethodCall.Method.GetGenericMethodDefinition()))
             {
                 return PushdownMember(
@@ -129,7 +134,7 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
 
                         return nullable && !indexerExpression.Type.IsNullableType()
                             ? Expression.Convert(indexerExpression, indexerExpression.Type.MakeNullable())
-                            : indexerExpression;
+                            : (Expression)indexerExpression;
                     },
                     methodCallExpression.Type);
             }
@@ -158,13 +163,7 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
         var source = methodCallExpression.Arguments[0];
         var queryableType = source.Type.GetSequenceType();
         var genericMethod = methodCallExpression.Method.GetGenericMethodDefinition();
-
-        if (genericMethod == QueryableMethods.FirstWithPredicate
-            || genericMethod == QueryableMethods.FirstOrDefaultWithPredicate
-            || genericMethod == QueryableMethods.SingleWithPredicate
-            || genericMethod == QueryableMethods.SingleOrDefaultWithPredicate
-            || genericMethod == QueryableMethods.LastWithPredicate
-            || genericMethod == QueryableMethods.LastOrDefaultWithPredicate)
+        if (methodCallExpression.Arguments.Count == 2)
         {
             // Move predicate to Where so that we can change shape before operator
             source = Expression.Call(
@@ -175,7 +174,8 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
             genericMethod = PredicateLessMethodInfo[genericMethod];
         }
 
-        if (source is MethodCallExpression { Method.IsGenericMethod: true } sourceMethodCallExpression
+        if (source is MethodCallExpression sourceMethodCallExpression
+            && sourceMethodCallExpression.Method.IsGenericMethod
             && sourceMethodCallExpression.Method.GetGenericMethodDefinition() == QueryableMethods.Select)
         {
             var selector = sourceMethodCallExpression.Arguments[1].UnwrapLambdaFromQuote();
@@ -203,16 +203,7 @@ public class SubqueryMemberPushdownExpressionVisitor : ExpressionVisitor
                 Expression.Quote(Expression.Lambda(memberAccessExpression, parameter)));
         }
 
-        if (genericMethod == QueryableMethods.ElementAt
-            || genericMethod == QueryableMethods.ElementAtOrDefault)
-        {
-            var index = Visit(methodCallExpression.Arguments[1]);
-            source = Expression.Call(genericMethod.MakeGenericMethod(source.Type.GetSequenceType()), source, index);
-        }
-        else
-        {
-            source = Expression.Call(genericMethod.MakeGenericMethod(source.Type.GetSequenceType()), source);
-        }
+        source = Expression.Call(genericMethod.MakeGenericMethod(source.Type.GetSequenceType()), source);
 
         return source.Type != returnType
             ? Expression.Convert(source, returnType)

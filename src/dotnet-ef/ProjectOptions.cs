@@ -15,6 +15,7 @@ internal class ProjectOptions
     public CommandOption? Runtime { get; private set; }
 
     // ReSharper disable once InconsistentNaming
+    public CommandOption? MSBuildProjectExtensionsPath { get; private set; }
     public CommandOption? NoBuild { get; private set; }
 
     public void Configure(CommandLineApplication command)
@@ -24,7 +25,7 @@ internal class ProjectOptions
         Framework = command.Option("--framework <FRAMEWORK>", Resources.FrameworkDescription);
         Configuration = command.Option("--configuration <CONFIGURATION>", Resources.ConfigurationDescription);
         Runtime = command.Option("--runtime <RUNTIME_IDENTIFIER>", Resources.RuntimeDescription);
-        command.Option("--msbuildprojectextensionspath <PATH>", Resources.ProjectExtensionsDescription);
+        MSBuildProjectExtensionsPath = command.Option("--msbuildprojectextensionspath <PATH>", Resources.ProjectExtensionsDescription);
         NoBuild = command.Option("--no-build", Resources.NoBuildDescription);
     }
 }

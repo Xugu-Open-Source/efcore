@@ -29,7 +29,9 @@ public class RelationalTransactionFactory : IRelationalTransactionFactory
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     public RelationalTransactionFactory(RelationalTransactionFactoryDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.

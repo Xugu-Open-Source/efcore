@@ -19,8 +19,8 @@ public class SqlServerParameterBasedSqlProcessor : RelationalParameterBasedSqlPr
     /// </summary>
     public SqlServerParameterBasedSqlProcessor(
         RelationalParameterBasedSqlProcessorDependencies dependencies,
-        RelationalParameterBasedSqlProcessorParameters parameters)
-        : base(dependencies, parameters)
+        bool useRelationalNulls)
+        : base(dependencies, useRelationalNulls)
     {
     }
 
@@ -35,14 +35,14 @@ public class SqlServerParameterBasedSqlProcessor : RelationalParameterBasedSqlPr
         IReadOnlyDictionary<string, object?> parametersValues,
         out bool canCache)
     {
-        var optimizedQueryExpression = new SkipTakeCollapsingExpressionVisitor(Dependencies.SqlExpressionFactory)
-            .Process(queryExpression, parametersValues, out var canCache2);
+        var optimizedQueryExpression = base.Optimize(queryExpression, parametersValues, out canCache);
 
-        optimizedQueryExpression = base.Optimize(optimizedQueryExpression, parametersValues, out canCache);
+        optimizedQueryExpression = new SkipTakeCollapsingExpressionVisitor(Dependencies.SqlExpressionFactory)
+            .Process(optimizedQueryExpression, parametersValues, out var canCache2);
 
         canCache &= canCache2;
 
-        return new SearchConditionConverter(Dependencies.SqlExpressionFactory).Visit(optimizedQueryExpression);
+        return new SearchConditionConvertingExpressionVisitor(Dependencies.SqlExpressionFactory).Visit(optimizedQueryExpression);
     }
 
     /// <inheritdoc />
@@ -54,7 +54,7 @@ public class SqlServerParameterBasedSqlProcessor : RelationalParameterBasedSqlPr
         Check.NotNull(selectExpression, nameof(selectExpression));
         Check.NotNull(parametersValues, nameof(parametersValues));
 
-        return new SqlServerSqlNullabilityProcessor(Dependencies, Parameters).Process(
+        return new SqlServerSqlNullabilityProcessor(Dependencies, UseRelationalNulls).Process(
             selectExpression, parametersValues, out canCache);
     }
 }

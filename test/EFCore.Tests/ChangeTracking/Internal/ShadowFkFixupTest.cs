@@ -1536,9 +1536,14 @@ public class ShadowFkFixupTest
 
     private class CategoryPN
     {
+        public CategoryPN()
+        {
+            Products = new List<ProductPN>();
+        }
+
         public int Id { get; set; }
 
-        public ICollection<ProductPN> Products { get; } = new List<ProductPN>();
+        public ICollection<ProductPN> Products { get; }
     }
 
     private class ProductPN
@@ -1558,19 +1563,29 @@ public class ShadowFkFixupTest
 
     private class Category
     {
+        public Category()
+        {
+            Products = new List<Product>();
+        }
+
         public int Id { get; set; }
 
-        public ICollection<Product> Products { get; } = new List<Product>();
+        public ICollection<Product> Products { get; }
     }
 
     private class Product
     {
+        public Product()
+        {
+            SpecialOffers = new List<SpecialOffer>();
+        }
+
         public int Id { get; set; }
 
         public Category Category { get; set; }
 
         // ReSharper disable once CollectionNeverUpdated.Local
-        public ICollection<SpecialOffer> SpecialOffers { get; } = new List<SpecialOffer>();
+        public ICollection<SpecialOffer> SpecialOffers { get; }
     }
 
     private class SpecialOffer
@@ -1583,8 +1598,10 @@ public class ShadowFkFixupTest
     private class FixupContext : DbContext
     {
         public FixupContext()
+        {
             // ReSharper disable once VirtualMemberCallInConstructor
-            => ChangeTracker.AutoDetectChangesEnabled = false;
+            ChangeTracker.AutoDetectChangesEnabled = false;
+        }
 
         protected internal override void OnModelCreating(ModelBuilder modelBuilder)
         {

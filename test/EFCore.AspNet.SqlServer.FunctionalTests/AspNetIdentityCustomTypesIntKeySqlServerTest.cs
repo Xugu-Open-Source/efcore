@@ -3,11 +3,15 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class AspNetIdentityCustomTypesIntKeySqlServerTest(
-    AspNetIdentityCustomTypesIntKeySqlServerTest.AspNetIdentityCustomTypesIntKeySqlServerFixture fixture)
+public class AspNetIdentityCustomTypesIntKeySqlServerTest
     : AspNetIdentityCustomTypesIntKeyTestBase<
-        AspNetIdentityCustomTypesIntKeySqlServerTest.AspNetIdentityCustomTypesIntKeySqlServerFixture>(fixture)
+        AspNetIdentityCustomTypesIntKeySqlServerTest.AspNetIdentityCustomTypesIntKeySqlServerFixture>
 {
+    public AspNetIdentityCustomTypesIntKeySqlServerTest(AspNetIdentityCustomTypesIntKeySqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class AspNetIdentityCustomTypesIntKeySqlServerFixture : AspNetIdentityFixtureBase
     {
         public TestSqlLoggerFactory TestSqlLoggerFactory

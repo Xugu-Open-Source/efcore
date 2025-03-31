@@ -1,6 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 // ReSharper disable InconsistentNaming
@@ -10,14 +11,17 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class NorthwindIncludeNoTrackingQueryTestBase<TFixture>(TFixture fixture) : NorthwindIncludeQueryTestBase<TFixture>(fixture)
+public abstract class NorthwindIncludeNoTrackingQueryTestBase<TFixture> : NorthwindIncludeQueryTestBase<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
     private static readonly MethodInfo _asNoTrackingMethodInfo
         = typeof(EntityFrameworkQueryableExtensions)
             .GetTypeInfo().GetDeclaredMethod(nameof(EntityFrameworkQueryableExtensions.AsNoTracking));
+
+    protected NorthwindIncludeNoTrackingQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
 
     // Include with cycles are not allowed in no tracking query.
     public override async Task Include_multi_level_reference_and_collection_predicate(bool async)
@@ -125,7 +129,7 @@ public abstract class NorthwindIncludeNoTrackingQueryTestBase<TFixture>(TFixture
                     .AsNoTracking()
                     .Single(c => c.CustomerID == "ALFKI");
 
-        Assert.NotEqual(orders, customer.Orders, ReferenceEqualityComparer.Instance);
+        Assert.NotEqual(orders, customer.Orders, LegacyReferenceEqualityComparer.Instance);
         Assert.Equal(6, customer.Orders.Count);
         Assert.True(customer.Orders.All(e => ReferenceEquals(e.Customer, customer)));
 

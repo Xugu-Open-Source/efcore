@@ -71,7 +71,7 @@ public interface IStoreStoredProcedure : ITableBase
     /// <param name="options">Options for generating the string.</param>
     /// <param name="indent">The number of indent spaces to use before each new line.</param>
     /// <returns>A human-readable representation.</returns>
-    string ITableBase.ToDebugString(MetadataDebugStringOptions options, int indent)
+    string ToDebugString(MetadataDebugStringOptions options = MetadataDebugStringOptions.ShortDefault, int indent = 0)
     {
         var builder = new StringBuilder();
         var indentString = new string(' ', indent);

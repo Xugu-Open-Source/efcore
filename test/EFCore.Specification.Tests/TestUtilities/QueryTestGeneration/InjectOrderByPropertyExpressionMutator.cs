@@ -1,13 +1,16 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Microsoft.EntityFrameworkCore.TestUtilities.QueryTestGeneration;
 
-public class InjectOrderByPropertyExpressionMutator(DbContext context) : ExpressionMutator(context)
+public class InjectOrderByPropertyExpressionMutator : ExpressionMutator
 {
-    private ExpressionFinder _expressionFinder = null!;
+    private ExpressionFinder _expressionFinder;
+
+    public InjectOrderByPropertyExpressionMutator(DbContext context)
+        : base(context)
+    {
+    }
 
     public override bool IsValid(Expression expression)
     {
@@ -59,22 +62,30 @@ public class InjectOrderByPropertyExpressionMutator(DbContext context) : Express
         return injector.Visit(expression);
     }
 
-    private class ExpressionFinder(InjectOrderByPropertyExpressionMutator mutator) : ExpressionVisitor
+    private class ExpressionFinder : ExpressionVisitor
     {
         private List<PropertyInfo> GetValidPropertiesForOrderBy(Expression expression)
-            => expression.Type.GetGenericArguments()[0].GetProperties().Where(p => !p.GetMethod!.IsStatic)
+            => expression.Type.GetGenericArguments()[0].GetProperties().Where(p => !p.GetMethod.IsStatic)
                 .Where(p => IsOrderedableType(p.PropertyType)).ToList();
 
         private bool _insideThenInclude;
+        private readonly InjectOrderByPropertyExpressionMutator _mutator;
+
+        public ExpressionFinder(InjectOrderByPropertyExpressionMutator mutator)
+        {
+            _mutator = mutator;
+        }
 
         public Dictionary<Expression, List<PropertyInfo>> FoundExpressions { get; } = new();
 
-        [return: NotNullIfNotNull(nameof(expression))]
-        public override Expression? Visit(Expression? expression)
+        public override Expression Visit(Expression expression)
         {
             // can't inject OrderBy inside of include - would have to rewrite the ThenInclude method to one that accepts ordered input
             var insideThenInclude = default(bool?);
-            if (expression is MethodCallExpression { Method.Name: "ThenInclude" or "ThenBy" or "ThenByDescending" })
+            if (expression is MethodCallExpression methodCallExpression
+                && (methodCallExpression.Method.Name == "ThenInclude"
+                    || methodCallExpression.Method.Name == "ThenBy"
+                    || methodCallExpression.Method.Name == "ThenByDescending"))
             {
                 insideThenInclude = _insideThenInclude;
                 _insideThenInclude = true;
@@ -86,7 +97,7 @@ public class InjectOrderByPropertyExpressionMutator(DbContext context) : Express
                 && !FoundExpressions.ContainsKey(expression))
             {
                 var validProperties = GetValidPropertiesForOrderBy(expression);
-                validProperties = mutator.FilterPropertyInfos(expression.Type.GetGenericArguments()[0], validProperties);
+                validProperties = _mutator.FilterPropertyInfos(expression.Type.GetGenericArguments()[0], validProperties);
 
                 if (validProperties.Any())
                 {

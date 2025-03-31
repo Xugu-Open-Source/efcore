@@ -43,7 +43,7 @@ public class PropertyOverridesConvention : IPropertyAddedConvention
         IConventionContext<IConventionPropertyBuilder> context)
     {
         var property = propertyBuilder.Metadata;
-        if (!property.DeclaringType.HasSharedClrType)
+        if (!property.DeclaringEntityType.HasSharedClrType)
         {
             return;
         }
@@ -56,7 +56,7 @@ public class PropertyOverridesConvention : IPropertyAddedConvention
                 continue;
             }
 
-            overridesToReattach ??= [];
+            overridesToReattach ??= new List<IConventionRelationalPropertyOverrides>();
 
             overridesToReattach.Add(overrides);
         }

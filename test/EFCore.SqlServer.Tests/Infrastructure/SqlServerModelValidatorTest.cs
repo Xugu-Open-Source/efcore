@@ -11,77 +11,6 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure;
 
 public class SqlServerModelValidatorTest : RelationalModelValidatorTest
 {
-    [ConditionalFact]
-    public void Detects_use_of_json_column()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        modelBuilder.Entity<Cheese>().Property(e => e.Name).HasColumnType("json");
-
-        VerifyWarning(
-            SqlServerResources.LogJsonTypeExperimental(new TestLogger<SqlServerLoggingDefinitions>())
-                .GenerateMessage("Cheese"), modelBuilder);
-    }
-
-    [ConditionalFact]
-    public void Detects_use_of_json_column_for_container()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        modelBuilder.Entity<ValidatorJsonEntityBasic>(
-            b =>
-            {
-                b.OwnsOne(
-                    x => x.OwnedReference, bb =>
-                    {
-                        bb.ToJson().HasColumnType("json");
-                        bb.Ignore(x => x.NestedCollection);
-                        bb.Ignore(x => x.NestedReference);
-                    });
-                b.Ignore(x => x.OwnedCollection);
-            });
-
-        VerifyWarning(
-            SqlServerResources.LogJsonTypeExperimental(new TestLogger<SqlServerLoggingDefinitions>())
-                .GenerateMessage(nameof(ValidatorJsonOwnedRoot)), modelBuilder);
-    }
-
-    [ConditionalFact] // Issue #34324
-    public virtual void Throws_for_nested_primitive_collections()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<WithNestedCollection>(
-            eb =>
-            {
-                eb.Property(e => e.Id);
-                eb.PrimitiveCollection(e => e.SomeStrings);
-            });
-
-        VerifyError(
-            RelationalStrings.NestedCollectionsNotSupported(
-                "string[][]", nameof(WithNestedCollection), nameof(WithNestedCollection.SomeStrings)), modelBuilder,
-            sensitiveDataLoggingEnabled: false);
-    }
-
-    protected class WithNestedCollection
-    {
-        public int Id { get; set; }
-        public string[][] SomeStrings { get; set; }
-    }
-
-    [ConditionalFact]
-    public virtual void Passes_on_TPT_with_nested_owned_types()
-    {
-        var modelBuilder = base.CreateConventionModelBuilder();
-
-        modelBuilder.Entity<BaseEntity>().UseTptMappingStrategy();
-        modelBuilder.Entity<ChildA>();
-        modelBuilder.Entity<ChildB>();
-        modelBuilder.Entity<ChildC>();
-        modelBuilder.Entity<ChildD>();
-
-        Validate(modelBuilder);
-    }
-
     public override void Detects_duplicate_columns_in_derived_types_with_different_types()
     {
         var modelBuilder = CreateConventionModelBuilder();
@@ -127,54 +56,6 @@ public class SqlServerModelValidatorTest : RelationalModelValidatorTest
         var keyProperty = modelBuilder.Model.FindEntityType(typeof(Animal))!.FindProperty(nameof(Animal.Id))!;
         Assert.Equal(ValueGenerated.OnAdd, keyProperty.ValueGenerated);
         Assert.Equal(SqlServerValueGenerationStrategy.Sequence, keyProperty.GetValueGenerationStrategy());
-    }
-
-    [ConditionalFact]
-    public virtual void Throws_for_identity_on_bad_type()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<Animal>(
-            b =>
-            {
-                b.Property(e => e.Name).UseIdentityColumn();
-            });
-
-        VerifyError(
-            SqlServerStrings.IdentityBadType(nameof(LivingBeing.Name), nameof(Animal), "string"),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Throws_for_sequence_on_bad_type()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<Animal>(
-            b =>
-            {
-                b.Property(e => e.Name).UseSequence();
-            });
-
-        VerifyError(
-            SqlServerStrings.SequenceBadType(nameof(LivingBeing.Name), nameof(Animal), "string"),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Throws_for_sequence_HiLo_on_bad_type()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<Animal>(
-            b =>
-            {
-                b.Property(e => e.Name).UseHiLo();
-            });
-
-        VerifyError(
-            SqlServerStrings.SequenceBadType(nameof(LivingBeing.Name), nameof(Animal), "string"),
-            modelBuilder);
     }
 
     [ConditionalFact]
@@ -522,38 +403,6 @@ public class SqlServerModelValidatorTest : RelationalModelValidatorTest
     }
 
     [ConditionalFact]
-    public virtual void Detects_duplicate_index_names_within_hierarchy_different_sort_in_tempdb()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        modelBuilder.Entity<Animal>();
-        modelBuilder.Entity<Cat>().HasIndex(c => c.Name).HasDatabaseName("IX_Animal_Name");
-        modelBuilder.Entity<Dog>().HasIndex(d => d.Name).HasDatabaseName("IX_Animal_Name").SortInTempDb();
-
-        VerifyError(
-            SqlServerStrings.DuplicateIndexSortInTempDbMismatch(
-                "{'" + nameof(Dog.Name) + "'}", nameof(Dog),
-                "{'" + nameof(Cat.Name) + "'}", nameof(Cat),
-                nameof(Animal), "IX_Animal_Name"),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Detects_duplicate_index_names_within_hierarchy_different_data_compression()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-        modelBuilder.Entity<Animal>();
-        modelBuilder.Entity<Cat>().HasIndex(c => c.Name).HasDatabaseName("IX_Animal_Name");
-        modelBuilder.Entity<Dog>().HasIndex(d => d.Name).HasDatabaseName("IX_Animal_Name").UseDataCompression(DataCompressionType.Page);
-
-        VerifyError(
-            SqlServerStrings.DuplicateIndexDataCompressionMismatch(
-                "{'" + nameof(Dog.Name) + "'}", nameof(Dog),
-                "{'" + nameof(Cat.Name) + "'}", nameof(Cat),
-                nameof(Animal), "IX_Animal_Name"),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
     public virtual void Detects_duplicate_index_names_within_hierarchy_with_different_different_include()
     {
         var modelBuilder = CreateConventionModelBuilder();
@@ -614,32 +463,6 @@ public class SqlServerModelValidatorTest : RelationalModelValidatorTest
         VerifyError(
             SqlServerStrings.IncompatibleTableMemoryOptimizedMismatch("Table", nameof(A), nameof(B), nameof(A), nameof(B)),
             modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Detects_incompatible_sql_output_clause_shared_table()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<A>().HasOne<B>().WithOne().HasForeignKey<A>(a => a.Id).HasPrincipalKey<B>(b => b.Id).IsRequired();
-
-        modelBuilder.Entity<A>().ToTable("Table", tb => tb.UseSqlOutputClause(false));
-        modelBuilder.Entity<B>().ToTable("Table", tb => tb.UseSqlOutputClause());
-
-        VerifyError(
-            SqlServerStrings.IncompatibleSqlOutputClauseMismatch("Table", nameof(A), nameof(B), nameof(B), nameof(A)),
-            modelBuilder);
-    }
-
-    [ConditionalFact]
-    public virtual void Passes_for_shared_table_with_only_one_entity_trigger_definition()
-    {
-        var modelBuilder = CreateConventionModelBuilder();
-
-        modelBuilder.Entity<Order>().ToTable("Table", tb => tb.HasTrigger("SomeTrigger"));
-        modelBuilder.Entity<Order>().OwnsOne(o => o.OrderDetails).ToTable("Table");
-
-        Validate(modelBuilder);
     }
 
     [ConditionalFact]
@@ -792,6 +615,15 @@ public class SqlServerModelValidatorTest : RelationalModelValidatorTest
     }
 
     [ConditionalFact]
+    public void Detects_non_key_SequenceHiLo()
+    {
+        var modelBuilder = CreateConventionModelBuilder();
+        modelBuilder.Entity<Dog>().Property(c => c.Type).UseHiLo();
+
+        VerifyError(SqlServerStrings.NonKeyValueGeneration(nameof(Dog.Type), nameof(Dog)), modelBuilder);
+    }
+
+    [ConditionalFact]
     public void Passes_for_non_key_SequenceHiLo_on_model()
     {
         var modelBuilder = CreateConventionModelBuilder();
@@ -801,6 +633,15 @@ public class SqlServerModelValidatorTest : RelationalModelValidatorTest
         modelBuilder.Entity<Dog>().Property(c => c.Type).ValueGeneratedOnAdd();
 
         Validate(modelBuilder);
+    }
+
+    [ConditionalFact]
+    public void Detects_non_key_KeySequence()
+    {
+        var modelBuilder = CreateConventionModelBuilder();
+        modelBuilder.Entity<Dog>().Property(c => c.Type).UseSequence();
+
+        VerifyError(SqlServerStrings.NonKeyValueGeneration(nameof(Dog.Type), nameof(Dog)), modelBuilder);
     }
 
     [ConditionalFact]
@@ -869,12 +710,13 @@ public class SqlServerModelValidatorTest : RelationalModelValidatorTest
         ConfigureProperty(propertyBuilder.Metadata, "DefaultValue", "2");
 
         VerifyWarnings(
-            [
+            new[]
+            {
                 SqlServerResources.LogConflictingValueGenerationStrategies(new TestLogger<SqlServerLoggingDefinitions>())
                     .GenerateMessage(sqlServerValueGenerationStrategy.ToString(), "DefaultValue", "Id", nameof(Dog)),
                 RelationalResources.LogKeyHasDefaultValue(new TestLogger<SqlServerLoggingDefinitions>())
                     .GenerateMessage("Id", nameof(Dog))
-            ],
+            },
             modelBuilder);
     }
 

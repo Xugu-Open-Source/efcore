@@ -3,9 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class AspNetIdentityDefaultSqlServerTest(AspNetIdentityDefaultSqlServerTest.AspNetDefaultIdentitySqlServerFixture fixture)
-    : AspNetIdentityDefaultTestBase<AspNetIdentityDefaultSqlServerTest.AspNetDefaultIdentitySqlServerFixture>(fixture)
+public class AspNetIdentityDefaultSqlServerTest
+    : AspNetIdentityDefaultTestBase<AspNetIdentityDefaultSqlServerTest.AspNetDefaultIdentitySqlServerFixture>
 {
+    public AspNetIdentityDefaultSqlServerTest(AspNetDefaultIdentitySqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class AspNetDefaultIdentitySqlServerFixture : AspNetIdentityFixtureBase
     {
         public TestSqlLoggerFactory TestSqlLoggerFactory

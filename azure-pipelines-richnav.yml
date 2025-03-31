@@ -3,9 +3,6 @@ trigger:
     include:
       - main
 
-variables:
-- template: /eng/common/templates/variables/pool-providers.yml
-
 stages:
 - stage: build
   displayName: Build
@@ -14,13 +11,14 @@ stages:
       parameters:
         enableMicrobuild: true
         enableRichCodeNavigation: true
+        richCodeNavigationEnvironment: production
         helixRepo: dotnet/efcore
         jobs:
           - job: Windows
             timeoutInMinutes: 90
             enablePublishTestResults: true
             pool:
-              name: $(DncEngPublicBuildPool)
+              name: NetCore-Svc-Public
               demands: ImageOverride -equals 1es-windows-2019-open
             steps:
               - task: NuGetCommand@2

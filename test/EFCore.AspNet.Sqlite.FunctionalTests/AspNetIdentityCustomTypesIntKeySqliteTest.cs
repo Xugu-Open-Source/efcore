@@ -3,11 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class AspNetIdentityCustomTypesIntKeySqliteTest(
-    AspNetIdentityCustomTypesIntKeySqliteTest.AspNetIdentityCustomTypesIntKeySqliteFixture fixture)
-    : AspNetIdentityCustomTypesIntKeyTestBase<AspNetIdentityCustomTypesIntKeySqliteTest.AspNetIdentityCustomTypesIntKeySqliteFixture>(
-        fixture)
+public class AspNetIdentityCustomTypesIntKeySqliteTest
+    : AspNetIdentityCustomTypesIntKeyTestBase<AspNetIdentityCustomTypesIntKeySqliteTest.AspNetIdentityCustomTypesIntKeySqliteFixture>
 {
+    public AspNetIdentityCustomTypesIntKeySqliteTest(AspNetIdentityCustomTypesIntKeySqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class AspNetIdentityCustomTypesIntKeySqliteFixture : AspNetIdentityFixtureBase
     {
         public TestSqlLoggerFactory TestSqlLoggerFactory

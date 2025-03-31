@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -48,11 +49,10 @@ public class SimpleRowIndexValueFactory<TKey> : IRowIndexValueFactory<TKey>
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool TryCreateIndexValue(object?[] keyValues, out TKey? key, out bool hasNullValue)
+    public virtual bool TryCreateIndexValue(object?[] keyValues, [NotNullWhen(true)] out TKey? key)
     {
         key = (TKey?)keyValues[0];
-        hasNullValue = key == null;
-        return true;
+        return key != null;
     }
 
     /// <summary>
@@ -61,17 +61,15 @@ public class SimpleRowIndexValueFactory<TKey> : IRowIndexValueFactory<TKey>
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool TryCreateIndexValue(IDictionary<string, object?> keyValues, out TKey? key, out bool hasNullValue)
+    public virtual bool TryCreateIndexValue(IDictionary<string, object?> keyValues, [NotNullWhen(true)] out TKey? key)
     {
         if (keyValues.TryGetValue(_column.Name, out var value))
         {
             key = (TKey?)value;
-            hasNullValue = key == null;
-            return true;
+            return key != null;
         }
 
         key = default;
-        hasNullValue = true;
         return false;
     }
 
@@ -84,14 +82,12 @@ public class SimpleRowIndexValueFactory<TKey> : IRowIndexValueFactory<TKey>
     public virtual bool TryCreateIndexValue(
         IReadOnlyModificationCommand command,
         bool fromOriginalValues,
-        out TKey? key,
-        out bool hasNullValue)
+        [NotNullWhen(true)] out TKey? key)
     {
         (key, var present) = fromOriginalValues
             ? ((Func<IReadOnlyModificationCommand, (TKey, bool)>)_columnAccessors.OriginalValueGetter)(command)
             : ((Func<IReadOnlyModificationCommand, (TKey, bool)>)_columnAccessors.CurrentValueGetter)(command);
-        hasNullValue = key == null;
-        return present;
+        return present && key != null;
     }
 
     /// <summary>
@@ -100,12 +96,10 @@ public class SimpleRowIndexValueFactory<TKey> : IRowIndexValueFactory<TKey>
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual (object? Value, bool HasNullValue) CreateEquatableIndexValue(
-        IReadOnlyModificationCommand command,
-        bool fromOriginalValues = false)
-        => TryCreateIndexValue(command, fromOriginalValues, out var keyValue, out var hasNullValue)
-            ? (new EquatableKeyValue<TKey>(_index, keyValue, EqualityComparer), hasNullValue)
-            : (null, true);
+    public virtual object? CreateEquatableIndexValue(IReadOnlyModificationCommand command, bool fromOriginalValues = false)
+        => TryCreateIndexValue(command, fromOriginalValues, out var keyValue)
+            ? new EquatableKeyValue<TKey>(_index, keyValue, EqualityComparer)
+            : null;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -113,10 +107,8 @@ public class SimpleRowIndexValueFactory<TKey> : IRowIndexValueFactory<TKey>
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual (object?[]? Value, bool HasNullValue) CreateIndexValue(
-        IReadOnlyModificationCommand command,
-        bool fromOriginalValues = false)
-        => TryCreateIndexValue(command, fromOriginalValues, out var value, out var hasNullValue)
-            ? (new object?[] { value }, hasNullValue)
-            : (null, true);
+    public virtual object[]? CreateIndexValue(IReadOnlyModificationCommand command, bool fromOriginalValues = false)
+        => TryCreateIndexValue(command, fromOriginalValues, out var value)
+            ? (new object[] { value })
+            : null;
 }

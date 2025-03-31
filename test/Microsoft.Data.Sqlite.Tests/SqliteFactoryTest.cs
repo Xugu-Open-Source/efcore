@@ -3,23 +3,32 @@
 
 using Xunit;
 
-namespace Microsoft.Data.Sqlite;
-
-public class SqliteFactoryTest
+namespace Microsoft.Data.Sqlite
 {
-    [Fact]
-    public void CreateConnection_works()
-        => Assert.IsType<SqliteConnection>(SqliteFactory.Instance.CreateConnection());
+    public class SqliteFactoryTest
+    {
+        [Fact]
+        public void CreateConnection_works()
+        {
+            Assert.IsType<SqliteConnection>(SqliteFactory.Instance.CreateConnection());
+        }
 
-    [Fact]
-    public void CreateConnectionStringBuilder_works()
-        => Assert.IsType<SqliteConnectionStringBuilder>(SqliteFactory.Instance.CreateConnectionStringBuilder());
+        [Fact]
+        public void CreateConnectionStringBuilder_works()
+        {
+            Assert.IsType<SqliteConnectionStringBuilder>(SqliteFactory.Instance.CreateConnectionStringBuilder());
+        }
 
-    [Fact]
-    public void CreateCommand_works()
-        => Assert.IsType<SqliteCommand>(SqliteFactory.Instance.CreateCommand());
+        [Fact]
+        public void CreateCommand_works()
+        {
+            Assert.IsType<SqliteCommand>(SqliteFactory.Instance.CreateCommand());
+        }
 
-    [Fact]
-    public void CreateParameter_works()
-        => Assert.IsType<SqliteParameter>(SqliteFactory.Instance.CreateParameter());
+        [Fact]
+        public void CreateParameter_works()
+        {
+            Assert.IsType<SqliteParameter>(SqliteFactory.Instance.CreateParameter());
+        }
+    }
 }

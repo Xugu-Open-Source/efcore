@@ -171,26 +171,9 @@ public interface IReadOnlyForeignKey : IReadOnlyAnnotatable
                 builder.Append(" Unique");
             }
 
-            if (IsRequired)
-            {
-                builder.Append(" Required");
-            }
-
-            if (IsRequiredDependent)
-            {
-                builder.Append(" RequiredDependent");
-            }
-
             if (IsOwnership)
             {
                 builder.Append(" Ownership");
-            }
-
-            if (DeleteBehavior != DeleteBehavior.NoAction)
-            {
-                builder
-                    .Append(' ')
-                    .Append(DeleteBehavior);
             }
 
             if (PrincipalToDependent != null)
@@ -201,6 +184,13 @@ public interface IReadOnlyForeignKey : IReadOnlyAnnotatable
             if (DependentToPrincipal != null)
             {
                 builder.Append(" ToPrincipal: ").Append(DependentToPrincipal.Name);
+            }
+
+            if (DeleteBehavior != DeleteBehavior.NoAction)
+            {
+                builder
+                    .Append(' ')
+                    .Append(DeleteBehavior);
             }
 
             if (!singleLine && (options & MetadataDebugStringOptions.IncludeAnnotations) != 0)

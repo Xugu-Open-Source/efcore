@@ -1,9 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Internal;
 
@@ -69,7 +67,7 @@ public class DbContextServices : IDbContextServices
             _inOnModelCreating = true;
 
             var dependencies = _scopedProvider!.GetRequiredService<ModelCreationDependencies>();
-            var modelFromOptions = CoreOptions?.Model ?? FindCompiledModel(_currentContext!.Context.GetType());
+            var modelFromOptions = CoreOptions?.Model;
 
             var modelVersion = modelFromOptions?.GetProductVersion();
             if (modelVersion != null)
@@ -85,59 +83,14 @@ public class DbContextServices : IDbContextServices
                 }
             }
 
-            if (modelFromOptions == null
-                || (designTime && !(modelFromOptions is Model)))
-            {
-                return RuntimeFeature.IsDynamicCodeSupported
+            return modelFromOptions == null
+                || (designTime && modelFromOptions is not Metadata.Internal.Model)
                     ? dependencies.ModelSource.GetModel(_currentContext!.Context, dependencies, designTime)
-                    : designTime
-                        ? throw new InvalidOperationException(CoreStrings.NativeAotDesignTimeModel)
-                        : throw new InvalidOperationException(CoreStrings.NativeAotNoCompiledModel);
-            }
-
-            var designTimeModel = dependencies.ModelRuntimeInitializer.Initialize(
-                modelFromOptions, designTime: modelFromOptions is Model, dependencies.ValidationLogger);
-
-            var runtimeModel = (IModel)designTimeModel.FindRuntimeAnnotationValue(CoreAnnotationNames.ReadOnlyModel)!;
-
-            return designTime ? designTimeModel : runtimeModel;
+                    : dependencies.ModelRuntimeInitializer.Initialize(modelFromOptions, designTime, dependencies.ValidationLogger);
         }
         finally
         {
             _inOnModelCreating = false;
-        }
-
-        static IModel? FindCompiledModel(Type contextType)
-        {
-            var contextAssembly = contextType.Assembly;
-            IModel? model = null;
-            foreach (var modelAttribute in contextAssembly.GetCustomAttributes<DbContextModelAttribute>())
-            {
-                if (modelAttribute.ContextType != contextType)
-                {
-                    continue;
-                }
-
-                var modelType = modelAttribute.ModelType;
-
-                var instanceProperty = modelType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
-                if (instanceProperty == null
-                    || instanceProperty.PropertyType != typeof(IModel))
-                {
-                    throw new InvalidOperationException(CoreStrings.CompiledModelMissingInstance(modelType.DisplayName()));
-                }
-
-                if (model != null)
-                {
-                    throw new InvalidOperationException(
-                        CoreStrings.CompiledModelDuplicateAttribute(
-                            contextAssembly.FullName, contextType.DisplayName()));
-                }
-
-                model = (IModel)instanceProperty.GetValue(null)!;
-            }
-
-            return model;
         }
     }
 

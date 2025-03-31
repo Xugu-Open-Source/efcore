@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.InheritanceRelationshipsModel;
 
-#nullable disable
-
 public class DerivedInheritanceRelationshipEntity : BaseInheritanceRelationshipEntity
 {
     public int? BaseId { get; set; }

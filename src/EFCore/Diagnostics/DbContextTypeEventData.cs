@@ -23,7 +23,9 @@ public class DbContextTypeEventData : EventData
         Func<EventDefinitionBase, EventData, string> messageGenerator,
         Type contextType)
         : base(eventDefinition, messageGenerator)
-        => ContextType = contextType;
+    {
+        ContextType = contextType;
+    }
 
     /// <summary>
     ///     The current <see cref="DbContext" />.

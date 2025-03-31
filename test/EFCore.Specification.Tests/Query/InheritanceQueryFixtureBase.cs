@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore.TestModels.InheritanceModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public abstract class InheritanceQueryFixtureBase : SharedStoreFixtureBase<InheritanceContext>, IFilteredQueryFixtureBase
 {
     private readonly Dictionary<bool, ISetSource> _expectedDataCache = new();
@@ -14,27 +12,17 @@ public abstract class InheritanceQueryFixtureBase : SharedStoreFixtureBase<Inher
     protected override string StoreName
         => "InheritanceTest";
 
-    public virtual bool EnableFilters
+    protected virtual bool EnableFilters
         => false;
 
-    public virtual bool IsDiscriminatorMappingComplete
+    protected virtual bool IsDiscriminatorMappingComplete
         => true;
 
-    public virtual bool HasDiscriminator
+    protected virtual bool HasDiscriminator
         => true;
 
-    public virtual bool UseGeneratedKeys
+    protected virtual bool UseGeneratedKeys
         => true;
-
-    public virtual bool EnableComplexTypes
-        => true;
-
-    public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
-        => base.AddOptions(builder).ConfigureWarnings(
-            w => w.Ignore(
-                CoreEventId.MappedEntityTypeIgnoredWarning,
-                CoreEventId.MappedPropertyIgnoredWarning,
-                CoreEventId.MappedNavigationIgnoredWarning));
 
     public Func<DbContext> GetContextCreator()
         => () => CreateContext();
@@ -270,19 +258,6 @@ public abstract class InheritanceQueryFixtureBase : SharedStoreFixtureBase<Inher
                     Assert.Equal(ee.Species, aa.Species);
                     Assert.Equal(ee.Name, aa.Name);
                     Assert.Equal(ee.Genus, aa.Genus);
-
-                    Assert.Equal(ee.AdditionalInfo is null, aa.AdditionalInfo is null);
-                    if (ee.AdditionalInfo is not null)
-                    {
-                        Assert.Equal(ee.AdditionalInfo.Nickname, aa.AdditionalInfo!.Nickname);
-
-                        Assert.Equal(ee.AdditionalInfo.LeafStructure is null, aa.AdditionalInfo.LeafStructure is null);
-                        if (ee.AdditionalInfo.LeafStructure is not null)
-                        {
-                            Assert.Equal(ee.AdditionalInfo.LeafStructure.NumLeaves, aa.AdditionalInfo.LeafStructure!.NumLeaves);
-                            Assert.Equal(ee.AdditionalInfo.LeafStructure.AreLeavesBig, aa.AdditionalInfo.LeafStructure.AreLeavesBig);
-                        }
-                    }
                 }
             }
         },
@@ -402,18 +377,7 @@ public abstract class InheritanceQueryFixtureBase : SharedStoreFixtureBase<Inher
         if (HasDiscriminator)
         {
             modelBuilder.Entity<Bird>().HasDiscriminator<string>("Discriminator").IsComplete(IsDiscriminatorMappingComplete);
-
-            modelBuilder.Entity<Drink>()
-                .HasDiscriminator(e => e.Discriminator)
-                .HasValue<Drink>(DrinkType.Drink)
-                .HasValue<Coke>(DrinkType.Coke)
-                .HasValue<Lilt>(DrinkType.Lilt)
-                .HasValue<Tea>(DrinkType.Tea)
-                .IsComplete(IsDiscriminatorMappingComplete);
-        }
-        else
-        {
-            modelBuilder.Entity<Drink>().Ignore(e => e.Discriminator);
+            modelBuilder.Entity<Drink>().HasDiscriminator().IsComplete(IsDiscriminatorMappingComplete);
         }
 
         modelBuilder.Entity<KiwiQuery>().HasDiscriminator().IsComplete(IsDiscriminatorMappingComplete);
@@ -426,19 +390,8 @@ public abstract class InheritanceQueryFixtureBase : SharedStoreFixtureBase<Inher
         modelBuilder.Entity<AnimalQuery>().HasNoKey();
         modelBuilder.Entity<BirdQuery>();
         modelBuilder.Entity<KiwiQuery>();
-
-        if (EnableComplexTypes)
-        {
-            modelBuilder.Entity<Daisy>()
-                .ComplexProperty(d => d.AdditionalInfo)
-                .ComplexProperty(a => a.LeafStructure);
-        }
-        else
-        {
-            modelBuilder.Entity<Daisy>().Ignore(d => d.AdditionalInfo);
-        }
     }
 
-    protected override Task SeedAsync(InheritanceContext context)
-        => InheritanceContext.SeedAsync(context, UseGeneratedKeys);
+    protected override void Seed(InheritanceContext context)
+        => InheritanceContext.Seed(context, UseGeneratedKeys);
 }

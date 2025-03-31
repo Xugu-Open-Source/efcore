@@ -3,14 +3,16 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public abstract class
-    ComplexNavigationsCollectionsSplitSharedTypeQueryRelationalTestBase<TFixture>(TFixture fixture)
-    : ComplexNavigationsCollectionsSharedTypeQueryTestBase
-        <TFixture>(fixture)
+    ComplexNavigationsCollectionsSplitSharedTypeQueryRelationalTestBase<TFixture> : ComplexNavigationsCollectionsSharedTypeQueryTestBase
+        <TFixture>
     where TFixture : ComplexNavigationsSharedTypeQueryRelationalFixtureBase, new()
 {
+    protected ComplexNavigationsCollectionsSplitSharedTypeQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public override async Task SelectMany_with_navigation_and_Distinct_projecting_columns_including_join_key(bool async)
         => Assert.Equal(
             RelationalStrings.InsufficientInformationToIdentifyElementOfCollectionJoin,
@@ -18,11 +20,7 @@ public abstract class
                 () => base.SelectMany_with_navigation_and_Distinct_projecting_columns_including_join_key(async))).Message);
 
     protected override Expression RewriteServerQueryExpression(Expression serverQueryExpression)
-    {
-        serverQueryExpression = base.RewriteServerQueryExpression(serverQueryExpression);
-
-        return new SplitQueryRewritingExpressionVisitor().Visit(serverQueryExpression);
-    }
+        => new SplitQueryRewritingExpressionVisitor().Visit(serverQueryExpression);
 
     private class SplitQueryRewritingExpressionVisitor : ExpressionVisitor
     {

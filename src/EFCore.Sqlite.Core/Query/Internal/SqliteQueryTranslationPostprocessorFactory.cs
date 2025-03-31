@@ -45,5 +45,5 @@ public class SqliteQueryTranslationPostprocessorFactory : IQueryTranslationPostp
         => new SqliteQueryTranslationPostprocessor(
             Dependencies,
             RelationalDependencies,
-            (RelationalQueryCompilationContext)queryCompilationContext);
+            queryCompilationContext);
 }

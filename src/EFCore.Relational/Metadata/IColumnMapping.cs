@@ -49,7 +49,7 @@ public interface IColumnMapping : IColumnMappingBase
         }
 
         builder
-            .Append(Property.DeclaringType.DisplayName())
+            .Append(Property.DeclaringEntityType.DisplayName())
             .Append('.')
             .Append(Property.Name)
             .Append(" - ");

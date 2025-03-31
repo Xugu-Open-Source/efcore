@@ -3,9 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class TestRelationalTransactionFactory(RelationalTransactionFactoryDependencies dependencies) : IRelationalTransactionFactory
+public class TestRelationalTransactionFactory : IRelationalTransactionFactory
 {
-    protected virtual RelationalTransactionFactoryDependencies Dependencies { get; } = dependencies;
+    public TestRelationalTransactionFactory(RelationalTransactionFactoryDependencies dependencies)
+    {
+        Dependencies = dependencies;
+    }
+
+    protected virtual RelationalTransactionFactoryDependencies Dependencies { get; }
 
     public RelationalTransaction Create(
         IRelationalConnection connection,
@@ -16,15 +21,20 @@ public class TestRelationalTransactionFactory(RelationalTransactionFactoryDepend
         => new TestRelationalTransaction(connection, transaction, logger, transactionOwned, Dependencies.SqlGenerationHelper);
 }
 
-public class TestRelationalTransaction(
-    IRelationalConnection connection,
-    DbTransaction transaction,
-    IDiagnosticsLogger<DbLoggerCategory.Database.Transaction> logger,
-    bool transactionOwned,
-    ISqlGenerationHelper sqlGenerationHelper) : RelationalTransaction(
-    connection, transaction, new Guid(), logger, transactionOwned, sqlGenerationHelper)
+public class TestRelationalTransaction : RelationalTransaction
 {
-    private readonly TestSqlServerConnection _testConnection = (TestSqlServerConnection)connection;
+    private readonly TestSqlServerConnection _testConnection;
+
+    public TestRelationalTransaction(
+        IRelationalConnection connection,
+        DbTransaction transaction,
+        IDiagnosticsLogger<DbLoggerCategory.Database.Transaction> logger,
+        bool transactionOwned,
+        ISqlGenerationHelper sqlGenerationHelper)
+        : base(connection, transaction, new Guid(), logger, transactionOwned, sqlGenerationHelper)
+    {
+        _testConnection = (TestSqlServerConnection)connection;
+    }
 
     public override void Commit()
     {

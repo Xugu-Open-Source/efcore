@@ -36,7 +36,9 @@ public class SqliteOptionsExtension : RelationalOptionsExtension
     /// </summary>
     protected SqliteOptionsExtension(SqliteOptionsExtension copyFrom)
         : base(copyFrom)
-        => _loadSpatialite = copyFrom._loadSpatialite;
+    {
+        _loadSpatialite = copyFrom._loadSpatialite;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -89,9 +91,14 @@ public class SqliteOptionsExtension : RelationalOptionsExtension
     public override void ApplyServices(IServiceCollection services)
         => services.AddEntityFrameworkSqlite();
 
-    private sealed class ExtensionInfo(IDbContextOptionsExtension extension) : RelationalExtensionInfo(extension)
+    private sealed class ExtensionInfo : RelationalExtensionInfo
     {
         private string? _logFragment;
+
+        public ExtensionInfo(IDbContextOptionsExtension extension)
+            : base(extension)
+        {
+        }
 
         private new SqliteOptionsExtension Extension
             => (SqliteOptionsExtension)base.Extension;

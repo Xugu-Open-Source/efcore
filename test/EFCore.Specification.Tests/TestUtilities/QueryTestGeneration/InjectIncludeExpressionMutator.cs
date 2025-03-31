@@ -5,10 +5,13 @@ using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities.QueryTestGeneration;
 
-#nullable disable
-
-public class InjectIncludeExpressionMutator(DbContext context) : ExpressionMutator(context)
+public class InjectIncludeExpressionMutator : ExpressionMutator
 {
+    public InjectIncludeExpressionMutator(DbContext context)
+        : base(context)
+    {
+    }
+
     private ExpressionFinder _expressionFinder;
 
     public override bool IsValid(Expression expression)
@@ -54,12 +57,18 @@ public class InjectIncludeExpressionMutator(DbContext context) : ExpressionMutat
         return expression;
     }
 
-    private class ExpressionFinder(InjectIncludeExpressionMutator mutator) : ExpressionVisitor
+    private class ExpressionFinder : ExpressionVisitor
     {
-        private readonly InjectIncludeExpressionMutator _mutator = mutator;
+        private readonly InjectIncludeExpressionMutator _mutator;
 
-        private readonly List<IEntityType> _topLevelEntityTypes = [];
-        public readonly List<Expression> FoundExpressions = [];
+        private readonly List<IEntityType> _topLevelEntityTypes = new();
+
+        public ExpressionFinder(InjectIncludeExpressionMutator mutator)
+        {
+            _mutator = mutator;
+        }
+
+        public readonly List<Expression> FoundExpressions = new();
 
         private int _depth;
 

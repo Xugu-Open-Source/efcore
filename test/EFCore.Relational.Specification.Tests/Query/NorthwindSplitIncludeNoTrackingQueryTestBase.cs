@@ -1,6 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 // ReSharper disable FormatStringProblem
@@ -9,15 +10,17 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable AccessToDisposedClosure
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class NorthwindSplitIncludeNoTrackingQueryTestBase<TFixture>(TFixture fixture)
-    : NorthwindIncludeNoTrackingQueryTestBase<TFixture>(fixture)
+public abstract class NorthwindSplitIncludeNoTrackingQueryTestBase<TFixture> : NorthwindIncludeNoTrackingQueryTestBase<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
     private static readonly MethodInfo _asSplitIncludeMethodInfo
         = typeof(RelationalQueryableExtensions)
             .GetTypeInfo().GetDeclaredMethod(nameof(RelationalQueryableExtensions.AsSplitQuery));
+
+    protected NorthwindSplitIncludeNoTrackingQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
 
     public override async Task Include_closes_reader(bool async)
     {
@@ -54,7 +57,7 @@ public abstract class NorthwindSplitIncludeNoTrackingQueryTestBase<TFixture>(TFi
                     .AsNoTracking()
                     .Single(c => c.CustomerID == "ALFKI");
 
-        Assert.NotEqual(orders, customer.Orders, ReferenceEqualityComparer.Instance);
+        Assert.NotEqual(orders, customer.Orders, LegacyReferenceEqualityComparer.Instance);
         Assert.Equal(6, customer.Orders.Count);
         Assert.True(customer.Orders.All(e => ReferenceEquals(e.Customer, customer)));
 

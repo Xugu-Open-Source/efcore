@@ -144,8 +144,13 @@ public class DbContextOptionsTest
         {
         }
 
-        private sealed class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
+        private sealed class ExtensionInfo : DbContextOptionsExtensionInfo
         {
+            public ExtensionInfo(IDbContextOptionsExtension extension)
+                : base(extension)
+            {
+            }
+
             public override bool IsDatabaseProvider
                 => false;
 
@@ -180,8 +185,13 @@ public class DbContextOptionsTest
         {
         }
 
-        private sealed class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
+        private sealed class ExtensionInfo : DbContextOptionsExtensionInfo
         {
+            public ExtensionInfo(IDbContextOptionsExtension extension)
+                : base(extension)
+            {
+            }
+
             public override bool IsDatabaseProvider
                 => true;
 
@@ -303,5 +313,7 @@ public class DbContextOptionsTest
     private DbContextOptions<UnkoolContext> GenericCheck(DbContextOptions<UnkoolContext> options)
         => options;
 
-    private class UnkoolContext : DbContext;
+    private class UnkoolContext : DbContext
+    {
+    }
 }

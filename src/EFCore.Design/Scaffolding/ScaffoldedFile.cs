@@ -6,22 +6,17 @@ namespace Microsoft.EntityFrameworkCore.Scaffolding;
 /// <summary>
 ///     Represents a scaffolded file.
 /// </summary>
-/// <remarks>
-///     Constructs a new instance of <see cref="ScaffoldedFile" />.
-/// </remarks>
-/// <param name="path">The path.</param>
-/// <param name="code">The scaffolded code</param>
-public class ScaffoldedFile(string path, string code)
+public class ScaffoldedFile
 {
     /// <summary>
     ///     Gets or sets the path.
     /// </summary>
     /// <value> The path. </value>
-    public virtual string Path { get; set; } = path;
+    public virtual string Path { get; set; } = null!;
 
     /// <summary>
     ///     Gets or sets the scaffolded code.
     /// </summary>
     /// <value> The scaffolded code. </value>
-    public virtual string Code { get; set; } = code;
+    public virtual string Code { get; set; } = null!;
 }

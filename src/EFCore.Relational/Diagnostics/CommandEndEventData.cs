@@ -55,7 +55,9 @@ public class CommandEndEventData : CommandEventData
             logParameterValues,
             startTime,
             commandSource)
-        => Duration = duration;
+    {
+        Duration = duration;
+    }
 
     /// <summary>
     ///     The duration this event.

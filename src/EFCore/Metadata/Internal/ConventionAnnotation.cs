@@ -21,7 +21,9 @@ public class ConventionAnnotation : Annotation, IConventionAnnotation
     /// </summary>
     public ConventionAnnotation(string name, object? value, ConfigurationSource configurationSource)
         : base(name, value)
-        => _configurationSource = configurationSource;
+    {
+        _configurationSource = configurationSource;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

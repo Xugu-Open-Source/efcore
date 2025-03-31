@@ -3,14 +3,15 @@
 
 using System;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class JobCandidate
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public int JobCandidateID { get; set; }
-    public int? BusinessEntityID { get; set; }
-    public DateTime ModifiedDate { get; set; }
-    public string Resume { get; set; }
+    public class JobCandidate
+    {
+        public int JobCandidateID { get; set; }
+        public int? BusinessEntityID { get; set; }
+        public DateTime ModifiedDate { get; set; }
+        public string Resume { get; set; }
 
-    public virtual Employee BusinessEntity { get; set; }
+        public virtual Employee BusinessEntity { get; set; }
+    }
 }

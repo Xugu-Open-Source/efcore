@@ -1,8 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.EntityFrameworkCore.SqlServer.Infrastructure.Internal;
-
 namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 
 /// <summary>
@@ -13,8 +11,6 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 /// </summary>
 public class SqlServerSqlTranslatingExpressionVisitorFactory : IRelationalSqlTranslatingExpressionVisitorFactory
 {
-    private readonly ISqlServerSingletonOptions _sqlServerSingletonOptions;
-
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -22,11 +18,9 @@ public class SqlServerSqlTranslatingExpressionVisitorFactory : IRelationalSqlTra
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public SqlServerSqlTranslatingExpressionVisitorFactory(
-        RelationalSqlTranslatingExpressionVisitorDependencies dependencies,
-        ISqlServerSingletonOptions sqlServerSingletonOptions)
+        RelationalSqlTranslatingExpressionVisitorDependencies dependencies)
     {
         Dependencies = dependencies;
-        _sqlServerSingletonOptions = sqlServerSingletonOptions;
     }
 
     /// <summary>
@@ -45,7 +39,6 @@ public class SqlServerSqlTranslatingExpressionVisitorFactory : IRelationalSqlTra
         QueryableMethodTranslatingExpressionVisitor queryableMethodTranslatingExpressionVisitor)
         => new SqlServerSqlTranslatingExpressionVisitor(
             Dependencies,
-            (SqlServerQueryCompilationContext)queryCompilationContext,
-            queryableMethodTranslatingExpressionVisitor,
-            _sqlServerSingletonOptions);
+            queryCompilationContext,
+            queryableMethodTranslatingExpressionVisitor);
 }

@@ -3,17 +3,27 @@
 
 using System;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.Orders;
-
-public abstract class OrdersContextBase(IServiceProvider serviceProvider) : DbContext
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.Orders
 {
-    public DbSet<Customer> Customers { get; set; }
-    public DbSet<Order> Orders { get; set; }
-    public DbSet<OrderLine> OrderLines { get; set; }
-    public DbSet<Product> Products { get; set; }
+    public abstract class OrdersContextBase : DbContext
+    {
+        private readonly IServiceProvider _serviceProvider;
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => ConfigureProvider(optionsBuilder.UseInternalServiceProvider(serviceProvider));
+        protected OrdersContextBase(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
 
-    protected abstract void ConfigureProvider(DbContextOptionsBuilder optionsBuilder);
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderLine> OrderLines { get; set; }
+        public DbSet<Product> Products { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            ConfigureProvider(optionsBuilder.UseInternalServiceProvider(_serviceProvider));
+        }
+
+        protected abstract void ConfigureProvider(DbContextOptionsBuilder optionsBuilder);
+    }
 }

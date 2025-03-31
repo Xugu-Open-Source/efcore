@@ -28,9 +28,4 @@ public interface ICoreSingletonOptions : ISingletonOptions
     ///     Reflects the option set by <see cref="DbContextOptionsBuilder.EnableThreadSafetyChecks" />.
     /// </summary>
     bool AreThreadSafetyChecksEnabled { get; }
-
-    /// <summary>
-    ///     The root service provider for the application, if available. />.
-    /// </summary>
-    IServiceProvider? RootApplicationServiceProvider { get; }
 }

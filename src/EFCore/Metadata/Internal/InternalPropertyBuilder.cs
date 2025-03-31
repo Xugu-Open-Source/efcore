@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -13,8 +11,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal;
 ///     any release. You should only use it directly in your code with extreme caution and knowing that
 ///     doing so can result in application failures when updating to a new Entity Framework Core release.
 /// </summary>
-public class InternalPropertyBuilder
-    : InternalPropertyBaseBuilder<IConventionPropertyBuilder, Property>, IConventionPropertyBuilder
+public class InternalPropertyBuilder : InternalPropertyBaseBuilder<Property>, IConventionPropertyBuilder
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -33,15 +30,6 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected override IConventionPropertyBuilder This
-        => this;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     public virtual InternalPropertyBuilder? IsRequired(bool? required, ConfigurationSource configurationSource)
     {
         if (configurationSource != ConfigurationSource.Explicit
@@ -52,7 +40,7 @@ public class InternalPropertyBuilder
 
         if (required == false)
         {
-            using (Metadata.DeclaringType.Model.DelayConventions())
+            using (Metadata.DeclaringEntityType.Model.DelayConventions())
             {
                 foreach (var key in Metadata.GetContainingKeys().ToList())
                 {
@@ -61,7 +49,7 @@ public class InternalPropertyBuilder
                     {
                         throw new InvalidOperationException(
                             CoreStrings.KeyPropertyCannotBeNullable(
-                                Metadata.Name, Metadata.DeclaringType.DisplayName(), key.Properties.Format()));
+                                Metadata.Name, Metadata.DeclaringEntityType.DisplayName(), key.Properties.Format()));
                     }
 
                     var removed = key.DeclaringEntityType.Builder.HasNoKey(key, configurationSource);
@@ -154,59 +142,8 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual InternalPropertyBuilder? HasSentinel(object? sentinel, ConfigurationSource configurationSource)
-    {
-        if (CanSetSentinel(sentinel, configurationSource))
-        {
-            Metadata.SetSentinel(sentinel, configurationSource);
-
-            return this;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual bool CanSetSentinel(object? sentinel, ConfigurationSource? configurationSource)
-    {
-        if (configurationSource.Overrides(Metadata.GetSentinelConfigurationSource()))
-        {
-            return true;
-        }
-
-        if (sentinel == null
-            || Metadata.ClrType.UnwrapNullableType().IsAssignableFrom(sentinel.GetType()))
-        {
-            return Equals(Metadata.Sentinel, sentinel);
-        }
-
-        try
-        {
-            return Equals(Metadata.Sentinel, Convert.ChangeType(sentinel, Metadata.ClrType, CultureInfo.InvariantCulture));
-        }
-        catch
-        {
-            throw new InvalidOperationException(
-                CoreStrings.IncompatibleSentinelValue(
-                    sentinel, Metadata.DeclaringType.DisplayName(), Metadata.Name, Metadata.ClrType.ShortDisplayName()));
-        }
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     public new virtual InternalPropertyBuilder? HasField(string? fieldName, ConfigurationSource configurationSource)
-        => base.HasField(fieldName, configurationSource) == null
-            ? null
-            : this;
+        => (InternalPropertyBuilder?)base.HasField(fieldName, configurationSource);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -215,9 +152,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public new virtual InternalPropertyBuilder? HasField(FieldInfo? fieldInfo, ConfigurationSource configurationSource)
-        => base.HasField(fieldInfo, configurationSource) == null
-            ? null
-            : this;
+        => (InternalPropertyBuilder?)base.HasField(fieldInfo, configurationSource);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -228,9 +163,7 @@ public class InternalPropertyBuilder
     public new virtual InternalPropertyBuilder? UsePropertyAccessMode(
         PropertyAccessMode? propertyAccessMode,
         ConfigurationSource configurationSource)
-        => base.UsePropertyAccessMode(propertyAccessMode, configurationSource) == null
-            ? null
-            : this;
+        => (InternalPropertyBuilder?)base.UsePropertyAccessMode(propertyAccessMode, configurationSource);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -409,13 +342,12 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual InternalPropertyBuilder? HasValueGenerator(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? valueGeneratorType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? valueGeneratorType,
         ConfigurationSource configurationSource)
     {
         if (valueGeneratorType == null)
         {
-            return HasValueGenerator((Func<IProperty, ITypeBase, ValueGenerator>?)null, configurationSource);
+            return HasValueGenerator((Func<IProperty, IEntityType, ValueGenerator>?)null, configurationSource);
         }
 
         if (!typeof(ValueGenerator).IsAssignableFrom(valueGeneratorType))
@@ -448,7 +380,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual InternalPropertyBuilder? HasValueGenerator(
-        Func<IProperty, ITypeBase, ValueGenerator>? factory,
+        Func<IProperty, IEntityType, ValueGenerator>? factory,
         ConfigurationSource configurationSource)
     {
         if (CanSetValueGenerator(factory, configurationSource))
@@ -468,8 +400,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual InternalPropertyBuilder? HasValueGeneratorFactory(
-        [DynamicallyAccessedMembers(ValueGeneratorFactory.DynamicallyAccessedMemberTypes)]
-        Type? factory,
+        [DynamicallyAccessedMembers(ValueGeneratorFactory.DynamicallyAccessedMemberTypes)]  Type? factory,
         ConfigurationSource configurationSource)
     {
         if (CanSetValueGeneratorFactory(factory, configurationSource))
@@ -502,8 +433,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual bool CanSetValueGeneratorFactory(
-        [DynamicallyAccessedMembers(ValueGeneratorFactory.DynamicallyAccessedMemberTypes)]
-        Type? factory,
+        [DynamicallyAccessedMembers(ValueGeneratorFactory.DynamicallyAccessedMemberTypes)] Type? factory,
         ConfigurationSource? configurationSource)
         => configurationSource.Overrides(Metadata.GetValueGeneratorFactoryConfigurationSource())
             || (Metadata[CoreAnnotationNames.ValueGeneratorFactory] == null
@@ -519,11 +449,6 @@ public class InternalPropertyBuilder
     {
         if (CanSetConversion(converter, configurationSource))
         {
-            if (converter != null)
-            {
-                Metadata.SetElementType(null, configurationSource);
-            }
-
             Metadata.SetProviderClrType(null, configurationSource);
             Metadata.SetValueConverter(converter, configurationSource);
 
@@ -547,8 +472,7 @@ public class InternalPropertyBuilder
                     && Metadata.CheckValueConverter(converter) == null)
                 || (Metadata[CoreAnnotationNames.ValueConverterType] == null
                     && (ValueConverter?)Metadata[CoreAnnotationNames.ValueConverter] == converter))
-            && configurationSource.Overrides(Metadata.GetProviderClrTypeConfigurationSource())
-            && (converter == null || CanSetElementType(null, configurationSource));
+            && configurationSource.Overrides(Metadata.GetProviderClrTypeConfigurationSource());
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -560,11 +484,6 @@ public class InternalPropertyBuilder
     {
         if (CanSetConversion(providerClrType, configurationSource))
         {
-            if (providerClrType != null)
-            {
-                Metadata.SetElementType(null, configurationSource);
-            }
-
             Metadata.SetValueConverter((ValueConverter?)null, configurationSource);
             Metadata.SetProviderClrType(providerClrType, configurationSource);
 
@@ -583,8 +502,7 @@ public class InternalPropertyBuilder
     public virtual bool CanSetConversion(Type? providerClrType, ConfigurationSource? configurationSource)
         => (configurationSource.Overrides(Metadata.GetProviderClrTypeConfigurationSource())
                 || Metadata.GetProviderClrType() == providerClrType)
-            && configurationSource.Overrides(Metadata.GetValueConverterConfigurationSource())
-            && (providerClrType == null || CanSetElementType(null, configurationSource));
+            && configurationSource.Overrides(Metadata.GetValueConverterConfigurationSource());
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -593,17 +511,11 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual InternalPropertyBuilder? HasConverter(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? converterType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? converterType,
         ConfigurationSource configurationSource)
     {
         if (CanSetConverter(converterType, configurationSource))
         {
-            if (converterType != null)
-            {
-                Metadata.SetElementType(null, configurationSource);
-            }
-
             Metadata.SetProviderClrType(null, configurationSource);
             Metadata.SetValueConverter(converterType, configurationSource);
 
@@ -620,13 +532,11 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual bool CanSetConverter(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? converterType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? converterType,
         ConfigurationSource? configurationSource)
-        => (configurationSource.Overrides(Metadata.GetValueConverterConfigurationSource())
-                || (Metadata[CoreAnnotationNames.ValueConverter] == null
-                    && (Type?)Metadata[CoreAnnotationNames.ValueConverterType] == converterType))
-            && (converterType == null || CanSetElementType(null, configurationSource));
+        => configurationSource.Overrides(Metadata.GetValueConverterConfigurationSource())
+            || (Metadata[CoreAnnotationNames.ValueConverter] == null
+                && (Type?)Metadata[CoreAnnotationNames.ValueConverterType] == converterType);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -713,8 +623,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual InternalPropertyBuilder? HasValueComparer(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? comparerType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? comparerType,
         ConfigurationSource configurationSource)
     {
         if (CanSetValueComparer(comparerType, configurationSource))
@@ -782,8 +691,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual InternalPropertyBuilder? HasProviderValueComparer(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? comparerType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? comparerType,
         ConfigurationSource configurationSource)
     {
         if (CanSetProviderValueComparer(comparerType, configurationSource))
@@ -803,8 +711,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual bool CanSetProviderValueComparer(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? comparerType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? comparerType,
         ConfigurationSource? configurationSource)
         => configurationSource.Overrides(Metadata.GetProviderValueComparerConfigurationSource())
             || (Metadata[CoreAnnotationNames.ProviderValueComparer] == null
@@ -816,48 +723,9 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual InternalElementTypeBuilder? SetElementType(Type? elementType, ConfigurationSource configurationSource)
+    public virtual InternalPropertyBuilder? Attach(InternalEntityTypeBuilder entityTypeBuilder)
     {
-        if (CanSetElementType(elementType, configurationSource))
-        {
-            Metadata.SetElementType(elementType, configurationSource);
-            if (elementType != null)
-            {
-                Metadata.SetValueConverter((Type?)null, configurationSource);
-            }
-
-            if (elementType == null
-                && CanSetConversion((Type?)null, configurationSource))
-            {
-                Metadata.RemoveAnnotation(CoreAnnotationNames.ValueConverter);
-            }
-
-            return new InternalElementTypeBuilder(Metadata.GetElementType()!, ModelBuilder);
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual bool CanSetElementType(Type? elementType, ConfigurationSource? configurationSource)
-        => (configurationSource.Overrides(Metadata.GetElementTypeConfigurationSource())
-                && (elementType == null || CanSetConversion((Type?)null, configurationSource)))
-            || elementType == Metadata.GetElementType()?.ClrType;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual InternalPropertyBuilder? Attach(InternalTypeBaseBuilder typeBaseBuilder)
-    {
-        var newProperty = typeBaseBuilder.Metadata.FindProperty(Metadata.Name);
+        var newProperty = entityTypeBuilder.Metadata.FindProperty(Metadata.Name);
         InternalPropertyBuilder? newPropertyBuilder;
         var configurationSource = Metadata.GetConfigurationSource();
         var typeConfigurationSource = Metadata.GetTypeConfigurationSource();
@@ -865,8 +733,7 @@ public class InternalPropertyBuilder
             && (newProperty.GetConfigurationSource().Overrides(configurationSource)
                 || newProperty.GetTypeConfigurationSource().Overrides(typeConfigurationSource)
                 || (Metadata.ClrType == newProperty.ClrType
-                    && Metadata.Name == newProperty.Name
-                    && Metadata.GetIdentifyingMemberInfo() == newProperty.GetIdentifyingMemberInfo())))
+                    && Metadata.GetIdentifyingMemberInfo()?.Name == newProperty.GetIdentifyingMemberInfo()?.Name)))
         {
             newPropertyBuilder = newProperty.Builder;
             newProperty.UpdateConfigurationSource(configurationSource);
@@ -880,11 +747,11 @@ public class InternalPropertyBuilder
             var identifyingMemberInfo = Metadata.GetIdentifyingMemberInfo();
 
             newPropertyBuilder = Metadata.IsIndexerProperty()
-                ? typeBaseBuilder.IndexerProperty(Metadata.ClrType, Metadata.Name, configurationSource)
+                ? entityTypeBuilder.IndexerProperty(Metadata.ClrType, Metadata.Name, configurationSource)
                 : identifyingMemberInfo == null
-                    ? typeBaseBuilder.Property(
+                    ? entityTypeBuilder.Property(
                         Metadata.ClrType, Metadata.Name, Metadata.GetTypeConfigurationSource(), configurationSource)
-                    : typeBaseBuilder.Property(identifyingMemberInfo, configurationSource);
+                    : entityTypeBuilder.Property(identifyingMemberInfo, configurationSource);
 
             if (newPropertyBuilder is null)
             {
@@ -956,84 +823,6 @@ public class InternalPropertyBuilder
             newPropertyBuilder.HasTypeMapping(Metadata.TypeMapping, oldTypeMappingConfigurationSource.Value);
         }
 
-        var oldElementType = Metadata.GetElementType();
-        if (oldElementType != null)
-        {
-            var newElementType = newPropertyBuilder.Metadata.GetElementType();
-            if (newElementType != null)
-            {
-                var newElementTypeBuilder = new InternalElementTypeBuilder(newElementType, ModelBuilder);
-                newElementTypeBuilder.MergeAnnotationsFrom(oldElementType);
-
-                var oldElementNullableConfigurationSource = oldElementType.GetIsNullableConfigurationSource();
-                if (oldElementNullableConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetIsRequired(!oldElementType.IsNullable, oldElementNullableConfigurationSource))
-                {
-                    newElementTypeBuilder.IsRequired(!oldElementType.IsNullable, oldElementNullableConfigurationSource.Value);
-                }
-
-                var oldElementUnicodeConfigurationSource = oldElementType.GetIsUnicodeConfigurationSource();
-                if (oldElementUnicodeConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetIsUnicode(oldElementType.IsNullable, oldElementUnicodeConfigurationSource))
-                {
-                    newElementTypeBuilder.IsUnicode(oldElementType.IsNullable, oldElementUnicodeConfigurationSource.Value);
-                }
-
-                var oldElementProviderClrTypeConfigurationSource = oldElementType.GetProviderClrTypeConfigurationSource();
-                if (oldElementProviderClrTypeConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetConversion(
-                        oldElementType.GetProviderClrType(), oldElementProviderClrTypeConfigurationSource))
-                {
-                    newElementTypeBuilder.HasConversion(
-                        oldElementType.GetProviderClrType(), oldElementProviderClrTypeConfigurationSource.Value);
-                }
-
-                var oldElementConverterConfigurationSource = oldElementType.GetValueConverterConfigurationSource();
-                if (oldElementConverterConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetConverter(
-                        oldElementType.GetValueConverter()?.GetType(), oldElementConverterConfigurationSource))
-                {
-                    newElementTypeBuilder.HasConverter(
-                        oldElementType.GetValueConverter()?.GetType(), oldElementConverterConfigurationSource.Value);
-                }
-
-                var oldElementPrecisionConfigurationSource = oldElementType.GetPrecisionConfigurationSource();
-                if (oldElementPrecisionConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetPrecision(oldElementType.GetPrecision(), oldElementPrecisionConfigurationSource))
-                {
-                    newElementTypeBuilder.HasPrecision(oldElementType.GetPrecision(), oldElementPrecisionConfigurationSource.Value);
-                }
-
-                var oldElementScaleConfigurationSource = oldElementType.GetScaleConfigurationSource();
-                if (oldElementScaleConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetScale(oldElementType.GetScale(), oldElementScaleConfigurationSource))
-                {
-                    newElementTypeBuilder.HasScale(oldElementType.GetScale(), oldElementScaleConfigurationSource.Value);
-                }
-
-                var oldElementMaxLengthConfigurationSource = oldElementType.GetMaxLengthConfigurationSource();
-                if (oldElementMaxLengthConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetMaxLength(oldElementType.GetMaxLength(), oldElementMaxLengthConfigurationSource))
-                {
-                    newElementTypeBuilder.HasMaxLength(oldElementType.GetMaxLength(), oldElementMaxLengthConfigurationSource.Value);
-                }
-
-                var oldElementTypeMappingConfigurationSource = oldElementType.GetTypeMappingConfigurationSource();
-                if (oldElementTypeMappingConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetTypeMapping(oldElementType.TypeMapping, oldElementTypeMappingConfigurationSource))
-                {
-                    newPropertyBuilder.HasTypeMapping(oldElementType.TypeMapping, oldElementTypeMappingConfigurationSource.Value);
-                }
-
-                var oldElementComparerConfigurationSource = oldElementType.GetValueComparerConfigurationSource();
-                if (oldElementComparerConfigurationSource.HasValue
-                    && newElementTypeBuilder.CanSetValueComparer(oldElementType.GetValueComparer(), oldElementComparerConfigurationSource))
-                {
-                    newElementTypeBuilder.HasValueComparer(oldElementType.GetValueComparer(), oldElementComparerConfigurationSource.Value);
-                }
-            }
-        }
-
         return newPropertyBuilder;
     }
 
@@ -1043,7 +832,7 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    IConventionPropertyBase IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.Metadata
+    IConventionPropertyBase IConventionPropertyBaseBuilder.Metadata
     {
         [DebuggerStepThrough]
         get => Metadata;
@@ -1060,56 +849,6 @@ public class InternalPropertyBuilder
         [DebuggerStepThrough]
         get => Metadata;
     }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    IConventionPropertyBuilder? IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.HasAnnotation(
-        string name,
-        object? value,
-        bool fromDataAnnotation)
-        => base.HasAnnotation(
-                name, value, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention)
-            == null
-                ? null
-                : this;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    IConventionPropertyBuilder? IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.HasNonNullAnnotation(
-        string name,
-        object? value,
-        bool fromDataAnnotation)
-        => base.HasNonNullAnnotation(
-                name, value, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention)
-            == null
-                ? null
-                : this;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    IConventionPropertyBuilder? IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.HasNoAnnotation(
-        string name,
-        bool fromDataAnnotation)
-        => base.HasNoAnnotation(
-                name, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention)
-            == null
-                ? null
-                : this;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -1174,27 +913,7 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    IConventionPropertyBuilder? IConventionPropertyBuilder.HasSentinel(object? sentinel, bool fromDataAnnotation)
-        => HasSentinel(sentinel, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    bool IConventionPropertyBuilder.CanSetSentinel(object? sentinel, bool fromDataAnnotation)
-        => CanSetSentinel(sentinel, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    IConventionPropertyBuilder? IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.HasField(
-        string? fieldName,
-        bool fromDataAnnotation)
+    IConventionPropertyBaseBuilder? IConventionPropertyBaseBuilder.HasField(string? fieldName, bool fromDataAnnotation)
         => HasField(fieldName, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <summary>
@@ -1203,9 +922,16 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    IConventionPropertyBuilder? IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.HasField(
-        FieldInfo? fieldInfo,
-        bool fromDataAnnotation)
+    IConventionPropertyBuilder? IConventionPropertyBuilder.HasField(string? fieldName, bool fromDataAnnotation)
+        => HasField(fieldName, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    IConventionPropertyBaseBuilder? IConventionPropertyBaseBuilder.HasField(FieldInfo? fieldInfo, bool fromDataAnnotation)
         => HasField(fieldInfo, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <summary>
@@ -1214,7 +940,16 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    bool IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.CanSetField(string? fieldName, bool fromDataAnnotation)
+    IConventionPropertyBuilder? IConventionPropertyBuilder.HasField(FieldInfo? fieldInfo, bool fromDataAnnotation)
+        => HasField(fieldInfo, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    bool IConventionPropertyBaseBuilder.CanSetField(string? fieldName, bool fromDataAnnotation)
         => CanSetField(fieldName, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <summary>
@@ -1223,7 +958,7 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    bool IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.CanSetField(FieldInfo? fieldInfo, bool fromDataAnnotation)
+    bool IConventionPropertyBaseBuilder.CanSetField(FieldInfo? fieldInfo, bool fromDataAnnotation)
         => CanSetField(fieldInfo, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <summary>
@@ -1232,7 +967,7 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    IConventionPropertyBuilder? IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.UsePropertyAccessMode(
+    IConventionPropertyBaseBuilder? IConventionPropertyBaseBuilder.UsePropertyAccessMode(
         PropertyAccessMode? propertyAccessMode,
         bool fromDataAnnotation)
         => UsePropertyAccessMode(
@@ -1244,9 +979,19 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    bool IConventionPropertyBaseBuilder<IConventionPropertyBuilder>.CanSetPropertyAccessMode(
+    IConventionPropertyBuilder? IConventionPropertyBuilder.UsePropertyAccessMode(
         PropertyAccessMode? propertyAccessMode,
         bool fromDataAnnotation)
+        => UsePropertyAccessMode(
+            propertyAccessMode, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    bool IConventionPropertyBaseBuilder.CanSetPropertyAccessMode(PropertyAccessMode? propertyAccessMode, bool fromDataAnnotation)
         => CanSetPropertyAccessMode(
             propertyAccessMode, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
@@ -1365,8 +1110,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     IConventionPropertyBuilder? IConventionPropertyBuilder.HasValueGenerator(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? valueGeneratorType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? valueGeneratorType,
         bool fromDataAnnotation)
         => HasValueGenerator(
             valueGeneratorType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
@@ -1378,7 +1122,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     IConventionPropertyBuilder? IConventionPropertyBuilder.HasValueGenerator(
-        Func<IProperty, ITypeBase, ValueGenerator>? factory,
+        Func<IProperty, IEntityType, ValueGenerator>? factory,
         bool fromDataAnnotation)
         => HasValueGenerator(factory, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
@@ -1388,7 +1132,7 @@ public class InternalPropertyBuilder
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    bool IConventionPropertyBuilder.CanSetValueGenerator(Func<IProperty, ITypeBase, ValueGenerator>? factory, bool fromDataAnnotation)
+    bool IConventionPropertyBuilder.CanSetValueGenerator(Func<IProperty, IEntityType, ValueGenerator>? factory, bool fromDataAnnotation)
         => CanSetValueGenerator(factory, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <summary>
@@ -1398,8 +1142,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     IConventionPropertyBuilder? IConventionPropertyBuilder.HasValueGeneratorFactory(
-        [DynamicallyAccessedMembers(ValueGeneratorFactory.DynamicallyAccessedMemberTypes)]
-        Type? valueGeneratorFactoryType,
+        [DynamicallyAccessedMembers(ValueGeneratorFactory.DynamicallyAccessedMemberTypes)] Type? valueGeneratorFactoryType,
         bool fromDataAnnotation)
         => HasValueGeneratorFactory(
             valueGeneratorFactoryType,
@@ -1412,8 +1155,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     bool IConventionPropertyBuilder.CanSetValueGeneratorFactory(
-        [DynamicallyAccessedMembers(ValueGeneratorFactory.DynamicallyAccessedMemberTypes)]
-        Type? valueGeneratorFactoryType,
+        [DynamicallyAccessedMembers(ValueGeneratorFactory.DynamicallyAccessedMemberTypes)] Type? valueGeneratorFactoryType,
         bool fromDataAnnotation)
         => CanSetValueGeneratorFactory(
             valueGeneratorFactoryType,
@@ -1444,8 +1186,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     IConventionPropertyBuilder? IConventionPropertyBuilder.HasConverter(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? converterType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? converterType,
         bool fromDataAnnotation)
         => HasConverter(converterType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
@@ -1456,8 +1197,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     bool IConventionPropertyBuilder.CanSetConverter(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? converterType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? converterType,
         bool fromDataAnnotation)
         => CanSetConverter(converterType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
@@ -1512,8 +1252,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     IConventionPropertyBuilder? IConventionPropertyBuilder.HasValueComparer(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? comparerType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? comparerType,
         bool fromDataAnnotation)
         => HasValueComparer(comparerType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
@@ -1524,8 +1263,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     bool IConventionPropertyBuilder.CanSetValueComparer(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? comparerType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? comparerType,
         bool fromDataAnnotation)
         => CanSetValueComparer(comparerType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
@@ -1554,8 +1292,7 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     IConventionPropertyBuilder? IConventionPropertyBuilder.HasProviderValueComparer(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? comparerType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? comparerType,
         bool fromDataAnnotation)
         => HasProviderValueComparer(comparerType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
@@ -1566,27 +1303,8 @@ public class InternalPropertyBuilder
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     bool IConventionPropertyBuilder.CanSetProviderValueComparer(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-        Type? comparerType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type? comparerType,
         bool fromDataAnnotation)
         => CanSetProviderValueComparer(
             comparerType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    IConventionElementTypeBuilder? IConventionPropertyBuilder.SetElementType(Type? elementType, bool fromDataAnnotation)
-        => SetElementType(elementType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    bool IConventionPropertyBuilder.CanSetElementType(Type? elementType, bool fromDataAnnotation)
-        => CanSetElementType(elementType, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 }

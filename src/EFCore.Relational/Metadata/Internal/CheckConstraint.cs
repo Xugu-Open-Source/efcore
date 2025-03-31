@@ -122,7 +122,11 @@ public class CheckConstraint : ConventionAnnotatable, IMutableCheckConstraint, I
     public static IReadOnlyCheckConstraint? FindDeclaredCheckConstraint(IReadOnlyEntityType entityType, string name)
     {
         var dataDictionary = GetConstraintsDictionary(entityType);
-        return dataDictionary?.GetValueOrDefault(name);
+        return dataDictionary == null
+            ? null
+            : dataDictionary.TryGetValue(name, out var checkConstraint)
+                ? checkConstraint
+                : null;
     }
 
     /// <summary>
@@ -227,7 +231,7 @@ public class CheckConstraint : ConventionAnnotatable, IMutableCheckConstraint, I
     public virtual InternalCheckConstraintBuilder Builder
     {
         [DebuggerStepThrough]
-        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel(ModelName));
+        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
     /// <summary>
@@ -419,6 +423,7 @@ public class CheckConstraint : ConventionAnnotatable, IMutableCheckConstraint, I
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    [EntityFrameworkInternal]
     public virtual DebugView DebugView
         => new(
             () => ((ICheckConstraint)this).ToDebugString(),

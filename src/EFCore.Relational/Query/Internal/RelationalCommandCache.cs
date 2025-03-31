@@ -1,8 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Collections;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.EntityFrameworkCore.Query.Internal;
@@ -39,8 +39,7 @@ public class RelationalCommandCache : IPrintableExpression
         _memoryCache = memoryCache;
         _querySqlGeneratorFactory = querySqlGeneratorFactory;
         _queryExpression = queryExpression;
-        _relationalParameterBasedSqlProcessor = relationalParameterBasedSqlProcessorFactory.Create(
-            new RelationalParameterBasedSqlProcessorParameters(useRelationalNulls));
+        _relationalParameterBasedSqlProcessor = relationalParameterBasedSqlProcessorFactory.Create(useRelationalNulls);
     }
 
     /// <summary>
@@ -107,21 +106,12 @@ public class RelationalCommandCache : IPrintableExpression
     private readonly struct CommandCacheKey : IEquatable<CommandCacheKey>
     {
         private readonly Expression _queryExpression;
-        private readonly Dictionary<string, ParameterInfo> _parameterInfos;
+        private readonly IReadOnlyDictionary<string, object?> _parameterValues;
 
-        internal CommandCacheKey(Expression queryExpression, IReadOnlyDictionary<string, object?> parameterValues)
+        public CommandCacheKey(Expression queryExpression, IReadOnlyDictionary<string, object?> parameterValues)
         {
             _queryExpression = queryExpression;
-            _parameterInfos = new Dictionary<string, ParameterInfo>();
-
-            foreach (var (key, value) in parameterValues)
-            {
-                _parameterInfos[key] = new ParameterInfo
-                {
-                    IsNull = value is null,
-                    ObjectArrayLength = value is object[] arr ? arr.Length : null
-                };
-            }
+            _parameterValues = parameterValues;
         }
 
         public override bool Equals(object? obj)
@@ -136,17 +126,26 @@ public class RelationalCommandCache : IPrintableExpression
                 return false;
             }
 
-            Check.DebugAssert(
-                _parameterInfos.Count == commandCacheKey._parameterInfos.Count,
-                "Parameter Count mismatch between identical queries");
-
-            if (_parameterInfos.Count > 0)
+            if (_parameterValues.Count > 0)
             {
-                foreach (var (key, info) in _parameterInfos)
+                foreach (var (key, value) in _parameterValues)
                 {
-                    if (!commandCacheKey._parameterInfos.TryGetValue(key, out var otherInfo) || info != otherInfo)
+                    if (!commandCacheKey._parameterValues.TryGetValue(key, out var otherValue))
                     {
                         return false;
+                    }
+
+                    // ReSharper disable once ArrangeRedundantParentheses
+                    if ((value == null) != (otherValue == null))
+                    {
+                        return false;
+                    }
+
+                    if (value is IEnumerable
+                        && value.GetType() == typeof(object[]))
+                    {
+                        // FromSql parameters must have the same number of elements
+                        return ((object[])value).Length == (otherValue as object[])?.Length;
                     }
                 }
             }
@@ -155,10 +154,6 @@ public class RelationalCommandCache : IPrintableExpression
         }
 
         public override int GetHashCode()
-            => RuntimeHelpers.GetHashCode(_queryExpression);
+            => 0;
     }
-
-    // Note that we keep only the null-ness of parameters (and array length for FromSql object arrays),
-    // and avoid referencing the actual parameter data (see #34028).
-    private readonly record struct ParameterInfo(bool IsNull, int? ObjectArrayLength);
 }

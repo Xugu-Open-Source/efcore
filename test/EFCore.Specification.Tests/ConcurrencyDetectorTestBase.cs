@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 #pragma warning disable CA1720
@@ -9,12 +9,15 @@
 // ReSharper disable MethodHasAsyncOverload
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class ConcurrencyDetectorTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class ConcurrencyDetectorTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : ConcurrencyDetectorTestBase<TFixture>.ConcurrencyDetectorFixtureBase, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected ConcurrencyDetectorTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -68,14 +71,19 @@ public abstract class ConcurrencyDetectorTestBase<TFixture>(TFixture fixture) : 
     protected ConcurrencyDetectorDbContext CreateContext()
         => Fixture.CreateContext();
 
-    public class ConcurrencyDetectorDbContext(DbContextOptions<ConcurrencyDetectorDbContext> options) : DbContext(options)
+    public class ConcurrencyDetectorDbContext : DbContext
     {
+        public ConcurrencyDetectorDbContext(DbContextOptions<ConcurrencyDetectorDbContext> options)
+            : base(options)
+        {
+        }
+
         public DbSet<Product> Products { get; set; }
 
-        public static Task SeedAsync(ConcurrencyDetectorDbContext context)
+        public static void Seed(ConcurrencyDetectorDbContext context)
         {
             context.Products.Add(new Product { Id = 1, Name = "Unicorn Party Pack" });
-            return context.SaveChangesAsync();
+            context.SaveChanges();
         }
     }
 
@@ -93,9 +101,9 @@ public abstract class ConcurrencyDetectorTestBase<TFixture>(TFixture fixture) : 
         protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
             => modelBuilder.Entity<Product>().Property(p => p.Id).ValueGeneratedNever();
 
-        protected override Task SeedAsync(ConcurrencyDetectorDbContext context)
-            => ConcurrencyDetectorDbContext.SeedAsync(context);
+        protected override void Seed(ConcurrencyDetectorDbContext context)
+            => ConcurrencyDetectorDbContext.Seed(context);
     }
 
-    public static IEnumerable<object[]> IsAsyncData = new object[][] { [false], [true] };
+    public static IEnumerable<object[]> IsAsyncData = new[] { new object[] { false }, new object[] { true } };
 }

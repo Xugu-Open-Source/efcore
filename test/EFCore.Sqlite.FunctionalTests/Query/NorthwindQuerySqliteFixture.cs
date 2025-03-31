@@ -5,10 +5,8 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class NorthwindQuerySqliteFixture<TModelCustomizer> : NorthwindQueryRelationalFixture<TModelCustomizer>
-    where TModelCustomizer : ITestModelCustomizer, new()
+    where TModelCustomizer : IModelCustomizer, new()
 {
     protected override ITestStoreFactory TestStoreFactory
         => SqliteNorthwindTestStoreFactory.Instance;
@@ -21,7 +19,4 @@ public class NorthwindQuerySqliteFixture<TModelCustomizer> : NorthwindQueryRelat
         modelBuilder.Entity<OrderDetail>().Property(o => o.UnitPrice).HasConversion<double>();
         modelBuilder.Entity<Product>().Property(o => o.UnitPrice).HasConversion<double?>();
     }
-
-    protected override Type ContextType
-        => typeof(NorthwindSqliteContext);
 }

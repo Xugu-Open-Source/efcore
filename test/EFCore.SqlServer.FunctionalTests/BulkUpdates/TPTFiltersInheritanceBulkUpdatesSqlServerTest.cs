@@ -3,13 +3,15 @@
 
 namespace Microsoft.EntityFrameworkCore.BulkUpdates;
 
-#nullable disable
-
-public class TPTFiltersInheritanceBulkUpdatesSqlServerTest(
-    TPTFiltersInheritanceBulkUpdatesSqlServerFixture fixture,
-    ITestOutputHelper testOutputHelper)
-    : TPTFiltersInheritanceBulkUpdatesTestBase<TPTFiltersInheritanceBulkUpdatesSqlServerFixture>(fixture, testOutputHelper)
+public class TPTFiltersInheritanceBulkUpdatesSqlServerTest : TPTFiltersInheritanceBulkUpdatesTestBase<
+    TPTFiltersInheritanceBulkUpdatesSqlServerFixture>
 {
+    public TPTFiltersInheritanceBulkUpdatesSqlServerTest(TPTFiltersInheritanceBulkUpdatesSqlServerFixture fixture)
+        : base(fixture)
+    {
+        ClearLog();
+    }
+
     [ConditionalFact]
     public virtual void Check_all_tests_overridden()
         => TestHelpers.AssertAllMethodsOverridden(GetType());
@@ -33,12 +35,15 @@ public class TPTFiltersInheritanceBulkUpdatesSqlServerTest(
         await base.Delete_where_using_hierarchy(async);
 
         AssertSql(
-            """
+"""
 DELETE FROM [c]
 FROM [Countries] AS [c]
 WHERE (
     SELECT COUNT(*)
     FROM [Animals] AS [a]
+    LEFT JOIN [Birds] AS [b] ON [a].[Id] = [b].[Id]
+    LEFT JOIN [Eagle] AS [e] ON [a].[Id] = [e].[Id]
+    LEFT JOIN [Kiwi] AS [k] ON [a].[Id] = [k].[Id]
     WHERE [a].[CountryId] = 1 AND [c].[Id] = [a].[CountryId] AND [a].[CountryId] > 0) > 0
 """);
     }
@@ -48,14 +53,16 @@ WHERE (
         await base.Delete_where_using_hierarchy_derived(async);
 
         AssertSql(
-            """
+"""
 DELETE FROM [c]
 FROM [Countries] AS [c]
 WHERE (
     SELECT COUNT(*)
     FROM [Animals] AS [a]
+    LEFT JOIN [Birds] AS [b] ON [a].[Id] = [b].[Id]
+    LEFT JOIN [Eagle] AS [e] ON [a].[Id] = [e].[Id]
     LEFT JOIN [Kiwi] AS [k] ON [a].[Id] = [k].[Id]
-    WHERE [a].[CountryId] = 1 AND [c].[Id] = [a].[CountryId] AND [k].[Id] IS NOT NULL AND [a].[CountryId] > 0) > 0
+    WHERE [a].[CountryId] = 1 AND [c].[Id] = [a].[CountryId] AND ([k].[Id] IS NOT NULL) AND [a].[CountryId] > 0) > 0
 """);
     }
 
@@ -94,35 +101,11 @@ WHERE (
         AssertSql();
     }
 
-    public override async Task Update_base_type(bool async)
+    public override async Task Update_where_hierarchy(bool async)
     {
-        await base.Update_base_type(async);
+        await base.Update_where_hierarchy(async);
 
-        AssertExecuteUpdateSql(
-            """
-@p='Animal' (Size = 4000)
-
-UPDATE [a]
-SET [a].[Name] = @p
-FROM [Animals] AS [a]
-WHERE [a].[CountryId] = 1 AND [a].[Name] = N'Great spotted kiwi'
-""");
-    }
-
-    public override async Task Update_base_type_with_OfType(bool async)
-    {
-        await base.Update_base_type_with_OfType(async);
-
-        AssertExecuteUpdateSql(
-            """
-@p='NewBird' (Size = 4000)
-
-UPDATE [a]
-SET [a].[Name] = @p
-FROM [Animals] AS [a]
-LEFT JOIN [Kiwi] AS [k] ON [a].[Id] = [k].[Id]
-WHERE [a].[CountryId] = 1 AND [k].[Id] IS NOT NULL
-""");
+        AssertExecuteUpdateSql();
     }
 
     public override async Task Update_where_hierarchy_subquery(bool async)
@@ -132,43 +115,9 @@ WHERE [a].[CountryId] = 1 AND [k].[Id] IS NOT NULL
         AssertExecuteUpdateSql();
     }
 
-    public override async Task Update_base_property_on_derived_type(bool async)
+    public override async Task Update_where_hierarchy_derived(bool async)
     {
-        await base.Update_base_property_on_derived_type(async);
-
-        AssertExecuteUpdateSql(
-            """
-@p='SomeOtherKiwi' (Size = 4000)
-
-UPDATE [a]
-SET [a].[Name] = @p
-FROM [Animals] AS [a]
-INNER JOIN [Birds] AS [b] ON [a].[Id] = [b].[Id]
-INNER JOIN [Kiwi] AS [k] ON [a].[Id] = [k].[Id]
-WHERE [a].[CountryId] = 1
-""");
-    }
-
-    public override async Task Update_derived_property_on_derived_type(bool async)
-    {
-        await base.Update_derived_property_on_derived_type(async);
-
-        AssertExecuteUpdateSql(
-            """
-@p='0' (Size = 1)
-
-UPDATE [k]
-SET [k].[FoundOn] = @p
-FROM [Animals] AS [a]
-INNER JOIN [Birds] AS [b] ON [a].[Id] = [b].[Id]
-INNER JOIN [Kiwi] AS [k] ON [a].[Id] = [k].[Id]
-WHERE [a].[CountryId] = 1
-""");
-    }
-
-    public override async Task Update_base_and_derived_types(bool async)
-    {
-        await base.Update_base_and_derived_types(async);
+        await base.Update_where_hierarchy_derived(async);
 
         AssertExecuteUpdateSql();
     }
@@ -178,15 +127,16 @@ WHERE [a].[CountryId] = 1
         await base.Update_where_using_hierarchy(async);
 
         AssertExecuteUpdateSql(
-            """
-@p='Monovia' (Size = 4000)
-
+"""
 UPDATE [c]
-SET [c].[Name] = @p
+SET [c].[Name] = N'Monovia'
 FROM [Countries] AS [c]
 WHERE (
     SELECT COUNT(*)
     FROM [Animals] AS [a]
+    LEFT JOIN [Birds] AS [b] ON [a].[Id] = [b].[Id]
+    LEFT JOIN [Eagle] AS [e] ON [a].[Id] = [e].[Id]
+    LEFT JOIN [Kiwi] AS [k] ON [a].[Id] = [k].[Id]
     WHERE [a].[CountryId] = 1 AND [c].[Id] = [a].[CountryId] AND [a].[CountryId] > 0) > 0
 """);
     }
@@ -196,17 +146,17 @@ WHERE (
         await base.Update_where_using_hierarchy_derived(async);
 
         AssertExecuteUpdateSql(
-            """
-@p='Monovia' (Size = 4000)
-
+"""
 UPDATE [c]
-SET [c].[Name] = @p
+SET [c].[Name] = N'Monovia'
 FROM [Countries] AS [c]
 WHERE (
     SELECT COUNT(*)
     FROM [Animals] AS [a]
+    LEFT JOIN [Birds] AS [b] ON [a].[Id] = [b].[Id]
+    LEFT JOIN [Eagle] AS [e] ON [a].[Id] = [e].[Id]
     LEFT JOIN [Kiwi] AS [k] ON [a].[Id] = [k].[Id]
-    WHERE [a].[CountryId] = 1 AND [c].[Id] = [a].[CountryId] AND [k].[Id] IS NOT NULL AND [a].[CountryId] > 0) > 0
+    WHERE [a].[CountryId] = 1 AND [c].[Id] = [a].[CountryId] AND ([k].[Id] IS NOT NULL) AND [a].[CountryId] > 0) > 0
 """);
     }
 

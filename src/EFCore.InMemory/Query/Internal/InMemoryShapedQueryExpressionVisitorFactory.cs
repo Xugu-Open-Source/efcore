@@ -19,7 +19,9 @@ public class InMemoryShapedQueryCompilingExpressionVisitorFactory : IShapedQuery
     /// </summary>
     public InMemoryShapedQueryCompilingExpressionVisitorFactory(
         ShapedQueryCompilingExpressionVisitorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.

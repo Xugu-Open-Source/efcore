@@ -3,8 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities.QueryTestGeneration;
 
-public class AppendTakeExpressionMutator(DbContext context) : ExpressionMutator(context)
+public class AppendTakeExpressionMutator : ExpressionMutator
 {
+    public AppendTakeExpressionMutator(DbContext context)
+        : base(context)
+    {
+    }
+
     public override bool IsValid(Expression expression)
         => IsOrderedQueryableResult(expression);
 

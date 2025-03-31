@@ -3,12 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class QueryExpressionInterceptionSqliteTestBase(
-    QueryExpressionInterceptionSqliteTestBase.InterceptionSqliteFixtureBase fixture)
-    : QueryExpressionInterceptionTestBase(fixture)
+public abstract class QueryExpressionInterceptionSqliteTestBase : QueryExpressionInterceptionTestBase
 {
+    protected QueryExpressionInterceptionSqliteTestBase(InterceptionSqliteFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     public abstract class InterceptionSqliteFixtureBase : InterceptionFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory
@@ -20,9 +21,14 @@ public abstract class QueryExpressionInterceptionSqliteTestBase(
             => base.InjectInterceptors(serviceCollection.AddEntityFrameworkSqlite(), injectedInterceptors);
     }
 
-    public class QueryExpressionInterceptionSqliteTest(QueryExpressionInterceptionSqliteTest.InterceptionSqliteFixture fixture)
-        : QueryExpressionInterceptionSqliteTestBase(fixture), IClassFixture<QueryExpressionInterceptionSqliteTest.InterceptionSqliteFixture>
+    public class QueryExpressionInterceptionSqliteTest
+        : QueryExpressionInterceptionSqliteTestBase, IClassFixture<QueryExpressionInterceptionSqliteTest.InterceptionSqliteFixture>
     {
+        public QueryExpressionInterceptionSqliteTest(InterceptionSqliteFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqliteFixture : InterceptionSqliteFixtureBase
         {
             protected override string StoreName
@@ -33,11 +39,15 @@ public abstract class QueryExpressionInterceptionSqliteTestBase(
         }
     }
 
-    public class QueryExpressionInterceptionWithDiagnosticsSqliteTest(
-        QueryExpressionInterceptionWithDiagnosticsSqliteTest.InterceptionSqliteFixture fixture)
-        : QueryExpressionInterceptionSqliteTestBase(fixture),
+    public class QueryExpressionInterceptionWithDiagnosticsSqliteTest
+        : QueryExpressionInterceptionSqliteTestBase,
             IClassFixture<QueryExpressionInterceptionWithDiagnosticsSqliteTest.InterceptionSqliteFixture>
     {
+        public QueryExpressionInterceptionWithDiagnosticsSqliteTest(InterceptionSqliteFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqliteFixture : InterceptionSqliteFixtureBase
         {
             protected override string StoreName

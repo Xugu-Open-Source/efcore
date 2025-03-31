@@ -34,13 +34,12 @@ public class ConverterMappingHints
         Precision = precision;
         Scale = scale;
         IsUnicode = unicode;
-#pragma warning disable CS0612 // Type or member is obsolete
         ValueGeneratorFactory = valueGeneratorFactory;
-#pragma warning restore CS0612 // Type or member is obsolete
     }
 
     /// <summary>
-    ///     Adds hints from the given object to this one. Hints that are already specified are not overridden.
+    ///     Adds hints from the given object to this one. Hints that are already specified are
+    ///     not overridden.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-value-converters">EF Core value converters</see> for more information and examples.
@@ -50,38 +49,12 @@ public class ConverterMappingHints
     public virtual ConverterMappingHints With(ConverterMappingHints? hints)
         => hints == null
             ? this
-            : hints.GetType().IsAssignableFrom(GetType())
-                ? new ConverterMappingHints(
-                    hints.Size ?? Size,
-                    hints.Precision ?? Precision,
-                    hints.Scale ?? Scale,
-                    hints.IsUnicode ?? IsUnicode,
-#pragma warning disable CS0612 // Type or member is obsolete
-                    hints.ValueGeneratorFactory ?? ValueGeneratorFactory)
-#pragma warning restore CS0612 // Type or member is obsolete
-                : hints.OverrideWith(this);
-
-    /// <summary>
-    ///     Adds hints from the given object to this one. Hints that are already specified are overridden.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-value-converters">EF Core value converters</see> for more information and examples.
-    /// </remarks>
-    /// <param name="hints">The hints to add.</param>
-    /// <returns>The combined hints.</returns>
-    public virtual ConverterMappingHints OverrideWith(ConverterMappingHints? hints)
-        => hints == null
-            ? this
-            : GetType().IsAssignableFrom(hints.GetType())
-                ? new ConverterMappingHints(
-                    Size ?? hints.Size,
-                    Precision ?? hints.Precision,
-                    Scale ?? hints.Scale,
-                    IsUnicode ?? hints.IsUnicode,
-#pragma warning disable CS0612 // Type or member is obsolete
-                    ValueGeneratorFactory ?? hints.ValueGeneratorFactory)
-#pragma warning restore CS0612 // Type or member is obsolete
-                : hints.With(this);
+            : new ConverterMappingHints(
+                hints.Size ?? Size,
+                hints.Precision ?? Precision,
+                hints.Scale ?? Scale,
+                hints.IsUnicode ?? IsUnicode,
+                hints.ValueGeneratorFactory ?? ValueGeneratorFactory);
 
     /// <summary>
     ///     The suggested size of the mapped data type.
@@ -107,6 +80,5 @@ public class ConverterMappingHints
     ///     An optional factory for creating a specific <see cref="ValueGenerator" /> to use for model
     ///     values when this converter is being used.
     /// </summary>
-    [Obsolete]
     public virtual Func<IProperty, IEntityType, ValueGenerator>? ValueGeneratorFactory { get; }
 }

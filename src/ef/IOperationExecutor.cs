@@ -1,7 +1,9 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Microsoft.EntityFrameworkCore.Tools;
 
@@ -14,14 +16,7 @@ internal interface IOperationExecutor : IDisposable
     IDictionary GetContextInfo(string? name);
     void UpdateDatabase(string? migration, string? connectionString, string? contextType);
     IEnumerable<IDictionary> GetContextTypes();
-    IEnumerable<string> OptimizeContext(
-        string? outputDir,
-        string? modelNamespace,
-        string? contextType,
-        string? suffix,
-        bool scaffoldModel,
-        bool precompileQueries,
-        bool nativeAot);
+    void OptimizeContext(string? outputDir, string? modelNamespace, string? contextType);
 
     IDictionary ScaffoldContext(
         string provider,
@@ -42,5 +37,4 @@ internal interface IOperationExecutor : IDisposable
     string ScriptMigration(string? fromMigration, string? toMigration, bool idempotent, bool noTransactions, string? contextType);
 
     string ScriptDbContext(string? contextType);
-    void HasPendingModelChanges(string? contextType);
 }

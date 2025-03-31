@@ -26,7 +26,9 @@ public class EntityEntryEventArgs : EventArgs
     [EntityFrameworkInternal]
     public EntityEntryEventArgs(
         InternalEntityEntry internalEntityEntry)
-        => _internalEntityEntry = internalEntityEntry;
+    {
+        _internalEntityEntry = internalEntityEntry;
+    }
 
     /// <summary>
     ///     The <see cref="EntityEntry" /> for the entity.

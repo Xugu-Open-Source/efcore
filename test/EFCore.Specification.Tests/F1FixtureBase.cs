@@ -17,36 +17,8 @@ public abstract class F1FixtureBase<TRowVersion> : SharedStoreFixtureBase<F1Cont
     public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
         => base.AddOptions(builder)
             .UseModel(CreateModelExternal())
-            .UseSeeding(
-                (c, _) =>
-                {
-                    if (!ShouldSeed((F1Context)c))
-                    {
-                        return;
-                    }
-
-                    F1Context.AddSeedData((F1Context)c);
-                    c.SaveChanges();
-                })
-            .UseAsyncSeeding(
-                async (c, _, t) =>
-                {
-                    if (!await ShouldSeedAsync((F1Context)c))
-                    {
-                        return;
-                    }
-
-                    F1Context.AddSeedData((F1Context)c);
-                    await c.SaveChangesAsync(t);
-                })
             .ConfigureWarnings(
                 w => w.Ignore(CoreEventId.SaveChangesStarting, CoreEventId.SaveChangesCompleted));
-
-    protected virtual bool ShouldSeed(F1Context context)
-        => context.EngineSuppliers.Count() == 0;
-
-    protected virtual async Task<bool> ShouldSeedAsync(F1Context context)
-        => await context.EngineSuppliers.CountAsync() == 0;
 
     protected override IServiceCollection AddServices(IServiceCollection serviceCollection)
         => base.AddServices(serviceCollection.AddSingleton<ISingletonInterceptor, F1MaterializationInterceptor>());
@@ -194,15 +166,7 @@ public abstract class F1FixtureBase<TRowVersion> : SharedStoreFixtureBase<F1Cont
         modelBuilder.Entity<TitleSponsor>(
             b =>
             {
-                // TODO: Configure as ComplexProperty when optional complex types are supported
-                // Issue #31376
-                b.OwnsOne(
-                    s => s.Details, eb =>
-                    {
-                        eb.Property(d => d.Space);
-                        eb.Property<TRowVersion>("Version").IsRowVersion();
-                        eb.Property<int?>(Sponsor.ClientTokenPropertyName).IsConcurrencyToken();
-                    });
+                b.OwnsOne(s => s.Details);
                 ConfigureConstructorBinding<TitleSponsor>(b.Metadata);
             });
 
@@ -220,32 +184,28 @@ public abstract class F1FixtureBase<TRowVersion> : SharedStoreFixtureBase<F1Cont
                 eb.Property<int?>(Sponsor.ClientTokenPropertyName);
             });
 
-        modelBuilder.Entity<Fan>();
-        modelBuilder.Entity<SuperFan>();
-        modelBuilder.Entity<MegaFan>();
+        modelBuilder.Entity<TitleSponsor>()
+            .OwnsOne(
+                s => s.Details, eb =>
+                {
+                    eb.Property(d => d.Space);
+                    eb.Property<TRowVersion>("Version").IsRowVersion();
+                    eb.Property<int?>(Sponsor.ClientTokenPropertyName).IsConcurrencyToken();
+                });
 
-        modelBuilder.Entity<FanTpt>();
-        modelBuilder.Entity<SuperFanTpt>();
-        modelBuilder.Entity<MegaFanTpt>();
-
-        modelBuilder.Entity<FanTpc>();
-        modelBuilder.Entity<SuperFanTpc>();
-        modelBuilder.Entity<MegaFanTpc>();
-
-        modelBuilder.Entity<Circuit>();
-        modelBuilder.Entity<StreetCircuit>().HasOne(e => e.City).WithOne().HasForeignKey<City>(e => e.Id);
-        modelBuilder.Entity<OvalCircuit>();
-        modelBuilder.Entity<City>();
-
-        modelBuilder.Entity<CircuitTpt>();
-        modelBuilder.Entity<StreetCircuitTpt>().HasOne(e => e.City).WithOne().HasForeignKey<CityTpt>(e => e.Id);
-        modelBuilder.Entity<OvalCircuitTpt>();
-        modelBuilder.Entity<CityTpt>();
-
-        modelBuilder.Entity<CircuitTpc>();
-        modelBuilder.Entity<StreetCircuitTpc>().HasOne(e => e.City).WithOne().HasForeignKey<CityTpc>(e => e.Id);
-        modelBuilder.Entity<OvalCircuitTpc>();
-        modelBuilder.Entity<CityTpc>();
+        if (typeof(TRowVersion) != typeof(byte[]))
+        {
+            modelBuilder.Entity<Chassis>().Property<TRowVersion>("Version").HasConversion<byte[]>();
+            modelBuilder.Entity<Driver>().Property<TRowVersion>("Version").HasConversion<byte[]>();
+            modelBuilder.Entity<Team>().Property<TRowVersion>("Version").HasConversion<byte[]>();
+            modelBuilder.Entity<Sponsor>().Property<TRowVersion>("Version").HasConversion<byte[]>();
+            modelBuilder.Entity<TitleSponsor>()
+                .OwnsOne(
+                    s => s.Details, eb =>
+                    {
+                        eb.Property<TRowVersion>("Version").IsRowVersion().HasConversion<byte[]>();
+                    });
+        }
     }
 
     private static void ConfigureConstructorBinding<TEntity>(IMutableEntityType mutableEntityType, params string[] propertyNames)
@@ -261,7 +221,10 @@ public abstract class F1FixtureBase<TRowVersion> : SharedStoreFixtureBase<F1Cont
 
         if (loaderField != null)
         {
-            var loaderProperty = entityType.FindServiceProperty(loaderField.Name)!;
+            var loaderProperty = typeof(TLoaderEntity) == typeof(TEntity)
+                ? entityType.AddServiceProperty(loaderField!, ConfigurationSource.Explicit)
+                : entityType.FindServiceProperty(loaderField.Name)!;
+
             parameterBindings.Add(new DependencyInjectionParameterBinding(typeof(ILazyLoader), typeof(ILazyLoader), loaderProperty));
         }
 
@@ -276,4 +239,7 @@ public abstract class F1FixtureBase<TRowVersion> : SharedStoreFixtureBase<F1Cont
                 parameterBindings
             );
     }
+
+    protected override void Seed(F1Context context)
+        => F1Context.Seed(context);
 }

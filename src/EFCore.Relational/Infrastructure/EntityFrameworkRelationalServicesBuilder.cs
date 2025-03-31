@@ -54,7 +54,7 @@ public class EntityFrameworkRelationalServicesBuilder : EntityFrameworkServicesB
             { typeof(ISqlGenerationHelper), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IRelationalAnnotationProvider), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IMigrationsAnnotationProvider), new ServiceCharacteristics(ServiceLifetime.Singleton) },
-            { typeof(IMigrationCommandExecutor), new ServiceCharacteristics(ServiceLifetime.Scoped) },
+            { typeof(IMigrationCommandExecutor), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IRelationalTypeMappingSource), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IUpdateSqlGenerator), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IRelationalTransactionFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
@@ -62,8 +62,6 @@ public class EntityFrameworkRelationalServicesBuilder : EntityFrameworkServicesB
             { typeof(IRawSqlCommandBuilder), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IQuerySqlGeneratorFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(IModificationCommandFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
-            { typeof(ISqlAliasManagerFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
-            { typeof(IRelationalLiftableConstantFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
             { typeof(ICommandBatchPreparer), new ServiceCharacteristics(ServiceLifetime.Scoped) },
             { typeof(IModificationCommandBatchFactory), new ServiceCharacteristics(ServiceLifetime.Scoped) },
             { typeof(IRelationalSqlTranslatingExpressionVisitorFactory), new ServiceCharacteristics(ServiceLifetime.Scoped) },
@@ -187,11 +185,6 @@ public class EntityFrameworkRelationalServicesBuilder : EntityFrameworkServicesB
         TryAdd<IRelationalParameterBasedSqlProcessorFactory, RelationalParameterBasedSqlProcessorFactory>();
         TryAdd<IRelationalQueryStringFactory, RelationalQueryStringFactory>();
         TryAdd<IQueryCompilationContextFactory, RelationalQueryCompilationContextFactory>();
-        TryAdd<IAdHocMapper, RelationalAdHocMapper>();
-        TryAdd<ISqlAliasManagerFactory, SqlAliasManagerFactory>();
-        TryAdd<ILiftableConstantFactory>(p => p.GetRequiredService<IRelationalLiftableConstantFactory>());
-        TryAdd<IRelationalLiftableConstantFactory, RelationalLiftableConstantFactory>();
-        TryAdd<ILiftableConstantProcessor, RelationalLiftableConstantProcessor>();
 
         ServiceCollectionMap.GetInfrastructure()
             .AddDependencySingleton<RelationalSqlGenerationHelperDependencies>()
@@ -207,7 +200,6 @@ public class EntityFrameworkRelationalServicesBuilder : EntityFrameworkServicesB
             .AddDependencySingleton<RelationalEvaluatableExpressionFilterDependencies>()
             .AddDependencySingleton<RelationalModelDependencies>()
             .AddDependencySingleton<RelationalModelRuntimeInitializerDependencies>()
-            .AddDependencySingleton<RelationalLiftableConstantExpressionDependencies>()
             .AddDependencyScoped<MigrationsSqlGeneratorDependencies>()
             .AddDependencyScoped<RelationalConventionSetBuilderDependencies>()
             .AddDependencyScoped<ModificationCommandBatchFactoryDependencies>()
@@ -228,8 +220,7 @@ public class EntityFrameworkRelationalServicesBuilder : EntityFrameworkServicesB
             .AddDependencyScoped<RelationalConnectionDependencies>()
             .AddDependencyScoped<RelationalDatabaseDependencies>()
             .AddDependencyScoped<RelationalQueryContextDependencies>()
-            .AddDependencyScoped<RelationalQueryCompilationContextDependencies>()
-            .AddDependencyScoped<RelationalAdHocMapperDependencies>();
+            .AddDependencyScoped<RelationalQueryCompilationContextDependencies>();
 
         return base.TryAddCoreServices();
     }

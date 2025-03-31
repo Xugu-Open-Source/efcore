@@ -10,16 +10,21 @@ using System.ComponentModel.DataAnnotations.Schema;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class FieldMappingTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : FieldMappingTestBase<TFixture>.FieldMappingFixtureBase, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected FieldMappingTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     protected static AsyncLocal<bool> _isSeeding = new();
 
-    protected interface IUser2;
+    protected interface IUser2
+    {
+    }
 
     protected class User2 : IUser2
     {
@@ -136,8 +141,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostAuto>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_auto_props()
-        => UpdateAsync<BlogAuto>("Posts");
+    public virtual void Update_auto_props()
+        => Update<BlogAuto>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -230,8 +235,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostHiding>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_hiding_props()
-        => UpdateAsync<BlogHiding>("Posts");
+    public virtual void Update_hiding_props()
+        => Update<BlogHiding>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -287,8 +292,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostFull>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_full_props()
-        => UpdateAsync<BlogFull>("Posts");
+    public virtual void Update_full_props()
+        => Update<BlogFull>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -344,8 +349,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostFullExplicit>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_full_props_with_named_fields()
-        => UpdateAsync<BlogFullExplicit>("Posts");
+    public virtual void Update_full_props_with_named_fields()
+        => Update<BlogFullExplicit>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -401,8 +406,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostReadOnly>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_read_only_props()
-        => UpdateAsync<BlogReadOnly>("Posts");
+    public virtual void Update_read_only_props()
+        => Update<BlogReadOnly>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -458,8 +463,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostWithReadOnlyCollection>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_props_with_IReadOnlyCollection()
-        => UpdateAsync<BlogWithReadOnlyCollection>("Posts");
+    public virtual void Update_props_with_IReadOnlyCollection()
+        => Update<BlogWithReadOnlyCollection>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -515,8 +520,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostReadOnlyExplicit>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_read_only_props_with_named_fields()
-        => UpdateAsync<BlogReadOnlyExplicit>("Posts");
+    public virtual void Update_read_only_props_with_named_fields()
+        => Update<BlogReadOnlyExplicit>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -572,8 +577,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostWriteOnly>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_write_only_props()
-        => UpdateAsync<BlogWriteOnly>("Posts");
+    public virtual void Update_write_only_props()
+        => Update<BlogWriteOnly>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -629,8 +634,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostWriteOnlyExplicit>("Id", "Title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_write_only_props_with_named_fields()
-        => UpdateAsync<BlogWriteOnlyExplicit>("Posts");
+    public virtual void Update_write_only_props_with_named_fields()
+        => Update<BlogWriteOnlyExplicit>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -686,8 +691,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostFields>("_id", "_title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_fields_only()
-        => UpdateAsync<BlogFields>("Posts");
+    public virtual void Update_fields_only()
+        => Update<BlogFields>("Posts");
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -743,8 +748,8 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         => Projection<PostNavFields>("_id", "_title", tracking);
 
     [ConditionalFact]
-    public virtual Task Update_fields_only_only_for_navs_too()
-        => UpdateAsync<BlogNavFields>("_posts");
+    public virtual void Update_fields_only_only_for_navs_too()
+        => Update<BlogNavFields>("_posts");
 
     protected virtual void Load_collection<TBlog>(string navigation)
         where TBlog : class, IBlogAccessor, new()
@@ -821,16 +826,17 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
         Assert.Equal("Post21", posts.Single(e => e.Prop1 == 21).Prop2);
     }
 
-    protected virtual Task UpdateAsync<TBlog>(string navigation)
+    protected virtual void Update<TBlog>(string navigation)
         where TBlog : class, IBlogAccessor, new()
-        => TestHelpers.ExecuteWithStrategyInTransactionAsync(
-            CreateContext, UseTransaction, async context =>
+        => TestHelpers.ExecuteWithStrategyInTransaction(
+            CreateContext, UseTransaction,
+            context =>
             {
-                var blogs = await context.Set<TBlog>().ToListAsync();
+                var blogs = context.Set<TBlog>().ToList();
 
                 foreach (var blog in blogs)
                 {
-                    await context.Entry(blog).Collection(navigation).LoadAsync();
+                    context.Entry(blog).Collection(navigation).Load();
 
                     blog.AccessTitle += "Updated";
 
@@ -842,16 +848,17 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
 
                 AssertGraph(blogs, "Updated");
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 AssertGraph(blogs, "Updated");
-            }, async context =>
+            },
+            context =>
             {
                 var blogs = context.Set<TBlog>().ToList();
 
                 foreach (var blog in blogs)
                 {
-                    await context.Entry(blog).Collection(navigation).LoadAsync();
+                    context.Entry(blog).Collection(navigation).Load();
                 }
 
                 AssertGraph(blogs, "Updated");
@@ -2139,7 +2146,7 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
             }
         }
 
-        protected override async Task SeedAsync(PoolableDbContext context)
+        protected override void Seed(PoolableDbContext context)
         {
             _isSeeding.Value = true;
             try
@@ -2187,7 +2194,7 @@ public abstract class FieldMappingTestBase<TFixture>(TFixture fixture) : IClassF
 
                 context.Add(new OneToOneFieldNavPrincipal { Id = 1, Name = "OneToOneFieldNavPrincipal1" });
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
             }
             finally
             {

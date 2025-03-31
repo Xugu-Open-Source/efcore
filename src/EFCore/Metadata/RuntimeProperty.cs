@@ -1,17 +1,15 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Microsoft.EntityFrameworkCore.Metadata;
 
 /// <summary>
-///     Represents a scalar property of an structural type.
+///     Represents a scalar property of an entity type.
 /// </summary>
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-modeling">Modeling entity types and relationships</see> for more information and examples.
@@ -21,17 +19,15 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
     private readonly bool _isNullable;
     private readonly ValueGenerated _valueGenerated;
     private readonly bool _isConcurrencyToken;
-    private object? _sentinel;
-    private object? _sentinelFromProviderValue;
     private readonly PropertySaveBehavior _beforeSaveBehavior;
     private readonly PropertySaveBehavior _afterSaveBehavior;
-    private readonly Func<IProperty, ITypeBase, ValueGenerator>? _valueGeneratorFactory;
-    private ValueConverter? _valueConverter;
-    private readonly ValueComparer? _customValueComparer;
+    private readonly Func<IProperty, IEntityType, ValueGenerator>? _valueGeneratorFactory;
+    private readonly ValueConverter? _valueConverter;
+    private readonly bool _explicitValueComparer;
     private ValueComparer? _valueComparer;
+    private readonly bool _explicitKeyValueComparer;
     private ValueComparer? _keyValueComparer;
-    private ValueComparer? _providerValueComparer;
-    private readonly JsonValueReaderWriter? _jsonValueReaderWriter;
+    private readonly ValueComparer? _providerValueComparer;
     private CoreTypeMapping? _typeMapping;
 
     /// <summary>
@@ -46,7 +42,7 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
         Type clrType,
         PropertyInfo? propertyInfo,
         FieldInfo? fieldInfo,
-        RuntimeTypeBase declaringType,
+        RuntimeEntityType declaringEntityType,
         PropertyAccessMode propertyAccessMode,
         bool nullable,
         bool concurrencyToken,
@@ -58,19 +54,16 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
         int? precision,
         int? scale,
         Type? providerClrType,
-        Func<IProperty, ITypeBase, ValueGenerator>? valueGeneratorFactory,
+        Func<IProperty, IEntityType, ValueGenerator>? valueGeneratorFactory,
         ValueConverter? valueConverter,
         ValueComparer? valueComparer,
         ValueComparer? keyValueComparer,
         ValueComparer? providerValueComparer,
-        JsonValueReaderWriter? jsonValueReaderWriter,
-        CoreTypeMapping? typeMapping,
-        object? sentinel)
+        CoreTypeMapping? typeMapping)
         : base(name, propertyInfo, fieldInfo, propertyAccessMode)
     {
-        DeclaringType = declaringType;
+        DeclaringEntityType = declaringEntityType;
         ClrType = clrType;
-        _sentinel = sentinel;
         _isNullable = nullable;
         _isConcurrencyToken = concurrencyToken;
         _valueGenerated = valueGenerated;
@@ -105,69 +98,11 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
         }
 
         _typeMapping = typeMapping;
-        _customValueComparer = valueComparer;
         _valueComparer = valueComparer;
+        _explicitValueComparer = _valueComparer != null;
         _keyValueComparer = keyValueComparer ?? valueComparer;
+        _explicitKeyValueComparer = keyValueComparer != null;
         _providerValueComparer = providerValueComparer;
-        _jsonValueReaderWriter = jsonValueReaderWriter;
-    }
-
-    /// <summary>
-    ///     Sets the <see cref="Sentinel" /> value, converting from the provider type if needed.
-    /// </summary>
-    /// <param name="providerValue">The value, as a provider value if a value converter is being used.</param>
-    public virtual void SetSentinelFromProviderValue(object? providerValue)
-        => _sentinelFromProviderValue = providerValue;
-
-    /// <summary>
-    ///     Sets the element type for this property.
-    /// </summary>
-    /// <param name="clrType">The type of value the property will hold.</param>
-    /// <param name="nullable">A value indicating whether this property can contain <see langword="null" />.</param>
-    /// <param name="maxLength">The maximum length of data that is allowed in this property.</param>
-    /// <param name="unicode">A value indicating whether or not the property can persist Unicode characters.</param>
-    /// <param name="precision">The precision of data that is allowed in this property.</param>
-    /// <param name="scale">The scale of data that is allowed in this property.</param>
-    /// <param name="providerClrType">
-    ///     The type that the property value will be converted to before being sent to the database provider.
-    /// </param>
-    /// <param name="valueConverter">The custom <see cref="ValueConverter" /> set for this property.</param>
-    /// <param name="valueComparer">The <see cref="ValueComparer" /> for this property.</param>
-    /// <param name="jsonValueReaderWriter">The <see cref="JsonValueReaderWriter" /> for this property.</param>
-    /// <param name="typeMapping">The <see cref="CoreTypeMapping" /> for this property.</param>
-    /// <returns>The newly created property.</returns>
-    public virtual RuntimeElementType SetElementType(
-        Type clrType,
-        bool nullable = false,
-        int? maxLength = null,
-        bool? unicode = null,
-        int? precision = null,
-        int? scale = null,
-        Type? providerClrType = null,
-        ValueConverter? valueConverter = null,
-        ValueComparer? valueComparer = null,
-        JsonValueReaderWriter? jsonValueReaderWriter = null,
-        CoreTypeMapping? typeMapping = null)
-    {
-        var elementType = new RuntimeElementType(
-            clrType,
-            this,
-            nullable,
-            maxLength,
-            unicode,
-            precision,
-            scale,
-            providerClrType,
-            valueConverter,
-            valueComparer,
-            jsonValueReaderWriter,
-            typeMapping);
-
-        SetAnnotation(CoreAnnotationNames.ElementType, elementType);
-
-        IsPrimitiveCollection = true;
-
-        return elementType;
     }
 
     /// <summary>
@@ -176,8 +111,10 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
     [DynamicallyAccessedMembers(IProperty.DynamicallyAccessedMemberTypes)]
     protected override Type ClrType { get; }
 
-    /// <inheritdoc />
-    public override RuntimeTypeBase DeclaringType { get; }
+    /// <summary>
+    ///     Gets the type that this property belongs to.
+    /// </summary>
+    public override RuntimeEntityType DeclaringEntityType { get; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -207,7 +144,7 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     [EntityFrameworkInternal]
-    public virtual ISet<RuntimeForeignKey>? ForeignKeys { get; set; }
+    public virtual List<RuntimeForeignKey>? ForeignKeys { get; set; }
 
     private IEnumerable<RuntimeForeignKey> GetContainingForeignKeys()
         => ForeignKeys ?? Enumerable.Empty<RuntimeForeignKey>();
@@ -233,36 +170,24 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
         get => NonCapturingLazyInitializer.EnsureInitialized(
             ref _typeMapping, (IProperty)this,
             static property =>
-                RuntimeFeature.IsDynamicCodeSupported
-                    ? property.DeclaringType.Model.GetModelDependencies().TypeMappingSource.FindMapping(property)!
-                    : throw new InvalidOperationException(CoreStrings.NativeAotNoCompiledModel));
+                property.DeclaringEntityType.Model.GetModelDependencies().TypeMappingSource.FindMapping(property)!);
         set => _typeMapping = value;
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual void SetValueConverter(ValueConverter converter)
-        => _valueConverter = converter;
+    private ValueComparer GetValueComparer()
+        => (GetValueComparer(null) ?? TypeMapping.Comparer)
+            .ToNullableComparer(this)!;
 
-    /// <inheritdoc />
-    public virtual ValueComparer GetValueComparer()
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _valueComparer, this,
-            static property => (property.GetValueComparer(null) ?? property.TypeMapping.Comparer)
-                .ToNullableComparer(property.ClrType)!);
+    private ValueComparer GetKeyValueComparer()
+        => (GetKeyValueComparer(null) ?? TypeMapping.KeyComparer)
+            .ToNullableComparer(this)!;
 
     private ValueComparer? GetValueComparer(HashSet<IReadOnlyProperty>? checkedProperties)
     {
-        if (_customValueComparer != null)
+        if (_explicitValueComparer // This condition is needed due to #28944
+            && _valueComparer != null)
         {
-            return _customValueComparer is IInfrastructure<ValueComparer> underlyingValueComparer
-                ? underlyingValueComparer.Instance
-                : _customValueComparer;
+            return _valueComparer;
         }
 
         var principal = (RuntimeProperty?)this.FindFirstDifferentPrincipal();
@@ -273,7 +198,7 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
 
         if (checkedProperties == null)
         {
-            checkedProperties = [];
+            checkedProperties = new HashSet<IReadOnlyProperty>();
         }
         else if (checkedProperties.Contains(this))
         {
@@ -284,78 +209,39 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
         return principal.GetValueComparer(checkedProperties);
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual ValueComparer SetComparer(ValueComparer valueComparer)
-        => _valueComparer = valueComparer;
-
-    /// <inheritdoc />
-    public virtual ValueComparer GetKeyValueComparer()
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _keyValueComparer, this,
-            static property => (property.GetValueComparer(null) ?? property.TypeMapping.KeyComparer)
-                .ToNullableComparer(property.ClrType)!);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual ValueComparer SetKeyComparer(ValueComparer valueComparer)
-        => _keyValueComparer = valueComparer;
-
-    private ValueComparer GetProviderValueComparer()
-        => _providerValueComparer ??=
-            (TypeMapping.Converter?.ProviderClrType ?? ClrType).UnwrapNullableType() == ClrType.UnwrapNullableType()
-                ? GetKeyValueComparer()
-                : TypeMapping.ProviderValueComparer;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual ValueComparer SetProviderValueComparer(ValueComparer valueComparer)
-        => _providerValueComparer = valueComparer;
-
-    /// <inheritdoc />
-    public override object? Sentinel
+    private ValueComparer? GetKeyValueComparer(HashSet<IReadOnlyProperty>? checkedProperties)
     {
-        get
+        if (_explicitKeyValueComparer // This condition is needed due to #28944
+            && _keyValueComparer != null)
         {
-            if (_sentinelFromProviderValue != null)
-            {
-                var providerValue = _sentinelFromProviderValue;
-                _sentinelFromProviderValue = null;
-                _sentinel = TypeMapping.Converter!.ConvertFromProvider(providerValue);
-            }
-
-            return _sentinel;
+            return _keyValueComparer;
         }
+
+        var principal = (RuntimeProperty?)this.FindFirstDifferentPrincipal();
+        if (principal == null)
+        {
+            return null;
+        }
+
+        if (checkedProperties == null)
+        {
+            checkedProperties = new HashSet<IReadOnlyProperty>();
+        }
+        else if (checkedProperties.Contains(this))
+        {
+            return null;
+        }
+
+        checkedProperties.Add(this);
+        return principal.GetKeyValueComparer(checkedProperties);
     }
 
     /// <summary>
-    ///     Gets the <see cref="JsonValueReaderWriter" /> for this property, or <see langword="null" /> if none is set.
+    ///     Returns a string that represents the current object.
     /// </summary>
-    /// <returns>The reader/writer, or <see langword="null" /> if none has been set.</returns>
-    public virtual JsonValueReaderWriter? GetJsonValueReaderWriter()
-        => _jsonValueReaderWriter;
-
-    /// <summary>
-    ///     Gets the configuration for elements of the primitive collection represented by this property.
-    /// </summary>
-    /// <returns>The configuration for the elements.</returns>
-    public virtual IElementType? GetElementType()
-        => (IElementType?)this[CoreAnnotationNames.ElementType];
+    /// <returns>A string that represents the current object.</returns>
+    public override string ToString()
+        => ((IProperty)this).ToDebugString(MetadataDebugStringOptions.SingleLineDefault);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -363,31 +249,11 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool IsPrimitiveCollection { get; private set; }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    [EntityFrameworkInternal]
     public virtual DebugView DebugView
         => new(
-            () => ((IReadOnlyProperty)this).ToDebugString(),
-            () => ((IReadOnlyProperty)this).ToDebugString(MetadataDebugStringOptions.LongDefault));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override string ToString()
-        => ((IReadOnlyProperty)this).ToDebugString(MetadataDebugStringOptions.SingleLineDefault);
-
-    /// <inheritdoc />
-    IReadOnlyElementType? IReadOnlyProperty.GetElementType()
-        => GetElementType();
+            () => ((IProperty)this).ToDebugString(),
+            () => ((IProperty)this).ToDebugString(MetadataDebugStringOptions.LongDefault));
 
     /// <inheritdoc />
     bool IReadOnlyProperty.IsNullable
@@ -442,7 +308,7 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
 
     /// <inheritdoc />
     [DebuggerStepThrough]
-    Func<IProperty, ITypeBase, ValueGenerator>? IReadOnlyProperty.GetValueGeneratorFactory()
+    Func<IProperty, IEntityType, ValueGenerator>? IReadOnlyProperty.GetValueGeneratorFactory()
         => _valueGeneratorFactory;
 
     /// <inheritdoc />
@@ -456,6 +322,20 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
         => (Type?)this[CoreAnnotationNames.ProviderClrType];
 
     /// <inheritdoc />
+    IReadOnlyEntityType IReadOnlyProperty.DeclaringEntityType
+    {
+        [DebuggerStepThrough]
+        get => DeclaringEntityType;
+    }
+
+    /// <inheritdoc />
+    IEntityType IProperty.DeclaringEntityType
+    {
+        [DebuggerStepThrough]
+        get => DeclaringEntityType;
+    }
+
+    /// <inheritdoc />
     [DebuggerStepThrough]
     CoreTypeMapping? IReadOnlyProperty.FindTypeMapping()
         => TypeMapping;
@@ -463,22 +343,40 @@ public class RuntimeProperty : RuntimePropertyBase, IProperty
     /// <inheritdoc />
     [DebuggerStepThrough]
     ValueComparer? IReadOnlyProperty.GetValueComparer()
-        => GetValueComparer();
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _valueComparer, this,
+            static property => property.GetValueComparer());
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    ValueComparer IProperty.GetValueComparer()
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _valueComparer, this,
+            static property => property.GetValueComparer());
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     ValueComparer? IReadOnlyProperty.GetKeyValueComparer()
-        => GetKeyValueComparer();
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _keyValueComparer, this,
+            static property => property.GetKeyValueComparer());
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    ValueComparer IProperty.GetKeyValueComparer()
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _keyValueComparer, this,
+            static property => property.GetKeyValueComparer());
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     ValueComparer? IReadOnlyProperty.GetProviderValueComparer()
-        => GetProviderValueComparer();
+        => _providerValueComparer ?? TypeMapping.ProviderValueComparer;
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     ValueComparer IProperty.GetProviderValueComparer()
-        => GetProviderValueComparer();
+        => _providerValueComparer ?? TypeMapping.ProviderValueComparer;
 
     /// <inheritdoc />
     [DebuggerStepThrough]

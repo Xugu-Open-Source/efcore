@@ -3,13 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class AspNetIdentityCustomTypesIntKeyInMemoryTest(
-    AspNetIdentityCustomTypesIntKeyInMemoryTest.AspNetIdentityCustomTypesIntKeyInMemoryFixture fixture)
-    : AspNetIdentityCustomTypesIntKeyTestBase<
-        AspNetIdentityCustomTypesIntKeyInMemoryTest.AspNetIdentityCustomTypesIntKeyInMemoryFixture>(fixture)
+public class AspNetIdentityCustomTypesIntKeyInMemoryTest
+    : AspNetIdentityCustomTypesIntKeyTestBase<AspNetIdentityCustomTypesIntKeyInMemoryTest.AspNetIdentityCustomTypesIntKeyInMemoryFixture
+    >
 {
-    protected override bool HasForeignKeyIndexes
-        => false;
+    public AspNetIdentityCustomTypesIntKeyInMemoryTest(AspNetIdentityCustomTypesIntKeyInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
 
     protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
     {

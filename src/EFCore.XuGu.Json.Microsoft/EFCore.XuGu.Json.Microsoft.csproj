@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <MinClientVersion>3.6</MinClientVersion>
+    <AssemblyName>Microsoft.EntityFrameworkCore.XuGu.Json.Microsoft</AssemblyName>
+    <RootNamespace>Microsoft.EntityFrameworkCore.XuGu</RootNamespace>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ImplicitUsings>true</ImplicitUsings>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>SA0001</NoWarn>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\EFCore.XuGu\EFCore.XuGu.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="XuguClient">
+      <HintPath>..\..\..\csharp-driver7.0\XGCSClient\bin\Debug\netstandard2.1\XuguClient.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

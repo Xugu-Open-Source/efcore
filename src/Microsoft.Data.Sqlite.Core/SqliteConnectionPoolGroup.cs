@@ -3,14 +3,21 @@
 
 namespace Microsoft.Data.Sqlite
 {
-    internal class SqliteConnectionPoolGroup(SqliteConnectionStringBuilder connectionOptions, string connectionString, bool isNonPooled)
+    internal class SqliteConnectionPoolGroup
     {
         private SqliteConnectionPool? _pool;
         private State _state = State.Active;
 
-        public SqliteConnectionStringBuilder ConnectionOptions { get; } = connectionOptions;
-        public string ConnectionString { get; } = connectionString;
-        public bool IsNonPooled { get; } = isNonPooled;
+        public SqliteConnectionPoolGroup(SqliteConnectionStringBuilder connectionOptions, string connectionString, bool isNonPooled)
+        {
+            ConnectionOptions = connectionOptions;
+            ConnectionString = connectionString;
+            IsNonPooled = isNonPooled;
+        }
+
+        public SqliteConnectionStringBuilder ConnectionOptions { get; }
+        public string ConnectionString { get; }
+        public bool IsNonPooled { get; }
 
         public bool IsDisabled
             => _state == State.Disabled;

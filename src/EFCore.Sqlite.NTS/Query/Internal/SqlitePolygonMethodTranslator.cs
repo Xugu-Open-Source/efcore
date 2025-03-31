@@ -15,7 +15,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Query.Internal;
 public class SqlitePolygonMethodTranslator : IMethodCallTranslator
 {
     private static readonly MethodInfo GetInteriorRingN
-        = typeof(Polygon).GetRuntimeMethod(nameof(Polygon.GetInteriorRingN), [typeof(int)])!;
+        = typeof(Polygon).GetRuntimeMethod(nameof(Polygon.GetInteriorRingN), new[] { typeof(int) })!;
 
     private readonly ISqlExpressionFactory _sqlExpressionFactory;
 
@@ -26,7 +26,9 @@ public class SqlitePolygonMethodTranslator : IMethodCallTranslator
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public SqlitePolygonMethodTranslator(ISqlExpressionFactory sqlExpressionFactory)
-        => _sqlExpressionFactory = sqlExpressionFactory;
+    {
+        _sqlExpressionFactory = sqlExpressionFactory;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -46,7 +48,7 @@ public class SqlitePolygonMethodTranslator : IMethodCallTranslator
                 "InteriorRingN",
                 new[] { instance!, _sqlExpressionFactory.Add(arguments[0], _sqlExpressionFactory.Constant(1)) },
                 nullable: true,
-                argumentsPropagateNullability: Statics.TrueArrays[2],
+                argumentsPropagateNullability: new[] { true, true },
                 method.ReturnType);
         }
 

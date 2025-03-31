@@ -7,16 +7,12 @@ using Microsoft.EntityFrameworkCore.TestModels.InheritanceModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public abstract class TPCInheritanceQueryTestBase<TFixture> : InheritanceQueryTestBase<TFixture>
     where TFixture : TPCInheritanceQueryFixture, new()
 {
-    protected TPCInheritanceQueryTestBase(TFixture fixture, ITestOutputHelper testOutputHelper)
+    protected TPCInheritanceQueryTestBase(TFixture fixture)
         : base(fixture)
     {
-        Fixture.TestSqlLoggerFactory.Clear();
-        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     // Keyless entities does not have TPC

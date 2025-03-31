@@ -11,19 +11,17 @@ namespace Microsoft.EntityFrameworkCore;
 /// </summary>
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
 ///     for more information and examples.
 /// </remarks>
 public static class SqlServerDbFunctionsExtensions
 {
-    #region Full-text search
-
     /// <summary>
     ///     A DbFunction method stub that can be used in LINQ queries to target the SQL Server <c>FREETEXT</c> store function.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -42,7 +40,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -59,7 +57,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -78,7 +76,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -90,17 +88,13 @@ public static class SqlServerDbFunctionsExtensions
         string searchCondition)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(Contains)));
 
-    #endregion Full-text search
-
-    #region DateDiffYear
-
     /// <summary>
     ///     Counts the number of year boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
     ///     Corresponds to SQL Server's <c>DATEDIFF(year, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -119,7 +113,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -138,7 +132,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -157,7 +151,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -171,54 +165,12 @@ public static class SqlServerDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffYear)));
 
     /// <summary>
-    ///     Counts the number of year boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
-    ///     Corresponds to SQL Server's <c>DATEDIFF(year, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of year boundaries crossed between the dates.</returns>
-    public static int DateDiffYear(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffYear)));
-
-    /// <summary>
-    ///     Counts the number of year boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
-    ///     Corresponds to SQL Server's <c>DATEDIFF(year, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of year boundaries crossed between the dates.</returns>
-    public static int? DateDiffYear(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffYear)));
-
-    #endregion DateDiffYear
-
-    #region DateDiffMonth
-
-    /// <summary>
     ///     Counts the number of month boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
     ///     Corresponds to SQL Server's <c>DATEDIFF(month, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -237,7 +189,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -256,7 +208,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -275,7 +227,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -289,54 +241,12 @@ public static class SqlServerDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMonth)));
 
     /// <summary>
-    ///     Counts the number of month boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
-    ///     Corresponds to SQL Server's <c>DATEDIFF(month, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of month boundaries crossed between the dates.</returns>
-    public static int DateDiffMonth(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMonth)));
-
-    /// <summary>
-    ///     Counts the number of month boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
-    ///     Corresponds to SQL Server's <c>DATEDIFF(month, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of month boundaries crossed between the dates.</returns>
-    public static int? DateDiffMonth(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMonth)));
-
-    #endregion DateDiffMonth
-
-    #region DateDiffDay
-
-    /// <summary>
     ///     Counts the number of day boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
     ///     Corresponds to SQL Server's <c>DATEDIFF(day, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -355,7 +265,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -374,7 +284,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -393,7 +303,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -405,48 +315,6 @@ public static class SqlServerDbFunctionsExtensions
         DateTimeOffset? startDate,
         DateTimeOffset? endDate)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffDay)));
-
-    /// <summary>
-    ///     Counts the number of day boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
-    ///     Corresponds to SQL Server's <c>DATEDIFF(day, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of day boundaries crossed between the dates.</returns>
-    public static int DateDiffDay(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffDay)));
-
-    /// <summary>
-    ///     Counts the number of day boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
-    ///     Corresponds to SQL Server's <c>DATEDIFF(day, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of day boundaries crossed between the dates.</returns>
-    public static int? DateDiffDay(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffDay)));
-
-    #endregion DateDiffDay
-
-    #region DateDiffHour
 
     /// <summary>
     ///     Counts the number of hour boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
@@ -454,7 +322,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -473,7 +341,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -492,7 +360,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -511,7 +379,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -526,11 +394,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of hour boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(hour, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(hour, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -545,11 +413,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of hour boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(hour, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(hour, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -563,92 +431,12 @@ public static class SqlServerDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffHour)));
 
     /// <summary>
-    ///     Counts the number of hour boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(hour, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of hour boundaries crossed between the times.</returns>
-    public static int DateDiffHour(
-        this DbFunctions _,
-        TimeOnly startTime,
-        TimeOnly endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffHour)));
-
-    /// <summary>
-    ///     Counts the number of hour boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(hour, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of hour boundaries crossed between the times.</returns>
-    public static int? DateDiffHour(
-        this DbFunctions _,
-        TimeOnly? startTime,
-        TimeOnly? endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffHour)));
-
-    /// <summary>
-    ///     Counts the number of hour boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(hour, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of hour boundaries crossed between the dates.</returns>
-    public static int DateDiffHour(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffHour)));
-
-    /// <summary>
-    ///     Counts the number of hour boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(hour, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of hour boundaries crossed between the dates.</returns>
-    public static int? DateDiffHour(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffHour)));
-
-    #endregion DateDiffHour
-
-    #region DateDiffMinute
-
-    /// <summary>
     ///     Counts the number of minute boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
     ///     Corresponds to SQL Server's <c>DATEDIFF(minute, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -667,7 +455,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -686,7 +474,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -705,7 +493,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -720,11 +508,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of minute boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(minute, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(minute, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -739,11 +527,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of minute boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(minute, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(minute, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -757,92 +545,12 @@ public static class SqlServerDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMinute)));
 
     /// <summary>
-    ///     Counts the number of minute boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(minute, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of minute boundaries crossed between the times.</returns>
-    public static int DateDiffMinute(
-        this DbFunctions _,
-        TimeOnly startTime,
-        TimeOnly endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMinute)));
-
-    /// <summary>
-    ///     Counts the number of minute boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(minute, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of minute boundaries crossed between the times.</returns>
-    public static int? DateDiffMinute(
-        this DbFunctions _,
-        TimeOnly? startTime,
-        TimeOnly? endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMinute)));
-
-    /// <summary>
-    ///     Counts the number of minute boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(minute, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of minute boundaries crossed between the dates.</returns>
-    public static int DateDiffMinute(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMinute)));
-
-    /// <summary>
-    ///     Counts the number of minute boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(minute, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of minute boundaries crossed between the dates.</returns>
-    public static int? DateDiffMinute(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMinute)));
-
-    #endregion DateDiffMinute
-
-    #region DateDiffSecond
-
-    /// <summary>
     ///     Counts the number of second boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
     ///     Corresponds to SQL Server's <c>DATEDIFF(second, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -861,7 +569,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -880,7 +588,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -899,7 +607,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -914,11 +622,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of second boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(second, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(second, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -933,11 +641,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of second boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(second, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(second, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -951,92 +659,12 @@ public static class SqlServerDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffSecond)));
 
     /// <summary>
-    ///     Counts the number of second boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(second, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of second boundaries crossed between the times.</returns>
-    public static int DateDiffSecond(
-        this DbFunctions _,
-        TimeOnly startTime,
-        TimeOnly endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffSecond)));
-
-    /// <summary>
-    ///     Counts the number of second boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(second, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of second boundaries crossed between the times.</returns>
-    public static int? DateDiffSecond(
-        this DbFunctions _,
-        TimeOnly? startTime,
-        TimeOnly? endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffSecond)));
-
-    /// <summary>
-    ///     Counts the number of second boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(second, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of second boundaries crossed between the dates.</returns>
-    public static int DateDiffSecond(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffSecond)));
-
-    /// <summary>
-    ///     Counts the number of second boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(second, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of second boundaries crossed between the dates.</returns>
-    public static int? DateDiffSecond(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffSecond)));
-
-    #endregion DateDiffSecond
-
-    #region DateDiffMillisecond
-
-    /// <summary>
     ///     Counts the number of millisecond boundaries crossed between the <paramref name="startDate" /> and
     ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1055,7 +683,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1074,7 +702,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1093,7 +721,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1108,11 +736,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of millisecond boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1127,11 +755,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of millisecond boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1145,92 +773,12 @@ public static class SqlServerDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMillisecond)));
 
     /// <summary>
-    ///     Counts the number of millisecond boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of millisecond boundaries crossed between the times.</returns>
-    public static int DateDiffMillisecond(
-        this DbFunctions _,
-        TimeOnly startTime,
-        TimeOnly endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMillisecond)));
-
-    /// <summary>
-    ///     Counts the number of millisecond boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of millisecond boundaries crossed between the times.</returns>
-    public static int? DateDiffMillisecond(
-        this DbFunctions _,
-        TimeOnly? startTime,
-        TimeOnly? endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMillisecond)));
-
-    /// <summary>
-    ///     Counts the number of millisecond boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of millisecond boundaries crossed between the dates.</returns>
-    public static int DateDiffMillisecond(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMillisecond)));
-
-    /// <summary>
-    ///     Counts the number of millisecond boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(millisecond, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of millisecond boundaries crossed between the dates.</returns>
-    public static int? DateDiffMillisecond(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMillisecond)));
-
-    #endregion DateDiffMillisecond
-
-    #region DateDiffMicrosecond
-
-    /// <summary>
     ///     Counts the number of microsecond boundaries crossed between the <paramref name="startDate" /> and
     ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1249,7 +797,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1268,7 +816,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1287,7 +835,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1302,11 +850,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of microsecond boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1321,11 +869,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of microsecond boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1339,92 +887,12 @@ public static class SqlServerDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMicrosecond)));
 
     /// <summary>
-    ///     Counts the number of microsecond boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of microsecond boundaries crossed between the times.</returns>
-    public static int DateDiffMicrosecond(
-        this DbFunctions _,
-        TimeOnly startTime,
-        TimeOnly endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMicrosecond)));
-
-    /// <summary>
-    ///     Counts the number of microsecond boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of microsecond boundaries crossed between the times.</returns>
-    public static int? DateDiffMicrosecond(
-        this DbFunctions _,
-        TimeOnly? startTime,
-        TimeOnly? endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMicrosecond)));
-
-    /// <summary>
-    ///     Counts the number of microsecond boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of microsecond boundaries crossed between the dates.</returns>
-    public static int DateDiffMicrosecond(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMicrosecond)));
-
-    /// <summary>
-    ///     Counts the number of microsecond boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(microsecond, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of microsecond boundaries crossed between the dates.</returns>
-    public static int? DateDiffMicrosecond(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffMicrosecond)));
-
-    #endregion DateDiffMicrosecond
-
-    #region DateDiffNanosecond
-
-    /// <summary>
     ///     Counts the number of nanosecond boundaries crossed between the <paramref name="startDate" /> and
     ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1443,7 +911,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1462,7 +930,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1481,7 +949,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1496,11 +964,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of nanosecond boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1515,11 +983,11 @@ public static class SqlServerDbFunctionsExtensions
 
     /// <summary>
     ///     Counts the number of nanosecond boundaries crossed between the <paramref name="startTimeSpan" /> and
-    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startTimeSpan, @endTimeSpan)</c>.
+    ///     <paramref name="endTimeSpan" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1533,92 +1001,12 @@ public static class SqlServerDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffNanosecond)));
 
     /// <summary>
-    ///     Counts the number of nanosecond boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of nanosecond boundaries crossed between the times.</returns>
-    public static int DateDiffNanosecond(
-        this DbFunctions _,
-        TimeOnly startTime,
-        TimeOnly endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffNanosecond)));
-
-    /// <summary>
-    ///     Counts the number of nanosecond boundaries crossed between the <paramref name="startTime" /> and
-    ///     <paramref name="endTime" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startTime, @endTime)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startTime">Starting time for the calculation.</param>
-    /// <param name="endTime">Ending time for the calculation.</param>
-    /// <returns>Number of nanosecond boundaries crossed between the times.</returns>
-    public static int? DateDiffNanosecond(
-        this DbFunctions _,
-        TimeOnly? startTime,
-        TimeOnly? endTime)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffNanosecond)));
-
-    /// <summary>
-    ///     Counts the number of nanosecond boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of nanosecond boundaries crossed between the dates.</returns>
-    public static int DateDiffNanosecond(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffNanosecond)));
-
-    /// <summary>
-    ///     Counts the number of nanosecond boundaries crossed between the <paramref name="startDate" /> and
-    ///     <paramref name="endDate" />. Corresponds to SQL Server's <c>DATEDIFF(nanosecond, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of nanosecond boundaries crossed between the dates.</returns>
-    public static int? DateDiffNanosecond(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffNanosecond)));
-
-    #endregion DateDiffNanosecond
-
-    #region DateDiffWeek
-
-    /// <summary>
     ///     Counts the number of week boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
     ///     Corresponds to SQL Server's <c>DATEDIFF(week, @startDate, @endDate)</c>.
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1637,7 +1025,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1656,7 +1044,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1675,7 +1063,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1687,46 +1075,6 @@ public static class SqlServerDbFunctionsExtensions
         DateTimeOffset? startDate,
         DateTimeOffset? endDate)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffWeek)));
-
-    /// <summary>
-    ///     Counts the number of week boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
-    ///     Corresponds to SQL Server's <c>DATEDIFF(week, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of week boundaries crossed between the dates.</returns>
-    public static int DateDiffWeek(
-        this DbFunctions _,
-        DateOnly startDate,
-        DateOnly endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffWeek)));
-
-    /// <summary>
-    ///     Counts the number of week boundaries crossed between the <paramref name="startDate" /> and <paramref name="endDate" />.
-    ///     Corresponds to SQL Server's <c>DATEDIFF(week, @startDate, @endDate)</c>.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="startDate">Starting date for the calculation.</param>
-    /// <param name="endDate">Ending date for the calculation.</param>
-    /// <returns>Number of week boundaries crossed between the dates.</returns>
-    public static int? DateDiffWeek(
-        this DbFunctions _,
-        DateOnly? startDate,
-        DateOnly? endDate)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DateDiffWeek)));
-
-    #endregion DateDiffWeek
 
     /// <summary>
     ///     Validate if the given string is a valid date.
@@ -1734,7 +1082,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1752,7 +1100,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1784,7 +1132,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1806,7 +1154,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1846,7 +1194,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1884,7 +1232,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1909,7 +1257,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1935,7 +1283,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1951,7 +1299,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1967,7 +1315,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1983,7 +1331,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -1999,7 +1347,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -2015,7 +1363,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -2031,7 +1379,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -2047,7 +1395,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -2063,7 +1411,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -2080,7 +1428,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -2102,7 +1450,7 @@ public static class SqlServerDbFunctionsExtensions
     ///     </para>
     ///     <para>
     ///         See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///         <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///         <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///         for more information and examples.
     ///     </para>
     /// </remarks>
@@ -2123,7 +1471,7 @@ public static class SqlServerDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
     ///     for more information and examples.
     /// </remarks>
     /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
@@ -2136,26 +1484,6 @@ public static class SqlServerDbFunctionsExtensions
         DateTimeOffset dateTimeOffset,
         string timeZone)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(AtTimeZone)));
-
-    /// <summary>
-    ///     Returns the starting position of the first occurrence of a pattern in a specified expression, or zero if the pattern is not found, on
-    ///     all valid text and character data types.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-database-functions">Database functions</see>, and
-    ///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
-    ///     for more information and examples.
-    /// </remarks>
-    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
-    /// <param name="pattern">A string pattern to search for.</param>
-    /// <param name="expression">Typically a column that is searched for the specified pattern</param>
-    /// <returns>Returns the starting position of the first occurrence of a pattern in a specified expression.</returns>
-    /// <seealso href="https://learn.microsoft.com/en-us/sql/t-sql/functions/patindex-transact-sql">SQL Server documentation for <c>PATINDEX</c>.</seealso>
-    public static long PatIndex(
-        this DbFunctions _,
-        string pattern,
-        string expression)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(PatIndex)));
 
     #region Sample standard deviation
 

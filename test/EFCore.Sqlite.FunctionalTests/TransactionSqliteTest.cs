@@ -3,11 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class TransactionSqliteTest(TransactionSqliteTest.TransactionSqliteFixture fixture)
-    : TransactionTestBase<TransactionSqliteTest.TransactionSqliteFixture>(fixture)
+public class TransactionSqliteTest : TransactionTestBase<TransactionSqliteTest.TransactionSqliteFixture>
 {
+    public TransactionSqliteTest(TransactionSqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected override bool SnapshotSupported
         => false;
 
@@ -24,16 +26,16 @@ public class TransactionSqliteTest(TransactionSqliteTest.TransactionSqliteFixtur
     public class TransactionSqliteFixture : TransactionFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory
-            => SharedCacheSqliteTestStoreFactory.Instance;
+            => SqliteTestStoreFactory.Instance;
 
-        public override async Task ReseedAsync()
+        public override void Reseed()
         {
             using var context = CreateContext();
-            context.Set<TransactionCustomer>().RemoveRange(await context.Set<TransactionCustomer>().ToListAsync());
-            context.Set<TransactionOrder>().RemoveRange(await context.Set<TransactionOrder>().ToListAsync());
-            await context.SaveChangesAsync();
+            context.Set<TransactionCustomer>().RemoveRange(context.Set<TransactionCustomer>());
+            context.Set<TransactionOrder>().RemoveRange(context.Set<TransactionOrder>());
+            context.SaveChanges();
 
-            await SeedAsync(context);
+            Seed(context);
         }
 
         public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)

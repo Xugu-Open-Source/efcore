@@ -3,13 +3,11 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class TPCInheritanceQuerySqliteFixture : TPCInheritanceQueryFixture
 {
     protected override ITestStoreFactory TestStoreFactory
         => SqliteTestStoreFactory.Instance;
 
-    public override bool UseGeneratedKeys
+    protected override bool UseGeneratedKeys
         => false;
 }

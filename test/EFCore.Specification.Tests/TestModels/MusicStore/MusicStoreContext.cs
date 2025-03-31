@@ -5,10 +5,13 @@ using Microsoft.EntityFrameworkCore.TestModels.AspNetIdentity;
 
 namespace Microsoft.EntityFrameworkCore.TestModels.MusicStore;
 
-#nullable disable
-
-public class MusicStoreContext(DbContextOptions<MusicStoreContext> options) : IdentityDbContext<ApplicationUser>(options)
+public class MusicStoreContext : IdentityDbContext<ApplicationUser>
 {
+    public MusicStoreContext(DbContextOptions<MusicStoreContext> options)
+        : base(options)
+    {
+    }
+
     public DbSet<Album> Albums { get; set; }
     public DbSet<Artist> Artists { get; set; }
     public DbSet<Order> Orders { get; set; }

@@ -1,18 +1,17 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using NetTopologySuite.Geometries;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities.QueryTestGeneration;
 
-public abstract class ExpressionMutator(DbContext context)
+public abstract class ExpressionMutator
 {
     protected static MethodInfo IncludeMethodInfo;
     protected static MethodInfo ThenIncludeReferenceMethodInfo;
     protected static MethodInfo ThenIncludeCollectionMethodInfo;
 
-    protected DbContext Context { get; } = context;
+    protected DbContext Context { get; }
 
     static ExpressionMutator()
     {
@@ -29,6 +28,11 @@ public abstract class ExpressionMutator(DbContext context)
         ThenIncludeReferenceMethodInfo = typeof(EntityFrameworkQueryableExtensions).GetMethods().Where(
             m => m.Name == nameof(EntityFrameworkQueryableExtensions.ThenInclude)
                 && m != ThenIncludeCollectionMethodInfo).Single();
+    }
+
+    public ExpressionMutator(DbContext context)
+    {
+        Context = context;
     }
 
     protected static bool IsQueryableType(Type type)
@@ -98,14 +102,22 @@ public abstract class ExpressionMutator(DbContext context)
     public abstract bool IsValid(Expression expression);
     public abstract Expression Apply(Expression expression, Random random);
 
-    protected class ExpressionInjector(Expression expressionToInject, Func<Expression, Expression> injectionPattern) : ExpressionVisitor
+    protected class ExpressionInjector : ExpressionVisitor
     {
-        [return: NotNullIfNotNull(nameof(node))]
-        public override Expression? Visit(Expression? node)
+        private readonly Expression _expressionToInject;
+        private readonly Func<Expression, Expression> _injectionPattern;
+
+        public ExpressionInjector(Expression expressionToInject, Func<Expression, Expression> injectionPattern)
         {
-            if (node == expressionToInject)
+            _expressionToInject = expressionToInject;
+            _injectionPattern = injectionPattern;
+        }
+
+        public override Expression Visit(Expression node)
+        {
+            if (node == _expressionToInject)
             {
-                return injectionPattern(node);
+                return _injectionPattern(node);
             }
 
             return base.Visit(node);

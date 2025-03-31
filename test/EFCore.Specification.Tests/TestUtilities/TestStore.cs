@@ -5,86 +5,98 @@ using System.Transactions;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public abstract class TestStore(string name, bool shared) : IAsyncDisposable
+public abstract class TestStore : IDisposable
 {
-    private static readonly TestStoreIndex GlobalTestStoreIndex = new();
-    public IServiceProvider? ServiceProvider { get; protected set; }
+    private static readonly TestStoreIndex _globalTestStoreIndex = new();
+    public IServiceProvider ServiceProvider { get; protected set; }
 
-    public string Name { get; protected set; } = name;
-    public bool Shared { get; } = shared;
+    protected TestStore(string name, bool shared)
+    {
+        Name = name;
+        Shared = shared;
+    }
 
-    public virtual async Task<TestStore> InitializeAsync(
-        IServiceProvider? serviceProvider,
-        Func<DbContext>? createContext,
-        Func<DbContext, Task>? seed = null,
-        Func<DbContext, Task>? clean = null)
+    public string Name { get; protected set; }
+    public bool Shared { get; }
+
+    public virtual TestStore Initialize(
+        IServiceProvider serviceProvider,
+        Func<DbContext> createContext,
+        Action<DbContext> seed = null,
+        Action<DbContext> clean = null)
     {
         ServiceProvider = serviceProvider;
-        createContext ??= CreateDefaultContext;
+        if (createContext == null)
+        {
+            createContext = CreateDefaultContext;
+        }
 
         if (Shared)
         {
-            await GetTestStoreIndex(serviceProvider).CreateSharedAsync(
-                GetType().Name + Name, async () => await InitializeAsync(createContext, seed, clean));
+            GetTestStoreIndex(serviceProvider).CreateShared(GetType().Name + Name, () => Initialize(createContext, seed, clean));
         }
         else
         {
-            await GetTestStoreIndex(serviceProvider).CreateNonSharedAsync(
-                GetType().Name + Name, async () => await InitializeAsync(createContext, seed, clean));
+            GetTestStoreIndex(serviceProvider).CreateNonShared(GetType().Name + Name, () => Initialize(createContext, seed, clean));
         }
 
         return this;
     }
 
-    public virtual Task<TestStore> InitializeAsync(
+    public virtual TestStore Initialize(
         IServiceProvider serviceProvider,
         Func<TestStore, DbContext> createContext,
-        Func<DbContext, Task>? seed = null,
-        Func<DbContext, Task>? clean = null)
-        => InitializeAsync(serviceProvider, () => createContext(this), seed, clean);
+        Action<DbContext> seed = null,
+        Action<DbContext> clean = null)
+        => Initialize(serviceProvider, () => createContext(this), seed, clean);
 
-    public virtual Task<TestStore> InitializeAsync<TContext>(
+    public virtual TestStore Initialize<TContext>(
         IServiceProvider serviceProvider,
         Func<TestStore, TContext> createContext,
-        Func<TContext, Task>? seed = null,
-        Func<TContext, Task>? clean = null)
+        Action<TContext> seed = null,
+        Action<TContext> clean = null)
         where TContext : DbContext
-        => InitializeAsync(
+        => Initialize(
             serviceProvider,
-            () => createContext(this),
+            createContext,
             // ReSharper disable twice RedundantCast
-            seed == null ? null : c => seed((TContext)c),
-            clean == null ? null : c => clean((TContext)c));
+            seed == null ? (Action<DbContext>)null : c => seed((TContext)c),
+            clean == null ? (Action<DbContext>)null : c => clean((TContext)c));
 
-    protected virtual async Task InitializeAsync(Func<DbContext> createContext, Func<DbContext, Task>? seed, Func<DbContext, Task>? clean)
+    protected virtual void Initialize(Func<DbContext> createContext, Action<DbContext> seed, Action<DbContext> clean)
     {
         using var context = createContext();
-        if (clean != null)
-        {
-            await clean(context);
-        }
+        clean?.Invoke(context);
 
-        await CleanAsync(context);
+        Clean(context);
 
-        if (seed != null)
-        {
-            await seed(context);
-        }
+        seed?.Invoke(context);
     }
 
     public abstract DbContextOptionsBuilder AddProviderOptions(DbContextOptionsBuilder builder);
+    public abstract void Clean(DbContext context);
 
     public virtual Task CleanAsync(DbContext context)
-        => Task.CompletedTask;
+    {
+        Clean(context);
+        return Task.CompletedTask;
+    }
 
     protected virtual DbContext CreateDefaultContext()
         => new(AddProviderOptions(new DbContextOptionsBuilder().EnableServiceProviderCaching(false)).Options);
 
-    protected virtual TestStoreIndex GetTestStoreIndex(IServiceProvider? serviceProvider)
-        => GlobalTestStoreIndex;
+    protected virtual TestStoreIndex GetTestStoreIndex(IServiceProvider serviceProvider)
+        => _globalTestStoreIndex;
 
-    public virtual ValueTask DisposeAsync()
-        => default;
+    public virtual void Dispose()
+    {
+    }
+
+    public virtual Task DisposeAsync()
+    {
+        Dispose();
+        return Task.CompletedTask;
+    }
 
     private static readonly SemaphoreSlim _transactionSyncRoot = new(1);
 
@@ -109,18 +121,25 @@ public abstract class TestStore(string name, bool shared) : IAsyncDisposable
     private class DistributedTransactionListener : IDisposable
     {
         public DistributedTransactionListener()
-            => TransactionManager.DistributedTransactionStarted += DistributedTransactionStarted;
+        {
+            TransactionManager.DistributedTransactionStarted += DistributedTransactionStarted;
+        }
 
-        private void DistributedTransactionStarted(object? sender, TransactionEventArgs e)
-            => Assert.Fail("Distributed transaction started");
+        private void DistributedTransactionStarted(object sender, TransactionEventArgs e)
+            => Assert.False(true, "Distributed transaction started");
 
         public void Dispose()
             => TransactionManager.DistributedTransactionStarted -= DistributedTransactionStarted;
     }
 
-    private class CompositeDisposable(params IDisposable[] disposables) : IDisposable
+    private class CompositeDisposable : IDisposable
     {
-        private readonly IDisposable[] _disposables = disposables;
+        private readonly IDisposable[] _disposables;
+
+        public CompositeDisposable(params IDisposable[] disposables)
+        {
+            _disposables = disposables;
+        }
 
         public void Dispose()
         {

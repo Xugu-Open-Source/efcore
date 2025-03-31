@@ -8,8 +8,6 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class QueryLoggingSqlServerTest : IClassFixture<NorthwindQuerySqlServerFixture<NoopModelCustomizer>>
 {
     public QueryLoggingSqlServerTest(NorthwindQuerySqlServerFixture<NoopModelCustomizer> fixture)
@@ -34,7 +32,7 @@ public class QueryLoggingSqlServerTest : IClassFixture<NorthwindQuerySqlServerFi
             "Compiling query expression: ",
             Fixture.TestSqlLoggerFactory.Log[0].Message);
         Assert.StartsWith(
-            "Generated query execution expression: " + Environment.NewLine + "'queryContext => SingleQueryingEnumerable.Create<Customer>(",
+            "Generated query execution expression: " + Environment.NewLine + "'queryContext => new SingleQueryingEnumerable<Customer>(",
             Fixture.TestSqlLoggerFactory.Log[1].Message);
     }
 
@@ -48,7 +46,7 @@ public class QueryLoggingSqlServerTest : IClassFixture<NorthwindQuerySqlServerFi
 
         Assert.NotNull(customers);
         Assert.StartsWith(
-            "Generated query execution expression: " + Environment.NewLine + "'queryContext => SplitQueryingEnumerable.Create<Customer>(",
+            "Generated query execution expression: " + Environment.NewLine + "'queryContext => new SplitQueryingEnumerable<Customer>(",
             Fixture.TestSqlLoggerFactory.Log[1].Message);
     }
 
@@ -169,7 +167,7 @@ public class QueryLoggingSqlServerTest : IClassFixture<NorthwindQuerySqlServerFi
 
         var loggerFactory1 = new ListLoggerFactory();
 
-        using (var context = new NorthwindSqlServerContext(CreateOptions(loggerFactory1)))
+        using (var context = new NorthwindRelationalContext(CreateOptions(loggerFactory1)))
         {
             var _ = context.Customers.ToList();
         }
@@ -178,7 +176,7 @@ public class QueryLoggingSqlServerTest : IClassFixture<NorthwindQuerySqlServerFi
 
         var loggerFactory2 = new ListLoggerFactory();
 
-        using (var context = new NorthwindSqlServerContext(CreateOptions(loggerFactory2)))
+        using (var context = new NorthwindRelationalContext(CreateOptions(loggerFactory2)))
         {
             var _ = context.Customers.ToList();
         }

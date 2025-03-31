@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
@@ -6,12 +6,15 @@ using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class FieldsOnlyLoadTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : FieldsOnlyLoadTestBase<TFixture>.FieldsOnlyLoadFixtureBase
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected FieldsOnlyLoadTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     [ConditionalTheory]
     [InlineData(EntityState.Unchanged)]
@@ -3514,8 +3517,8 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
     public virtual async Task Load_many_to_one_reference_to_principal_null_FK_shadow_fk(EntityState state, bool async)
     {
         using var context = CreateContext();
-        var child = context.Attach(new ChildShadowFk { Id = 767 }).Entity;
-        context.Entry(child).Property("ParentId").CurrentValue = null;
+        var child = context.Attach(
+            new ChildShadowFk { Id = 767 }).Entity;
 
         ClearLog();
 
@@ -3552,8 +3555,8 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
     public virtual async Task Load_one_to_one_reference_to_principal_null_FK_shadow_fk(EntityState state, bool async)
     {
         using var context = CreateContext();
-        var single = context.Attach(new SingleShadowFk { Id = 767 }).Entity;
-        context.Entry(single).Property("ParentId").CurrentValue = null;
+        var single = context.Attach(
+            new SingleShadowFk { Id = 767 }).Entity;
 
         ClearLog();
 
@@ -3591,8 +3594,8 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
     public virtual async Task Load_many_to_one_reference_to_principal_using_Query_null_FK_shadow_fk(EntityState state, bool async)
     {
         using var context = CreateContext();
-        var child = context.Attach(new ChildShadowFk { Id = 767 }).Entity;
-        context.Entry(child).Property("ParentId").CurrentValue = null;
+        var child = context.Attach(
+            new ChildShadowFk { Id = 767 }).Entity;
 
         ClearLog();
 
@@ -3626,8 +3629,8 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
     public virtual async Task Load_one_to_one_reference_to_principal_using_Query_null_FK_shadow_fk(EntityState state, bool async)
     {
         using var context = CreateContext();
-        var single = context.Attach(new SingleShadowFk { Id = 767 }).Entity;
-        context.Entry(single).Property("ParentId").CurrentValue = null;
+        var single = context.Attach(
+            new SingleShadowFk { Id = 767 }).Entity;
 
         ClearLog();
 
@@ -4221,14 +4224,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await collectionEntry.LoadAsync();
-        }
-        else
-        {
-            collectionEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Children), nameof(Parent)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await collectionEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        collectionEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4248,14 +4257,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await collectionEntry.LoadAsync();
-        }
-        else
-        {
-            collectionEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Children), nameof(Parent)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await collectionEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        collectionEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4275,14 +4290,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await collectionEntry.LoadAsync();
-        }
-        else
-        {
-            collectionEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Children), nameof(Parent)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await collectionEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        collectionEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4302,14 +4323,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(child).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await referenceEntry.LoadAsync();
-        }
-        else
-        {
-            referenceEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Child.Parent), nameof(Child)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await referenceEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        referenceEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4329,14 +4356,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(child).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await referenceEntry.LoadAsync();
-        }
-        else
-        {
-            referenceEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Child.Parent), nameof(Child)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await referenceEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        referenceEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4356,14 +4389,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(child).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await referenceEntry.LoadAsync();
-        }
-        else
-        {
-            referenceEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Child.Parent), nameof(Child)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await referenceEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        referenceEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4383,14 +4422,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await referenceEntry.LoadAsync();
-        }
-        else
-        {
-            referenceEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Single), nameof(Parent)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await referenceEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        referenceEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4410,14 +4455,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await referenceEntry.LoadAsync();
-        }
-        else
-        {
-            referenceEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Single), nameof(Parent)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await referenceEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        referenceEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4437,14 +4488,20 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await referenceEntry.LoadAsync();
-        }
-        else
-        {
-            referenceEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Single), nameof(Parent)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await referenceEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        referenceEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -4462,7 +4519,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        var query = collectionEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Children), nameof(Parent)),
+            Assert.Throws<InvalidOperationException>(() => collectionEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -4480,7 +4539,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        var query = collectionEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Children), nameof(Parent)),
+            Assert.Throws<InvalidOperationException>(() => collectionEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -4498,7 +4559,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        var query = collectionEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Children), nameof(Parent)),
+            Assert.Throws<InvalidOperationException>(() => collectionEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -4516,7 +4579,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(child).State = EntityState.Detached;
         }
 
-        var query = referenceEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Child.Parent), nameof(Child)),
+            Assert.Throws<InvalidOperationException>(() => referenceEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -4534,7 +4599,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(child).State = EntityState.Detached;
         }
 
-        var query = referenceEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Child.Parent), nameof(Child)),
+            Assert.Throws<InvalidOperationException>(() => referenceEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -4552,7 +4619,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(child).State = EntityState.Detached;
         }
 
-        var query = referenceEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Child.Parent), nameof(Child)),
+            Assert.Throws<InvalidOperationException>(() => referenceEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -4570,7 +4639,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        var query = referenceEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Single), nameof(Parent)),
+            Assert.Throws<InvalidOperationException>(() => referenceEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -4588,7 +4659,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        var query = referenceEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Single), nameof(Parent)),
+            Assert.Throws<InvalidOperationException>(() => referenceEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -4606,7 +4679,9 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             context.Entry(parent).State = EntityState.Detached;
         }
 
-        var query = referenceEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(Parent.Single), nameof(Parent)),
+            Assert.Throws<InvalidOperationException>(() => referenceEntry.Query()).Message);
     }
 
     protected class Parent
@@ -4706,10 +4781,15 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
     {
     }
 
-    protected class ChangeDetectorProxy(
-        IDiagnosticsLogger<DbLoggerCategory.ChangeTracking> logger,
-        ILoggingOptions loggingOptions) : ChangeDetector(logger, loggingOptions)
+    protected class ChangeDetectorProxy : ChangeDetector
     {
+        public ChangeDetectorProxy(
+            IDiagnosticsLogger<DbLoggerCategory.ChangeTracking> logger,
+            ILoggingOptions loggingOptions)
+            : base(logger, loggingOptions)
+        {
+        }
+
         public bool DetectChangesCalled { get; set; }
 
         public override void DetectChanges(IStateManager stateManager)
@@ -4842,7 +4922,7 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
                 });
         }
 
-        protected override Task SeedAsync(PoolableDbContext context)
+        protected override void Seed(PoolableDbContext context)
         {
             context.Add(
                 new Parent
@@ -4863,7 +4943,7 @@ public abstract class FieldsOnlyLoadTestBase<TFixture>(TFixture fixture) : IClas
             // context.Add(
             //     new SimpleProduct { Deposit = new Deposit() });
 
-            return context.SaveChangesAsync();
+            context.SaveChanges();
         }
     }
 }

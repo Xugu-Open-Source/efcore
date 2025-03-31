@@ -19,34 +19,26 @@ public sealed record CSharpRuntimeAnnotationCodeGeneratorParameters
     ///     as new dependencies are added. Instead, use this type in your constructor so that an instance
     ///     will be created and injected automatically by the dependency injection container. To create
     ///     an instance with some dependent services replaced, first resolve the object from the dependency
-    ///     injection container, then replace selected services using the C# 'with' operator. Do not call
+    ///     injection container, then replace selected services using the 'With...' methods. Do not call
     ///     the constructor at any point in this process.
     /// </remarks>
     [EntityFrameworkInternal]
     public CSharpRuntimeAnnotationCodeGeneratorParameters(
         string targetName,
         string className,
-        string @namespace,
         IndentedStringBuilder mainBuilder,
         IndentedStringBuilder methodBuilder,
         ISet<string> namespaces,
-        IDictionary<string, object> scopeObjects,
-        IDictionary<object, string> scopeVariables,
-        Dictionary<ITypeBase, string> configurationClassNames,
-        bool nullable,
-        bool nativeAot)
+        ISet<string> scopeVariables,
+        bool nullable)
     {
         TargetName = targetName;
         ClassName = className;
-        Namespace = @namespace;
         MainBuilder = mainBuilder;
         MethodBuilder = methodBuilder;
         Namespaces = namespaces;
-        ScopeObjects = scopeObjects;
         ScopeVariables = scopeVariables;
-        ConfigurationClassNames = configurationClassNames;
         UseNullableReferenceTypes = nullable;
-        ForNativeAot = nativeAot;
     }
 
     /// <summary>
@@ -65,11 +57,6 @@ public sealed record CSharpRuntimeAnnotationCodeGeneratorParameters
     public string ClassName { get; init; }
 
     /// <summary>
-    ///     The namespace of the current class.
-    /// </summary>
-    public string Namespace { get; init; }
-
-    /// <summary>
     ///     The builder for the code building the metadata item.
     /// </summary>
     public IndentedStringBuilder MainBuilder { get; init; }
@@ -85,19 +72,9 @@ public sealed record CSharpRuntimeAnnotationCodeGeneratorParameters
     public ISet<string> Namespaces { get; init; }
 
     /// <summary>
-    ///     A map between the variable names in the current scope and their values.
+    ///     A collection of variable names in the current scope.
     /// </summary>
-    public IDictionary<string, object> ScopeObjects { get; init; }
-
-    /// <summary>
-    ///     A map between the variable values in the current scope and their names.
-    /// </summary>
-    public IDictionary<object, string> ScopeVariables { get; init; }
-
-    /// <summary>
-    ///     The configuration class names corresponding to the structural types.
-    /// </summary>
-    public IReadOnlyDictionary<ITypeBase, string> ConfigurationClassNames { get; init; }
+    public ISet<string> ScopeVariables { get; init; }
 
     /// <summary>
     ///     Indicates whether the given annotations are runtime annotations.
@@ -105,14 +82,8 @@ public sealed record CSharpRuntimeAnnotationCodeGeneratorParameters
     public bool IsRuntime { get; init; }
 
     /// <summary>
-    ///     Gets or sets a value indicating whether nullable reference types are enabled.
+    ///     Gets or sets a value indicating whther nullable reference types are enabled.
     /// </summary>
-    /// <value>A value indicating whether nullable reference types are enabled.</value>
+    /// <value>A value indicating whther nullable reference types are enabled.</value>
     public bool UseNullableReferenceTypes { get; init; }
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether the generated code should be compatible with NativeAOT.
-    /// </summary>
-    /// <value> A value indicating whether the generated code should be compatible with NativeAOT. </value>
-    public bool ForNativeAot { get; init; }
 }

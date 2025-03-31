@@ -87,7 +87,10 @@ public abstract class ExecutionStrategy : IExecutionStrategy
         int maxRetryCount,
         TimeSpan maxRetryDelay)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(maxRetryCount);
+        if (maxRetryCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxRetryCount));
+        }
 
         if (maxRetryDelay.TotalMilliseconds < 0.0)
         {
@@ -106,7 +109,7 @@ public abstract class ExecutionStrategy : IExecutionStrategy
     ///     See <see href="https://aka.ms/efcore-docs-connection-resiliency">Connection resiliency and database retries</see>
     ///     for more information and examples.
     /// </remarks>
-    protected virtual List<Exception> ExceptionsEncountered { get; } = [];
+    protected virtual List<Exception> ExceptionsEncountered { get; } = new();
 
     /// <summary>
     ///     A pseudo-random number generator that can be used to vary the delay between retries.
@@ -120,7 +123,7 @@ public abstract class ExecutionStrategy : IExecutionStrategy
     ///     See <see href="https://aka.ms/efcore-docs-connection-resiliency">Connection resiliency and database retries</see>
     ///     for more information and examples.
     /// </remarks>
-    public virtual int MaxRetryCount { get; }
+    protected virtual int MaxRetryCount { get; }
 
     /// <summary>
     ///     The maximum delay between retries.
@@ -129,7 +132,7 @@ public abstract class ExecutionStrategy : IExecutionStrategy
     ///     See <see href="https://aka.ms/efcore-docs-connection-resiliency">Connection resiliency and database retries</see>
     ///     for more information and examples.
     /// </remarks>
-    public virtual TimeSpan MaxRetryDelay { get; }
+    protected virtual TimeSpan MaxRetryDelay { get; }
 
     /// <summary>
     ///     Dependencies for this service.
@@ -226,7 +229,7 @@ public abstract class ExecutionStrategy : IExecutionStrategy
             {
                 Current = null;
 
-                EntityFrameworkMetricsData.ReportExecutionStrategyOperationFailure();
+                EntityFrameworkEventSource.Log.ExecutionStrategyOperationFailure();
 
                 if (verifySucceeded != null
                     && CallOnWrappedException(ex, ShouldVerifySuccessOn))
@@ -255,7 +258,8 @@ public abstract class ExecutionStrategy : IExecutionStrategy
 
                 OnRetry();
 
-                Thread.Sleep(delay.Value);
+                using var waitEvent = new ManualResetEventSlim(false);
+                waitEvent.WaitHandle.WaitOne(delay.Value);
             }
         }
     }
@@ -336,7 +340,7 @@ public abstract class ExecutionStrategy : IExecutionStrategy
             {
                 Current = null;
 
-                EntityFrameworkMetricsData.ReportExecutionStrategyOperationFailure();
+                EntityFrameworkEventSource.Log.ExecutionStrategyOperationFailure();
 
                 if (verifySucceeded != null
                     && CallOnWrappedException(ex, ShouldVerifySuccessOn))
@@ -489,9 +493,10 @@ public abstract class ExecutionStrategy : IExecutionStrategy
     {
         while (true)
         {
-            if (exception is DbUpdateException { InnerException: Exception innerException })
+            if (exception is DbUpdateException dbUpdateException
+                && dbUpdateException.InnerException != null)
             {
-                exception = innerException;
+                exception = dbUpdateException.InnerException;
                 continue;
             }
 

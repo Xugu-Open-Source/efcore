@@ -248,10 +248,10 @@ public class ServiceProviderCacheTest
         return optionsBuilder.Options;
     }
 
-    private class FakeDbContextOptionsExtension1(List<string> log) : IDbContextOptionsExtension
+    private class FakeDbContextOptionsExtension1 : IDbContextOptionsExtension
     {
         private DbContextOptionsExtensionInfo _info;
-        private readonly List<string> _log = log;
+        private readonly List<string> _log;
 
         public string Something { get; set; }
 
@@ -259,8 +259,13 @@ public class ServiceProviderCacheTest
             => _info ??= new ExtensionInfo(this);
 
         public FakeDbContextOptionsExtension1()
-            : this([])
+            : this(new List<string>())
         {
+        }
+
+        public FakeDbContextOptionsExtension1(List<string> log)
+        {
+            _log = log;
         }
 
         public virtual void ApplyServices(IServiceCollection services)
@@ -270,8 +275,13 @@ public class ServiceProviderCacheTest
         {
         }
 
-        private sealed class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
+        private sealed class ExtensionInfo : DbContextOptionsExtensionInfo
         {
+            public ExtensionInfo(IDbContextOptionsExtension extension)
+                : base(extension)
+            {
+            }
+
             public override bool IsDatabaseProvider
                 => false;
 
@@ -289,17 +299,22 @@ public class ServiceProviderCacheTest
         }
     }
 
-    private class FakeDbContextOptionsExtension2(List<string> log) : IDbContextOptionsExtension
+    private class FakeDbContextOptionsExtension2 : IDbContextOptionsExtension
     {
         private DbContextOptionsExtensionInfo _info;
-        private readonly List<string> _log = log;
+        private readonly List<string> _log;
 
         public DbContextOptionsExtensionInfo Info
             => _info ??= new ExtensionInfo(this);
 
         public FakeDbContextOptionsExtension2()
-            : this([])
+            : this(new List<string>())
         {
+        }
+
+        public FakeDbContextOptionsExtension2(List<string> log)
+        {
+            _log = log;
         }
 
         public virtual void ApplyServices(IServiceCollection services)
@@ -309,8 +324,13 @@ public class ServiceProviderCacheTest
         {
         }
 
-        private sealed class ExtensionInfo(IDbContextOptionsExtension extension) : DbContextOptionsExtensionInfo(extension)
+        private sealed class ExtensionInfo : DbContextOptionsExtensionInfo
         {
+            public ExtensionInfo(IDbContextOptionsExtension extension)
+                : base(extension)
+            {
+            }
+
             public override bool IsDatabaseProvider
                 => false;
 

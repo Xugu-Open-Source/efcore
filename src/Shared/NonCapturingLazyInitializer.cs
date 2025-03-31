@@ -4,6 +4,8 @@
 #nullable enable
 
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using Microsoft.EntityFrameworkCore.Utilities;
 
 namespace Microsoft.EntityFrameworkCore.Internal;
 

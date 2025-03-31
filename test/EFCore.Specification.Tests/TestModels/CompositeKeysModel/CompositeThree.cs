@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.CompositeKeysModel;
 
-#nullable disable
-
 public class CompositeThree
 {
     public string Id1 { get; set; }

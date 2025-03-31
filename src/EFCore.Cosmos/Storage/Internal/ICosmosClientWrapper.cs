@@ -135,11 +135,7 @@ public interface ICosmosClientWrapper
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    FeedIterator CreateQuery(
-        string containerId,
-        CosmosSqlQuery query,
-        string? continuationToken = null,
-        QueryRequestOptions? queryRequestOptions = null);
+    FeedIterator CreateQuery(string containerId, string? partitionKey, CosmosSqlQuery query);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -149,7 +145,7 @@ public interface ICosmosClientWrapper
     /// </summary>
     JObject? ExecuteReadItem(
         string containerId,
-        PartitionKey partitionKeyValue,
+        string? partitionKey,
         string resourceId);
 
     /// <summary>
@@ -160,7 +156,7 @@ public interface ICosmosClientWrapper
     /// </summary>
     Task<JObject?> ExecuteReadItemAsync(
         string containerId,
-        PartitionKey partitionKeyValue,
+        string? partitionKey,
         string resourceId,
         CancellationToken cancellationToken = default);
 
@@ -170,9 +166,9 @@ public interface ICosmosClientWrapper
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    IEnumerable<JToken> ExecuteSqlQuery(
+    IEnumerable<JObject> ExecuteSqlQuery(
         string containerId,
-        PartitionKey partitionKeyValue,
+        string? partitionKey,
         CosmosSqlQuery query);
 
     /// <summary>
@@ -181,16 +177,8 @@ public interface ICosmosClientWrapper
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    IAsyncEnumerable<JToken> ExecuteSqlQueryAsync(
+    IAsyncEnumerable<JObject> ExecuteSqlQueryAsync(
         string containerId,
-        PartitionKey partitionKeyValue,
+        string? partitionKey,
         CosmosSqlQuery query);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    IEnumerable<JToken> GetResponseMessageEnumerable(ResponseMessage responseMessage);
 }

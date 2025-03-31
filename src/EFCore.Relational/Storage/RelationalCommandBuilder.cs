@@ -1,14 +1,12 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Text;
-
 namespace Microsoft.EntityFrameworkCore.Storage;
 
 /// <inheritdoc />
 public class RelationalCommandBuilder : IRelationalCommandBuilder
 {
-    private readonly List<IRelationalParameter> _parameters = [];
+    private readonly List<IRelationalParameter> _parameters = new();
     private readonly IndentedStringBuilder _commandTextBuilder = new();
 
     /// <summary>
@@ -23,7 +21,9 @@ public class RelationalCommandBuilder : IRelationalCommandBuilder
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     public RelationalCommandBuilder(
         RelationalCommandBuilderDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.
@@ -67,14 +67,6 @@ public class RelationalCommandBuilder : IRelationalCommandBuilder
 
     /// <inheritdoc />
     public virtual IRelationalCommandBuilder Append(string value)
-    {
-        _commandTextBuilder.Append(value);
-
-        return this;
-    }
-
-    /// <inheritdoc />
-    public virtual IRelationalCommandBuilder Append(FormattableString value)
     {
         _commandTextBuilder.Append(value);
 

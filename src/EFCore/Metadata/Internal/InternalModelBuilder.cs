@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -52,53 +51,6 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual InternalEntityTypeBuilder? Entity(
-        [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)] Type type,
-        ConfigurationSource configurationSource,
-        bool? shouldBeOwned = null)
-        => Entity(new TypeIdentity(type, Metadata), configurationSource, shouldBeOwned);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual InternalEntityTypeBuilder? Entity(
-        string name,
-        string definingNavigationName,
-        EntityType definingEntityType,
-        ConfigurationSource configurationSource)
-        => Entity(new TypeIdentity(name), definingNavigationName, definingEntityType, configurationSource);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual InternalEntityTypeBuilder? Entity(
-        [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)] Type type,
-        string definingNavigationName,
-        EntityType definingEntityType,
-        ConfigurationSource configurationSource)
-        => Entity(new TypeIdentity(type, Metadata), definingNavigationName, definingEntityType, configurationSource);
-
-    private InternalEntityTypeBuilder? Entity(
-        in TypeIdentity type,
-        string definingNavigationName,
-        EntityType definingEntityType,
-        ConfigurationSource configurationSource)
-        => SharedTypeEntity(
-            definingEntityType.GetOwnedName(type.Type?.ShortDisplayName() ?? type.Name, definingNavigationName),
-            type.Type, configurationSource, shouldBeOwned: true);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     public virtual InternalEntityTypeBuilder? SharedTypeEntity(
         string name,
         [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)] Type? type,
@@ -106,14 +58,41 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
         bool? shouldBeOwned = false)
         => Entity(new TypeIdentity(name, type ?? Model.DefaultPropertyBagType), configurationSource, shouldBeOwned);
 
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public virtual InternalEntityTypeBuilder? Entity(
+        [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)] Type type,
+        ConfigurationSource configurationSource,
+        bool? shouldBeOwned = null)
+        => Entity(new TypeIdentity(type, Metadata), configurationSource, shouldBeOwned);
+
     private InternalEntityTypeBuilder? Entity(
         in TypeIdentity type,
         ConfigurationSource configurationSource,
         bool? shouldBeOwned)
     {
-        if (!CanHaveEntity(type, configurationSource, shouldBeOwned, shouldThrow: configurationSource == ConfigurationSource.Explicit))
+        if (IsIgnored(type, configurationSource))
         {
             return null;
+        }
+
+        if (type.Type != null
+            && shouldBeOwned != null)
+        {
+            var configurationType = shouldBeOwned.Value
+                ? TypeConfigurationType.OwnedEntityType
+                : type.IsNamed
+                    ? TypeConfigurationType.SharedTypeEntityType
+                    : TypeConfigurationType.EntityType;
+
+            if (!CanBeConfigured(type.Type, configurationType, configurationSource))
+            {
+                return null;
+            }
         }
 
         using var batch = Metadata.DelayConventions();
@@ -127,6 +106,19 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
                 entityType = Metadata.FindEntityType(clrType);
                 if (entityType != null)
                 {
+                    Check.DebugAssert(
+                        entityType.Name != type.Name || !entityType.HasSharedClrType,
+                        "Shared type entity types shouldn't be named the same as non-shared");
+
+                    if (!configurationSource.OverridesStrictly(entityType.GetConfigurationSource())
+                        && !entityType.IsOwned())
+                    {
+                        return configurationSource == ConfigurationSource.Explicit
+                            ? throw new InvalidOperationException(
+                                CoreStrings.ClashingNonSharedType(type.Name, clrType.ShortDisplayName()))
+                            : null;
+                    }
+
                     entityTypeSnapshot = InternalEntityTypeBuilder.DetachAllMembers(entityType);
 
                     // TODO: Use convention batch to track replaced entity type, see #15898
@@ -201,57 +193,44 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
                     : null;
             }
         }
-        else if (clrType != null)
-        {
-            var complexConfigurationSource = Metadata.FindIsComplexConfigurationSource(clrType);
-            if (complexConfigurationSource != null
-                && configurationSource == ConfigurationSource.Convention)
-            {
-                return null;
-            }
-        }
 
-        if (shouldBeOwned == null)
+        if (type.Type != null)
         {
-            if (type.Type == null)
+            if (shouldBeOwned == null)
             {
-                return null;
-            }
-
-            var configurationType = Metadata.Configuration?.GetConfigurationType(type.Type);
-            switch (configurationType)
-            {
-                case null:
-                    break;
-                case TypeConfigurationType.EntityType:
-                case TypeConfigurationType.SharedTypeEntityType:
+                var configurationType = Metadata.Configuration?.GetConfigurationType(type.Type);
+                switch (configurationType)
                 {
-                    shouldBeOwned ??= false;
-                    break;
-                }
-                case TypeConfigurationType.OwnedEntityType:
-                {
-                    shouldBeOwned ??= true;
-                    break;
-                }
-                default:
-                {
-                    if (configurationSource != ConfigurationSource.Explicit)
+                    case null:
+                        break;
+                    case TypeConfigurationType.EntityType:
+                    case TypeConfigurationType.SharedTypeEntityType:
                     {
-                        return null;
+                        shouldBeOwned ??= false;
+                        break;
                     }
+                    case TypeConfigurationType.OwnedEntityType:
+                    {
+                        shouldBeOwned ??= true;
+                        break;
+                    }
+                    default:
+                    {
+                        if (configurationSource != ConfigurationSource.Explicit)
+                        {
+                            return null;
+                        }
 
-                    break;
+                        break;
+                    }
                 }
+
+                shouldBeOwned ??= Metadata.FindIsOwnedConfigurationSource(type.Type) != null;
             }
-
-            shouldBeOwned ??= Metadata.FindIsOwnedConfigurationSource(type.Type) != null;
         }
-
-        if (type.IsNamed
-            && clrType != null)
+        else if (shouldBeOwned == null)
         {
-            Metadata.AddShared(clrType, configurationSource);
+            return null;
         }
 
         Metadata.RemoveIgnored(type.Name);
@@ -276,109 +255,12 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool CanHaveEntity(
-        in TypeIdentity type,
-        ConfigurationSource configurationSource,
-        bool? shouldBeOwned,
-        bool shouldThrow = false)
-    {
-        if (IsIgnored(type, configurationSource))
-        {
-            return false;
-        }
-
-        if (type.Type != null
-            && shouldBeOwned != null)
-        {
-            var configurationType = shouldBeOwned.Value
-                ? TypeConfigurationType.OwnedEntityType
-                : type.IsNamed
-                    ? TypeConfigurationType.SharedTypeEntityType
-                    : TypeConfigurationType.EntityType;
-
-            if (!CanBeConfigured(type.Type, configurationType, configurationSource))
-            {
-                return false;
-            }
-        }
-
-        var clrType = type.Type;
-        EntityType? entityType;
-        if (type.IsNamed)
-        {
-            if (clrType != null)
-            {
-                entityType = Metadata.FindEntityType(clrType);
-                if (entityType != null)
-                {
-                    Check.DebugAssert(
-                        entityType.Name != type.Name || !entityType.HasSharedClrType,
-                        "Shared type entity types shouldn't be named the same as non-shared");
-
-                    if (!configurationSource.OverridesStrictly(entityType.GetConfigurationSource())
-                        && !entityType.IsOwned())
-                    {
-                        return shouldThrow
-                            ? throw new InvalidOperationException(
-                                CoreStrings.ClashingNonSharedType(type.Name, clrType.ShortDisplayName()))
-                            : false;
-                    }
-                }
-            }
-
-            entityType = Metadata.FindEntityType(type.Name);
-        }
-        else
-        {
-            clrType = type.Type!;
-            var sharedConfigurationSource = Metadata.FindIsSharedConfigurationSource(clrType);
-            if (sharedConfigurationSource != null
-                && !configurationSource.OverridesStrictly(sharedConfigurationSource.Value))
-            {
-                return shouldThrow
-                    ? throw new InvalidOperationException(CoreStrings.ClashingSharedType(clrType.ShortDisplayName()))
-                    : false;
-            }
-
-            entityType = Metadata.FindEntityType(clrType);
-        }
-
-        if (shouldBeOwned == false
-            && clrType != null
-            && (!configurationSource.OverridesStrictly(Metadata.FindIsOwnedConfigurationSource(clrType))
-                || (Metadata.Configuration?.GetConfigurationType(clrType) == TypeConfigurationType.OwnedEntityType
-                    && configurationSource != ConfigurationSource.Explicit)))
-        {
-            return shouldThrow
-                ? throw new InvalidOperationException(
-                    CoreStrings.ClashingOwnedEntityType(clrType == null ? type.Name : clrType.ShortDisplayName()))
-                : false;
-        }
-
-        if (entityType != null
-            && type.Type != null
-            && entityType.ClrType != type.Type
-            && !configurationSource.OverridesStrictly(entityType.GetConfigurationSource()))
-        {
-            return shouldThrow
-                ? throw new InvalidOperationException(
-                    CoreStrings.ClashingMismatchedSharedType(type.Name, entityType.ClrType.ShortDisplayName()))
-                : false;
-        }
-
-        if (entityType == null
-            && clrType != null)
-        {
-            var complexConfigurationSource = Metadata.FindIsComplexConfigurationSource(clrType);
-            if (complexConfigurationSource != null
-                && configurationSource == ConfigurationSource.Convention)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
+    public virtual InternalEntityTypeBuilder? Entity(
+        string name,
+        string definingNavigationName,
+        EntityType definingEntityType,
+        ConfigurationSource configurationSource)
+        => Entity(new TypeIdentity(name), definingNavigationName, definingEntityType, configurationSource);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -386,14 +268,38 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual InternalModelBuilder? RemoveImplicitJoinEntity(
-        EntityType joinEntityType,
-        ConfigurationSource configurationSource = ConfigurationSource.Convention)
-        => !Check.NotNull(joinEntityType, nameof(joinEntityType)).IsInModel
+    public virtual InternalEntityTypeBuilder? Entity(
+        [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)] Type type,
+        string definingNavigationName,
+        EntityType definingEntityType,
+        ConfigurationSource configurationSource)
+        => Entity(new TypeIdentity(type, Metadata), definingNavigationName, definingEntityType, configurationSource);
+
+    private InternalEntityTypeBuilder? Entity(
+        in TypeIdentity type,
+        string definingNavigationName,
+        EntityType definingEntityType,
+        ConfigurationSource configurationSource)
+        => SharedTypeEntity(
+            definingEntityType.GetOwnedName(type.Type?.ShortDisplayName() ?? type.Name, definingNavigationName),
+            type.Type, configurationSource, shouldBeOwned: true);
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public virtual InternalModelBuilder? RemoveImplicitJoinEntity(EntityType joinEntityType)
+    {
+        Check.NotNull(joinEntityType, nameof(joinEntityType));
+
+        return !joinEntityType.IsInModel
             ? this
             : !joinEntityType.IsImplicitlyCreatedJoinEntityType
                 ? null
-                : HasNoEntityType(joinEntityType, configurationSource);
+                : HasNoEntityType(joinEntityType, ConfigurationSource.Convention);
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -451,37 +357,6 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
 
     private bool IsOwned(in TypeIdentity type)
         => type.Type != null && Metadata.IsOwned(type.Type);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual InternalModelBuilder Complex(Type type, ConfigurationSource configurationSource)
-    {
-        var existingComplexConfiguration = Metadata.FindIsComplexConfigurationSource(type);
-        if (existingComplexConfiguration == null)
-        {
-            Metadata.AddComplex(type, configurationSource);
-
-            foreach (var existingEntityType in Metadata.FindEntityTypes(type).ToList())
-            {
-                Metadata.Builder.HasNoEntityType(existingEntityType, ConfigurationSource.Convention);
-            }
-
-            var properties = Metadata.FindProperties(type);
-            if (properties != null)
-            {
-                foreach (var property in properties)
-                {
-                    property.DeclaringType.Builder.RemoveProperty(property, ConfigurationSource.Convention);
-                }
-            }
-        }
-
-        return this;
-    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -594,11 +469,6 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
             var entityType = Metadata.FindEntityType(name);
             if (entityType != null)
             {
-                if (entityType.GetConfigurationSource() == ConfigurationSource.Explicit)
-                {
-                    Metadata.ScopedModelDependencies?.Logger.MappedEntityTypeIgnoredWarning(entityType);
-                }
-
                 HasNoEntityType(entityType, configurationSource);
             }
 
@@ -609,6 +479,10 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
             else
             {
                 Metadata.AddIgnored(type.Type, configurationSource);
+            }
+
+            if (type.Type != null)
+            {
                 Metadata.RemoveOwned(type.Type);
             }
 
@@ -687,11 +561,6 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
         {
             foreach (var foreignKey in entityType.GetDeclaredReferencingForeignKeys().ToList())
             {
-                if (!foreignKey.IsInModel)
-                {
-                    continue;
-                }
-
                 if (foreignKey.IsOwnership
                     && configurationSource.Overrides(foreignKey.DeclaringEntityType.GetConfigurationSource()))
                 {
@@ -729,15 +598,6 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
 
         return this;
     }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual bool CanRemoveEntityType(EntityType entityType, ConfigurationSource configurationSource)
-        => configurationSource.Overrides(entityType.GetConfigurationSource());
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -809,72 +669,11 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual InternalModelBuilder? HasEmbeddedDiscriminatorName(string? name, ConfigurationSource configurationSource)
-    {
-        if (CanSetEmbeddedDiscriminatorName(name, configurationSource))
-        {
-            Metadata.SetEmbeddedDiscriminatorName(name, configurationSource);
-
-            return this;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual bool CanSetEmbeddedDiscriminatorName(string? name, ConfigurationSource configurationSource)
-        => configurationSource.Overrides(Metadata.GetEmbeddedDiscriminatorNameConfigurationSource())
-            || Metadata.GetEmbeddedDiscriminatorName() == name;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     IConventionModel IConventionModelBuilder.Metadata
     {
         [DebuggerStepThrough]
         get => Metadata;
     }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    IConventionModelBuilder? IConventionModelBuilder.HasAnnotation(string name, object? value, bool fromDataAnnotation)
-        => (IConventionModelBuilder?)base.HasAnnotation(
-            name, value, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    IConventionModelBuilder? IConventionModelBuilder.HasNonNullAnnotation(string name, object? value, bool fromDataAnnotation)
-        => (IConventionModelBuilder?)base.HasNonNullAnnotation(
-            name, value, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    IConventionModelBuilder? IConventionModelBuilder.HasNoAnnotation(string name, bool fromDataAnnotation)
-        => (IConventionModelBuilder?)base.HasNoAnnotation(
-            name, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -961,67 +760,6 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
         [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)] Type type,
         bool fromDataAnnotation)
         => Owned(type, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    IConventionModelBuilder? IConventionModelBuilder.ComplexType(Type type, bool fromDataAnnotation)
-        => Complex(type, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    bool IConventionModelBuilder.CanHaveEntity(string name, bool fromDataAnnotation)
-        => CanHaveEntity(
-            new TypeIdentity(name),
-            fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention,
-            shouldBeOwned: null);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    bool IConventionModelBuilder.CanHaveEntity(Type type, bool fromDataAnnotation)
-        => CanHaveEntity(
-            new TypeIdentity(type, Metadata),
-            fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention,
-            shouldBeOwned: null);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    bool IConventionModelBuilder.CanHaveSharedTypeEntity(string name, Type? type, bool fromDataAnnotation)
-        => CanHaveEntity(
-            new TypeIdentity(name, type ?? Model.DefaultPropertyBagType),
-            fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention,
-            shouldBeOwned: null);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    bool IConventionModelBuilder.CanRemoveEntity(IConventionEntityType entityType, bool fromDataAnnotation)
-        => CanRemoveEntityType(
-            (EntityType)entityType,
-            fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -1147,26 +885,4 @@ public class InternalModelBuilder : AnnotatableBuilder<Model, InternalModelBuild
     bool IConventionModelBuilder.CanSetPropertyAccessMode(PropertyAccessMode? propertyAccessMode, bool fromDataAnnotation)
         => CanSetPropertyAccessMode(
             propertyAccessMode, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    IConventionModelBuilder? IConventionModelBuilder.HasEmbeddedDiscriminatorName(string? name, bool fromDataAnnotation)
-        => HasEmbeddedDiscriminatorName(
-            name, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [DebuggerStepThrough]
-    bool IConventionModelBuilder.CanSetEmbeddedDiscriminatorName(string? name, bool fromDataAnnotation)
-        => CanSetEmbeddedDiscriminatorName(
-            name, fromDataAnnotation ? ConfigurationSource.DataAnnotation : ConfigurationSource.Convention);
 }

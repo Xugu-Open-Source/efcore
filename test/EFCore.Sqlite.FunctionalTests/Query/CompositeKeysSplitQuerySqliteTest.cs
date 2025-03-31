@@ -3,7 +3,10 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class CompositeKeysSplitQuerySqliteTest(CompositeKeysQuerySqliteFixture fixture)
-    : CompositeKeysSplitQueryRelationalTestBase<CompositeKeysQuerySqliteFixture>(fixture);
+public class CompositeKeysSplitQuerySqliteTest : CompositeKeysSplitQueryRelationalTestBase<CompositeKeysQuerySqliteFixture>
+{
+    public CompositeKeysSplitQuerySqliteTest(CompositeKeysQuerySqliteFixture fixture, ITestOutputHelper testOutputHelper)
+        : base(fixture)
+    {
+    }
+}

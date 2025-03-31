@@ -30,17 +30,13 @@ public class SnapshotModelProcessor : ISnapshotModelProcessor
         IModelRuntimeInitializer modelRuntimeInitializer)
     {
         _operationReporter = operationReporter;
-        _relationalNames =
-        [
-            ..typeof(RelationalAnnotationNames)
+        _relationalNames = new HashSet<string>(
+            typeof(RelationalAnnotationNames)
                 .GetRuntimeFields()
-                .Where(
-                    p => p.Name != nameof(RelationalAnnotationNames.Prefix)
-                        && p.Name != nameof(RelationalAnnotationNames.AllNames))
+                .Where(p => p.Name != nameof(RelationalAnnotationNames.Prefix))
                 .Select(p => (string)p.GetValue(null)!)
                 .Where(v => v.IndexOf(':') > 0)
-                .Select(v => v[(RelationalAnnotationNames.Prefix.Length - 1)..])
-        ];
+                .Select(v => v[(RelationalAnnotationNames.Prefix.Length - 1)..]));
         _modelRuntimeInitializer = modelRuntimeInitializer;
     }
 
@@ -50,11 +46,9 @@ public class SnapshotModelProcessor : ISnapshotModelProcessor
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual IModel? Process(IReadOnlyModel? model, bool resetVersion = false)
+    public virtual IModel? Process(IReadOnlyModel? model)
     {
-        if (model == null
-            || model is not Model mutableModel
-            || mutableModel.IsReadOnly)
+        if (model == null)
         {
             return null;
         }
@@ -79,12 +73,6 @@ public class SnapshotModelProcessor : ISnapshotModelProcessor
                     ProcessElement(element.PrincipalToDependent, version);
                 }
             }
-        }
-
-        mutableModel.RemoveAnnotation("ChangeDetector.SkipDetectChanges");
-        if (resetVersion)
-        {
-            mutableModel.SetProductVersion(ProductInfo.GetVersion());
         }
 
         return _modelRuntimeInitializer.Initialize((IModel)model, designTime: true, validationLogger: null);
@@ -148,7 +136,7 @@ public class SnapshotModelProcessor : ISnapshotModelProcessor
         if ((!version.StartsWith("1.", StringComparison.Ordinal)
                 && !version.StartsWith("2.", StringComparison.Ordinal)
                 && !version.StartsWith("3.", StringComparison.Ordinal))
-            || model is not IMutableModel mutableModel)
+            || !(model is IMutableModel mutableModel))
         {
             return;
         }
@@ -156,17 +144,13 @@ public class SnapshotModelProcessor : ISnapshotModelProcessor
         var sequences = model.GetAnnotations()
 #pragma warning disable CS0618 // Type or member is obsolete
             .Where(a => a.Name.StartsWith(RelationalAnnotationNames.SequencePrefix, StringComparison.Ordinal))
-            .ToList();
+            .Select(a => new Sequence(model, a.Name));
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        var sequencesDictionary = new Dictionary<(string, string?), ISequence>();
-        foreach (var sequenceAnnotation in sequences)
+        var sequencesDictionary = new SortedDictionary<(string, string?), ISequence>();
+        foreach (var sequence in sequences)
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            var sequence = new Sequence(model, sequenceAnnotation.Name);
-#pragma warning restore CS0618 // Type or member is obsolete
             sequencesDictionary[(sequence.Name, sequence.ModelSchema)] = sequence;
-            mutableModel.RemoveAnnotation(sequenceAnnotation.Name);
         }
 
         if (sequencesDictionary.Count > 0)
@@ -177,7 +161,7 @@ public class SnapshotModelProcessor : ISnapshotModelProcessor
 
     private static void UpdateOwnedTypes(IMutableEntityType entityType)
     {
-        var ownerships = entityType.GetDeclaredReferencingForeignKeys().Where(fk => fk is { IsOwnership: true, IsUnique: true })
+        var ownerships = entityType.GetDeclaredReferencingForeignKeys().Where(fk => fk.IsOwnership && fk.IsUnique)
             .ToList();
         foreach (var ownership in ownerships)
         {
@@ -201,7 +185,7 @@ public class SnapshotModelProcessor : ISnapshotModelProcessor
                     if (oldProperty is IConventionProperty conventionProperty
                         && conventionProperty.GetConfigurationSource() == ConfigurationSource.Convention)
                     {
-                        oldProperty.DeclaringType.RemoveProperty(oldProperty);
+                        oldProperty.DeclaringEntityType.RemoveProperty(oldProperty);
                     }
                 }
             }

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 // ReSharper disable InconsistentNaming
@@ -11,12 +12,15 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class NorthwindStringIncludeQueryTestBase<TFixture>(TFixture fixture) : NorthwindIncludeQueryTestBase<TFixture>(fixture)
+public abstract class NorthwindStringIncludeQueryTestBase<TFixture> : NorthwindIncludeQueryTestBase<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
     private static readonly IncludeRewritingExpressionVisitor _includeRewritingExpressionVisitor = new();
+
+    protected NorthwindStringIncludeQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -85,7 +89,7 @@ public abstract class NorthwindStringIncludeQueryTestBase<TFixture>(TFixture fix
                     .Include("Orders")
                     .Single(c => c.CustomerID == "ALFKI");
 
-        Assert.Equal(orders, customer.Orders, ReferenceEqualityComparer.Instance);
+        Assert.Equal(orders, customer.Orders, LegacyReferenceEqualityComparer.Instance);
         Assert.Equal(6, customer.Orders.Count);
         Assert.True(orders.All(o => ReferenceEquals(o.Customer, customer)));
         Assert.Equal(6 + 1, context.ChangeTracker.Entries().Count());
@@ -220,15 +224,26 @@ public abstract class NorthwindStringIncludeQueryTestBase<TFixture>(TFixture fix
         }
 
         private static string GetPath(Expression expression)
-            => expression switch
+        {
+            switch (expression)
             {
-                MemberExpression { Expression: ParameterExpression } memberExpression
-                    => memberExpression.Member.Name,
-                MemberExpression memberExpression
-                    => $"{GetPath(memberExpression.Expression)}.{memberExpression.Member.Name}",
-                UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.Convert or ExpressionType.TypeAs } unaryExpression
-                    => GetPath(unaryExpression.Operand),
-                _ => throw new NotImplementedException("Unhandled expression tree in Include lambda")
-            };
+                case MemberExpression memberExpression:
+                    if (memberExpression.Expression is ParameterExpression)
+                    {
+                        return memberExpression.Member.Name;
+                    }
+
+                    return $"{GetPath(memberExpression.Expression)}.{memberExpression.Member.Name}";
+
+                case UnaryExpression unaryExpression
+                    when unaryExpression.NodeType == ExpressionType.Convert
+                    || unaryExpression.NodeType == ExpressionType.Convert
+                    || unaryExpression.NodeType == ExpressionType.TypeAs:
+                    return GetPath(unaryExpression.Operand);
+
+                default:
+                    throw new NotImplementedException("Unhandled expression tree in Include lambda");
+            }
+        }
     }
 }

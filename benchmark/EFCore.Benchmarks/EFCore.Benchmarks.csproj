@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>Microsoft.EntityFrameworkCore.Benchmarks</RootNamespace>
-    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -12,7 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\EFCore.Relational\EFCore.Relational.csproj" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(MicrosoftCodeAnalysisVersion)" />
   </ItemGroup>
 
 </Project>

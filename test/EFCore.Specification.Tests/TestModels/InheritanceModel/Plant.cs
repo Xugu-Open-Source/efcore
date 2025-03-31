@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.InheritanceModel;
 
-#nullable disable
-
 public abstract class Plant
 {
     public PlantGenus Genus { get; set; }

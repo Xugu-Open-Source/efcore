@@ -9,12 +9,7 @@ namespace Microsoft.EntityFrameworkCore.InMemory.Query.Internal;
 ///     any release. You should only use it directly in your code with extreme caution and knowing that
 ///     doing so can result in application failures when updating to a new Entity Framework Core release.
 /// </summary>
-public class CollectionResultShaperExpression(
-    Expression projection,
-    Expression innerShaper,
-    INavigationBase? navigation,
-    Type elementType)
-    : Expression, IPrintableExpression
+public class CollectionResultShaperExpression : Expression, IPrintableExpression
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -22,7 +17,17 @@ public class CollectionResultShaperExpression(
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual Expression Projection { get; } = projection;
+    public CollectionResultShaperExpression(
+        Expression projection,
+        Expression innerShaper,
+        INavigationBase? navigation,
+        Type elementType)
+    {
+        Projection = projection;
+        InnerShaper = innerShaper;
+        Navigation = navigation;
+        ElementType = elementType;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -30,7 +35,7 @@ public class CollectionResultShaperExpression(
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual Expression InnerShaper { get; } = innerShaper;
+    public virtual Expression Projection { get; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -38,7 +43,7 @@ public class CollectionResultShaperExpression(
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual INavigationBase? Navigation { get; } = navigation;
+    public virtual Expression InnerShaper { get; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -46,7 +51,15 @@ public class CollectionResultShaperExpression(
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual Type ElementType { get; } = elementType;
+    public virtual INavigationBase? Navigation { get; }
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public virtual Type ElementType { get; }
 
     /// <inheritdoc />
     public sealed override ExpressionType NodeType

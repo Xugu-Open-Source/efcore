@@ -5,12 +5,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class SqlServerQueryTriggersTest(SqlServerQueryTriggersTest.SqlServerTriggersFixture fixture)
-    : IClassFixture<SqlServerQueryTriggersTest.SqlServerTriggersFixture>
+public class SqlServerQueryTriggersTest : IClassFixture<SqlServerQueryTriggersTest.SqlServerTriggersFixture>
 {
-    private SqlServerTriggersFixture Fixture { get; } = fixture;
+    public SqlServerQueryTriggersTest(SqlServerTriggersFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    private SqlServerTriggersFixture Fixture { get; }
 
     [ConditionalFact]
     public void Triggers_with_subqueries_run_on_insert_update_and_delete()
@@ -78,8 +80,13 @@ public class SqlServerQueryTriggersTest(SqlServerQueryTriggersTest.SqlServerTrig
     protected QueryTriggersContext CreateContext()
         => (QueryTriggersContext)Fixture.CreateContext();
 
-    protected class QueryTriggersContext(DbContextOptions options) : PoolableDbContext(options)
+    protected class QueryTriggersContext : PoolableDbContext
     {
+        public QueryTriggersContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public virtual DbSet<Product> Products { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -111,11 +118,11 @@ public class SqlServerQueryTriggersTest(SqlServerQueryTriggersTest.SqlServerTrig
         protected override ITestStoreFactory TestStoreFactory
             => SqlServerTestStoreFactory.Instance;
 
-        protected override async Task SeedAsync(DbContext context)
+        protected override void Seed(DbContext context)
         {
-            await context.Database.EnsureCreatedResilientlyAsync();
+            context.Database.EnsureCreatedResiliently();
 
-            await context.Database.ExecuteSqlRawAsync(
+            context.Database.ExecuteSqlRaw(
                 @"
 CREATE TRIGGER TRG_InsertUpdateProduct
 ON UpdatedProducts

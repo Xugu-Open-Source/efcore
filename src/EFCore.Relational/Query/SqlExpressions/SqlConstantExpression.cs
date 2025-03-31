@@ -16,43 +16,24 @@ namespace Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 /// </summary>
 public class SqlConstantExpression : SqlExpression
 {
-    private static ConstructorInfo? _quotingConstructor;
-
-    /// <summary>
-    ///     Creates a new instance of the <see cref="SqlConstantExpression" /> class.
-    /// </summary>
-    /// <param name="value">An <see cref="Object" /> to set the <see cref="Value" /> property equal to.</param>
-    /// <param name="type">The <see cref="System.Type" /> of the expression.</param>
-    /// <param name="typeMapping">The <see cref="RelationalTypeMapping" /> associated with the expression.</param>
-    public SqlConstantExpression(object? value, Type type, RelationalTypeMapping? typeMapping)
-        : base(type.UnwrapNullableType(), typeMapping)
-        => Value = value;
-
-    /// <summary>
-    ///     Creates a new instance of the <see cref="SqlConstantExpression" /> class.
-    /// </summary>
-    /// <param name="value">An <see cref="Object" /> to set the <see cref="Value" /> property equal to.</param>
-    /// <param name="typeMapping">The <see cref="RelationalTypeMapping" /> associated with the expression.</param>
-    public SqlConstantExpression(object value, RelationalTypeMapping? typeMapping)
-        : this(value, value.GetType(), typeMapping)
-    {
-    }
+    private readonly ConstantExpression _constantExpression;
 
     /// <summary>
     ///     Creates a new instance of the <see cref="SqlConstantExpression" /> class.
     /// </summary>
     /// <param name="constantExpression">A <see cref="ConstantExpression" />.</param>
     /// <param name="typeMapping">The <see cref="RelationalTypeMapping" /> associated with the expression.</param>
-    [Obsolete("Call the constructor accepting a value (and possibly a Type) instead")]
     public SqlConstantExpression(ConstantExpression constantExpression, RelationalTypeMapping? typeMapping)
-        : this(constantExpression.Value, constantExpression.Type, typeMapping)
+        : base(constantExpression.Type.UnwrapNullableType(), typeMapping)
     {
+        _constantExpression = constantExpression;
     }
 
     /// <summary>
     ///     The constant value.
     /// </summary>
-    public virtual object? Value { get; }
+    public virtual object? Value
+        => _constantExpression.Value;
 
     /// <summary>
     ///     Applies supplied type mapping to this expression.
@@ -60,23 +41,11 @@ public class SqlConstantExpression : SqlExpression
     /// <param name="typeMapping">A relational type mapping to apply.</param>
     /// <returns>A new expression which has supplied type mapping.</returns>
     public virtual SqlExpression ApplyTypeMapping(RelationalTypeMapping? typeMapping)
-        => new SqlConstantExpression(Value, Type, typeMapping);
+        => new SqlConstantExpression(_constantExpression, typeMapping);
 
     /// <inheritdoc />
     protected override Expression VisitChildren(ExpressionVisitor visitor)
         => this;
-
-    /// <inheritdoc />
-    public override Expression Quote()
-        => New(
-            _quotingConstructor ??= typeof(SqlConstantExpression)
-                .GetConstructor([typeof(object), typeof(Type), typeof(RelationalTypeMapping)])!,
-            Type.IsValueType
-                ? Convert(
-                    Constant(Value, Type), typeof(object))
-                : Constant(Value, Type),
-            Constant(Type),
-            RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 
     /// <inheritdoc />
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -127,5 +96,5 @@ public class SqlConstantExpression : SqlExpression
 
     /// <inheritdoc />
     public override int GetHashCode()
-        => HashCode.Combine(base.GetHashCode(), Value is IList list ? list.Count : Value);
+        => HashCode.Combine(base.GetHashCode(), Value);
 }

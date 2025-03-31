@@ -23,19 +23,19 @@ public class SqliteMethodCallTranslatorProvider : RelationalMethodCallTranslator
         var sqlExpressionFactory = (SqliteSqlExpressionFactory)dependencies.SqlExpressionFactory;
 
         AddTranslators(
-        [
-            new SqliteByteArrayMethodTranslator(sqlExpressionFactory),
-            new SqliteCharMethodTranslator(sqlExpressionFactory),
-            new SqliteDateOnlyMethodTranslator(sqlExpressionFactory),
-            new SqliteDateTimeMethodTranslator(sqlExpressionFactory),
-            new SqliteGlobMethodTranslator(sqlExpressionFactory),
-            new SqliteHexMethodTranslator(sqlExpressionFactory),
-            new SqliteMathTranslator(sqlExpressionFactory),
-            new SqliteObjectToStringTranslator(sqlExpressionFactory),
-            new SqliteRandomTranslator(sqlExpressionFactory),
-            new SqliteRegexMethodTranslator(sqlExpressionFactory),
-            new SqliteStringMethodTranslator(sqlExpressionFactory),
-            new SqliteSubstrMethodTranslator(sqlExpressionFactory)
-        ]);
+            new IMethodCallTranslator[]
+            {
+                new SqliteByteArrayMethodTranslator(sqlExpressionFactory),
+                new SqliteCharMethodTranslator(sqlExpressionFactory),
+                new SqliteDateTimeAddTranslator(sqlExpressionFactory),
+                new SqliteGlobMethodTranslator(sqlExpressionFactory),
+                new SqliteHexMethodTranslator(sqlExpressionFactory),
+                new SqliteMathTranslator(sqlExpressionFactory),
+                new SqliteObjectToStringTranslator(sqlExpressionFactory),
+                new SqliteRandomTranslator(sqlExpressionFactory),
+                new SqliteRegexMethodTranslator(sqlExpressionFactory),
+                new SqliteStringMethodTranslator(sqlExpressionFactory),
+                new SqliteSubstrMethodTranslator(sqlExpressionFactory)
+            });
     }
 }

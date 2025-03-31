@@ -3,9 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class ConfigurationDbContextSqliteTest(ConfigurationDbContextSqliteTest.ConfigurationDbContextSqliteFixture fixture)
-    : ConfigurationDbContextTestBase<ConfigurationDbContextSqliteTest.ConfigurationDbContextSqliteFixture>(fixture)
+public class ConfigurationDbContextSqliteTest
+    : ConfigurationDbContextTestBase<ConfigurationDbContextSqliteTest.ConfigurationDbContextSqliteFixture>
 {
+    public ConfigurationDbContextSqliteTest(ConfigurationDbContextSqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class ConfigurationDbContextSqliteFixture : ConfigurationDbContextFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

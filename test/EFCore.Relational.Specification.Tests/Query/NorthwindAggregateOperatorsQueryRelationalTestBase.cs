@@ -5,12 +5,14 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class NorthwindAggregateOperatorsQueryRelationalTestBase<TFixture>(TFixture fixture)
-    : NorthwindAggregateOperatorsQueryTestBase<TFixture>(fixture)
+public abstract class NorthwindAggregateOperatorsQueryRelationalTestBase<TFixture> : NorthwindAggregateOperatorsQueryTestBase<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
+    protected NorthwindAggregateOperatorsQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public override async Task Last_when_no_order_by(bool async)
         => Assert.Equal(
             RelationalStrings.LastUsedWithoutOrderBy(nameof(Enumerable.Last)),
@@ -47,9 +49,13 @@ public abstract class NorthwindAggregateOperatorsQueryRelationalTestBase<TFixtur
             (await Assert.ThrowsAsync<InvalidOperationException>(
                 () => base.Average_no_data_subquery(async))).Message);
 
+    protected virtual bool CanExecuteQueryString
+        => false;
+
     protected override QueryAsserter CreateQueryAsserter(TFixture fixture)
         => new RelationalQueryAsserter(
             fixture,
             RewriteExpectedQueryExpression,
-            RewriteServerQueryExpression);
+            RewriteServerQueryExpression,
+            canExecuteQueryString: CanExecuteQueryString);
 }

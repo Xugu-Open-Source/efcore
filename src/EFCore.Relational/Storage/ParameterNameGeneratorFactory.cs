@@ -30,7 +30,9 @@ public class ParameterNameGeneratorFactory : IParameterNameGeneratorFactory
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     public ParameterNameGeneratorFactory(ParameterNameGeneratorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.

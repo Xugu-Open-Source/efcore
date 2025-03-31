@@ -6,11 +6,14 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) : QueryTestBase<TFixture>(fixture)
+public abstract class NorthwindGroupByQueryTestBase<TFixture> : QueryTestBase<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
+    protected NorthwindGroupByQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected NorthwindContext CreateContext()
         => Fixture.CreateContext();
 
@@ -1657,7 +1660,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                 o => ss.Set<Order>().GroupBy(e => e.CustomerID)
                     .Where(g => g.Count() > 30)
                     .Select(g => g.Key)
-                    .Contains(o.CustomerID)));
+                    .Contains(o.CustomerID)),
+            entryCount: 31);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1765,7 +1769,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                     .Select(g => new { CustomerID = g.Key, LastOrderID = g.Max(o => o.OrderID) })
                 join c in ss.Set<Customer>() on a.CustomerID equals c.CustomerID
                 join o in ss.Set<Order>() on a.LastOrderID equals o.OrderID
-                select new { c, o });
+                select new { c, o },
+            entryCount: 126);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1777,7 +1782,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                       .Where(g => g.Count() > 5)
                       .Select(g => new { CustomerID = g.Key, LastOrderID = g.Max(o => o.OrderID) })
                       .Where(c1 => c.CustomerID == c1.CustomerID)
-                  select c);
+                  select c,
+            entryCount: 63);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1790,7 +1796,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                       .Select(g => new { CustomerID = g.Key, LastOrderID = g.Max(o => o.OrderID) })
                       .Where(c1 => c.CustomerID == c1.CustomerID)
                       .DefaultIfEmpty()
-                  select c);
+                  select c,
+            entryCount: 91);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1804,7 +1811,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                         .Select(g => new { CustomerID = g.Key, LastOrderID = g.Max(o => o.OrderID) })
                     on c.CustomerID equals a.CustomerID
                 join o in ss.Set<Order>() on a.LastOrderID equals o.OrderID
-                select new { c, o });
+                select new { c, o },
+            entryCount: 126);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1817,7 +1825,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                         .Where(g => g.Count() > 5)
                         .Select(g => new { CustomerID = g.Key, LastOrderID = g.Max(o => o.OrderID) })
                     on c.CustomerID equals a.CustomerID
-                select new { c, a.LastOrderID });
+                select new { c, a.LastOrderID },
+            entryCount: 63);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1838,7 +1847,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                     c,
                     a.LastOrderID,
                     g.OrderID
-                });
+                },
+            entryCount: 63);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1852,7 +1862,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                         .Select(g => new { g.Key.CustomerID, LastOrderID = g.Max(o => o.OrderID) })
                         .Distinct()
                     on c.CustomerID equals a.CustomerID
-                select new { c, a.LastOrderID });
+                select new { c, a.LastOrderID },
+            entryCount: 31);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1877,7 +1888,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                     on c.CustomerID equals a.CustomerID into grouping
                 from g in grouping.DefaultIfEmpty()
                 select new { c, LastOrderID = g != null ? g.LastOrderID : (int?)null },
-            elementSorter: r => r.c.CustomerID);
+            elementSorter: r => r.c.CustomerID,
+            entryCount: 4);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1899,7 +1911,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                     o,
                     i.c,
                     i.c.CustomerID
-                });
+                },
+            entryCount: 187);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -1914,7 +1927,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                              g => new { g.Key, LastOrderID = g.Max(o => o.OrderID) })
                      on c.CustomerID equals a.Key
                  select new { c, a.LastOrderID }),
-            e => e.c.CustomerID);
+            e => e.c.CustomerID,
+            entryCount: 63);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2205,7 +2219,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.c, a.c);
                 AssertEqual(e.Count, a.Count);
-            });
+            },
+            entryCount: 89);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2215,7 +2230,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             ss => ss.Set<Order>()
                 .GroupBy(o => o.CustomerID, e => e.OrderDate)
                 .Select(g => new { g.Key, LastOrderDate = g.Max() })
-                .Join(ss.Set<Order>(), o => o, i => new { Key = i.CustomerID, LastOrderDate = i.OrderDate }, (_, x) => x));
+                .Join(ss.Set<Order>(), o => o, i => new { Key = i.CustomerID, LastOrderDate = i.OrderDate }, (_, x) => x),
+            entryCount: 90);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2235,7 +2251,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.c, a.c);
                 AssertEqual(e.Max, a.Max);
-            });
+            },
+            entryCount: 10);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2269,7 +2286,7 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                 .Take(0)
                 .GroupBy(o => o.CustomerID)
                 .Select(g => new { g.Key, Total = g.Count() }),
-            assertEmpty: true);
+            elementSorter: o => o.Key);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2282,7 +2299,7 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                 .Skip(0)
                 .Take(0)
                 .Select(g => new { g.Key, Total = g.Count() }),
-            assertEmpty: true);
+            elementSorter: o => o.Key);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2328,7 +2345,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                        select g.Min(x => x.OrderID))
                   from o in ss.Set<Order>()
                   where o.OrderID == id
-                  select o);
+                  select o,
+            entryCount: 89);
 
     [ConditionalTheory(Skip = "Issue#27480")]
     [MemberData(nameof(IsAsyncData))]
@@ -2543,7 +2561,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                     g =>
                         new
                         {
-                            g.Key, Max = g.Distinct().Select(e => e.OrderDate).Distinct().Max(),
+                            g.Key,
+                            Max = g.Distinct().Select(e => e.OrderDate).Distinct().Max(),
                         }),
             elementSorter: e => e.Key);
 
@@ -2558,7 +2577,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                     g =>
                         new
                         {
-                            g.Key, Max = g.Where(e => e.OrderDate.HasValue).Select(e => e.OrderDate).Distinct().Max(),
+                            g.Key,
+                            Max = g.Where(e => e.OrderDate.HasValue).Select(e => e.OrderDate).Distinct().Max(),
                         }),
             elementSorter: e => e.Key);
 
@@ -2573,7 +2593,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<Customer>().GroupBy(c => c.City),
             elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(e, a));
+            elementAsserter: (e, a) => AssertGrouping(e, a),
+            entryCount: 91);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2582,7 +2603,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<Order>().Where(e => e.OrderID < 10500).GroupBy(c => c.Customer),
             elementSorter: e => e.Key.CustomerID,
-            elementAsserter: (e, a) => AssertGrouping(e, a));
+            elementAsserter: (e, a) => AssertGrouping(e, a),
+            entryCount: 328);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2591,30 +2613,25 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<OrderDetail>().Where(e => e.OrderID < 10500).GroupBy(c => c.OrderID),
             elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(e, a));
+            elementAsserter: (e, a) => AssertGrouping(e, a),
+            entryCount: 664);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public virtual Task Final_GroupBy_property_anonymous_type(bool async)
         => AssertQuery(
             async,
-            ss => ss.Set<Customer>().Select(
-                e => new
-                {
-                    e.City,
-                    e.ContactName,
-                    e.ContactTitle
-                }).GroupBy(c => c.City),
+            ss => ss.Set<Customer>().Select(e => new { e.City, e.ContactName, e.ContactTitle }).GroupBy(c => c.City),
             elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(
-                e, a,
+            elementAsserter: (e, a) => AssertGrouping(e, a,
                 elementSorter: i => (i.ContactName, i.ContactTitle),
                 elementAsserter: (ee, aa) =>
                 {
                     AssertEqual(ee.City, aa.City);
                     AssertEqual(ee.ContactName, aa.ContactName);
                     AssertEqual(ee.ContactTitle, aa.ContactTitle);
-                }));
+                }),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2623,13 +2640,13 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<Customer>().GroupBy(c => new { c.City, c.Region }),
             elementSorter: e => (e.Key.City, e.Key.Region),
-            elementAsserter: (e, a) => AssertGrouping(
-                e, a,
+            elementAsserter: (e, a) => AssertGrouping(e, a,
                 keyAsserter: (ee, aa) =>
                 {
                     AssertEqual(ee.City, aa.City);
                     AssertEqual(ee.Region, aa.Region);
-                }));
+                }),
+            entryCount: 91);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2638,14 +2655,14 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<Customer>().GroupBy(c => new { c.City, Inner = new { c.Region, Constant = 1 } }),
             elementSorter: e => (e.Key.City, e.Key.Inner.Region),
-            elementAsserter: (e, a) => AssertGrouping(
-                e, a,
+            elementAsserter: (e, a) => AssertGrouping(e, a,
                 keyAsserter: (ee, aa) =>
                 {
                     AssertEqual(ee.City, aa.City);
                     AssertEqual(ee.Inner.Region, aa.Inner.Region);
                     AssertEqual(ee.Inner.Constant, aa.Inner.Constant);
-                }));
+                }),
+            entryCount: 91);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2655,7 +2672,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             ss => ss.Set<Customer>().GroupBy(c => new RandomClass { City = c.City, Constant = 1 }),
             ss => ss.Set<Customer>().GroupBy(c => new RandomClass { City = c.City, Constant = 1 }, new RandomClassEqualityComparer()),
             elementSorter: e => e.Key.City,
-            elementAsserter: (e, a) => AssertGrouping(e, a, keyAsserter: (ee, aa) => AssertEqual(ee.City, aa.City)));
+            elementAsserter: (e, a) => AssertGrouping(e, a, keyAsserter: (ee, aa) => AssertEqual(ee.City, aa.City)),
+            entryCount: 91);
 
     protected class RandomClass
     {
@@ -2665,11 +2683,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
 
     protected class RandomClassEqualityComparer : IEqualityComparer<RandomClass>
     {
-        public bool Equals(RandomClass x, RandomClass y)
-            => x.City == y.City && x.Constant == y.Constant;
-
-        public int GetHashCode([DisallowNull] RandomClass obj)
-            => HashCode.Combine(obj.City, obj.Constant);
+        public bool Equals(RandomClass x, RandomClass y) => x.City == y.City && x.Constant == y.Constant;
+        public int GetHashCode([DisallowNull] RandomClass obj) => HashCode.Combine(obj.City, obj.Constant);
     }
 
     [ConditionalTheory]
@@ -2679,14 +2694,14 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<Customer>().GroupBy(c => c.City, e => new { e.ContactName, e.ContactTitle }),
             elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(
-                e, a,
+            elementAsserter: (e, a) => AssertGrouping(e, a,
                 elementSorter: i => (i.ContactName, i.ContactTitle),
                 elementAsserter: (ee, aa) =>
                 {
                     AssertEqual(ee.ContactName, aa.ContactName);
                     AssertEqual(ee.ContactTitle, aa.ContactTitle);
-                }));
+                }),
+            entryCount: 0);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2695,9 +2710,9 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<Customer>().Where(c => c.Country == "USA").Include(c => c.Orders).GroupBy(c => c.City),
             elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(
-                e, a,
-                elementAsserter: (ee, aa) => AssertInclude(ee, aa, new ExpectedInclude<Customer>(c => c.Orders))));
+            elementAsserter: (e, a) => AssertGrouping(e, a,
+                elementAsserter: (ee, aa) => AssertInclude(ee, aa, new ExpectedInclude<Customer>(c => c.Orders))),
+            entryCount: 135);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2706,14 +2721,14 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<Customer>().Where(c => c.Country == "USA").Select(c => new { c.City, c.Orders }).GroupBy(c => c.City),
             elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(
-                e, a,
+            elementAsserter: (e, a) => AssertGrouping(e, a,
                 elementSorter: ee => ee.City,
                 elementAsserter: (ee, aa) =>
                 {
                     AssertEqual(ee.City, aa.City);
                     AssertCollection(ee.Orders, aa.Orders);
-                }));
+                }),
+            entryCount: 122);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2724,14 +2739,14 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                 .Select(c => new { c.City, Orders = c.Orders.Where(o => o.OrderID < 11000) })
                 .GroupBy(c => c.City),
             elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(
-                e, a,
+            elementAsserter: (e, a) => AssertGrouping(e, a,
                 elementSorter: ee => ee.City,
                 elementAsserter: (ee, aa) =>
                 {
                     AssertEqual(ee.City, aa.City);
                     AssertCollection(ee.Orders, aa.Orders);
-                }));
+                }),
+            entryCount: 108);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2739,33 +2754,22 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
         => AssertQuery(
             async,
             ss => ss.Set<Customer>().Where(c => c.Country == "USA")
-                .Select(
-                    c => new
-                    {
-                        c.City,
-                        Orders = c.Orders.Where(o => o.OrderID < 11000),
-                        LastOrder = c.Orders.OrderByDescending(o => o.OrderDate).FirstOrDefault()
-                    })
+                .Select(c => new
+                {
+                    c.City,
+                    Orders = c.Orders.Where(o => o.OrderID < 11000),
+                    LastOrder = c.Orders.OrderByDescending(o => o.OrderDate).FirstOrDefault() })
                 .GroupBy(c => c.City),
             elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(
-                e, a,
+            elementAsserter: (e, a) => AssertGrouping(e, a,
                 elementSorter: ee => ee.City,
                 elementAsserter: (ee, aa) =>
                 {
                     AssertEqual(ee.City, aa.City);
                     AssertCollection(ee.Orders, aa.Orders);
                     AssertEqual(ee.LastOrder, aa.LastOrder);
-                }));
-
-    [ConditionalTheory]
-    [MemberData(nameof(IsAsyncData))]
-    public virtual Task Final_GroupBy_TagWith(bool async)
-        => AssertQuery(
-            async,
-            ss => ss.Set<Customer>().TagWith("foo").GroupBy(c => c.City),
-            elementSorter: e => e.Key,
-            elementAsserter: (e, a) => AssertGrouping(e, a));
+                }),
+            entryCount: 115);
 
     #endregion
 
@@ -2794,7 +2798,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
         => AssertTranslationFailed(
             () => AssertQuery(
                 async,
-                ss => ss.Set<Customer>().GroupBy(c => c.City).SelectMany(g => g)));
+                ss => ss.Set<Customer>().GroupBy(c => c.City).SelectMany(g => g),
+                entryCount: 91));
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2804,7 +2809,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                 async,
                 ss => ss.Set<Order>().OrderBy(o => o.OrderID)
                     .GroupBy(o => o.CustomerID)
-                    .SelectMany(g => g)));
+                    .SelectMany(g => g),
+                entryCount: 830));
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2824,7 +2830,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             () => AssertQuery(
                 async,
                 ss => ss.Set<Order>().GroupBy(o => o.CustomerID).OrderBy(g => g.Key).Take(5).Skip(3).Distinct().Select(g => g.Key),
-                assertOrder: true));
+                assertOrder: true,
+                entryCount: 31));
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2847,7 +2854,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 Assert.Equal(e.Key, a.Key);
                 AssertCollection(e.Count, a.Count);
-            });
+            },
+            entryCount: 42);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2895,7 +2903,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<Employee>().Where(e => EF.Property<string>(e, "Title") == "Sales Representative" && e.EmployeeID == 1)
                 .GroupBy(e => EF.Property<string>(e, "Title"))
-                .Select(g => g.First()));
+                .Select(g => g.First()),
+            entryCount: 1);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2919,7 +2928,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.Key, a.Key);
                 AssertCollection(e.List, a.List);
-            });
+            },
+            entryCount: 91);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2934,7 +2944,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.Key, a.Key);
                 AssertCollection(e.List, a.List);
-            });
+            },
+            entryCount: 91);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2949,7 +2960,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.Key, a.Key);
                 AssertCollection(e.List, a.List);
-            });
+            },
+            entryCount: 4);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2964,7 +2976,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.Key, a.Key);
                 AssertCollection(e.List, a.List);
-            });
+            },
+            entryCount: 91);
 
     #endregion
 
@@ -2983,7 +2996,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.Key, a.Key);
                 AssertEqual(e.Aggregate, a.Aggregate);
-            });
+            },
+            entryCount: 830);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -2998,7 +3012,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.Key, a.Key);
                 AssertEqual(e.Aggregate, a.Aggregate);
-            });
+            },
+            entryCount: 89);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -3007,7 +3022,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             async,
             ss => ss.Set<OrderDetail>()
                 .GroupBy(od => od.Order)
-                .Select(g => g.Key));
+                .Select(g => g.Key),
+            entryCount: 830);
 
     [ConditionalTheory(Skip = "Issue#29014")]
     [MemberData(nameof(IsAsyncData))]
@@ -3178,9 +3194,14 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
                 .GroupBy(o => o.CustomerID)
                 .Select(e => new Result(e.Key)));
 
-    private class Result(string customerID)
+    private class Result
     {
-        private readonly string _customerID = customerID;
+        private readonly string _customerID;
+
+        public Result(string customerID)
+        {
+            _customerID = customerID;
+        }
     }
 
     #endregion
@@ -3351,7 +3372,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.Customer, a.Customer);
                 AssertCollection(e.Orders, a.Orders);
-            });
+            },
+            entryCount: 15);
 
     [ConditionalTheory(Skip = "Issue#27130")]
     [MemberData(nameof(IsAsyncData))]
@@ -3445,7 +3467,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.c, a.c);
                 AssertCollection(e.Orders, a.Orders);
-            });
+            },
+            entryCount: 63);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -3462,7 +3485,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.c, a.c);
                 AssertCollection(e.Orders, a.Orders);
-            });
+            },
+            entryCount: 63);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -3479,7 +3503,8 @@ public abstract class NorthwindGroupByQueryTestBase<TFixture>(TFixture fixture) 
             {
                 AssertEqual(e.c, a.c);
                 AssertCollection(e.Orders, a.Orders);
-            });
+            },
+            entryCount: 63);
 
     #endregion
 }

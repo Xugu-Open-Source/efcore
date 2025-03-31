@@ -34,24 +34,19 @@ public static class TransparentIdentifierFactory
     public static Type Create(Type outerType, Type innerType)
         => typeof(TransparentIdentifier<,>).MakeGenericType(outerType, innerType);
 
-    private readonly struct TransparentIdentifier<TOuter, TInner>(TOuter outer, TInner inner)
+    private readonly struct TransparentIdentifier<TOuter, TInner>
     {
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
         [UsedImplicitly]
-        public readonly TOuter Outer = outer;
+        public TransparentIdentifier(TOuter outer, TInner inner)
+        {
+            Outer = outer;
+            Inner = inner;
+        }
 
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
         [UsedImplicitly]
-        public readonly TInner Inner = inner;
+        public readonly TOuter Outer;
+
+        [UsedImplicitly]
+        public readonly TInner Inner;
     }
 }

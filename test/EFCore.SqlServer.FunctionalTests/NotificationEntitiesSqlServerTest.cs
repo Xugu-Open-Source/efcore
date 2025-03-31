@@ -3,11 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class NotificationEntitiesSqlServerTest(NotificationEntitiesSqlServerTest.NotificationEntitiesSqlServerFixture fixture)
-    : NotificationEntitiesTestBase<NotificationEntitiesSqlServerTest.NotificationEntitiesSqlServerFixture>(fixture)
+public class NotificationEntitiesSqlServerTest
+    : NotificationEntitiesTestBase<NotificationEntitiesSqlServerTest.NotificationEntitiesSqlServerFixture>
 {
+    public NotificationEntitiesSqlServerTest(NotificationEntitiesSqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class NotificationEntitiesSqlServerFixture : NotificationEntitiesFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

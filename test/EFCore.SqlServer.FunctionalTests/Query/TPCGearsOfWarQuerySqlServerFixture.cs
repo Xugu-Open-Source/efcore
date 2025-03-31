@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class TPCGearsOfWarQuerySqlServerFixture : TPCGearsOfWarQueryRelationalFixture
 {
     protected override ITestStoreFactory TestStoreFactory
@@ -17,5 +15,13 @@ public class TPCGearsOfWarQuerySqlServerFixture : TPCGearsOfWarQueryRelationalFi
         base.OnModelCreating(modelBuilder, context);
 
         modelBuilder.Entity<City>().Property(g => g.Location).HasColumnType("varchar(100)");
+
+        // No support yet for DateOnly/TimeOnly (#24507)
+        modelBuilder.Entity<Mission>(
+            b =>
+            {
+                b.Ignore(m => m.Date);
+                b.Ignore(m => m.Time);
+            });
     }
 }

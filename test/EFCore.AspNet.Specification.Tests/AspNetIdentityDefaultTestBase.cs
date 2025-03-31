@@ -6,15 +6,20 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Microsoft.EntityFrameworkCore;
 
-public abstract class AspNetIdentityDefaultTestBase<TFixture>(TFixture fixture)
+public abstract class AspNetIdentityDefaultTestBase<TFixture>
     : AspNetIdentityTestBase<TFixture, IdentityDbContext, IdentityUser, IdentityRole, string, IdentityUserClaim<string>,
-        IdentityUserRole<string>, IdentityUserLogin<string>, IdentityRoleClaim<string>, IdentityUserToken<string>>(fixture)
+        IdentityUserRole<string>, IdentityUserLogin<string>, IdentityRoleClaim<string>, IdentityUserToken<string>>
     where TFixture : AspNetIdentityTestBase<TFixture, IdentityDbContext, IdentityUser, IdentityRole, string, IdentityUserClaim<string>,
         IdentityUserRole<string>, IdentityUserLogin<string>, IdentityRoleClaim<string>, IdentityUserToken<string>>.AspNetIdentityFixtureBase
 {
+    protected AspNetIdentityDefaultTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected override List<EntityTypeMapping> ExpectedMappings
-        =>
-        [
+        => new()
+        {
             new EntityTypeMapping
             {
                 Name = "Microsoft.AspNetCore.Identity.IdentityRole",
@@ -39,10 +44,10 @@ public abstract class AspNetIdentityDefaultTestBase<TFixture>(TFixture fixture)
                     "Property: IdentityRoleClaim<string>.Id (int) Required PK AfterSave:Throw ValueGenerated.OnAdd",
                     "Property: IdentityRoleClaim<string>.ClaimType (string)",
                     "Property: IdentityRoleClaim<string>.ClaimValue (string)",
-                    $"Property: IdentityRoleClaim<string>.RoleId (string) Required FK{(HasForeignKeyIndexes ? " Index" : "")}",
+                    "Property: IdentityRoleClaim<string>.RoleId (string) Required FK Index",
                 },
-                Indexes = HasForeignKeyIndexes ? ["{'RoleId'} "] : [],
-                FKs = { "ForeignKey: IdentityRoleClaim<string> {'RoleId'} -> IdentityRole {'Id'} Required Cascade", },
+                Indexes = { "{'RoleId'} ", },
+                FKs = { "ForeignKey: IdentityRoleClaim<string> {'RoleId'} -> IdentityRole {'Id'} Cascade", },
             },
             new EntityTypeMapping
             {
@@ -82,10 +87,10 @@ public abstract class AspNetIdentityDefaultTestBase<TFixture>(TFixture fixture)
                     "Property: IdentityUserClaim<string>.Id (int) Required PK AfterSave:Throw ValueGenerated.OnAdd",
                     "Property: IdentityUserClaim<string>.ClaimType (string)",
                     "Property: IdentityUserClaim<string>.ClaimValue (string)",
-                    $"Property: IdentityUserClaim<string>.UserId (string) Required FK{(HasForeignKeyIndexes ? " Index" : "")}",
+                    "Property: IdentityUserClaim<string>.UserId (string) Required FK Index",
                 },
-                Indexes = HasForeignKeyIndexes ? ["{'UserId'} "] : [],
-                FKs = { "ForeignKey: IdentityUserClaim<string> {'UserId'} -> IdentityUser {'Id'} Required Cascade", },
+                Indexes = { "{'UserId'} ", },
+                FKs = { "ForeignKey: IdentityUserClaim<string> {'UserId'} -> IdentityUser {'Id'} Cascade", },
             },
             new EntityTypeMapping
             {
@@ -97,10 +102,10 @@ public abstract class AspNetIdentityDefaultTestBase<TFixture>(TFixture fixture)
                     "Property: IdentityUserLogin<string>.LoginProvider (string) Required PK AfterSave:Throw",
                     "Property: IdentityUserLogin<string>.ProviderKey (string) Required PK AfterSave:Throw",
                     "Property: IdentityUserLogin<string>.ProviderDisplayName (string)",
-                    $"Property: IdentityUserLogin<string>.UserId (string) Required FK{(HasForeignKeyIndexes ? " Index" : "")}",
+                    "Property: IdentityUserLogin<string>.UserId (string) Required FK Index",
                 },
-                Indexes = HasForeignKeyIndexes ? ["{'UserId'} "] : [],
-                FKs = { "ForeignKey: IdentityUserLogin<string> {'UserId'} -> IdentityUser {'Id'} Required Cascade", },
+                Indexes = { "{'UserId'} ", },
+                FKs = { "ForeignKey: IdentityUserLogin<string> {'UserId'} -> IdentityUser {'Id'} Cascade", },
             },
             new EntityTypeMapping
             {
@@ -110,13 +115,13 @@ public abstract class AspNetIdentityDefaultTestBase<TFixture>(TFixture fixture)
                 Properties =
                 {
                     "Property: IdentityUserRole<string>.UserId (string) Required PK FK AfterSave:Throw",
-                    $"Property: IdentityUserRole<string>.RoleId (string) Required PK FK{(HasForeignKeyIndexes ? " Index" : "")} AfterSave:Throw",
+                    "Property: IdentityUserRole<string>.RoleId (string) Required PK FK Index AfterSave:Throw",
                 },
-                Indexes = HasForeignKeyIndexes ? ["{'RoleId'} "] : [],
+                Indexes = { "{'RoleId'} ", },
                 FKs =
                 {
-                    "ForeignKey: IdentityUserRole<string> {'RoleId'} -> IdentityRole {'Id'} Required Cascade",
-                    "ForeignKey: IdentityUserRole<string> {'UserId'} -> IdentityUser {'Id'} Required Cascade",
+                    "ForeignKey: IdentityUserRole<string> {'RoleId'} -> IdentityRole {'Id'} Cascade",
+                    "ForeignKey: IdentityUserRole<string> {'UserId'} -> IdentityUser {'Id'} Cascade",
                 },
             },
             new EntityTypeMapping
@@ -132,7 +137,7 @@ public abstract class AspNetIdentityDefaultTestBase<TFixture>(TFixture fixture)
                     "Property: IdentityUserToken<string>.Name (string) Required PK AfterSave:Throw",
                     "Property: IdentityUserToken<string>.Value (string)",
                 },
-                FKs = { "ForeignKey: IdentityUserToken<string> {'UserId'} -> IdentityUser {'Id'} Required Cascade", },
-            }
-        ];
+                FKs = { "ForeignKey: IdentityUserToken<string> {'UserId'} -> IdentityUser {'Id'} Cascade", },
+            },
+        };
 }

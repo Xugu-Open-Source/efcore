@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.AspNetIdentity;
 
-#nullable disable
-
 public class IdentityRoleClaim<TKey>
     where TKey : IEquatable<TKey>
 {

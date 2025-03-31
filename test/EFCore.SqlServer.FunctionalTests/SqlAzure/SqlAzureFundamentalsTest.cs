@@ -6,12 +6,15 @@ using Microsoft.EntityFrameworkCore.SqlAzure.Model;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.SqlAzure;
 
-#nullable disable
-
-[SqlServerCondition(SqlServerCondition.IsAzureSql)]
-public class SqlAzureFundamentalsTest(SqlAzureFixture fixture) : IClassFixture<SqlAzureFixture>
+[SqlServerCondition(SqlServerCondition.IsSqlAzure)]
+public class SqlAzureFundamentalsTest : IClassFixture<SqlAzureFixture>
 {
-    public SqlAzureFixture Fixture { get; } = fixture;
+    public SqlAzureFundamentalsTest(SqlAzureFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    public SqlAzureFixture Fixture { get; }
 
     [ConditionalFact]
     public void CanExecuteQuery()

@@ -5,10 +5,13 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.TransportationModel;
 
-#nullable disable
-
-public class TransportationContext(DbContextOptions options) : PoolableDbContext(options)
+public class TransportationContext : PoolableDbContext
 {
+    public TransportationContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public DbSet<Vehicle> Vehicles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -73,10 +76,10 @@ public class TransportationContext(DbContextOptions options) : PoolableDbContext
             });
     }
 
-    public Task SeedAsync()
+    public void Seed()
     {
         Vehicles.AddRange(CreateVehicles());
-        return SaveChangesAsync();
+        SaveChanges();
     }
 
     public void AssertSeeded()
@@ -116,12 +119,10 @@ public class TransportationContext(DbContextOptions options) : PoolableDbContext
             {
                 Name = "P85 2012 Tesla Model S Performance Edition",
                 SeatingCapacity = 5,
-                Engine =
-                    new Engine
-                    {
-                        Description = "416 hp three phase, four pole AC induction",
-                        VehicleName = "P85 2012 Tesla Model S Performance Edition"
-                    },
+                Engine = new Engine
+                {
+                    Description = "416 hp three phase, four pole AC induction", VehicleName = "P85 2012 Tesla Model S Performance Edition"
+                },
                 Operator = new LicensedOperator
                 {
                     Name = "Elon Musk",
@@ -133,18 +134,17 @@ public class TransportationContext(DbContextOptions options) : PoolableDbContext
             {
                 Name = "North American X-15A-2",
                 SeatingCapacity = 1,
-                Engine =
-                    new ContinuousCombustionEngine
+                Engine = new ContinuousCombustionEngine
+                {
+                    Description = "Reaction Motors XLR99 throttleable, restartable liquid-propellant rocket engine",
+                    FuelTank = new FuelTank
                     {
-                        Description = "Reaction Motors XLR99 throttleable, restartable liquid-propellant rocket engine",
-                        FuelTank = new FuelTank
-                        {
-                            FuelType = "Liquid oxygen and anhydrous ammonia",
-                            Capacity = 11250,
-                            VehicleName = "North American X-15A-2"
-                        },
+                        FuelType = "Liquid oxygen and anhydrous ammonia",
+                        Capacity = 11250,
                         VehicleName = "North American X-15A-2"
                     },
+                    VehicleName = "North American X-15A-2"
+                },
                 Operator = new LicensedOperator
                 {
                     Name = "William J. Knight",

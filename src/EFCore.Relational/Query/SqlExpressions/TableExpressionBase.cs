@@ -12,20 +12,26 @@ namespace Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 ///         not used in application code.
 ///     </para>
 /// </summary>
-[DebuggerDisplay("{Microsoft.EntityFrameworkCore.Query.ExpressionPrinter.Print(this), nq}")]
-public abstract class TableExpressionBase : Expression, IRelationalQuotableExpression, IPrintableExpression
+public abstract class TableExpressionBase : Expression, IPrintableExpression
 {
-    /// <summary>
-    ///     An indexed collection of annotations associated with this table expression.
-    /// </summary>
-    protected virtual IReadOnlyDictionary<string, IAnnotation>? Annotations { get; }
+    private readonly IReadOnlyDictionary<string, IAnnotation>? _annotations;
 
     /// <summary>
     ///     Creates a new instance of the <see cref="TableExpressionBase" /> class.
     /// </summary>
     /// <param name="alias">A string alias for the table source.</param>
-    /// <param name="annotations">A collection of annotations associated with this table expression.</param>
-    protected TableExpressionBase(string? alias, IEnumerable<IAnnotation>? annotations = null)
+    protected TableExpressionBase(string? alias)
+        : this(alias, annotations: null)
+    {
+        Alias = alias;
+    }
+
+    /// <summary>
+    ///     Creates a new instance of the <see cref="TableExpressionBase" /> class.
+    /// </summary>
+    /// <param name="alias">A string alias for the table source.</param>
+    /// <param name="annotations">A collection of annotations associated with this expression.</param>
+    protected TableExpressionBase(string? alias, IEnumerable<IAnnotation>? annotations)
     {
         Alias = alias;
 
@@ -37,25 +43,14 @@ public abstract class TableExpressionBase : Expression, IRelationalQuotableExpre
                 dictionary[annotation.Name] = annotation;
             }
 
-            Annotations = dictionary;
+            _annotations = dictionary;
         }
-    }
-
-    /// <summary>
-    ///     Creates a new instance of the <see cref="TableExpressionBase" /> class.
-    /// </summary>
-    /// <param name="alias">A string alias for the table source.</param>
-    /// <param name="annotations">A collection of annotations associated with this expression.</param>
-    protected TableExpressionBase(string? alias, IReadOnlyDictionary<string, IAnnotation>? annotations)
-    {
-        Alias = alias;
-        Annotations = annotations;
     }
 
     /// <summary>
     ///     The alias assigned to this table source.
     /// </summary>
-    public virtual string? Alias { get; }
+    public virtual string? Alias { get; internal set; }
 
     /// <inheritdoc />
     protected override Expression VisitChildren(ExpressionVisitor visitor)
@@ -68,23 +63,6 @@ public abstract class TableExpressionBase : Expression, IRelationalQuotableExpre
     /// <inheritdoc />
     public sealed override ExpressionType NodeType
         => ExpressionType.Extension;
-
-    /// <summary>
-    ///     Creates a new object that is a copy of the current instance.
-    /// </summary>
-    /// <param name="alias">The alias to be used by the cloned table.</param>
-    /// <param name="cloningExpressionVisitor">The cloning expression for further visitation of nested nodes.</param>
-    /// <returns>A new object that is a copy of this instance.</returns>
-    public abstract TableExpressionBase Clone(string? alias, ExpressionVisitor cloningExpressionVisitor);
-
-    /// <summary>
-    ///     Returns a copy of the current <see cref="TableExpressionBase" /> with the new provided alias.
-    /// </summary>
-    /// <param name="newAlias">The alias to apply to the returned <see cref="TableExpressionBase" />.</param>
-    public abstract TableExpressionBase WithAlias(string newAlias);
-
-    /// <inheritdoc />
-    public abstract Expression Quote();
 
     /// <summary>
     ///     Creates a printable string representation of the given expression using <see cref="ExpressionPrinter" />.
@@ -123,7 +101,7 @@ public abstract class TableExpressionBase : Expression, IRelationalQuotableExpre
 
     /// <inheritdoc />
     public override int GetHashCode()
-        => Alias?.GetHashCode() ?? 0;
+        => 0;
 
     /// <summary>
     ///     Adds an annotation to this object. Throws if an annotation with the specified name already exists.
@@ -141,19 +119,9 @@ public abstract class TableExpressionBase : Expression, IRelationalQuotableExpre
                 : throw new InvalidOperationException(CoreStrings.DuplicateAnnotation(name, this.Print()));
         }
 
-        var annotations = new SortedDictionary<string, IAnnotation>();
+        var annotation = new Annotation(name, value);
 
-        if (Annotations is not null)
-        {
-            foreach (var annotation in Annotations.Values)
-            {
-                annotations[annotation.Name] = annotation;
-            }
-        }
-
-        annotations[name] = new Annotation(name, value);
-
-        return WithAnnotations(annotations);
+        return CreateWithAnnotations(new[] { annotation }.Concat(GetAnnotations()));
     }
 
     /// <summary>
@@ -161,7 +129,7 @@ public abstract class TableExpressionBase : Expression, IRelationalQuotableExpre
     /// </summary>
     /// <param name="annotations">The annotations to be applied.</param>
     /// <returns>The new expression with given annotations.</returns>
-    protected abstract TableExpressionBase WithAnnotations(IReadOnlyDictionary<string, IAnnotation> annotations);
+    protected abstract TableExpressionBase CreateWithAnnotations(IEnumerable<IAnnotation> annotations);
 
     /// <summary>
     ///     Gets the annotation with the given name, returning <see langword="null" /> if it does not exist.
@@ -171,21 +139,15 @@ public abstract class TableExpressionBase : Expression, IRelationalQuotableExpre
     ///     The existing annotation if an annotation with the specified name already exists. Otherwise, <see langword="null" />.
     /// </returns>
     public virtual IAnnotation? FindAnnotation(string name)
-        => Annotations?.GetValueOrDefault(name);
+        => _annotations == null
+            ? null
+            : _annotations.TryGetValue(name, out var annotation)
+                ? annotation
+                : null;
 
     /// <summary>
     ///     Gets all annotations on the current object.
     /// </summary>
     public virtual IEnumerable<IAnnotation> GetAnnotations()
-        => Annotations?.Values ?? Enumerable.Empty<IAnnotation>();
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual string GetRequiredAlias()
-        => Alias ?? throw new InvalidOperationException(RelationalStrings.NoAliasOnTable(ExpressionPrinter.Print(this)));
+        => _annotations?.Values ?? Enumerable.Empty<IAnnotation>();
 }

@@ -5,9 +5,7 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class SequentialGuidEndToEndTest : IAsyncLifetime
+public class SequentialGuidEndToEndTest : IDisposable
 {
     [ConditionalFact]
     public async Task Can_use_sequential_GUID_end_to_end_async()
@@ -80,12 +78,17 @@ public class SequentialGuidEndToEndTest : IAsyncLifetime
         }
     }
 
-    private class BronieContext(IServiceProvider serviceProvider, string databaseName) : DbContext
+    private class BronieContext : DbContext
     {
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
-        private readonly string _databaseName = databaseName;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly string _databaseName;
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        public BronieContext(IServiceProvider serviceProvider, string databaseName)
+        {
+            _serviceProvider = serviceProvider;
+            _databaseName = databaseName;
+        }
+
         public DbSet<Pegasus> Pegasuses { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -101,11 +104,13 @@ public class SequentialGuidEndToEndTest : IAsyncLifetime
         public int Index { get; set; }
     }
 
-    protected SqlServerTestStore TestStore { get; private set; }
+    public SequentialGuidEndToEndTest()
+    {
+        TestStore = SqlServerTestStore.CreateInitialized("SequentialGuidEndToEndTest");
+    }
 
-    public async Task InitializeAsync()
-        => TestStore = await SqlServerTestStore.CreateInitializedAsync("SequentialGuidEndToEndTest");
+    protected SqlServerTestStore TestStore { get; }
 
-    public async Task DisposeAsync()
-        => await TestStore.DisposeAsync();
+    public virtual void Dispose()
+        => TestStore.Dispose();
 }

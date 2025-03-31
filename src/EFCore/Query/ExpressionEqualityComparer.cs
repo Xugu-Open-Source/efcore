@@ -403,9 +403,7 @@ public sealed class ExpressionEqualityComparer : IEqualityComparer<Expression?>
 
             for (var i = 0; i < n; i++)
             {
-                var (p1, p2) = (a.Parameters[i], b.Parameters[i]);
-
-                if (p1.Type != p2.Type)
+                if (a.Parameters[i].Type != b.Parameters[i].Type)
                 {
                     for (var j = 0; j < i; j++)
                     {
@@ -415,10 +413,7 @@ public sealed class ExpressionEqualityComparer : IEqualityComparer<Expression?>
                     return false;
                 }
 
-                if (!_parameterScope.TryAdd(p1, p2))
-                {
-                    throw new InvalidOperationException(CoreStrings.SameParameterInstanceUsedInMultipleLambdas(p1.Name));
-                }
+                _parameterScope.Add(a.Parameters[i], b.Parameters[i]);
             }
 
             try

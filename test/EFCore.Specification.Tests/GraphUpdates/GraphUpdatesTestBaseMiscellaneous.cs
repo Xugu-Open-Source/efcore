@@ -8,8 +8,6 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public abstract partial class GraphUpdatesTestBase<TFixture>
     where TFixture : GraphUpdatesTestBase<TFixture>.GraphUpdatesFixtureBase, new()
 {
@@ -80,123 +78,6 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 Assert.Equal(cruiser.IdUserState, cruiser.UserState.AccessStateId);
             });
 
-    [ConditionalTheory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual async Task Can_insert_when_FK_has_sentinel_value(bool async)
-        => await ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                if (async)
-                {
-                    await context.AddAsync(new CruiserWithSentinel { IdUserState = 667 });
-                    await context.SaveChangesAsync();
-                }
-                else
-                {
-                    context.Add(new CruiserWithSentinel { IdUserState = 667 });
-                    context.SaveChanges();
-                }
-            },
-            async context =>
-            {
-                var queryable = context.Set<CruiserWithSentinel>().Include(e => e.UserState);
-                var cruiser = async ? (await queryable.SingleAsync()) : queryable.Single();
-                Assert.Equal(cruiser.IdUserState, cruiser.UserState.AccessStateWithSentinelId);
-            });
-
-    [ConditionalTheory]
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public virtual Task Can_insert_when_bool_PK_in_composite_key_has_sentinel_value(bool async, bool initialValue)
-        => Can_insert_when_PK_property_in_composite_key_has_sentinel_value(async, initialValue);
-
-    [ConditionalTheory]
-    [InlineData(false, 0)]
-    [InlineData(true, 0)]
-    [InlineData(false, 1)]
-    [InlineData(true, 1)]
-    [InlineData(false, 2)]
-    [InlineData(true, 2)]
-    public virtual Task Can_insert_when_int_PK_in_composite_key_has_sentinel_value(bool async, int initialValue)
-        => Can_insert_when_PK_property_in_composite_key_has_sentinel_value(async, initialValue);
-
-    [ConditionalTheory]
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public virtual Task Can_insert_when_nullable_bool_PK_in_composite_key_has_sentinel_value(bool async, bool? initialValue)
-        => Can_insert_when_PK_property_in_composite_key_has_sentinel_value(async, initialValue);
-
-    protected async Task Can_insert_when_PK_property_in_composite_key_has_sentinel_value<T>(bool async, T initialValue)
-        where T : new()
-    {
-        var inserted = new CompositeKeyWith<T>
-        {
-            SourceId = Guid.NewGuid(),
-            TargetId = Guid.NewGuid(),
-            PrimaryGroup = initialValue
-        };
-
-        await ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                if (async)
-                {
-                    await context.AddAsync(inserted);
-                    await context.SaveChangesAsync();
-                }
-                else
-                {
-                    context.Add(inserted);
-                    context.SaveChanges();
-                }
-            },
-            async context =>
-            {
-                var queryable = context.Set<CompositeKeyWith<T>>();
-                var loaded = async ? (await queryable.SingleAsync()) : queryable.Single();
-                Assert.Equal(inserted.SourceId, loaded.SourceId);
-                Assert.Equal(inserted.TargetId, loaded.TargetId);
-                Assert.Equal(initialValue, loaded.PrimaryGroup);
-            });
-    }
-
-    [ConditionalTheory]
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public virtual Task Throws_for_single_property_bool_key_with_default_value_generation(bool async, bool initialValue)
-        => Throws_for_single_property_key_with_default_value_generation(async, initialValue);
-
-    [ConditionalTheory]
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public virtual Task Throws_for_single_property_nullable_bool_key_with_default_value_generation(bool async, bool? initialValue)
-        => Throws_for_single_property_key_with_default_value_generation(async, initialValue);
-
-    protected async Task Throws_for_single_property_key_with_default_value_generation<T>(bool async, T initialValue)
-        where T : new()
-    {
-        var inserted = new BoolOnlyKey<T> { PrimaryGroup = initialValue };
-
-        await ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                Assert.Equal(
-                    CoreStrings.NoValueGenerator("PrimaryGroup", typeof(BoolOnlyKey<T>).ShortDisplayName(), typeof(T).ShortDisplayName()),
-                    (async
-                        ? (await Assert.ThrowsAsync<NotSupportedException>(async () => await context.AddAsync(inserted)))
-                        : Assert.Throws<NotSupportedException>(() => context.Add(inserted))).Message);
-            });
-    }
-
     [ConditionalTheory] // Issue #23043
     [InlineData(false)]
     [InlineData(true)]
@@ -216,9 +97,10 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     context.Add(city);
                     context.SaveChanges();
                 }
-            }, async context =>
+            },
+            context =>
             {
-                var city = await context.Set<City>().Include(x => x.Colleges).SingleAsync();
+                var city = context.Set<City>().Include(x => x.Colleges).Single();
                 var college = city.Colleges.Single();
 
                 city.Colleges.Clear();
@@ -233,10 +115,12 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 }
                 else
                 {
-                    Assert.Equal(Fixture.HasIdentityResolution ? 2 : 3, context.ChangeTracker.Entries().Count());
+                    Assert.Equal(2, context.ChangeTracker.Entries().Count());
                     Assert.Equal(EntityState.Deleted, context.Entry(college).State);
                     Assert.Equal(EntityState.Unchanged, context.Entry(city).State);
                 }
+
+                return Task.CompletedTask;
             });
 
     [ConditionalTheory] // Issue #22465
@@ -410,7 +294,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 }
 
                 owner.OwnedCollection = addNew
-                    ? [new Owned(), new Owned()]
+                    ? new List<Owned> { new(), new() }
                     : new List<Owned>();
 
                 Assert.Equal(
@@ -636,11 +520,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 }
 
                 owner.OwnedCollection = addNew
-                    ? [new OwnedWithKey { Bar = "OfGold" }, new OwnedWithKey { Bar = "OfSoap" }]
+                    ? new List<OwnedWithKey> { new() { Bar = "OfGold" }, new() { Bar = "OfSoap" } }
                     : new List<OwnedWithKey>();
 
                 owner.OwnedCollectionPrivateKey = addNew
-                    ? [new OwnedWithPrivateKey { Bar = "OfChocolate" }, new OwnedWithPrivateKey { Bar = "OfLead" }]
+                    ? new List<OwnedWithPrivateKey> { new() { Bar = "OfChocolate" }, new() { Bar = "OfLead" } }
                     : new List<OwnedWithPrivateKey>();
 
                 if (async)
@@ -731,7 +615,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [ConditionalTheory] // Issue #21206
     [InlineData(false)]
     [InlineData(true)]
-    public virtual async Task Discriminator_values_are_not_marked_as_unknown(bool async)
+    public async Task Discriminator_values_are_not_marked_as_unknown(bool async)
         => await ExecuteWithStrategyInTransactionAsync(
             async context =>
             {
@@ -777,15 +661,15 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
             });
 
     [ConditionalFact]
-    public virtual Task Avoid_nulling_shared_FK_property_when_deleting()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Avoid_nulling_shared_FK_property_when_deleting()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var root = await context
+                var root = context
                     .Set<SharedFkRoot>()
                     .Include(e => e.Parents)
                     .Include(e => e.Dependants)
-                    .SingleAsync();
+                    .Single();
 
                 Assert.Equal(3, context.ChangeTracker.Entries().Count());
 
@@ -820,7 +704,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Equal(root.Id, parent.RootId);
                     Assert.Equal(parent.Id, parent.DependantId);
 
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
@@ -833,7 +717,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Equal(root.Id, parent.RootId);
                     Assert.Null(parent.DependantId);
 
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.Equal(2, context.ChangeTracker.Entries().Count());
 
@@ -850,15 +734,16 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Equal(root.Id, parent.RootId);
                     Assert.Null(parent.DependantId);
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction)
                 {
-                    var root = await context
+                    var root = context
                         .Set<SharedFkRoot>()
                         .Include(e => e.Parents)
                         .Include(e => e.Dependants)
-                        .SingleAsync();
+                        .Single();
 
                     Assert.Equal(2, context.ChangeTracker.Entries().Count());
 
@@ -876,15 +761,15 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [ConditionalTheory]
     [InlineData(false)]
     [InlineData(true)]
-    public virtual Task Avoid_nulling_shared_FK_property_when_nulling_navigation(bool nullPrincipal)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Avoid_nulling_shared_FK_property_when_nulling_navigation(bool nullPrincipal)
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var root = await context
+                var root = context
                     .Set<SharedFkRoot>()
                     .Include(e => e.Parents)
                     .Include(e => e.Dependants)
-                    .SingleAsync();
+                    .Single();
 
                 Assert.Equal(3, context.ChangeTracker.Entries().Count());
 
@@ -926,7 +811,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 Assert.Equal(root.Id, parent.RootId);
                 Assert.Null(parent.DependantId);
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.Equal(3, context.ChangeTracker.Entries().Count());
 
@@ -938,13 +823,14 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 Assert.Equal(root.Id, dependent.RootId);
                 Assert.Equal(root.Id, parent.RootId);
                 Assert.Null(parent.DependantId);
-            }, async context =>
+            },
+            context =>
             {
-                var root = await context
+                var root = context
                     .Set<SharedFkRoot>()
                     .Include(e => e.Parents)
                     .Include(e => e.Dependants)
-                    .SingleAsync();
+                    .Single();
 
                 Assert.Equal(3, context.ChangeTracker.Entries().Count());
 
@@ -962,11 +848,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
             });
 
     [ConditionalFact]
-    public virtual Task Mutating_discriminator_value_throws_by_convention()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Mutating_discriminator_value_throws_by_convention()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var instance = await context.Set<OptionalSingle1Derived>().FirstAsync();
+                var instance = context.Set<OptionalSingle1Derived>().First();
 
                 var propertyEntry = context.Entry(instance).Property("Discriminator");
 
@@ -976,17 +862,17 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.Equal(
                     CoreStrings.PropertyReadOnlyAfterSave("Discriminator", nameof(OptionalSingle1Derived)),
-                    (await Assert.ThrowsAsync<InvalidOperationException>(() => context.SaveChangesAsync())).Message);
+                    Assert.Throws<InvalidOperationException>(() => context.SaveChanges()).Message);
             });
 
     [ConditionalFact]
-    public virtual Task Mutating_discriminator_value_can_be_configured_to_allow_mutation()
+    public virtual void Mutating_discriminator_value_can_be_configured_to_allow_mutation()
     {
         var id = 0;
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var instance = await context.Set<OptionalSingle2Derived>().FirstAsync();
+                var instance = context.Set<OptionalSingle2Derived>().First();
                 var propertyEntry = context.Entry(instance).Property(e => e.Disc);
                 id = instance.Id;
 
@@ -995,10 +881,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 propertyEntry.CurrentValue = new MyDiscriminator(1);
 
-                await context.SaveChangesAsync();
-            }, async context =>
+                context.SaveChanges();
+            },
+            context =>
             {
-                var instance = await context.Set<OptionalSingle2>().FirstAsync(e => e.Id == id);
+                var instance = context.Set<OptionalSingle2>().First(e => e.Id == id);
                 var propertyEntry = context.Entry(instance).Property(e => e.Disc);
 
                 Assert.IsType<OptionalSingle2>(instance);
@@ -1010,12 +897,12 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData((int)ChangeMechanism.Fk)]
     [InlineData((int)ChangeMechanism.Dependent)]
     [InlineData((int)(ChangeMechanism.Dependent | ChangeMechanism.Fk))]
-    public virtual Task Changes_to_Added_relationships_are_picked_up(ChangeMechanism changeMechanism)
+    public virtual void Changes_to_Added_relationships_are_picked_up(ChangeMechanism changeMechanism)
     {
         var id = 0;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var entity = new OptionalSingle1();
 
@@ -1048,14 +935,15 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
 
                 id = entity.Id;
-            }, async context =>
+            },
+            context =>
             {
-                var entity = await context.Set<OptionalSingle1>().Include(e => e.Root).SingleAsync(e => e.Id == id);
+                var entity = context.Set<OptionalSingle1>().Include(e => e.Root).Single(e => e.Id == id);
 
                 Assert.Null(entity.Root);
                 Assert.Null(entity.RootId);
@@ -1071,7 +959,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(true, CascadeTiming.Immediate)]
     [InlineData(true, CascadeTiming.Never)]
     [InlineData(true, null)]
-    public virtual Task New_FK_is_not_cleared_on_old_dependent_delete(
+    public virtual void New_FK_is_not_cleared_on_old_dependent_delete(
         bool loadNewParent,
         CascadeTiming? deleteOrphansTiming)
     {
@@ -1079,18 +967,18 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         var childId = 0;
         int? newFk = 0;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                var removed = await context.Set<Optional1>().OrderBy(e => e.Id).FirstAsync();
-                var child = await context.Set<Optional2>().OrderBy(e => e.Id).FirstAsync(e => e.ParentId == removed.Id);
+                var removed = context.Set<Optional1>().OrderBy(e => e.Id).First();
+                var child = context.Set<Optional2>().OrderBy(e => e.Id).First(e => e.ParentId == removed.Id);
 
                 removedId = removed.Id;
                 childId = child.Id;
 
-                newFk = (await context.Set<Optional1>().AsNoTracking().SingleAsync(e => e.Id != removed.Id)).Id;
+                newFk = context.Set<Optional1>().AsNoTracking().Single(e => e.Id != removed.Id).Id;
 
                 var newParent = loadNewParent ? context.Set<Optional1>().Find(newFk) : null;
 
@@ -1102,11 +990,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 if (Fixture.ForceClientNoAction)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1123,15 +1011,16 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                         Assert.Null((child.Parent));
                     }
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction
                     && !Fixture.NoStoreCascades)
                 {
-                    Assert.Null(await context.Set<Optional1>().FindAsync(removedId));
+                    Assert.Null(context.Set<Optional1>().Find(removedId));
 
-                    var child = await context.Set<Optional2>().FindAsync(childId);
-                    var newParent = loadNewParent ? await context.Set<Optional1>().FindAsync(newFk) : null;
+                    var child = context.Set<Optional2>().Find(childId);
+                    var newParent = loadNewParent ? context.Set<Optional1>().Find(newFk) : null;
 
                     Assert.Equal(newFk, child.ParentId);
 
@@ -1155,13 +1044,13 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never)]
     [InlineData(null)]
-    public virtual async Task No_fixup_to_Deleted_entities(
+    public virtual void No_fixup_to_Deleted_entities(
         CascadeTiming? deleteOrphansTiming)
     {
         using var context = CreateContext();
         context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-        var root = await LoadOptionalGraphAsync(context);
+        var root = LoadOptionalGraph(context);
         var existing = root.OptionalChildren.OrderBy(e => e.Id).First();
 
         Assert.False(context.ChangeTracker.HasChanges());
@@ -1174,7 +1063,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
         Assert.True(context.ChangeTracker.HasChanges());
 
-        var queried = await context.Set<Optional1>().ToListAsync();
+        var queried = context.Set<Optional1>().ToList();
 
         Assert.Null(existing.Parent);
         Assert.Null(existing.ParentId);
@@ -1186,9 +1075,9 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     }
 
     [ConditionalFact]
-    public virtual Task Notification_entities_can_have_indexes()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Notification_entities_can_have_indexes()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var produce = new Produce { Name = "Apple", BarCode = 77 };
                 context.Add(produce);
@@ -1197,7 +1086,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1212,7 +1101,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1220,11 +1109,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
             });
 
     [ConditionalFact]
-    public virtual Task Resetting_a_deleted_reference_fixes_up_again()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Resetting_a_deleted_reference_fixes_up_again()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var bloog = await context.Set<Bloog>().Include(e => e.Poosts).SingleAsync();
+                var bloog = context.Set<Bloog>().Include(e => e.Poosts).Single();
                 var poost1 = bloog.Poosts.First();
                 var poost2 = bloog.Poosts.Skip(1).First();
 
@@ -1283,7 +1172,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 {
                     Assert.True(context.ChangeTracker.HasChanges());
 
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1294,18 +1183,18 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
             });
 
     [ConditionalFact]
-    public virtual Task Detaching_principal_entity_will_remove_references_to_it()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Detaching_principal_entity_will_remove_references_to_it()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var root = await LoadOptionalGraphAsync(context);
-                await LoadRequiredGraphAsync(context);
-                await LoadOptionalAkGraphAsync(context);
-                await LoadRequiredAkGraphAsync(context);
-                await LoadRequiredCompositeGraphAsync(context);
-                await LoadRequiredNonPkGraphAsync(context);
-                await LoadOptionalOneToManyGraphAsync(context);
-                await LoadRequiredNonPkAkGraphAsync(context);
+                var root = LoadOptionalGraph(context);
+                LoadRequiredGraph(context);
+                LoadOptionalAkGraph(context);
+                LoadRequiredAkGraph(context);
+                LoadRequiredCompositeGraph(context);
+                LoadRequiredNonPkGraph(context);
+                LoadOptionalOneToManyGraph(context);
+                LoadRequiredNonPkAkGraph(context);
 
                 var optionalSingle = root.OptionalSingle;
                 var requiredSingle = root.RequiredSingle;
@@ -1385,18 +1274,18 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
             });
 
     [ConditionalFact]
-    public virtual Task Detaching_dependent_entity_will_not_remove_references_to_it()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Detaching_dependent_entity_will_not_remove_references_to_it()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var root = await LoadOptionalGraphAsync(context);
-                await LoadRequiredGraphAsync(context);
-                await LoadOptionalAkGraphAsync(context);
-                await LoadRequiredAkGraphAsync(context);
-                await LoadRequiredCompositeGraphAsync(context);
-                await LoadRequiredNonPkGraphAsync(context);
-                await LoadOptionalOneToManyGraphAsync(context);
-                await LoadRequiredNonPkAkGraphAsync(context);
+                var root = LoadOptionalGraph(context);
+                LoadRequiredGraph(context);
+                LoadOptionalAkGraph(context);
+                LoadRequiredAkGraph(context);
+                LoadRequiredCompositeGraph(context);
+                LoadRequiredNonPkGraph(context);
+                LoadOptionalOneToManyGraph(context);
+                LoadRequiredNonPkAkGraph(context);
 
                 var optionalSingle = root.OptionalSingle;
                 var requiredSingle = root.RequiredSingle;
@@ -1529,20 +1418,20 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Never, CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never, CascadeTiming.Never)]
     [InlineData(null, null)]
-    public virtual Task Re_childing_parent_to_new_child_with_delete(
+    public virtual void Re_childing_parent_to_new_child_with_delete(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
     {
         var oldId = 0;
         var newId = 0;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 context.ChangeTracker.CascadeDeleteTiming = cascadeDeleteTiming ?? CascadeTiming.Never;
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                var parent = await context.Set<ParentAsAChild>().Include(p => p.ChildAsAParent).SingleAsync();
+                var parent = context.Set<ParentAsAChild>().Include(p => p.ChildAsAParent).Single();
 
                 var oldChild = parent.ChildAsAParent;
                 oldId = oldChild.Id;
@@ -1554,7 +1443,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1572,9 +1461,10 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 Assert.Equal(EntityState.Detached, context.Entry(oldChild).State);
                 Assert.Equal(EntityState.Unchanged, context.Entry(newChild).State);
                 Assert.Equal(EntityState.Unchanged, context.Entry(parent).State);
-            }, async context =>
+            },
+            context =>
             {
-                var parent = await context.Set<ParentAsAChild>().Include(p => p.ChildAsAParent).SingleAsync();
+                var parent = context.Set<ParentAsAChild>().Include(p => p.ChildAsAParent).Single();
 
                 Assert.Equal(newId, parent.ChildAsAParentId);
                 Assert.Equal(newId, parent.ChildAsAParent.Id);
@@ -1583,15 +1473,15 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     }
 
     [ConditionalFact]
-    public virtual Task Sometimes_not_calling_DetectChanges_when_required_does_not_throw_for_null_ref()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Sometimes_not_calling_DetectChanges_when_required_does_not_throw_for_null_ref()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var dependent = await context.Set<BadOrder>().SingleAsync();
+                var dependent = context.Set<BadOrder>().Single();
 
                 dependent.BadCustomerId = null;
 
-                var principal = await context.Set<BadCustomer>().SingleAsync();
+                var principal = context.Set<BadCustomer>().Single();
 
                 principal.Status++;
 
@@ -1601,17 +1491,18 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
 
                 Assert.Null(dependent.BadCustomerId);
                 Assert.Null(dependent.BadCustomer);
                 Assert.Empty(principal.BadOrders);
-            }, async context =>
+            },
+            context =>
             {
-                var dependent = await context.Set<BadOrder>().SingleAsync();
-                var principal = await context.Set<BadCustomer>().SingleAsync();
+                var dependent = context.Set<BadOrder>().Single();
+                var principal = context.Set<BadCustomer>().Single();
 
                 Assert.Null(dependent.BadCustomerId);
                 Assert.Null(dependent.BadCustomer);
@@ -1619,9 +1510,9 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
             });
 
     [ConditionalFact]
-    public virtual Task Can_add_valid_first_dependent_when_multiple_possible_principal_sides()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Can_add_valid_first_dependent_when_multiple_possible_principal_sides()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var quizTask = new QuizTask();
                 quizTask.Choices.Add(new TaskChoice());
@@ -1630,24 +1521,25 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
-            }, async context =>
+            },
+            context =>
             {
-                var quizTask = await context.Set<QuizTask>().Include(e => e.Choices).SingleAsync();
+                var quizTask = context.Set<QuizTask>().Include(e => e.Choices).Single();
 
                 Assert.Equal(quizTask.Id, quizTask.Choices.Single().QuestTaskId);
 
-                Assert.Same(quizTask.Choices.Single(), await context.Set<TaskChoice>().SingleAsync());
+                Assert.Same(quizTask.Choices.Single(), context.Set<TaskChoice>().Single());
 
                 Assert.Empty(context.Set<HiddenAreaTask>().Include(e => e.Choices));
             });
 
     [ConditionalFact]
-    public virtual Task Can_add_valid_second_dependent_when_multiple_possible_principal_sides()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Can_add_valid_second_dependent_when_multiple_possible_principal_sides()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var hiddenAreaTask = new HiddenAreaTask();
                 hiddenAreaTask.Choices.Add(new TaskChoice());
@@ -1656,24 +1548,25 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
-            }, async context =>
+            },
+            context =>
             {
-                var hiddenAreaTask = await context.Set<HiddenAreaTask>().Include(e => e.Choices).SingleAsync();
+                var hiddenAreaTask = context.Set<HiddenAreaTask>().Include(e => e.Choices).Single();
 
                 Assert.Equal(hiddenAreaTask.Id, hiddenAreaTask.Choices.Single().QuestTaskId);
 
-                Assert.Same(hiddenAreaTask.Choices.Single(), await context.Set<TaskChoice>().SingleAsync());
+                Assert.Same(hiddenAreaTask.Choices.Single(), context.Set<TaskChoice>().Single());
 
                 Assert.Empty(context.Set<QuizTask>().Include(e => e.Choices));
             });
 
     [ConditionalFact]
-    public virtual Task Can_add_multiple_dependents_when_multiple_possible_principal_sides()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public virtual void Can_add_multiple_dependents_when_multiple_possible_principal_sides()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
                 var quizTask = new QuizTask();
                 quizTask.Choices.Add(new TaskChoice());
@@ -1689,13 +1582,14 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
-            }, async context =>
+            },
+            context =>
             {
-                var quizTask = await context.Set<QuizTask>().Include(e => e.Choices).SingleAsync();
-                var hiddenAreaTask = await context.Set<HiddenAreaTask>().Include(e => e.Choices).SingleAsync();
+                var quizTask = context.Set<QuizTask>().Include(e => e.Choices).Single();
+                var hiddenAreaTask = context.Set<HiddenAreaTask>().Include(e => e.Choices).Single();
 
                 Assert.Equal(2, quizTask.Choices.Count);
                 foreach (var quizTaskChoice in quizTask.Choices)
@@ -1718,662 +1612,131 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 }
             });
 
-    [ConditionalTheory] // Issue #30122
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Sever_relationship_that_will_later_be_deleted(bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    [ConditionalFact]
+    public void Can_attach_full_required_graph_of_duplicates()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var swedes = await context.Set<Parsnip>()
-                    .Include(x => x.Carrot)
-                    .ThenInclude(x => x.Turnips)
-                    .Include(x => x.Swede)
-                    .ThenInclude(x => x.TurnipSwedes)
-                    .SingleAsync(x => x.Id == 1);
+                var trackedRoot = LoadRequiredGraph(context);
+                var entries = context.ChangeTracker.Entries().ToList();
 
-                swedes.Carrot.Turnips.Clear();
-                swedes.Swede.TurnipSwedes.Clear();
+                context.Attach(QueryRequiredGraph(context).AsNoTracking().Single(IsTheRoot));
 
-                _ = async
-                    ? await context.SaveChangesAsync()
-                    : context.SaveChanges();
+                AssertEntries(entries, context.ChangeTracker.Entries().ToList());
+                AssertNavigations(trackedRoot);
 
-                var entries = context.ChangeTracker.Entries();
-                Assert.Equal(3, entries.Count());
-                Assert.All(entries, e => Assert.Equal(EntityState.Unchanged, e.State));
-                Assert.Contains(entries, e => e.Entity.GetType() == typeof(Carrot));
-                Assert.Contains(entries, e => e.Entity.GetType() == typeof(Parsnip));
-                Assert.Contains(entries, e => e.Entity.GetType() == typeof(Swede));
-            });
-
-    [ConditionalFact] // Issue #32168
-    public virtual Task Save_changed_owned_one_to_one()
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                context.Add(CreateOwnerRoot());
-                await context.SaveChangesAsync();
-            }, async context =>
-            {
-                var root = await context.Set<OwnerRoot>().SingleAsync();
-
-                if (Fixture.ForceClientNoAction)
-                {
-                    context.Entry(root.OptionalSingle.Single).State = EntityState.Deleted;
-                    context.Entry(root.OptionalSingle).State = EntityState.Deleted;
-                    context.Entry(root.RequiredSingle.Single).State = EntityState.Deleted;
-                    context.Entry(root.RequiredSingle).State = EntityState.Deleted;
-                }
-
-                root.OptionalSingle = new OwnedOptionalSingle1 { Name = "OS`", Single = new OwnedOptionalSingle2 { Name = "OS2`" } };
-                root.RequiredSingle = new OwnedRequiredSingle1 { Name = "RS`", Single = new OwnedRequiredSingle2 { Name = "RS2`" } };
-
-                Assert.True(context.ChangeTracker.HasChanges());
-
-                await context.SaveChangesAsync();
-
-                Assert.False(context.ChangeTracker.HasChanges());
-
-                Assert.Equal("OS`", root.OptionalSingle.Name);
-                Assert.Equal("OS2`", root.OptionalSingle.Single.Name);
-                Assert.Equal("RS`", root.RequiredSingle.Name);
-                Assert.Equal("RS2`", root.RequiredSingle.Single.Name);
-            }, async context =>
-            {
-                var root = await context.Set<OwnerRoot>().SingleAsync();
-                Assert.Equal("OS`", root.OptionalSingle.Name);
-                Assert.Equal("OS2`", root.OptionalSingle.Single.Name);
-                Assert.Equal("RS`", root.RequiredSingle.Name);
-                Assert.Equal("RS2`", root.RequiredSingle.Single.Name);
+                Assert.Equal(0, context.SaveChanges());
             });
 
     [ConditionalFact]
-    public virtual Task Save_changed_owned_one_to_many()
-    {
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    public void Can_attach_full_optional_graph_of_duplicates()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                context.Add(CreateOwnerRoot());
-                await context.SaveChangesAsync();
-            }, async context =>
-            {
-                var root = await context.Set<OwnerRoot>().SingleAsync();
-                var optionalChildren = root.OptionalChildren.Single(e => e.Name == "OC1");
-                var requiredChildren = root.RequiredChildren.Single(e => e.Name == "RC1");
+                var trackedRoot = LoadOptionalGraph(context);
+                var entries = context.ChangeTracker.Entries().ToList();
 
-                if (Fixture.ForceClientNoAction)
-                {
-                    optionalChildren.Children.ForEach(c => context.Entry(c).State = EntityState.Deleted);
-                    context.Entry(optionalChildren).State = EntityState.Deleted;
-                    requiredChildren.Children.ForEach(c => context.Entry(c).State = EntityState.Deleted);
-                    context.Entry(requiredChildren).State = EntityState.Deleted;
-                }
+                context.Attach(QueryOptionalGraph(context).AsNoTracking().Single(IsTheRoot));
 
-                root.OptionalChildren.Remove(optionalChildren);
-                root.RequiredChildren.Remove(requiredChildren);
-                root.OptionalChildren.First().Children.Add(new OwnedOptional2 { Name = "OCC3" });
-                root.OptionalChildren.Add(
-                    new OwnedOptional1
-                    {
-                        Name = "OC3", Children = { new OwnedOptional2 { Name = "OCC4" }, new OwnedOptional2 { Name = "OCC5" } }
-                    });
-                root.RequiredChildren.First().Children.Add(new OwnedRequired2 { Name = "RCC3" });
-                root.RequiredChildren.Add(
-                    new OwnedRequired1
-                    {
-                        Name = "RC3", Children = { new OwnedRequired2 { Name = "RCC4" }, new OwnedRequired2 { Name = "RCC5" } }
-                    });
+                AssertEntries(entries, context.ChangeTracker.Entries().ToList());
+                AssertNavigations(trackedRoot);
 
-                Assert.True(context.ChangeTracker.HasChanges());
-
-                await context.SaveChangesAsync();
-
-                Assert.False(context.ChangeTracker.HasChanges());
-
-                AssertGraph(root);
-            }, async context =>
-            {
-                var root = await context.Set<OwnerRoot>().SingleAsync();
-
-                AssertGraph(root);
+                Assert.Equal(0, context.SaveChanges());
             });
 
-        void AssertGraph(OwnerRoot ownerRoot)
-        {
-            Assert.Equal(2, ownerRoot.OptionalChildren.Count);
-            Assert.Contains("OC2", ownerRoot.OptionalChildren.Select(e => e.Name));
-            Assert.Contains("OC3", ownerRoot.OptionalChildren.Select(e => e.Name));
-
-            var oc2Children = ownerRoot.OptionalChildren.Single(e => e.Name == "OC2").Children;
-            Assert.Equal(3, oc2Children.Count);
-            Assert.Contains("OCC1", oc2Children.Select(e => e.Name));
-            Assert.Contains("OCC2", oc2Children.Select(e => e.Name));
-            Assert.Contains("OCC3", oc2Children.Select(e => e.Name));
-
-            var oc3Children = ownerRoot.OptionalChildren.Single(e => e.Name == "OC3").Children;
-            Assert.Equal(2, oc3Children.Count);
-            Assert.Contains("OCC4", oc3Children.Select(e => e.Name));
-            Assert.Contains("OCC5", oc3Children.Select(e => e.Name));
-
-            Assert.Equal(2, ownerRoot.RequiredChildren.Count);
-            Assert.Contains("RC2", ownerRoot.RequiredChildren.Select(e => e.Name));
-            Assert.Contains("RC3", ownerRoot.RequiredChildren.Select(e => e.Name));
-
-            var rc2Children = ownerRoot.RequiredChildren.Single(e => e.Name == "RC2").Children;
-            Assert.Equal(1, rc2Children.Count);
-            Assert.Contains("RCC3", rc2Children.Select(e => e.Name));
-
-            var rc3Children = ownerRoot.RequiredChildren.Single(e => e.Name == "RC3").Children;
-            Assert.Equal(2, rc3Children.Count);
-            Assert.Contains("RCC4", rc3Children.Select(e => e.Name));
-            Assert.Contains("RCC5", rc3Children.Select(e => e.Name));
-        }
-    }
-
-    [ConditionalTheory] // Issue #30135
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Update_root_by_collection_replacement_of_inserted_first_level(bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    [ConditionalFact]
+    public void Can_attach_full_required_non_PK_graph_of_duplicates()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                await PopulateGraphAsync(context);
-                var newRoot = BuildNewRoot(firstLevel1: true, secondLevel1: true, thirdLevel1: true, firstLevel2: true);
+                var trackedRoot = LoadRequiredNonPkGraph(context);
+                var entries = context.ChangeTracker.Entries().ToList();
 
-                Assert.Equal(1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
+                context.Attach(QueryRequiredNonPkGraph(context).AsNoTracking().Single(IsTheRoot));
 
-                if (await UpdateRoot(context, newRoot, async))
-                {
-                    Assert.Equal(
-                        Fixture.HasIdentityResolution || !Fixture.AutoDetectChanges ? 1 : 2,
-                        context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                }
+                AssertEntries(entries, context.ChangeTracker.Entries().ToList());
+                AssertNavigations(trackedRoot);
+
+                Assert.Equal(0, context.SaveChanges());
             });
 
-    [ConditionalTheory] // Issue #30135
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Update_root_by_collection_replacement_of_deleted_first_level(bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    [ConditionalFact]
+    public void Can_attach_full_required_AK_graph_of_duplicates()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                await PopulateGraphAsync(context);
-                var newRoot = BuildNewRoot();
+                var trackedRoot = LoadRequiredAkGraph(context);
+                var entries = context.ChangeTracker.Entries().ToList();
 
-                Assert.Equal(1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
+                context.Attach(QueryRequiredAkGraph(context).AsNoTracking().Single(IsTheRoot));
 
-                if (await UpdateRoot(context, newRoot, async))
-                {
-                    Assert.Equal(Fixture.AutoDetectChanges ? 0 : 1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                }
+                AssertEntries(entries, context.ChangeTracker.Entries().ToList());
+                AssertNavigations(trackedRoot);
+
+                Assert.Equal(0, context.SaveChanges());
             });
 
-    [ConditionalTheory] // Issue #30135
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Update_root_by_collection_replacement_of_inserted_second_level(bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    [ConditionalFact]
+    public void Can_attach_full_optional_AK_graph_of_duplicates()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                await PopulateGraphAsync(context);
-                var newRoot = BuildNewRoot(firstLevel1: true, secondLevel1: true, thirdLevel1: true, firstLevel2: true, secondLevel2: true);
+                var trackedRoot = LoadOptionalAkGraph(context);
+                var entries = context.ChangeTracker.Entries().ToList();
 
-                Assert.Equal(1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                Assert.Equal(1, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
+                context.Attach(QueryOptionalAkGraph(context).AsNoTracking().Single(IsTheRoot));
 
-                if (await UpdateRoot(context, newRoot, async))
-                {
-                    if (Fixture.AutoDetectChanges)
-                    {
-                        Assert.Equal(Fixture.HasIdentityResolution ? 1 : 2, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                        Assert.Equal(Fixture.HasIdentityResolution ? 0 : 2, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
-                    }
-                    else
-                    {
-                        Assert.Equal(1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                        Assert.Equal(1, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
-                    }
-                }
+                AssertEntries(entries, context.ChangeTracker.Entries().ToList());
+                AssertNavigations(trackedRoot);
+
+                Assert.Equal(0, context.SaveChanges());
             });
 
-    [ConditionalTheory] // Issue #30135
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Update_root_by_collection_replacement_of_deleted_second_level(
-        bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    [ConditionalFact]
+    public void Can_attach_full_required_non_PK_AK_graph_of_duplicates()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                await PopulateGraphAsync(context);
-                var newRoot = BuildNewRoot(firstLevel1: true);
+                var trackedRoot = LoadRequiredNonPkAkGraph(context);
+                var entries = context.ChangeTracker.Entries().ToList();
 
-                Assert.Equal(1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                Assert.Equal(1, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
+                context.Attach(QueryRequiredNonPkAkGraph(context).AsNoTracking().Single(IsTheRoot));
 
-                if (await UpdateRoot(context, newRoot, async))
-                {
-                    Assert.Equal(Fixture.HasIdentityResolution ? 0 : 1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                    Assert.Equal(Fixture.AutoDetectChanges ? 0 : 1, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
-                }
+                AssertEntries(entries, context.ChangeTracker.Entries().ToList());
+                AssertNavigations(trackedRoot);
+
+                Assert.Equal(0, context.SaveChanges());
             });
 
-    [ConditionalTheory] // Issue #30135
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Update_root_by_collection_replacement_of_inserted_first_level_level(bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    [ConditionalFact]
+    public void Can_attach_full_required_one_to_many_graph_of_duplicates()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                await PopulateGraphAsync(context);
-                var newRoot = BuildNewRoot(
-                    firstLevel1: true, secondLevel1: true, thirdLevel1: true, firstLevel2: true, secondLevel2: true, thirdLevel2: true);
+                var trackedRoot = LoadOptionalOneToManyGraph(context);
+                var entries = context.ChangeTracker.Entries().ToList();
 
-                Assert.Equal(1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                Assert.Equal(1, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
-                Assert.Equal(1, context.Set<ThirdLaw>().Count(x => x.SecondLawId == 111));
+                context.Attach(QueryOptionalOneToManyGraph(context).AsNoTracking().Single(IsTheRoot));
 
-                if (await UpdateRoot(context, newRoot, async))
-                {
-                    if (Fixture.AutoDetectChanges)
-                    {
-                        Assert.Equal(Fixture.HasIdentityResolution ? 1 : 2, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                        Assert.Equal(Fixture.HasIdentityResolution ? 0 : 2, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
-                        Assert.Equal(Fixture.HasIdentityResolution ? 0 : 2, context.Set<ThirdLaw>().Count(x => x.SecondLawId == 111));
-                    }
-                    else
-                    {
-                        Assert.Equal(1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                        Assert.Equal(1, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
-                        Assert.Equal(1, context.Set<ThirdLaw>().Count(x => x.SecondLawId == 111));
-                    }
-                }
+                AssertEntries(entries, context.ChangeTracker.Entries().ToList());
+                AssertNavigations(trackedRoot);
+
+                Assert.Equal(0, context.SaveChanges());
             });
 
-    [ConditionalTheory] // Issue #30135
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Update_root_by_collection_replacement_of_deleted_third_level(bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
+    [ConditionalFact]
+    public void Can_attach_full_required_composite_graph_of_duplicates()
+        => ExecuteWithStrategyInTransaction(
+            context =>
             {
-                await PopulateGraphAsync(context);
-                var newRoot = BuildNewRoot(firstLevel1: true, secondLevel1: true);
+                var trackedRoot = LoadRequiredCompositeGraph(context);
+                var entries = context.ChangeTracker.Entries().ToList();
 
-                Assert.Equal(1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                Assert.Equal(1, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
-                Assert.Equal(1, context.Set<ThirdLaw>().Count(x => x.SecondLawId == 111));
+                context.Attach(QueryRequiredCompositeGraph(context).AsNoTracking().Single(IsTheRoot));
 
-                if (await UpdateRoot(context, newRoot, async))
-                {
-                    Assert.Equal(Fixture.HasIdentityResolution ? 0 : 1, context.Set<FirstLaw>().Count(x => x.BayazId == 1));
-                    Assert.Equal(Fixture.HasIdentityResolution ? 0 : 1, context.Set<SecondLaw>().Count(x => x.FirstLawId == 11));
-                    Assert.Equal(Fixture.AutoDetectChanges ? 0 : 1, context.Set<ThirdLaw>().Count(x => x.SecondLawId == 111));
-                }
+                AssertEntries(entries, context.ChangeTracker.Entries().ToList());
+                AssertNavigations(trackedRoot);
+
+                Assert.Equal(0, context.SaveChanges());
             });
-
-    protected async Task<bool> UpdateRoot(DbContext context, Bayaz newRoot, bool async)
-    {
-        var existingRoot = await context.Set<Bayaz>()
-            .Include(x => x.FirstLaw)
-            .ThenInclude(x => x.SecondLaw)
-            .ThenInclude(x => x.ThirdLaw)
-            .SingleAsync(x => x.BayazId == newRoot.BayazId);
-
-        existingRoot.BayazName = newRoot.BayazName;
-        existingRoot.FirstLaw = newRoot.FirstLaw;
-
-        if (Fixture.ForceClientNoAction)
-        {
-            Assert.Equal(
-                CoreStrings.RelationshipConceptualNullSensitive(nameof(Bayaz), nameof(FirstLaw), "{BayazId: 1}"),
-                (await Assert.ThrowsAsync<InvalidOperationException>(
-                    async () =>
-                    {
-                        _ = async
-                            ? await context.SaveChangesAsync()
-                            : context.SaveChanges();
-                    })).Message);
-
-            return false;
-        }
-
-        _ = async
-            ? await context.SaveChangesAsync()
-            : context.SaveChanges();
-
-        return true;
-    }
-
-    protected Task PopulateGraphAsync(DbContext context)
-    {
-        context.Add(new Bayaz { BayazId = 1, BayazName = "bayaz" });
-
-        context.Add(
-            new FirstLaw
-            {
-                FirstLawId = 11,
-                FirstLawName = "firstLaw1",
-                BayazId = 1
-            });
-
-        context.Add(
-            new SecondLaw
-            {
-                SecondLawId = 111,
-                SecondLawName = "secondLaw1",
-                FirstLawId = 11
-            });
-
-        context.Add(
-            new ThirdLaw
-            {
-                ThirdLawId = 1111,
-                ThirdLawName = "thirdLaw1",
-                SecondLawId = 111
-            });
-
-        return context.SaveChangesAsync();
-    }
-
-    protected Bayaz BuildNewRoot(
-        bool firstLevel1 = false,
-        bool firstLevel2 = false,
-        bool secondLevel1 = false,
-        bool secondLevel2 = false,
-        bool thirdLevel1 = false,
-        bool thirdLevel2 = false)
-    {
-        var root = new Bayaz { BayazId = 1, BayazName = "bayaz" };
-
-        if (firstLevel1)
-        {
-            root.FirstLaw.Add(AddFirstLevel(secondLevel1, secondLevel2, thirdLevel1, thirdLevel2));
-        }
-
-        if (firstLevel2)
-        {
-            root.FirstLaw.Add(
-                new FirstLaw
-                {
-                    FirstLawId = 12,
-                    FirstLawName = "firstLaw2",
-                    BayazId = 1
-                });
-        }
-
-        return root;
-    }
-
-    private FirstLaw AddFirstLevel(bool secondLevel1, bool secondLevel2, bool thirdLevel1, bool thirdLevel2)
-    {
-        var firstLevel = new FirstLaw
-        {
-            FirstLawId = 11,
-            FirstLawName = "firstLaw1",
-            BayazId = 1
-        };
-
-        if (secondLevel1)
-        {
-            firstLevel.SecondLaw.Add(AddSecondLevel(thirdLevel1, thirdLevel2));
-        }
-
-        if (secondLevel2)
-        {
-            firstLevel.SecondLaw.Add(
-                new SecondLaw
-                {
-                    SecondLawId = 112,
-                    SecondLawName = "secondLaw2",
-                    FirstLawId = 11
-                });
-        }
-
-        return firstLevel;
-    }
-
-    private static SecondLaw AddSecondLevel(bool thirdLevel1, bool thirdLevel2)
-    {
-        var secondLevel = new SecondLaw
-        {
-            SecondLawId = 111,
-            SecondLawName = "secondLaw1",
-            FirstLawId = 11
-        };
-
-        if (thirdLevel1)
-        {
-            secondLevel.ThirdLaw.Add(
-                new ThirdLaw
-                {
-                    ThirdLawId = 1111,
-                    ThirdLawName = "thirdLaw1",
-                    SecondLawId = 111
-                });
-        }
-
-        if (thirdLevel2)
-        {
-            secondLevel.ThirdLaw.Add(
-                new ThirdLaw
-                {
-                    ThirdLawId = 1112,
-                    ThirdLawName = "thirdLaw2",
-                    SecondLawId = 111
-                });
-        }
-
-        return secondLevel;
-    }
-
-    [ConditionalTheory] // Issue #28961 and Issue #32385
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Alternate_key_over_foreign_key_doesnt_bypass_delete_behavior(bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                var parent = new NaiveParent { Children = { new SneakyChild() } };
-                context.Add(parent);
-
-                _ = async
-                    ? await context.SaveChangesAsync()
-                    : context.SaveChanges();
-
-                Assert.Equal(2, context.ChangeTracker.Entries().Count());
-
-                parent.Children.Remove(parent.Children.First());
-                _ = async
-                    ? await context.SaveChangesAsync()
-                    : context.SaveChanges();
-
-                Assert.Equal(1, context.ChangeTracker.Entries().Count());
-            });
-
-    [ConditionalTheory] // Issue #30764
-    [InlineData(false)]
-    [InlineData(true)]
-    public virtual Task Shadow_skip_navigation_in_base_class_is_handled(bool async)
-        => ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                var entities = async
-                    ? await context.Set<Lettuce2>().ToListAsync()
-                    : context.Set<Lettuce2>().ToList();
-
-                Assert.Equal(1, entities.Count);
-                Assert.Equal(nameof(Lettuce2), context.Entry(entities[0]).Property<string>("Discriminator").CurrentValue);
-            });
-
-    [ConditionalTheory] // Issue #32084
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public virtual Task Mark_explicitly_set_dependent_appropriately_with_any_inheritance_and_stable_generator(bool async, bool useAdd)
-    {
-        var parentId = Guid.NewGuid();
-        var childId = Guid.NewGuid();
-
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                if (async)
-                {
-                    await context.AddAsync(new ParentEntity32084 { Id = parentId });
-                    await context.SaveChangesAsync();
-                }
-                else
-                {
-                    context.Add(new ParentEntity32084 { Id = parentId });
-                    context.SaveChanges();
-                }
-            },
-            async context =>
-            {
-                var parent = async
-                    ? await context.FindAsync<ParentEntity32084>(parentId)
-                    : context.Find<ParentEntity32084>(parentId);
-
-                var child = new ChildEntity32084
-                {
-                    Id = childId,
-                    ParentId = parent!.Id,
-                    ChildValue = "test value"
-                };
-
-                if (useAdd)
-                {
-                    _ = async ? await context.AddAsync(child) : context.Add(child);
-                }
-                else
-                {
-                    parent.Child = child;
-                    context.ChangeTracker.DetectChanges();
-                }
-
-                Assert.Equal(2, context.ChangeTracker.Entries().Count());
-                Assert.Equal(EntityState.Unchanged, context.Entry(parent).State);
-
-                if (useAdd) // If we call Add explicitly, then the key value is forced to Added
-                {
-                    Assert.Equal(EntityState.Added, context.Entry(child).State);
-                    _ = async ? await context.SaveChangesAsync() : context.SaveChanges();
-                }
-                else
-                {
-                    Assert.Equal(EntityState.Modified, context.Entry(child).State);
-                    await Assert.ThrowsAsync<DbUpdateConcurrencyException>(
-                        async () => _ = async ? await context.SaveChangesAsync() : context.SaveChanges());
-                }
-            });
-    }
-
-    [ConditionalTheory] // Issue #32084
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public virtual Task Mark_explicitly_set_stable_dependent_appropriately(bool async, bool useAdd)
-    {
-        var parentId = Guid.NewGuid();
-        var childId = Guid.NewGuid();
-
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                if (async)
-                {
-                    await context.AddAsync(new StableParent32084 { Id = parentId });
-                    await context.SaveChangesAsync();
-                }
-                else
-                {
-                    context.Add(new StableParent32084 { Id = parentId });
-                    context.SaveChanges();
-                }
-            },
-            async context =>
-            {
-                var parent = async
-                    ? await context.FindAsync<StableParent32084>(parentId)
-                    : context.Find<StableParent32084>(parentId);
-
-                var child = new StableChild32084
-                {
-                    Id = childId, ParentId = parent!.Id,
-                };
-
-                if (useAdd)
-                {
-                    _ = async ? await context.AddAsync(child) : context.Add(child);
-                }
-                else
-                {
-                    parent.Child = child;
-                    context.ChangeTracker.DetectChanges();
-                }
-
-                Assert.Equal(EntityState.Unchanged, context.Entry(parent).State);
-                Assert.Equal(2, context.ChangeTracker.Entries().Count());
-                Assert.Equal(EntityState.Added, context.Entry(child).State);
-
-                _ = async ? await context.SaveChangesAsync() : context.SaveChanges();
-            });
-    }
-
-    [ConditionalTheory] // Issue #32084
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public virtual Task Mark_explicitly_set_stable_dependent_appropriately_when_deep_in_graph(bool async, bool useAdd)
-    {
-        var parentId = Guid.NewGuid();
-        var childId = Guid.NewGuid();
-        var brotherId = Guid.NewGuid();
-
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
-            {
-                if (async)
-                {
-                    await context.AddAsync(new SneakyUncle32084 { Id = brotherId });
-                    await context.SaveChangesAsync();
-                }
-                else
-                {
-                    context.Add(new SneakyUncle32084 { Id = brotherId });
-                    context.SaveChanges();
-                }
-            },
-            async context =>
-            {
-                var brother = async
-                    ? (await context.FindAsync<SneakyUncle32084>(brotherId))!
-                    : context.Find<SneakyUncle32084>(brotherId)!;
-
-                var child = new StableChild32084 { Id = childId };
-                var parent = new StableParent32084 { Id = parentId, Child = child };
-
-                if (useAdd)
-                {
-                    brother.BrotherId = parentId;
-                    _ = async ? await context.AddAsync(parent) : context.Add(parent);
-                }
-                else
-                {
-                    brother.Brother = parent;
-                    context.ChangeTracker.DetectChanges();
-                }
-
-                Assert.Equal(3, context.ChangeTracker.Entries().Count());
-                Assert.Equal(EntityState.Modified, context.Entry(brother).State);
-                Assert.Equal(EntityState.Added, context.Entry(parent).State);
-                Assert.Equal(EntityState.Added, context.Entry(child).State);
-
-                _ = async ? await context.SaveChangesAsync() : context.SaveChanges();
-            });
-    }
 }

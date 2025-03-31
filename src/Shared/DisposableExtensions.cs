@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System;
+using System.Threading.Tasks;
+
 namespace Microsoft.EntityFrameworkCore.Utilities;
 
 internal static class DisposableExtensions

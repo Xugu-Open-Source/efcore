@@ -4,14 +4,9 @@
 using System.Collections;
 using System.Globalization;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Editing;
 using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Design.Internal;
 
@@ -24,8 +19,6 @@ namespace Microsoft.EntityFrameworkCore.Design.Internal;
 public class CSharpHelper : ICSharpHelper
 {
     private readonly ITypeMappingSource _typeMappingSource;
-    private readonly Project _project;
-    private readonly RuntimeModelLinqToCSharpSyntaxTranslator _translator;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -36,18 +29,10 @@ public class CSharpHelper : ICSharpHelper
     public CSharpHelper(ITypeMappingSource typeMappingSource)
     {
         _typeMappingSource = typeMappingSource;
-
-        var workspace = new AdhocWorkspace();
-        var projectId = ProjectId.CreateNewId();
-        var versionStamp = VersionStamp.Create();
-        var projectInfo = ProjectInfo.Create(projectId, versionStamp, "Proj", "Proj", LanguageNames.CSharp);
-        _project = workspace.AddProject(projectInfo);
-        var syntaxGenerator = SyntaxGenerator.GetGenerator(workspace, LanguageNames.CSharp);
-        _translator = new RuntimeModelLinqToCSharpSyntaxTranslator(syntaxGenerator);
     }
 
-    private static readonly IReadOnlyCollection<string> Keywords =
-    [
+    private static readonly IReadOnlyCollection<string> Keywords = new[]
+    {
         "__arglist",
         "__makeref",
         "__reftype",
@@ -129,7 +114,7 @@ public class CSharpHelper : ICSharpHelper
         "void",
         "volatile",
         "while"
-    ];
+    };
 
     private static readonly IReadOnlyDictionary<Type, Func<CSharpHelper, object, string>> LiteralFuncs =
         new Dictionary<Type, Func<CSharpHelper, object, string>>
@@ -232,50 +217,6 @@ public class CSharpHelper : ICSharpHelper
     /// </summary>
     public virtual string Identifier(string name, ICollection<string>? scope = null, bool? capitalize = null)
     {
-        var identifier = Identifier(name, capitalize);
-        if (scope == null)
-        {
-            return Keywords.Contains(identifier) ? "@" + identifier : identifier;
-        }
-
-        var uniqueIdentifier = Keywords.Contains(identifier) ? "@" + identifier : identifier;
-        var qualifier = 0;
-        while (scope.Contains(uniqueIdentifier))
-        {
-            uniqueIdentifier = identifier + qualifier++;
-        }
-
-        scope.Add(uniqueIdentifier);
-        identifier = uniqueIdentifier;
-
-        return identifier;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public string Identifier<T>(string name, T value, IDictionary<string, T> scope, bool? capitalize = null)
-    {
-        var identifier = Identifier(name, capitalize);
-
-        var uniqueIdentifier = Keywords.Contains(identifier) ? "@" + identifier : identifier;
-        var qualifier = 0;
-        while (scope.ContainsKey(uniqueIdentifier))
-        {
-            uniqueIdentifier = identifier + qualifier++;
-        }
-
-        scope.Add(uniqueIdentifier, value);
-        identifier = uniqueIdentifier;
-
-        return identifier;
-    }
-
-    private static string Identifier(string name, bool? capitalize)
-    {
         var builder = new StringBuilder();
         var partStart = 0;
 
@@ -309,7 +250,20 @@ public class CSharpHelper : ICSharpHelper
         }
 
         var identifier = builder.ToString();
-        return identifier;
+        if (scope != null)
+        {
+            var uniqueIdentifier = identifier;
+            var qualifier = 0;
+            while (scope.Contains(uniqueIdentifier))
+            {
+                uniqueIdentifier = identifier + qualifier++;
+            }
+
+            scope.Add(uniqueIdentifier);
+            identifier = uniqueIdentifier;
+        }
+
+        return Keywords.Contains(identifier) ? "@" + identifier : identifier;
     }
 
     private static void ChangeFirstLetterCase(StringBuilder builder, bool capitalize)
@@ -339,7 +293,7 @@ public class CSharpHelper : ICSharpHelper
     {
         var @namespace = new StringBuilder();
         foreach (var piece in name.Where(p => !string.IsNullOrEmpty(p))
-                     .SelectMany(p => p.Split('.', StringSplitOptions.RemoveEmptyEntries)))
+                     .SelectMany(p => p.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries)))
         {
             var identifier = Identifier(piece);
             if (!string.IsNullOrEmpty(identifier))
@@ -359,17 +313,9 @@ public class CSharpHelper : ICSharpHelper
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual string Literal(string? value)
-        // do not output @"" syntax as in Migrations this can get indented at a newline and so add spaces to the literal
+        // do not use @"" syntax as in Migrations this can get indented at a newline and so add spaces to the literal
         => value is not null
-            ? new StringBuilder(value)
-                .Replace("\\", @"\\")
-                .Replace("\0", @"\0")
-                .Replace("\n", @"\n")
-                .Replace("\r", @"\r")
-                .Replace("\"", "\\\"")
-                .Insert(0, '"')
-                .Append('"')
-                .ToString()
+            ? "\"" + value.Replace(@"\", @"\\").Replace("\"", "\\\"").Replace("\n", @"\n").Replace("\r", @"\r") + "\""
             : "null";
 
     /// <summary>
@@ -397,17 +343,7 @@ public class CSharpHelper : ICSharpHelper
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual string Literal(char value)
-        => "\'"
-            + value switch
-            {
-                '\\' => @"\\",
-                '\0' => @"\0",
-                '\n' => @"\n",
-                '\r' => @"\r",
-                '\'' => @"\'",
-                _ => value.ToString()
-            }
-            + "\'";
+        => "\'" + (value == '\'' ? "\\'" : value.ToString()) + "\'";
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -757,54 +693,6 @@ public class CSharpHelper : ICSharpHelper
         return builder.ToString();
     }
 
-    private string ValueTuple(ITuple tuple)
-    {
-        var builder = new StringBuilder();
-
-        Type[]? typeArguments = null;
-        var i = 0;
-
-        if (tuple.Length == 1)
-        {
-            builder.Append("ValueTuple.Create(");
-            AppendItem(tuple[i]);
-            builder.Append(')');
-
-            return builder.ToString();
-        }
-
-        builder.Append('(');
-
-        for (; i < tuple.Length; i++)
-        {
-            if (i > 0)
-            {
-                builder.Append(", ");
-            }
-
-            AppendItem(tuple[i]);
-        }
-
-        builder.Append(')');
-
-        return builder.ToString();
-
-        void AppendItem(object? item)
-        {
-            if (item is null)
-            {
-                typeArguments ??= tuple.GetType().GenericTypeArguments;
-
-                builder
-                    .Append('(')
-                    .Append(Reference(typeArguments[i]))
-                    .Append(')');
-            }
-
-            builder.Append(UnknownLiteral(item));
-        }
-    }
-
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -981,16 +869,14 @@ public class CSharpHelper : ICSharpHelper
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual string Literal(Enum value, bool fullName = false)
+    public virtual string Literal(Enum value)
     {
         var type = value.GetType();
         var name = Enum.GetName(type, value);
 
         return name == null
-            ? type.IsDefined(typeof(FlagsAttribute), false)
-                ? GetCompositeEnumValue(type, value, fullName)
-                : $"({Reference(type)}){UnknownLiteral(Convert.ChangeType(value, Enum.GetUnderlyingType(type)))}"
-            : GetSimpleEnumValue(type, name, fullName);
+            ? GetCompositeEnumValue(type, value)
+            : GetSimpleEnumValue(type, name);
     }
 
     /// <summary>
@@ -999,8 +885,8 @@ public class CSharpHelper : ICSharpHelper
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected virtual string GetSimpleEnumValue(Type type, string name, bool fullName)
-        => Reference(type, fullName) + "." + name;
+    protected virtual string GetSimpleEnumValue(Type type, string name)
+        => Reference(type) + "." + name;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -1008,7 +894,7 @@ public class CSharpHelper : ICSharpHelper
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected virtual string GetCompositeEnumValue(Type type, Enum flags, bool fullName)
+    protected virtual string GetCompositeEnumValue(Type type, Enum flags)
     {
         var allValues = new HashSet<Enum>(GetFlags(flags));
         foreach (var currentValue in allValues.ToList())
@@ -1021,12 +907,11 @@ public class CSharpHelper : ICSharpHelper
         }
 
         return allValues.Aggregate(
-                (string?)null,
-                (previous, current) =>
-                    previous == null
-                        ? GetSimpleEnumValue(type, Enum.GetName(type, current)!, fullName)
-                        : previous + " | " + GetSimpleEnumValue(type, Enum.GetName(type, current)!, fullName))
-            ?? $"({Reference(type)}){UnknownLiteral(Convert.ChangeType(flags, Enum.GetUnderlyingType(type)))}";
+            (string?)null,
+            (previous, current) =>
+                previous == null
+                    ? GetSimpleEnumValue(type, Enum.GetName(type, current)!)
+                    : previous + " | " + GetSimpleEnumValue(type, Enum.GetName(type, current)!))!;
     }
 
     internal static IReadOnlyCollection<Enum> GetFlags(Enum flags)
@@ -1085,14 +970,8 @@ public class CSharpHelper : ICSharpHelper
             return Array(literalType.GetElementType()!, array);
         }
 
-        if (value is ITuple tuple
-            && value.GetType().FullName?.StartsWith("System.ValueTuple`", StringComparison.Ordinal) == true)
-        {
-            return ValueTuple(tuple);
-        }
-
         var valueType = value.GetType();
-        if (valueType is { IsGenericType: true, IsGenericTypeDefinition: false })
+        if (valueType.IsGenericType && !valueType.IsGenericTypeDefinition)
         {
             var genericArguments = valueType.GetGenericArguments();
             switch (value)
@@ -1143,18 +1022,12 @@ public class CSharpHelper : ICSharpHelper
 
                 return true;
             case ExpressionType.Convert:
-            {
-                var unaryExpression = (UnaryExpression)expression;
-                if (unaryExpression.Method?.Name != "op_Implicit")
-                {
-                    builder
-                        .Append('(')
-                        .Append(Reference(expression.Type, fullName: true))
-                        .Append(')');
-                }
+                builder
+                    .Append('(')
+                    .Append(Reference(expression.Type, fullName: true))
+                    .Append(')');
 
-                return HandleExpression(unaryExpression.Operand, builder);
-            }
+                return HandleExpression(((UnaryExpression)expression).Operand, builder);
             case ExpressionType.New:
                 builder
                     .Append("new ")
@@ -1464,13 +1337,13 @@ public class CSharpHelper : ICSharpHelper
         }
 
         builder
-            .Append('[')
+            .Append("[")
             .Append(attributeName);
 
         if (fragment.Arguments.Count != 0
             || fragment.NamedArguments.Count != 0)
         {
-            builder.Append('(');
+            builder.Append("(");
 
             var first = true;
             foreach (var value in fragment.Arguments)
@@ -1504,10 +1377,10 @@ public class CSharpHelper : ICSharpHelper
                     .Append(UnknownLiteral(item.Value));
             }
 
-            builder.Append(')');
+            builder.Append(")");
         }
 
-        builder.Append(']');
+        builder.Append("]");
 
         return builder.ToString();
     }
@@ -1523,7 +1396,7 @@ public class CSharpHelper : ICSharpHelper
         var builder = new StringBuilder();
 
         var first = true;
-        foreach (var line in comment.Split(["\r\n", "\n", "\r"], StringSplitOptions.None))
+        foreach (var line in comment.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None))
         {
             if (!first)
             {
@@ -1561,72 +1434,13 @@ public class CSharpHelper : ICSharpHelper
     public virtual IEnumerable<string> GetRequiredUsings(Type type)
         => type.GetNamespaces();
 
-    private string ToSourceCode(SyntaxNode node)
-        => node.NormalizeWhitespace().ToFullString();
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual string Statement(
-        Expression node,
-        ISet<string> collectedNamespaces,
-        ISet<string> unsafeAccessors,
-        IReadOnlyDictionary<object, string>? constantReplacements,
-        IReadOnlyDictionary<MemberInfo, QualifiedName>? memberAccessReplacements)
-    {
-        var unsafeAccessorDeclarations = new HashSet<MethodDeclarationSyntax>();
-
-        var code = ToSourceCode(
-            _translator.TranslateStatement(
-                node,
-                constantReplacements,
-                memberAccessReplacements,
-                collectedNamespaces,
-                unsafeAccessorDeclarations));
-
-        // TODO: Possibly improve this (e.g. expose a single string that contains all the accessors concatenated?)
-        unsafeAccessors.UnionWith(unsafeAccessorDeclarations.Select(ToSourceCode));
-
-        return code;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual string Expression(
-        Expression node,
-        ISet<string> collectedNamespaces,
-        ISet<string> unsafeAccessors,
-        IReadOnlyDictionary<object, string>? constantReplacements,
-        IReadOnlyDictionary<MemberInfo, QualifiedName>? memberAccessReplacements)
-    {
-        var unsafeAccessorDeclarations = new HashSet<MethodDeclarationSyntax>();
-
-        var code = ToSourceCode(
-            _translator.TranslateExpression(
-                node,
-                constantReplacements,
-                memberAccessReplacements,
-                collectedNamespaces,
-                unsafeAccessorDeclarations));
-
-        // TODO: Possibly improve this (e.g. expose a single string that contains all the accessors concatenated?)
-        unsafeAccessors.UnionWith(unsafeAccessorDeclarations.Select(ToSourceCode));
-
-        return code;
-    }
-
     private static bool IsIdentifierStartCharacter(char ch)
     {
         if (ch < 'a')
         {
-            return ch is >= 'A' and (<= 'Z' or '_');
+            return ch >= 'A'
+                && (ch <= 'Z'
+                    || ch == '_');
         }
 
         if (ch <= 'z')
@@ -1641,10 +1455,10 @@ public class CSharpHelper : ICSharpHelper
     {
         if (ch < 'a')
         {
-            return (ch < 'A'
-                    ? ch is >= '0' and <= '9'
-                    : ch <= 'Z')
-                || ch == '_';
+            return ch < 'A'
+                ? ch >= '0'
+                && ch <= '9'
+                : ch <= 'Z';
         }
 
         if (ch <= 'z')

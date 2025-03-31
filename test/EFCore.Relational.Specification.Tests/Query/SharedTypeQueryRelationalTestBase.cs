@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public abstract class SharedTypeQueryRelationalTestBase : SharedTypeQueryTestBase
 {
     protected TestSqlLoggerFactory TestSqlLoggerFactory
@@ -21,7 +19,7 @@ public abstract class SharedTypeQueryRelationalTestBase : SharedTypeQueryTestBas
     public virtual async Task Can_use_shared_type_entity_type_in_query_filter_with_from_sql(bool async)
     {
         var contextFactory = await InitializeAsync<MyContextRelational24601>(
-            seed: c => c.SeedAsync());
+            seed: c => c.Seed());
 
         using var context = contextFactory.CreateContext();
         var query = context.Set<ViewQuery24601>();
@@ -32,36 +30,13 @@ public abstract class SharedTypeQueryRelationalTestBase : SharedTypeQueryTestBas
         Assert.Empty(result);
     }
 
-    [ConditionalFact]
-    public virtual async Task Ad_hoc_query_for_shared_type_entity_type_works()
+    protected class MyContextRelational24601 : MyContext24601
     {
-        var contextFactory = await InitializeAsync<MyContextRelational24601>(
-            seed: c => c.SeedAsync());
+        public MyContextRelational24601(DbContextOptions options)
+            : base(options)
+        {
+        }
 
-        using var context = contextFactory.CreateContext();
-
-        var result = context.Database.SqlQueryRaw<ViewQuery24601>(
-            ((RelationalTestStore)TestStore).NormalizeDelimitersInRawString(@"SELECT * FROM [ViewQuery24601]"));
-
-        Assert.Empty(await result.ToListAsync());
-    }
-
-    [ConditionalFact]
-    public virtual async Task Ad_hoc_query_for_default_shared_type_entity_type_throws()
-    {
-        var contextFactory = await InitializeAsync<MyContextRelational24601>(
-            seed: c => c.SeedAsync());
-
-        using var context = contextFactory.CreateContext();
-
-        Assert.Equal(
-            CoreStrings.ClashingSharedType("Dictionary<string, object>"),
-            Assert.Throws<InvalidOperationException>(
-                () => context.Database.SqlQueryRaw<Dictionary<string, object>>(@"SELECT * FROM X")).Message);
-    }
-
-    protected class MyContextRelational24601(DbContextOptions options) : MyContext24601(options)
-    {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

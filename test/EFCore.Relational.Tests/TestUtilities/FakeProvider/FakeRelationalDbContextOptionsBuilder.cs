@@ -3,5 +3,11 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities.FakeProvider;
 
-public class FakeRelationalDbContextOptionsBuilder(DbContextOptionsBuilder optionsBuilder)
-    : RelationalDbContextOptionsBuilder<FakeRelationalDbContextOptionsBuilder, FakeRelationalOptionsExtension>(optionsBuilder);
+public class FakeRelationalDbContextOptionsBuilder
+    : RelationalDbContextOptionsBuilder<FakeRelationalDbContextOptionsBuilder, FakeRelationalOptionsExtension>
+{
+    public FakeRelationalDbContextOptionsBuilder(DbContextOptionsBuilder optionsBuilder)
+        : base(optionsBuilder)
+    {
+    }
+}

@@ -10,9 +10,6 @@ public class InheritanceQueryInMemoryFixture : InheritanceQueryFixtureBase
     protected override ITestStoreFactory TestStoreFactory
         => InMemoryTestStoreFactory.Instance;
 
-    public override bool EnableComplexTypes
-        => false;
-
     public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
         => base.AddOptions(builder).ConfigureWarnings(
             c => c.Log(InMemoryEventId.TransactionIgnoredWarning));

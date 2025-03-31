@@ -226,14 +226,24 @@ public class ShadowFixupTest
             });
     }
 
-    private class Parent(int id)
+    private class Parent
     {
-        public int Id { get; set; } = id;
+        public Parent(int id)
+        {
+            Id = id;
+        }
+
+        public int Id { get; set; }
     }
 
-    private class Child(int id)
+    private class Child
     {
-        public int Id { get; set; } = id;
+        public Child(int id)
+        {
+            Id = id;
+        }
+
+        public int Id { get; set; }
     }
 
     private class Category
@@ -243,7 +253,9 @@ public class ShadowFixupTest
         }
 
         public Category(int id)
-            => Id = id;
+        {
+            Id = id;
+        }
 
         public int Id { get; set; }
     }
@@ -255,7 +267,9 @@ public class ShadowFixupTest
         }
 
         public Product(int id)
-            => Id = id;
+        {
+            Id = id;
+        }
 
         public int Id { get; set; }
     }
@@ -263,7 +277,9 @@ public class ShadowFixupTest
     private sealed class FixupContext : DbContext
     {
         public FixupContext()
-            => ChangeTracker.AutoDetectChangesEnabled = false;
+        {
+            ChangeTracker.AutoDetectChangesEnabled = false;
+        }
 
         protected internal override void OnModelCreating(ModelBuilder modelBuilder)
         {

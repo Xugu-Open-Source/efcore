@@ -9,5 +9,4 @@ public class Address
 {
     public string City { get; set; } = null!;
     public Country Country { get; set; }
-    public int? ZipCode { get; set; }
 }

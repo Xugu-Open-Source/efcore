@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class OwnedEntityQuerySqliteTest : OwnedEntityQueryRelationalTestBase
 {
     protected override ITestStoreFactory TestStoreFactory

@@ -3,4 +3,10 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class SerializationInMemoryTest(F1InMemoryFixture fixture) : SerializationTestBase<F1InMemoryFixture>(fixture);
+public class SerializationInMemoryTest : SerializationTestBase<F1InMemoryFixture>
+{
+    public SerializationInMemoryTest(F1InMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+}

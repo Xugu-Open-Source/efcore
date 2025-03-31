@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 
@@ -15,87 +14,6 @@ namespace Microsoft.EntityFrameworkCore;
 /// </summary>
 public static class RelationalDatabaseFacadeExtensions
 {
-    /// <summary>
-    ///     Gets all the migrations that are defined in the configured migrations assembly.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
-    /// </remarks>
-    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
-    /// <returns>The list of migrations.</returns>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
-    public static IEnumerable<string> GetMigrations(this DatabaseFacade databaseFacade)
-        => databaseFacade.GetRelationalService<IMigrationsAssembly>().Migrations.Keys;
-
-    /// <summary>
-    ///     Gets all migrations that have been applied to the target database.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
-    /// </remarks>
-    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
-    /// <returns>The list of migrations.</returns>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
-    public static IEnumerable<string> GetAppliedMigrations(this DatabaseFacade databaseFacade)
-        => databaseFacade.GetRelationalService<IHistoryRepository>()
-            .GetAppliedMigrations().Select(hr => hr.MigrationId);
-
-    /// <summary>
-    ///     Asynchronously gets all migrations that have been applied to the target database.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
-    /// </remarks>
-    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
-    /// <param name="cancellationToken">A <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
-    public static async Task<IEnumerable<string>> GetAppliedMigrationsAsync(
-        this DatabaseFacade databaseFacade,
-        CancellationToken cancellationToken = default)
-        => (await databaseFacade.GetRelationalService<IHistoryRepository>()
-            .GetAppliedMigrationsAsync(cancellationToken).ConfigureAwait(false)).Select(hr => hr.MigrationId);
-
-    /// <summary>
-    ///     Gets all migrations that are defined in the assembly but haven't been applied to the target database.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
-    /// </remarks>
-    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
-    /// <returns>The list of migrations.</returns>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
-    public static IEnumerable<string> GetPendingMigrations(this DatabaseFacade databaseFacade)
-        => GetMigrations(databaseFacade).Except(GetAppliedMigrations(databaseFacade));
-
-    /// <summary>
-    ///     Asynchronously gets all migrations that are defined in the assembly but haven't been applied to the target database.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
-    /// </remarks>
-    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
-    /// <param name="cancellationToken">A <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
-    public static async Task<IEnumerable<string>> GetPendingMigrationsAsync(
-        this DatabaseFacade databaseFacade,
-        CancellationToken cancellationToken = default)
-        => GetMigrations(databaseFacade).Except(
-            await GetAppliedMigrationsAsync(databaseFacade, cancellationToken).ConfigureAwait(false));
-
     /// <summary>
     ///     Applies any pending migrations for the context to the database. Will create the database
     ///     if it does not already exist.
@@ -110,36 +28,74 @@ public static class RelationalDatabaseFacadeExtensions
     ///     </para>
     /// </remarks>
     /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
     public static void Migrate(this DatabaseFacade databaseFacade)
         => databaseFacade.GetRelationalService<IMigrator>().Migrate();
 
     /// <summary>
-    ///     Applies migrations for the context to the database. Will create the database
-    ///     if it does not already exist.
+    ///     Gets all the migrations that are defined in the configured migrations assembly.
     /// </summary>
-    /// <param name="targetMigration">
-    ///     The target migration to migrate the database to, or <see langword="null" /> to migrate to the latest.
-    /// </param>
     /// <remarks>
-    ///     <para>
-    ///         Note that this API is mutually exclusive with <see cref="DatabaseFacade.EnsureCreated" />. EnsureCreated does not use migrations
-    ///         to create the database and therefore the database that is created cannot be later updated using migrations.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
-    ///     </para>
+    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
     /// </remarks>
     /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
-    public static void Migrate(
+    /// <returns>The list of migrations.</returns>
+    public static IEnumerable<string> GetMigrations(this DatabaseFacade databaseFacade)
+        => databaseFacade.GetRelationalService<IMigrationsAssembly>().Migrations.Keys;
+
+    /// <summary>
+    ///     Gets all migrations that have been applied to the target database.
+    /// </summary>
+    /// <remarks>
+    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
+    /// </remarks>
+    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
+    /// <returns>The list of migrations.</returns>
+    public static IEnumerable<string> GetAppliedMigrations(this DatabaseFacade databaseFacade)
+        => databaseFacade.GetRelationalService<IHistoryRepository>()
+            .GetAppliedMigrations().Select(hr => hr.MigrationId);
+
+    /// <summary>
+    ///     Asynchronously gets all migrations that have been applied to the target database.
+    /// </summary>
+    /// <remarks>
+    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
+    /// </remarks>
+    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
+    public static async Task<IEnumerable<string>> GetAppliedMigrationsAsync(
         this DatabaseFacade databaseFacade,
-        string? targetMigration)
-        => databaseFacade.GetRelationalService<IMigrator>().Migrate(targetMigration);
+        CancellationToken cancellationToken = default)
+        => (await databaseFacade.GetRelationalService<IHistoryRepository>()
+            .GetAppliedMigrationsAsync(cancellationToken).ConfigureAwait(false)).Select(hr => hr.MigrationId);
+
+    /// <summary>
+    ///     Gets all migrations that are defined in the assembly but haven't been applied to the target database.
+    /// </summary>
+    /// <remarks>
+    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
+    /// </remarks>
+    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
+    /// <returns>The list of migrations.</returns>
+    public static IEnumerable<string> GetPendingMigrations(this DatabaseFacade databaseFacade)
+        => GetMigrations(databaseFacade).Except(GetAppliedMigrations(databaseFacade));
+
+    /// <summary>
+    ///     Asynchronously gets all migrations that are defined in the assembly but haven't been applied to the target database.
+    /// </summary>
+    /// <remarks>
+    ///     See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
+    /// </remarks>
+    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
+    public static async Task<IEnumerable<string>> GetPendingMigrationsAsync(
+        this DatabaseFacade databaseFacade,
+        CancellationToken cancellationToken = default)
+        => GetMigrations(databaseFacade).Except(
+            await GetAppliedMigrationsAsync(databaseFacade, cancellationToken).ConfigureAwait(false));
 
     /// <summary>
     ///     Asynchronously applies any pending migrations for the context to the database. Will create the database
@@ -159,43 +115,11 @@ public static class RelationalDatabaseFacadeExtensions
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
     /// <returns>A task that represents the asynchronous migration operation.</returns>
     /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
     public static Task MigrateAsync(
         this DatabaseFacade databaseFacade,
         CancellationToken cancellationToken = default)
-        => databaseFacade.GetRelationalService<IMigrator>().MigrateAsync(cancellationToken: cancellationToken);
-
-    /// <summary>
-    ///     Asynchronously applies migrations for the context to the database. Will create the database
-    ///     if it does not already exist.
-    /// </summary>
-    /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
-    /// <param name="targetMigration">
-    ///     The target migration to migrate the database to, or <see langword="null" /> to migrate to the latest.
-    /// </param>
-    /// <param name="cancellationToken">A <see cref="CancellationToken" /> to observe while waiting for the task to complete.</param>
-    /// <remarks>
-    ///     <para>
-    ///         Note that this API is mutually exclusive with <see cref="DatabaseFacade.EnsureCreated" />.
-    ///         <see cref="DatabaseFacade.EnsureCreated" /> does not use migrations to create the database and therefore the database
-    ///         that is created cannot be later updated using migrations.
-    ///     </para>
-    ///     <para>
-    ///         See <see href="https://aka.ms/efcore-docs-migrations">Database migrations</see> for more information and examples.
-    ///     </para>
-    /// </remarks>
-    /// <returns>A task that represents the asynchronous migration operation.</returns>
-    /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
-    public static Task MigrateAsync(
-        this DatabaseFacade databaseFacade,
-        string? targetMigration,
-        CancellationToken cancellationToken = default)
-        => databaseFacade.GetRelationalService<IMigrator>().MigrateAsync(targetMigration, cancellationToken);
+        => databaseFacade.GetRelationalService<IMigrator>()
+            .MigrateAsync(cancellationToken: cancellationToken);
 
     /// <summary>
     ///     Executes the given SQL against the database and returns the number of rows affected.
@@ -233,8 +157,8 @@ public static class RelationalDatabaseFacadeExtensions
     public static int ExecuteSqlRaw(
         this DatabaseFacade databaseFacade,
         string sql,
-        params object?[] parameters)
-        => ExecuteSqlRaw(databaseFacade, sql, (IEnumerable<object?>)parameters);
+        params object[] parameters)
+        => ExecuteSqlRaw(databaseFacade, sql, (IEnumerable<object>)parameters);
 
     /// <summary>
     ///     Executes the given SQL against the database and returns the number of rows affected.
@@ -266,7 +190,7 @@ public static class RelationalDatabaseFacadeExtensions
     public static int ExecuteSqlInterpolated(
         this DatabaseFacade databaseFacade,
         FormattableString sql)
-        => ExecuteSqlRaw(databaseFacade, sql.Format, sql.GetArguments());
+        => ExecuteSqlRaw(databaseFacade, sql.Format, sql.GetArguments()!);
 
     /// <summary>
     ///     Executes the given SQL against the database and returns the number of rows affected.
@@ -298,7 +222,7 @@ public static class RelationalDatabaseFacadeExtensions
     public static int ExecuteSql(
         this DatabaseFacade databaseFacade,
         FormattableString sql)
-        => ExecuteSqlRaw(databaseFacade, sql.Format, sql.GetArguments());
+        => ExecuteSqlRaw(databaseFacade, sql.Format, sql.GetArguments()!);
 
     /// <summary>
     ///     Executes the given SQL against the database and returns the number of rows affected.
@@ -336,7 +260,7 @@ public static class RelationalDatabaseFacadeExtensions
     public static int ExecuteSqlRaw(
         this DatabaseFacade databaseFacade,
         string sql,
-        IEnumerable<object?> parameters)
+        IEnumerable<object> parameters)
     {
         Check.NotNull(sql, nameof(sql));
         Check.NotNull(parameters, nameof(parameters));
@@ -347,20 +271,27 @@ public static class RelationalDatabaseFacadeExtensions
             : null;
         var logger = facadeDependencies.CommandLogger;
 
-        using var _ = concurrencyDetector?.EnterCriticalSection();
+        concurrencyDetector?.EnterCriticalSection();
 
-        var rawSqlCommand = facadeDependencies.RawSqlCommandBuilder
-            .Build(sql, parameters, databaseFacade.GetService<IModel>());
+        try
+        {
+            var rawSqlCommand = facadeDependencies.RawSqlCommandBuilder
+                .Build(sql, parameters);
 
-        return rawSqlCommand
-            .RelationalCommand
-            .ExecuteNonQuery(
-                new RelationalCommandParameterObject(
-                    facadeDependencies.RelationalConnection,
-                    rawSqlCommand.ParameterValues,
-                    null,
-                    ((IDatabaseFacadeDependenciesAccessor)databaseFacade).Context,
-                    logger, CommandSource.ExecuteSqlRaw));
+            return rawSqlCommand
+                .RelationalCommand
+                .ExecuteNonQuery(
+                    new RelationalCommandParameterObject(
+                        facadeDependencies.RelationalConnection,
+                        rawSqlCommand.ParameterValues,
+                        null,
+                        ((IDatabaseFacadeDependenciesAccessor)databaseFacade).Context,
+                        logger, CommandSource.ExecuteSqlRaw));
+        }
+        finally
+        {
+            concurrencyDetector?.ExitCriticalSection();
+        }
     }
 
     /// <summary>
@@ -409,14 +340,11 @@ public static class RelationalDatabaseFacadeExtensions
         Check.NotNull(parameters, nameof(parameters));
 
         var facadeDependencies = GetFacadeDependencies(databaseFacade);
-        var queryProvider = facadeDependencies.QueryProvider;
-        var argumentsExpression = Expression.Constant(parameters);
 
-        return queryProvider.CreateQuery<TResult>(
-            facadeDependencies.TypeMappingSource.FindMapping(typeof(TResult)) != null
-                ? new SqlQueryRootExpression(queryProvider, typeof(TResult), sql, argumentsExpression)
-                : new FromSqlQueryRootExpression(
-                    queryProvider, facadeDependencies.AdHocMapper.GetOrAddEntityType(typeof(TResult)), sql, argumentsExpression));
+        return facadeDependencies.QueryProvider
+            .CreateQuery<TResult>(
+                new SqlQueryRootExpression(
+                    facadeDependencies.QueryProvider, typeof(TResult), sql, Expression.Constant(parameters)));
     }
 
     /// <summary>
@@ -452,7 +380,17 @@ public static class RelationalDatabaseFacadeExtensions
     public static IQueryable<TResult> SqlQuery<TResult>(
         this DatabaseFacade databaseFacade,
         [NotParameterized] FormattableString sql)
-        => SqlQueryRaw<TResult>(databaseFacade, sql.Format, sql.GetArguments()!);
+    {
+        Check.NotNull(sql, nameof(sql));
+        Check.NotNull(sql.Format, nameof(sql.Format));
+
+        var facadeDependencies = GetFacadeDependencies(databaseFacade);
+
+        return facadeDependencies.QueryProvider
+            .CreateQuery<TResult>(
+                new SqlQueryRootExpression(
+                    facadeDependencies.QueryProvider, typeof(TResult), sql.Format, Expression.Constant(sql.GetArguments())));
+    }
 
     /// <summary>
     ///     Executes the given SQL against the database and returns the number of rows affected.
@@ -656,22 +594,29 @@ public static class RelationalDatabaseFacadeExtensions
             : null;
         var logger = facadeDependencies.CommandLogger;
 
-        using var _ = concurrencyDetector?.EnterCriticalSection();
+        concurrencyDetector?.EnterCriticalSection();
 
-        var rawSqlCommand = facadeDependencies.RawSqlCommandBuilder
-            .Build(sql, parameters, databaseFacade.GetService<IModel>());
+        try
+        {
+            var rawSqlCommand = facadeDependencies.RawSqlCommandBuilder
+                .Build(sql, parameters);
 
-        return await rawSqlCommand
-            .RelationalCommand
-            .ExecuteNonQueryAsync(
-                new RelationalCommandParameterObject(
-                    facadeDependencies.RelationalConnection,
-                    rawSqlCommand.ParameterValues,
-                    null,
-                    ((IDatabaseFacadeDependenciesAccessor)databaseFacade).Context,
-                    logger, CommandSource.ExecuteSqlRaw),
-                cancellationToken)
-            .ConfigureAwait(false);
+            return await rawSqlCommand
+                .RelationalCommand
+                .ExecuteNonQueryAsync(
+                    new RelationalCommandParameterObject(
+                        facadeDependencies.RelationalConnection,
+                        rawSqlCommand.ParameterValues,
+                        null,
+                        ((IDatabaseFacadeDependenciesAccessor)databaseFacade).Context,
+                        logger, CommandSource.ExecuteSqlRaw),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            concurrencyDetector?.ExitCriticalSection();
+        }
     }
 
     /// <summary>
@@ -701,18 +646,16 @@ public static class RelationalDatabaseFacadeExtensions
     ///         The connection can only be set when the existing connection, if any, is not open.
     ///     </para>
     ///     <para>
+    ///         Note that the given connection must be disposed by application code since it was not created by Entity Framework.
+    ///     </para>
+    ///     <para>
     ///         See <see href="https://aka.ms/efcore-docs-connections">Connections and connection strings</see> for more information and examples.
     ///     </para>
     /// </remarks>
     /// <param name="databaseFacade">The <see cref="DatabaseFacade" /> for the context.</param>
     /// <param name="connection">The connection.</param>
-    /// <param name="contextOwnsConnection">
-    ///     If <see langword="true" />, then EF will take ownership of the connection and will
-    ///     dispose it in the same way it would dispose a connection created by EF. If <see langword="false" />, then the caller still
-    ///     owns the connection and is responsible for its disposal. The default value is <see langword="false" />.
-    /// </param>
-    public static void SetDbConnection(this DatabaseFacade databaseFacade, DbConnection? connection, bool contextOwnsConnection = false)
-        => GetFacadeDependencies(databaseFacade).RelationalConnection.SetDbConnection(connection, contextOwnsConnection);
+    public static void SetDbConnection(this DatabaseFacade databaseFacade, DbConnection? connection)
+        => GetFacadeDependencies(databaseFacade).RelationalConnection.DbConnection = connection;
 
     /// <summary>
     ///     Gets the underlying connection string configured for this <see cref="DbContext" />.
@@ -999,9 +942,6 @@ public static class RelationalDatabaseFacadeExtensions
     /// <returns>
     ///     A SQL script.
     /// </returns>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
     public static string GenerateCreateScript(this DatabaseFacade databaseFacade)
         => databaseFacade.GetRelationalService<IRelationalDatabaseCreator>().GenerateCreateScript();
 
@@ -1017,35 +957,27 @@ public static class RelationalDatabaseFacadeExtensions
         => ((IDatabaseFacadeDependenciesAccessor)databaseFacade)
             .Context.GetService<IDbContextOptions>().Extensions.OfType<RelationalOptionsExtension>().Any();
 
-    /// <summary>
-    ///     Returns <see langword="true" /> if the model has pending changes to be applied.
-    /// </summary>
-    /// <param name="databaseFacade">The facade from <see cref="DbContext.Database" />.</param>
-    /// <returns>
-    ///     <see langword="true" /> if the database model has pending changes
-    ///     and a new migration has to be added.
-    /// </returns>
-    [RequiresDynamicCode(
-        "Migrations operations are not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
-    public static bool HasPendingModelChanges(this DatabaseFacade databaseFacade)
-        => databaseFacade.GetRelationalService<IMigrator>().HasPendingModelChanges();
-
     private static IRelationalDatabaseFacadeDependencies GetFacadeDependencies(DatabaseFacade databaseFacade)
     {
         var dependencies = ((IDatabaseFacadeDependenciesAccessor)databaseFacade).Dependencies;
 
-        return dependencies is IRelationalDatabaseFacadeDependencies relationalDependencies
-            ? relationalDependencies
-            : throw new InvalidOperationException(RelationalStrings.RelationalNotInUse);
+        if (dependencies is IRelationalDatabaseFacadeDependencies relationalDependencies)
+        {
+            return relationalDependencies;
+        }
+
+        throw new InvalidOperationException(RelationalStrings.RelationalNotInUse);
     }
 
     private static TService GetRelationalService<TService>(this IInfrastructure<IServiceProvider> databaseFacade)
     {
         var service = databaseFacade.Instance.GetService<TService>();
-        return service == null
-            ? throw new InvalidOperationException(RelationalStrings.RelationalNotInUse)
-            : service;
+        if (service == null)
+        {
+            throw new InvalidOperationException(RelationalStrings.RelationalNotInUse);
+        }
+
+        return service;
     }
 
     private static IDbContextTransactionManager GetTransactionManager(this DatabaseFacade databaseFacade)

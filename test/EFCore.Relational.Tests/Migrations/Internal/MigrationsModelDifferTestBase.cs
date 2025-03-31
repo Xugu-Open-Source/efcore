@@ -124,8 +124,6 @@ public abstract class MigrationsModelDifferTestBase
                 TestServiceFactory.Instance.Create<RelationalTypeMappingSourceDependencies>()),
             new MigrationsAnnotationProvider(
                 new MigrationsAnnotationProviderDependencies()),
-            new RelationalAnnotationProvider(
-                new RelationalAnnotationProviderDependencies()),
             TestServiceFactory.Instance.Create<IRowIdentityMapFactory>(),
             TestHelpers.CreateContext(options).GetService<CommandBatchPreparerDependencies>());
 }

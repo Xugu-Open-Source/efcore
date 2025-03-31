@@ -12,7 +12,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite.Properties;
-using Microsoft.Data.Sqlite.Utilities;
 using SQLitePCL;
 using static SQLitePCL.raw;
 
@@ -167,7 +166,7 @@ namespace Microsoft.Data.Sqlite
         /// <value>The collection of parameters used by the command.</value>
         /// <seealso href="https://docs.microsoft.com/dotnet/standard/data/sqlite/parameters">Parameters</seealso>
         public new virtual SqliteParameterCollection Parameters
-            => _parameters ??= [];
+            => _parameters ??= new SqliteParameterCollection();
 
         /// <summary>
         ///     Gets the collection of parameters used by the command.
@@ -257,7 +256,9 @@ namespace Microsoft.Data.Sqlite
                 return;
             }
 
-            using var enumerator = PrepareAndEnumerateStatements().GetEnumerator();
+            var timer = new Stopwatch();
+
+            using var enumerator = PrepareAndEnumerateStatements(timer).GetEnumerator();
             while (enumerator.MoveNext())
             {
             }
@@ -306,21 +307,22 @@ namespace Microsoft.Data.Sqlite
                 throw new InvalidOperationException(Resources.TransactionCompleted);
             }
 
+            var timer = new Stopwatch();
             var closeConnection = behavior.HasFlag(CommandBehavior.CloseConnection);
 
-            var dataReader = new SqliteDataReader(this, GetStatements(), closeConnection);
+            var dataReader = new SqliteDataReader(this, timer, GetStatements(timer), closeConnection);
             dataReader.NextResult();
 
             return DataReader = dataReader;
         }
 
-        private IEnumerable<sqlite3_stmt> GetStatements()
+        private IEnumerable<sqlite3_stmt> GetStatements(Stopwatch timer)
         {
             foreach ((var stmt, var expectedParams) in !_prepared
-                ? PrepareAndEnumerateStatements()
+                ? PrepareAndEnumerateStatements(timer)
                 : _preparedStatements)
             {
-                var boundParams = _parameters?.Bind(stmt, Connection!.Handle!) ?? 0;
+                var boundParams = _parameters?.Bind(stmt) ?? 0;
 
                 if (expectedParams != boundParams)
                 {
@@ -464,7 +466,7 @@ namespace Microsoft.Data.Sqlite
         {
         }
 
-        private IEnumerable<(sqlite3_stmt Statement, int ParamCount)> PrepareAndEnumerateStatements()
+        private IEnumerable<(sqlite3_stmt Statement, int ParamCount)> PrepareAndEnumerateStatements(Stopwatch timer)
         {
             DisposePreparedStatements(disposing: false);
 
@@ -472,19 +474,18 @@ namespace Microsoft.Data.Sqlite
             var sql = new byte[byteCount + 1];
             Encoding.UTF8.GetBytes(_commandText, 0, _commandText.Length, sql, 0);
 
-            var totalElapsedTime = TimeSpan.Zero;
             int rc;
             sqlite3_stmt stmt;
             var start = 0;
             do
             {
-                var timer = SharedStopwatch.StartNew();
+                timer.Start();
 
                 ReadOnlySpan<byte> tail;
                 while (IsBusy(rc = sqlite3_prepare_v2(_connection!.Handle, sql.AsSpan(start), out stmt, out tail)))
                 {
                     if (CommandTimeout != 0
-                        && (totalElapsedTime + timer.Elapsed).TotalMilliseconds >= CommandTimeout * 1000L)
+                        && timer.ElapsedMilliseconds >= CommandTimeout * 1000L)
                     {
                         break;
                     }
@@ -492,7 +493,7 @@ namespace Microsoft.Data.Sqlite
                     Thread.Sleep(150);
                 }
 
-                totalElapsedTime += timer.Elapsed;
+                timer.Stop();
                 start = sql.Length - tail.Length;
 
                 SqliteException.ThrowExceptionForRC(rc, _connection.Handle);
@@ -543,6 +544,8 @@ namespace Microsoft.Data.Sqlite
         }
 
         private static bool IsBusy(int rc)
-            => rc is SQLITE_LOCKED or SQLITE_BUSY or SQLITE_LOCKED_SHAREDCACHE;
+            => rc == SQLITE_LOCKED
+                || rc == SQLITE_BUSY
+                || rc == SQLITE_LOCKED_SHAREDCACHE;
     }
 }

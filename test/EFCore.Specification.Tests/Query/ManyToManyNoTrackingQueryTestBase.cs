@@ -5,14 +5,17 @@ using Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class ManyToManyNoTrackingQueryTestBase<TFixture>(TFixture fixture) : ManyToManyQueryTestBase<TFixture>(fixture)
+public abstract class ManyToManyNoTrackingQueryTestBase<TFixture> : ManyToManyQueryTestBase<TFixture>
     where TFixture : ManyToManyQueryFixtureBase, new()
 {
     private static readonly MethodInfo _asNoTrackingMethodInfo
         = typeof(EntityFrameworkQueryableExtensions)
             .GetTypeInfo().GetDeclaredMethod(nameof(EntityFrameworkQueryableExtensions.AsNoTracking));
+
+    protected ManyToManyNoTrackingQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
 
     protected override bool IgnoreEntryCount
         => true;

@@ -4,22 +4,23 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class Currency
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public Currency()
+    public class Currency
     {
-        CountryRegionCurrency = new HashSet<CountryRegionCurrency>();
-        CurrencyRate = new HashSet<CurrencyRate>();
-        CurrencyRateNavigation = new HashSet<CurrencyRate>();
+        public Currency()
+        {
+            CountryRegionCurrency = new HashSet<CountryRegionCurrency>();
+            CurrencyRate = new HashSet<CurrencyRate>();
+            CurrencyRateNavigation = new HashSet<CurrencyRate>();
+        }
+
+        public string CurrencyCode { get; set; }
+        public DateTime ModifiedDate { get; set; }
+        public string Name { get; set; }
+
+        public virtual ICollection<CountryRegionCurrency> CountryRegionCurrency { get; set; }
+        public virtual ICollection<CurrencyRate> CurrencyRate { get; set; }
+        public virtual ICollection<CurrencyRate> CurrencyRateNavigation { get; set; }
     }
-
-    public string CurrencyCode { get; set; }
-    public DateTime ModifiedDate { get; set; }
-    public string Name { get; set; }
-
-    public virtual ICollection<CountryRegionCurrency> CountryRegionCurrency { get; set; }
-    public virtual ICollection<CurrencyRate> CurrencyRate { get; set; }
-    public virtual ICollection<CurrencyRate> CurrencyRateNavigation { get; set; }
 }

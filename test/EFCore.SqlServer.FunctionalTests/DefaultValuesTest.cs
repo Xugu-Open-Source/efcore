@@ -3,9 +3,7 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class DefaultValuesTest : IAsyncLifetime
+public class DefaultValuesTest : IDisposable
 {
     private readonly IServiceProvider _serviceProvider = new ServiceCollection()
         .AddEntityFrameworkSqlServer()
@@ -41,15 +39,18 @@ public class DefaultValuesTest : IAsyncLifetime
         }
     }
 
-    private class ChipsContext(IServiceProvider serviceProvider, string databaseName) : DbContext
+    private class ChipsContext : DbContext
     {
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
-        private readonly string _databaseName = databaseName;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly string _databaseName;
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        public ChipsContext(IServiceProvider serviceProvider, string databaseName)
+        {
+            _serviceProvider = serviceProvider;
+            _databaseName = databaseName;
+        }
+
         public DbSet<KettleChips> Chips { get; set; }
-
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public DbSet<Chipper> Chippers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -86,11 +87,13 @@ public class DefaultValuesTest : IAsyncLifetime
         public string Id { get; set; }
     }
 
-    protected SqlServerTestStore TestStore { get; private set; }
+    public DefaultValuesTest()
+    {
+        TestStore = SqlServerTestStore.CreateInitialized("DefaultValuesTest");
+    }
 
-    public async Task InitializeAsync()
-        => TestStore = await SqlServerTestStore.CreateInitializedAsync("DefaultValuesTest");
+    protected SqlServerTestStore TestStore { get; }
 
-    public async Task DisposeAsync()
-        => await TestStore.DisposeAsync();
+    public virtual void Dispose()
+        => TestStore.Dispose();
 }

@@ -3,8 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class TestTypeMappingSource(TypeMappingSourceDependencies dependencies) : TypeMappingSource(dependencies)
+public class TestTypeMappingSource : TypeMappingSource
 {
-    protected override CoreTypeMapping? FindMapping(in TypeMappingInfo mappingInfo)
+    public TestTypeMappingSource(TypeMappingSourceDependencies dependencies)
+        : base(dependencies)
+    {
+    }
+
+    protected override CoreTypeMapping FindMapping(in TypeMappingInfo mappingInfo)
         => null;
 }

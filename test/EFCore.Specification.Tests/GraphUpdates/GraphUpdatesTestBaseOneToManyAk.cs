@@ -7,8 +7,6 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public abstract partial class GraphUpdatesTestBase<TFixture>
     where TFixture : GraphUpdatesTestBase<TFixture>.GraphUpdatesFixtureBase, new()
 {
@@ -71,7 +69,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData((int)(ChangeMechanism.Fk | ChangeMechanism.Dependent), true, null)]
     [InlineData((int)(ChangeMechanism.Principal | ChangeMechanism.Dependent | ChangeMechanism.Fk), false, null)]
     [InlineData((int)(ChangeMechanism.Principal | ChangeMechanism.Dependent | ChangeMechanism.Fk), true, null)]
-    public virtual Task Save_optional_many_to_one_dependents_with_alternate_key(
+    public virtual void Save_optional_many_to_one_dependents_with_alternate_key(
         ChangeMechanism changeMechanism,
         bool useExistingEntities,
         CascadeTiming? deleteOrphansTiming)
@@ -88,32 +86,33 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         Root root = null;
         IReadOnlyList<EntityEntry> entries = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 if (useExistingEntities)
                 {
                     context.AddRange(new1, new1d, new1dd, new2a, new2d, new2dd, new2b, new2ca, new2cb);
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
-            }, async context =>
+            },
+            context =>
             {
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                root = await LoadOptionalAkGraphAsync(context);
+                root = LoadOptionalAkGraph(context);
                 var existing = root.OptionalChildrenAk.OrderBy(e => e.Id).First();
 
                 if (useExistingEntities)
                 {
-                    new1 = await context.Set<OptionalAk1>().SingleAsync(e => e.Id == new1.Id);
-                    new1d = (OptionalAk1Derived)await context.Set<OptionalAk1>().SingleAsync(e => e.Id == new1d.Id);
-                    new1dd = (OptionalAk1MoreDerived)await context.Set<OptionalAk1>().SingleAsync(e => e.Id == new1dd.Id);
-                    new2a = await context.Set<OptionalAk2>().SingleAsync(e => e.Id == new2a.Id);
-                    new2b = await context.Set<OptionalAk2>().SingleAsync(e => e.Id == new2b.Id);
-                    new2ca = await context.Set<OptionalComposite2>().SingleAsync(e => e.Id == new2ca.Id);
-                    new2cb = await context.Set<OptionalComposite2>().SingleAsync(e => e.Id == new2cb.Id);
-                    new2d = (OptionalAk2Derived)await context.Set<OptionalAk2>().SingleAsync(e => e.Id == new2d.Id);
-                    new2dd = (OptionalAk2MoreDerived)await context.Set<OptionalAk2>().SingleAsync(e => e.Id == new2dd.Id);
+                    new1 = context.Set<OptionalAk1>().Single(e => e.Id == new1.Id);
+                    new1d = (OptionalAk1Derived)context.Set<OptionalAk1>().Single(e => e.Id == new1d.Id);
+                    new1dd = (OptionalAk1MoreDerived)context.Set<OptionalAk1>().Single(e => e.Id == new1dd.Id);
+                    new2a = context.Set<OptionalAk2>().Single(e => e.Id == new2a.Id);
+                    new2b = context.Set<OptionalAk2>().Single(e => e.Id == new2b.Id);
+                    new2ca = context.Set<OptionalComposite2>().Single(e => e.Id == new2ca.Id);
+                    new2cb = context.Set<OptionalComposite2>().Single(e => e.Id == new2cb.Id);
+                    new2d = (OptionalAk2Derived)context.Set<OptionalAk2>().Single(e => e.Id == new2d.Id);
+                    new2dd = (OptionalAk2MoreDerived)context.Set<OptionalAk2>().Single(e => e.Id == new2dd.Id);
                 }
                 else
                 {
@@ -163,7 +162,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
 
@@ -200,9 +199,10 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 Assert.Equal(root.AlternateId, new1dd.ParentId);
 
                 entries = context.ChangeTracker.Entries().ToList();
-            }, async context =>
+            },
+            context =>
             {
-                var loadedRoot = await LoadOptionalAkGraphAsync(context);
+                var loadedRoot = LoadOptionalAkGraph(context);
 
                 AssertEntries(entries, context.ChangeTracker.Entries().ToList());
                 AssertKeys(root, loadedRoot);
@@ -269,7 +269,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData((int)(ChangeMechanism.Fk | ChangeMechanism.Dependent), true, null)]
     [InlineData((int)(ChangeMechanism.Principal | ChangeMechanism.Dependent | ChangeMechanism.Fk), false, null)]
     [InlineData((int)(ChangeMechanism.Principal | ChangeMechanism.Dependent | ChangeMechanism.Fk), true, null)]
-    public virtual Task Save_required_many_to_one_dependents_with_alternate_key(
+    public virtual void Save_required_many_to_one_dependents_with_alternate_key(
         ChangeMechanism changeMechanism,
         bool useExistingEntities,
         CascadeTiming? deleteOrphansTiming)
@@ -287,32 +287,33 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         Root root = null;
         IReadOnlyList<EntityEntry> entries = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 if (useExistingEntities)
                 {
                     context.AddRange(newRoot, new1, new1d, new1dd, new2a, new2d, new2dd, new2b, new2ca, new2cb);
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
-            }, async context =>
+            },
+            context =>
             {
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                root = await LoadRequiredAkGraphAsync(context);
+                root = LoadRequiredAkGraph(context);
                 var existing = root.RequiredChildrenAk.OrderBy(e => e.Id).First();
 
                 if (useExistingEntities)
                 {
-                    new1 = await context.Set<RequiredAk1>().SingleAsync(e => e.Id == new1.Id);
-                    new1d = (RequiredAk1Derived)await context.Set<RequiredAk1>().SingleAsync(e => e.Id == new1d.Id);
-                    new1dd = (RequiredAk1MoreDerived)await context.Set<RequiredAk1>().SingleAsync(e => e.Id == new1dd.Id);
-                    new2a = await context.Set<RequiredAk2>().SingleAsync(e => e.Id == new2a.Id);
-                    new2b = await context.Set<RequiredAk2>().SingleAsync(e => e.Id == new2b.Id);
-                    new2ca = await context.Set<RequiredComposite2>().SingleAsync(e => e.Id == new2ca.Id);
-                    new2cb = await context.Set<RequiredComposite2>().SingleAsync(e => e.Id == new2cb.Id);
-                    new2d = (RequiredAk2Derived)await context.Set<RequiredAk2>().SingleAsync(e => e.Id == new2d.Id);
-                    new2dd = (RequiredAk2MoreDerived)await context.Set<RequiredAk2>().SingleAsync(e => e.Id == new2dd.Id);
+                    new1 = context.Set<RequiredAk1>().Single(e => e.Id == new1.Id);
+                    new1d = (RequiredAk1Derived)context.Set<RequiredAk1>().Single(e => e.Id == new1d.Id);
+                    new1dd = (RequiredAk1MoreDerived)context.Set<RequiredAk1>().Single(e => e.Id == new1dd.Id);
+                    new2a = context.Set<RequiredAk2>().Single(e => e.Id == new2a.Id);
+                    new2b = context.Set<RequiredAk2>().Single(e => e.Id == new2b.Id);
+                    new2ca = context.Set<RequiredComposite2>().Single(e => e.Id == new2ca.Id);
+                    new2cb = context.Set<RequiredComposite2>().Single(e => e.Id == new2cb.Id);
+                    new2d = (RequiredAk2Derived)context.Set<RequiredAk2>().Single(e => e.Id == new2d.Id);
+                    new2dd = (RequiredAk2MoreDerived)context.Set<RequiredAk2>().Single(e => e.Id == new2dd.Id);
                 }
                 else
                 {
@@ -373,7 +374,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
 
@@ -410,9 +411,10 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 Assert.Equal(root.AlternateId, new1dd.ParentId);
 
                 entries = context.ChangeTracker.Entries().ToList();
-            }, async context =>
+            },
+            context =>
             {
-                var loadedRoot = await LoadRequiredAkGraphAsync(context);
+                var loadedRoot = LoadRequiredAkGraph(context);
 
                 AssertEntries(entries, context.ChangeTracker.Entries().ToList());
                 AssertKeys(root, loadedRoot);
@@ -449,17 +451,17 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData((int)(ChangeMechanism.Principal | ChangeMechanism.Fk), null)]
     [InlineData((int)(ChangeMechanism.Fk | ChangeMechanism.Dependent), null)]
     [InlineData((int)(ChangeMechanism.Principal | ChangeMechanism.Dependent | ChangeMechanism.Fk), null)]
-    public virtual Task Save_removed_optional_many_to_one_dependents_with_alternate_key(
+    public virtual void Save_removed_optional_many_to_one_dependents_with_alternate_key(
         ChangeMechanism changeMechanism,
         CascadeTiming? deleteOrphansTiming)
     {
         Root root = null;
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                root = await LoadOptionalAkGraphAsync(context);
+                root = LoadOptionalAkGraph(context);
 
                 var firstChild = root.OptionalChildrenAk.OrderByDescending(c => c.Id).First();
                 var childCollection = firstChild.Children;
@@ -491,7 +493,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.True(context.ChangeTracker.HasChanges());
 
-                await context.SaveChangesAsync();
+                context.SaveChanges();
 
                 Assert.False(context.ChangeTracker.HasChanges());
 
@@ -506,11 +508,12 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 Assert.Null(removed1.ParentId);
                 Assert.Null(removed2.ParentId);
                 Assert.Null(removed2c.ParentId);
-            }, async context =>
+            },
+            context =>
             {
                 if ((changeMechanism & ChangeMechanism.Fk) == 0)
                 {
-                    var loadedRoot = await LoadOptionalAkGraphAsync(context);
+                    var loadedRoot = LoadOptionalAkGraph(context);
 
                     AssertKeys(root, loadedRoot);
                     AssertNavigations(loadedRoot);
@@ -534,7 +537,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData((int)ChangeMechanism.Principal, null)]
     [InlineData((int)ChangeMechanism.Dependent, null)]
     [InlineData((int)(ChangeMechanism.Principal | ChangeMechanism.Dependent), null)]
-    public virtual Task Save_removed_required_many_to_one_dependents_with_alternate_key(
+    public virtual void Save_removed_required_many_to_one_dependents_with_alternate_key(
         ChangeMechanism changeMechanism,
         CascadeTiming? deleteOrphansTiming)
     {
@@ -543,12 +546,12 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         RequiredComposite2 removed2c = null;
         RequiredAk1 removed1 = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                root = await LoadRequiredAkGraphAsync(context);
+                root = LoadRequiredAkGraph(context);
 
                 var firstChild = root.RequiredChildrenAk.OrderByDescending(c => c.Id).First();
                 var childCollection = firstChild.Children;
@@ -580,20 +583,12 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     || deleteOrphansTiming == CascadeTiming.Never)
                 {
                     var testCode = deleteOrphansTiming == CascadeTiming.Immediate
-                        ? () =>
-                        {
-                            context.ChangeTracker.DetectChanges();
-                            return Task.CompletedTask;
-                        }
+                        ? () => context.ChangeTracker.DetectChanges()
                         : deleteOrphansTiming == null
-                            ? () =>
-                            {
-                                context.ChangeTracker.CascadeChanges();
-                                return Task.CompletedTask;
-                            }
-                            : (Func<Task>)(() => context.SaveChangesAsync());
+                            ? () => context.ChangeTracker.CascadeChanges()
+                            : (Action)(() => context.SaveChanges());
 
-                    var message = (await Assert.ThrowsAsync<InvalidOperationException>(testCode)).Message;
+                    var message = Assert.Throws<InvalidOperationException>(testCode).Message;
 
                     Assert.True(
                         message
@@ -612,7 +607,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                         context.ChangeTracker.CascadeChanges();
                     }
 
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -624,13 +619,14 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Null(removed2.Parent);
                     Assert.Null(removed2c.Parent);
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction
                     && !Fixture.NoStoreCascades
                     && deleteOrphansTiming != CascadeTiming.Never)
                 {
-                    var loadedRoot = await LoadRequiredAkGraphAsync(context);
+                    var loadedRoot = LoadRequiredAkGraph(context);
 
                     AssertKeys(root, loadedRoot);
                     AssertNavigations(loadedRoot);
@@ -657,20 +653,20 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Never, CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never, CascadeTiming.Never)]
     [InlineData(null, null)]
-    public virtual Task Optional_many_to_one_dependents_with_alternate_key_are_orphaned(
+    public virtual void Optional_many_to_one_dependents_with_alternate_key_are_orphaned(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
     {
         var removedId = 0;
         List<int> orphanedIds = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 context.ChangeTracker.CascadeDeleteTiming = cascadeDeleteTiming ?? CascadeTiming.Never;
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                var root = await LoadOptionalAkGraphAsync(context);
+                var root = LoadOptionalAkGraph(context);
 
                 Assert.Equal(2, root.OptionalChildrenAk.Count());
 
@@ -700,11 +696,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 if (Fixture.ForceClientNoAction)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -720,11 +716,12 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Same(root, removed.Parent);
                     Assert.Equal(2, removed.Children.Count());
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction)
                 {
-                    var root = await LoadOptionalAkGraphAsync(context);
+                    var root = LoadOptionalAkGraph(context);
 
                     Assert.Single(root.OptionalChildrenAk);
                     Assert.DoesNotContain(removedId, root.OptionalChildrenAk.Select(e => e.Id));
@@ -746,7 +743,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Never, CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never, CascadeTiming.Never)]
     [InlineData(null, null)]
-    public virtual Task Required_many_to_one_dependents_with_alternate_key_are_cascade_deleted(
+    public virtual void Required_many_to_one_dependents_with_alternate_key_are_cascade_deleted(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
     {
@@ -754,13 +751,13 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         List<int> orphanedIds = null;
         List<int> orphanedIdCs = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 context.ChangeTracker.CascadeDeleteTiming = cascadeDeleteTiming ?? CascadeTiming.Never;
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                var root = await LoadRequiredAkGraphAsync(context);
+                var root = LoadRequiredAkGraph(context);
 
                 Assert.Equal(2, root.RequiredChildrenAk.Count());
 
@@ -800,15 +797,15 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 if (Fixture.ForceClientNoAction)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else if (cascadeDeleteTiming == CascadeTiming.Never)
                 {
-                    await Assert.ThrowsAsync<InvalidOperationException>(() => context.SaveChangesAsync());
+                    Assert.Throws<InvalidOperationException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -825,12 +822,13 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Same(root, removed.Parent);
                     Assert.Equal(2, removed.Children.Count());
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction
                     && cascadeDeleteTiming != CascadeTiming.Never)
                 {
-                    var root = await LoadRequiredAkGraphAsync(context);
+                    var root = LoadRequiredAkGraph(context);
 
                     Assert.Single(root.RequiredChildrenAk);
                     Assert.DoesNotContain(removedId, root.RequiredChildrenAk.Select(e => e.Id));
@@ -853,7 +851,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Never, CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never, CascadeTiming.Never)]
     [InlineData(null, null)]
-    public virtual Task Required_many_to_one_dependents_with_alternate_key_are_cascade_deleted_in_store(
+    public virtual void Required_many_to_one_dependents_with_alternate_key_are_cascade_deleted_in_store(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
     {
@@ -861,10 +859,10 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         List<int> orphanedIds = null;
         List<int> orphanedIdCs = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var removed = (await LoadRequiredAkGraphAsync(context)).RequiredChildrenAk.First();
+                var removed = LoadRequiredAkGraph(context).RequiredChildrenAk.First();
 
                 removedId = removed.Id;
                 orphanedIds = removed.Children.Select(e => e.Id).ToList();
@@ -872,12 +870,13 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.Equal(2, orphanedIds.Count);
                 Assert.Equal(2, orphanedIdCs.Count);
-            }, async context =>
+            },
+            context =>
             {
                 context.ChangeTracker.CascadeDeleteTiming = cascadeDeleteTiming ?? CascadeTiming.Never;
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                var root = await context.Set<Root>().Include(e => e.RequiredChildrenAk).SingleAsync(IsTheRoot);
+                var root = context.Set<Root>().Include(e => e.RequiredChildrenAk).Single(IsTheRoot);
                 context.Set<RequiredAk1>().Load();
 
                 var removed = root.RequiredChildrenAk.Single(e => e.Id == removedId);
@@ -894,11 +893,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                 if (Fixture.ForceClientNoAction
                     || Fixture.NoStoreCascades)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -914,12 +913,13 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Same(root, removed.Parent);
                     Assert.Empty(removed.Children); // Never loaded
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction
                     && !Fixture.NoStoreCascades)
                 {
-                    var root = await LoadRequiredAkGraphAsync(context);
+                    var root = LoadRequiredAkGraph(context);
 
                     Assert.Single(root.RequiredChildrenAk);
                     Assert.DoesNotContain(removedId, root.RequiredChildrenAk.Select(e => e.Id));
@@ -942,7 +942,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Never, CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never, CascadeTiming.Never)]
     [InlineData(null, null)]
-    public virtual Task Optional_many_to_one_dependents_with_alternate_key_are_orphaned_in_store(
+    public virtual void Optional_many_to_one_dependents_with_alternate_key_are_orphaned_in_store(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
     {
@@ -950,10 +950,10 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         List<int> orphanedIds = null;
         List<int> orphanedIdCs = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
-                var removed = (await LoadOptionalAkGraphAsync(context)).OptionalChildrenAk.OrderBy(c => c.Id).First();
+                var removed = LoadOptionalAkGraph(context).OptionalChildrenAk.OrderBy(c => c.Id).First();
 
                 removedId = removed.Id;
                 orphanedIds = removed.Children.Select(e => e.Id).ToList();
@@ -961,19 +961,20 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 Assert.Equal(2, orphanedIds.Count);
                 Assert.Equal(2, orphanedIdCs.Count);
-            }, async context =>
+            },
+            context =>
             {
                 context.ChangeTracker.CascadeDeleteTiming = cascadeDeleteTiming ?? CascadeTiming.Never;
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                var root = await context.Set<Root>().Include(e => e.OptionalChildrenAk).SingleAsync(IsTheRoot);
+                var root = context.Set<Root>().Include(e => e.OptionalChildrenAk).Single(IsTheRoot);
                 context.Entry(root).Collection(e => e.OptionalChildrenAk).Load();
 
                 var removed = root.OptionalChildrenAk.First(e => e.Id == removedId);
 
                 context.Remove(removed);
 
-                foreach (var toOrphan in await context.Set<OptionalComposite2>().Where(e => orphanedIdCs.Contains(e.Id)).ToListAsync())
+                foreach (var toOrphan in context.Set<OptionalComposite2>().Where(e => orphanedIdCs.Contains(e.Id)).ToList())
                 {
                     toOrphan.ParentId = null;
                 }
@@ -987,11 +988,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 if (Fixture.ForceClientNoAction)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1002,33 +1003,34 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                     Assert.Empty(context.Set<OptionalAk1>().Where(e => e.Id == removedId));
 
-                    var orphaned = await context.Set<OptionalAk2>().Where(e => orphanedIds.Contains(e.Id)).ToListAsync();
+                    var orphaned = context.Set<OptionalAk2>().Where(e => orphanedIds.Contains(e.Id)).ToList();
                     Assert.Equal(orphanedIds.Count, orphaned.Count);
                     Assert.True(orphaned.All(e => e.ParentId == null));
 
-                    var orphanedC = await context.Set<OptionalComposite2>().Where(e => orphanedIdCs.Contains(e.Id)).ToListAsync();
+                    var orphanedC = context.Set<OptionalComposite2>().Where(e => orphanedIdCs.Contains(e.Id)).ToList();
                     Assert.Equal(orphanedIdCs.Count, orphanedC.Count);
                     Assert.True(orphanedC.All(e => e.ParentId == null));
 
                     Assert.Same(root, removed.Parent);
                     Assert.Empty(removed.Children); // Never loaded
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction)
                 {
-                    var root = await LoadOptionalAkGraphAsync(context);
+                    var root = LoadOptionalAkGraph(context);
 
                     Assert.Single(root.OptionalChildrenAk);
                     Assert.DoesNotContain(removedId, root.OptionalChildrenAk.Select(e => e.Id));
 
                     Assert.Empty(context.Set<OptionalAk1>().Where(e => e.Id == removedId));
 
-                    var orphaned = await context.Set<OptionalAk2>().Where(e => orphanedIds.Contains(e.Id)).ToListAsync();
+                    var orphaned = context.Set<OptionalAk2>().Where(e => orphanedIds.Contains(e.Id)).ToList();
                     Assert.Equal(orphanedIds.Count, orphaned.Count);
                     Assert.True(orphaned.All(e => e.ParentId == null));
 
-                    var orphanedC = await context.Set<OptionalComposite2>().Where(e => orphanedIdCs.Contains(e.Id)).ToListAsync();
+                    var orphanedC = context.Set<OptionalComposite2>().Where(e => orphanedIdCs.Contains(e.Id)).ToList();
                     Assert.Equal(orphanedIdCs.Count, orphanedC.Count);
                     Assert.True(orphanedC.All(e => e.ParentId == null));
                 }
@@ -1046,7 +1048,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Never, CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never, CascadeTiming.Never)]
     [InlineData(null, null)]
-    public virtual Task Optional_many_to_one_dependents_with_alternate_key_are_orphaned_starting_detached(
+    public virtual void Optional_many_to_one_dependents_with_alternate_key_are_orphaned_starting_detached(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
     {
@@ -1055,13 +1057,14 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         List<int> orphanedIdCs = null;
         Root root = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
-                root = await LoadOptionalAkGraphAsync(context);
+                root = LoadOptionalAkGraph(context);
 
                 Assert.Equal(2, root.OptionalChildrenAk.Count());
-            }, async context =>
+            },
+            context =>
             {
                 context.ChangeTracker.CascadeDeleteTiming = cascadeDeleteTiming ?? CascadeTiming.Never;
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
@@ -1089,7 +1092,8 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     context.ChangeTracker.CascadeChanges();
                 }
 
-                var expectedState = cascadeDeleteTiming is CascadeTiming.Immediate or null
+                var expectedState = (cascadeDeleteTiming == CascadeTiming.Immediate
+                        || cascadeDeleteTiming == null)
                     && !Fixture.ForceClientNoAction
                         ? EntityState.Modified
                         : EntityState.Unchanged;
@@ -1101,11 +1105,11 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 if (Fixture.ForceClientNoAction)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1116,11 +1120,12 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Same(root, removed.Parent);
                     Assert.Equal(2, removed.Children.Count());
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction)
                 {
-                    root = await LoadOptionalAkGraphAsync(context);
+                    root = LoadOptionalAkGraph(context);
 
                     Assert.Single(root.OptionalChildrenAk);
                     Assert.DoesNotContain(removedId, root.OptionalChildrenAk.Select(e => e.Id));
@@ -1143,7 +1148,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Never, CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never, CascadeTiming.Never)]
     [InlineData(null, null)]
-    public virtual Task Required_many_to_one_dependents_with_alternate_key_are_cascade_deleted_starting_detached(
+    public virtual void Required_many_to_one_dependents_with_alternate_key_are_cascade_deleted_starting_detached(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
     {
@@ -1152,13 +1157,14 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         List<int> orphanedIdCs = null;
         Root root = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
-                root = await LoadRequiredAkGraphAsync(context);
+                root = LoadRequiredAkGraph(context);
 
                 Assert.Equal(2, root.RequiredChildrenAk.Count());
-            }, async context =>
+            },
+            context =>
             {
                 context.ChangeTracker.CascadeDeleteTiming = cascadeDeleteTiming ?? CascadeTiming.Never;
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
@@ -1185,7 +1191,8 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     context.ChangeTracker.CascadeChanges();
                 }
 
-                var expectedState = cascadeDeleteTiming is CascadeTiming.Immediate or null
+                var expectedState = (cascadeDeleteTiming == CascadeTiming.Immediate
+                        || cascadeDeleteTiming == null)
                     && !Fixture.ForceClientNoAction
                         ? EntityState.Deleted
                         : EntityState.Unchanged;
@@ -1197,15 +1204,15 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 if (Fixture.ForceClientNoAction)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else if (cascadeDeleteTiming == CascadeTiming.Never)
                 {
-                    await Assert.ThrowsAsync<InvalidOperationException>(() => context.SaveChangesAsync());
+                    Assert.Throws<InvalidOperationException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1216,12 +1223,13 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Same(root, removed.Parent);
                     Assert.Equal(2, removed.Children.Count());
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction
                     && cascadeDeleteTiming != CascadeTiming.Never)
                 {
-                    root = await LoadRequiredAkGraphAsync(context);
+                    root = LoadRequiredAkGraph(context);
 
                     Assert.Single(root.RequiredChildrenAk);
                     Assert.DoesNotContain(removedId, root.RequiredChildrenAk.Select(e => e.Id));
@@ -1244,7 +1252,7 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
     [InlineData(CascadeTiming.Never, CascadeTiming.Immediate)]
     [InlineData(CascadeTiming.Never, CascadeTiming.Never)]
     [InlineData(null, null)]
-    public virtual Task Required_many_to_one_dependents_with_alternate_key_are_cascade_detached_when_Added(
+    public virtual void Required_many_to_one_dependents_with_alternate_key_are_cascade_detached_when_Added(
         CascadeTiming? cascadeDeleteTiming,
         CascadeTiming? deleteOrphansTiming)
     {
@@ -1252,13 +1260,13 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
         List<int> orphanedIds = null;
         List<int> orphanedIdCs = null;
 
-        return ExecuteWithStrategyInTransactionAsync(
-            async context =>
+        ExecuteWithStrategyInTransaction(
+            context =>
             {
                 context.ChangeTracker.CascadeDeleteTiming = cascadeDeleteTiming ?? CascadeTiming.Never;
                 context.ChangeTracker.DeleteOrphansTiming = deleteOrphansTiming ?? CascadeTiming.Never;
 
-                var root = await LoadRequiredAkGraphAsync(context);
+                var root = LoadRequiredAkGraph(context);
 
                 Assert.Equal(2, root.RequiredChildrenAk.Count());
 
@@ -1303,7 +1311,8 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     context.ChangeTracker.CascadeChanges();
                 }
 
-                if (cascadeDeleteTiming is CascadeTiming.Immediate or null
+                if ((cascadeDeleteTiming == CascadeTiming.Immediate
+                        || cascadeDeleteTiming == null)
                     && !Fixture.ForceClientNoAction)
                 {
                     Assert.Equal(EntityState.Detached, context.Entry(added).State);
@@ -1323,15 +1332,15 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
 
                 if (Fixture.ForceClientNoAction)
                 {
-                    await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+                    Assert.Throws<DbUpdateException>(() => context.SaveChanges());
                 }
                 else if (cascadeDeleteTiming == CascadeTiming.Never)
                 {
-                    await Assert.ThrowsAsync<InvalidOperationException>(() => context.SaveChangesAsync());
+                    Assert.Throws<InvalidOperationException>(() => context.SaveChanges());
                 }
                 else
                 {
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
 
                     Assert.False(context.ChangeTracker.HasChanges());
 
@@ -1344,12 +1353,13 @@ public abstract partial class GraphUpdatesTestBase<TFixture>
                     Assert.Same(root, removed.Parent);
                     Assert.Equal(3, removed.Children.Count());
                 }
-            }, async context =>
+            },
+            context =>
             {
                 if (!Fixture.ForceClientNoAction
                     && cascadeDeleteTiming != CascadeTiming.Never)
                 {
-                    var root = await LoadRequiredAkGraphAsync(context);
+                    var root = LoadRequiredAkGraph(context);
 
                     Assert.Single(root.RequiredChildrenAk);
                     Assert.DoesNotContain(removedId, root.RequiredChildrenAk.Select(e => e.Id));

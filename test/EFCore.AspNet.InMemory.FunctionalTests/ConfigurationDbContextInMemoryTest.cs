@@ -5,11 +5,13 @@ using IdentityServer4.EntityFramework.DbContexts;
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class ConfigurationDbContextInMemoryTest(ConfigurationDbContextInMemoryTest.ConfigurationDbContextInMemoryFixture fixture)
-    : ConfigurationDbContextTestBase<ConfigurationDbContextInMemoryTest.ConfigurationDbContextInMemoryFixture>(fixture)
+public class ConfigurationDbContextInMemoryTest
+    : ConfigurationDbContextTestBase<ConfigurationDbContextInMemoryTest.ConfigurationDbContextInMemoryFixture>
 {
-    protected override bool HasForeignKeyIndexes
-        => false;
+    public ConfigurationDbContextInMemoryTest(ConfigurationDbContextInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
 
     protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
     {

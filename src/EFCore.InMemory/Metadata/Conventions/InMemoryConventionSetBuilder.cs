@@ -37,7 +37,6 @@ public class InMemoryConventionSetBuilder : ProviderConventionSetBuilder
         var conventionSet = base.CreateConventionSet();
 
         conventionSet.Add(new DefiningQueryRewritingConvention(Dependencies));
-        conventionSet.Remove(typeof(ForeignKeyIndexConvention));
 
         return conventionSet;
     }

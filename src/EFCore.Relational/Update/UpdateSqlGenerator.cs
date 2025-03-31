@@ -29,11 +29,13 @@ namespace Microsoft.EntityFrameworkCore.Update;
 public abstract class UpdateSqlGenerator : IUpdateSqlGenerator
 {
     /// <summary>
-    ///     Initializes a new instance of this class.
+    ///     Initializes a new instance of the this class.
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     protected UpdateSqlGenerator(UpdateSqlGeneratorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.
@@ -177,7 +179,7 @@ public abstract class UpdateSqlGenerator : IUpdateSqlGenerator
         requiresTransaction = false;
 
         AppendDeleteCommand(
-            commandStringBuilder, name, schema, [], conditionOperations, appendReturningOneClause: true);
+            commandStringBuilder, name, schema, Array.Empty<IColumnModification>(), conditionOperations, appendReturningOneClause: true);
 
         return ResultSetMapping.LastInResultSet | ResultSetMapping.ResultSetWithRowsAffectedOnly;
     }
@@ -517,7 +519,7 @@ public abstract class UpdateSqlGenerator : IUpdateSqlGenerator
                     commandStringBuilder.Append(", ");
                 }
 
-                commandStringBuilder.Append('1');
+                commandStringBuilder.Append("1");
             }
         }
     }

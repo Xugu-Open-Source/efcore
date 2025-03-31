@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Internal;
 
 // ReSharper disable UnusedMember.Local
@@ -42,8 +41,7 @@ public class InternalModelBuilderTest
     [ConditionalFact]
     public void Can_ignore_lower_or_equal_source_entity_type_using_entity_clr_type()
     {
-        var logger = CreateTestLogger();
-        var model = new Model(new ConventionSet(), new ModelDependencies(logger));
+        var model = new Model();
         var modelBuilder = CreateModelBuilder(model);
         modelBuilder.Entity(typeof(Customer), ConfigurationSource.Convention);
 
@@ -53,42 +51,29 @@ public class InternalModelBuilderTest
         Assert.NotNull(modelBuilder.Ignore(typeof(Customer), ConfigurationSource.DataAnnotation));
         Assert.Null(modelBuilder.Entity(typeof(Customer), ConfigurationSource.DataAnnotation));
 
-        Assert.Null(logger.Message);
-
         Assert.NotNull(modelBuilder.Entity(typeof(Customer), ConfigurationSource.Explicit));
 
         Assert.NotNull(modelBuilder.Ignore(typeof(Customer), ConfigurationSource.Explicit));
         Assert.Null(model.FindEntityType(typeof(Customer)));
-
-        Assert.Equal(
-            CoreResources.LogMappedEntityTypeIgnored(logger).GenerateMessage(nameof(Customer)),
-            logger.Message);
     }
 
     [ConditionalFact]
     public void Can_ignore_lower_or_equal_source_entity_type_using_entity_type_name()
     {
-        var logger = CreateTestLogger();
-        var model = new Model(new ConventionSet(), new ModelDependencies(logger));
+        var model = new Model();
         var modelBuilder = CreateModelBuilder(model);
-        modelBuilder.Entity(typeof(Customer).FullName!, ConfigurationSource.DataAnnotation);
+        modelBuilder.Entity(typeof(Customer).FullName, ConfigurationSource.DataAnnotation);
 
-        Assert.NotNull(modelBuilder.Ignore(typeof(Customer).FullName!, ConfigurationSource.DataAnnotation));
+        Assert.NotNull(modelBuilder.Ignore(typeof(Customer).FullName, ConfigurationSource.DataAnnotation));
 
-        Assert.Null(model.FindEntityType(typeof(Customer).FullName!));
-        Assert.NotNull(modelBuilder.Ignore(typeof(Customer).FullName!, ConfigurationSource.Explicit));
-        Assert.Null(modelBuilder.Entity(typeof(Customer).FullName!, ConfigurationSource.DataAnnotation));
+        Assert.Null(model.FindEntityType(typeof(Customer).FullName));
+        Assert.NotNull(modelBuilder.Ignore(typeof(Customer).FullName, ConfigurationSource.Explicit));
+        Assert.Null(modelBuilder.Entity(typeof(Customer).FullName, ConfigurationSource.DataAnnotation));
 
-        Assert.Null(logger.Message);
+        Assert.NotNull(modelBuilder.Entity(typeof(Customer).FullName, ConfigurationSource.Explicit));
 
-        Assert.NotNull(modelBuilder.Entity(typeof(Customer).FullName!, ConfigurationSource.Explicit));
-
-        Assert.NotNull(modelBuilder.Ignore(typeof(Customer).FullName!, ConfigurationSource.Explicit));
-        Assert.Null(model.FindEntityType(typeof(Customer).FullName!));
-
-        Assert.Equal(
-            CoreResources.LogMappedEntityTypeIgnored(logger).GenerateMessage(nameof(Customer)),
-            logger.Message);
+        Assert.NotNull(modelBuilder.Ignore(typeof(Customer).FullName, ConfigurationSource.Explicit));
+        Assert.Null(model.FindEntityType(typeof(Customer).FullName));
     }
 
     [ConditionalFact]
@@ -124,46 +109,32 @@ public class InternalModelBuilderTest
     [ConditionalFact]
     public void Can_ignore_existing_entity_type_using_entity_clr_type()
     {
-        var logger = CreateTestLogger();
-        var model = new Model(new ConventionSet(), new ModelDependencies(logger));
+        var model = new Model();
         var entityType = model.AddEntityType(typeof(Customer), owned: false, ConfigurationSource.Explicit);
         var modelBuilder = CreateModelBuilder(model);
-        Assert.Same(entityType, modelBuilder.Entity(typeof(Customer), ConfigurationSource.Convention)!.Metadata);
+        Assert.Same(entityType, modelBuilder.Entity(typeof(Customer), ConfigurationSource.Convention).Metadata);
         Assert.Null(modelBuilder.Ignore(typeof(Customer), ConfigurationSource.DataAnnotation));
         Assert.NotNull(model.FindEntityType(typeof(Customer)));
-
-        Assert.Null(logger.Message);
 
         Assert.NotNull(modelBuilder.Ignore(typeof(Customer), ConfigurationSource.Explicit));
 
         Assert.Null(model.FindEntityType(typeof(Customer)));
-
-        Assert.Equal(
-            CoreResources.LogMappedEntityTypeIgnored(logger).GenerateMessage(nameof(Customer)),
-            logger.Message);
     }
 
     [ConditionalFact]
     public void Can_ignore_existing_entity_type_using_entity_type_name()
     {
-        var logger = CreateTestLogger();
-        var model = new Model(new ConventionSet(), new ModelDependencies(logger));
-        var entityType = model.AddEntityType(typeof(Customer).FullName!, owned: false, ConfigurationSource.Explicit);
+        var model = new Model();
+        var entityType = model.AddEntityType(typeof(Customer).FullName, owned: false, ConfigurationSource.Explicit);
         var modelBuilder = CreateModelBuilder(model);
 
-        Assert.Same(entityType, modelBuilder.Entity(typeof(Customer).FullName!, ConfigurationSource.Convention)!.Metadata);
-        Assert.Null(modelBuilder.Ignore(typeof(Customer).FullName!, ConfigurationSource.DataAnnotation));
-        Assert.NotNull(model.FindEntityType(typeof(Customer).FullName!));
+        Assert.Same(entityType, modelBuilder.Entity(typeof(Customer).FullName, ConfigurationSource.Convention).Metadata);
+        Assert.Null(modelBuilder.Ignore(typeof(Customer).FullName, ConfigurationSource.DataAnnotation));
+        Assert.NotNull(model.FindEntityType(typeof(Customer).FullName));
 
-        Assert.Null(logger.Message);
+        Assert.NotNull(modelBuilder.Ignore(typeof(Customer).FullName, ConfigurationSource.Explicit));
 
-        Assert.NotNull(modelBuilder.Ignore(typeof(Customer).FullName!, ConfigurationSource.Explicit));
-
-        Assert.Null(model.FindEntityType(typeof(Customer).FullName!));
-
-        Assert.Equal(
-            CoreResources.LogMappedEntityTypeIgnored(logger).GenerateMessage(nameof(Customer)),
-            logger.Message);
+        Assert.Null(model.FindEntityType(typeof(Customer).FullName));
     }
 
     [ConditionalFact]
@@ -372,7 +343,7 @@ public class InternalModelBuilderTest
 
         Assert.NotNull(modelBuilder.SharedTypeEntity(nameof(Details), typeof(Details), ConfigurationSource.Explicit));
 
-        Assert.DoesNotContain(model.FindEntityTypes(typeof(Details)), e => !e.HasSharedClrType);
+        Assert.Empty(model.FindEntityTypes(typeof(Details)).Where(e => !e.HasSharedClrType));
 
         Assert.Null(modelBuilder.Owned(typeof(Details), ConfigurationSource.Convention));
 
@@ -435,9 +406,9 @@ public class InternalModelBuilderTest
         Assert.NotNull(joinEntityType);
         Assert.NotNull(modelBuilder.RemoveImplicitJoinEntity(joinEntityType));
 
-        Assert.DoesNotContain(
-            model.GetEntityTypes(),
-            e => e.IsImplicitlyCreatedJoinEntityType);
+        Assert.Empty(
+            model.GetEntityTypes()
+                .Where(e => e.IsImplicitlyCreatedJoinEntityType));
 
         var leftSkipNav = manyToManyLeft.Metadata.FindDeclaredSkipNavigation(nameof(ManyToManyLeft.Rights));
         var rightSkipNav = manyToManyRight.Metadata.FindDeclaredSkipNavigation(nameof(ManyToManyRight.Lefts));
@@ -535,9 +506,6 @@ public class InternalModelBuilderTest
                 .Message);
     }
 
-    private static TestLogger<DbLoggerCategory.Model, TestLoggingDefinitions> CreateTestLogger()
-        => new() { EnabledFor = LogLevel.Warning };
-
     private static void Cleanup(InternalModelBuilder modelBuilder)
         => new ModelCleanupConvention(CreateDependencies())
             .ProcessModelFinalizing(
@@ -563,7 +531,9 @@ public class InternalModelBuilderTest
         public Details Details { get; set; }
     }
 
-    private class SpecialCustomer : Customer;
+    private class SpecialCustomer : Customer
+    {
+    }
 
     private class Order
     {

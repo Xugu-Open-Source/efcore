@@ -15,8 +15,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 /// </summary>
 [RequiresUnreferencedCode(
     "BindingList raises ListChanged events with PropertyDescriptors. PropertyDescriptors require unreferenced code.")]
-[RequiresDynamicCode("Requires calling MakeGenericType on the property descriptor's type")]
-public class ObservableBackedBindingList<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T> : SortableBindingList<T>
+public class ObservableBackedBindingList<T> : SortableBindingList<T>
 {
     private bool _addingNewInstance;
     private T? _addNewInstance;
@@ -202,7 +201,8 @@ public class ObservableBackedBindingList<[DynamicallyAccessedMembers(Dynamically
                     Clear();
                 }
 
-                if (e.Action is NotifyCollectionChangedAction.Remove or NotifyCollectionChangedAction.Replace)
+                if (e.Action == NotifyCollectionChangedAction.Remove
+                    || e.Action == NotifyCollectionChangedAction.Replace)
                 {
                     foreach (T entity in e.OldItems!)
                     {
@@ -210,7 +210,8 @@ public class ObservableBackedBindingList<[DynamicallyAccessedMembers(Dynamically
                     }
                 }
 
-                if (e.Action is NotifyCollectionChangedAction.Add or NotifyCollectionChangedAction.Replace)
+                if (e.Action == NotifyCollectionChangedAction.Add
+                    || e.Action == NotifyCollectionChangedAction.Replace)
                 {
                     foreach (T entity in e.NewItems!)
                     {

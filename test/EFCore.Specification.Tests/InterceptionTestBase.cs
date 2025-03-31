@@ -5,11 +5,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class InterceptionTestBase(InterceptionTestBase.InterceptionFixtureBase fixture)
+public abstract class InterceptionTestBase
 {
-    protected InterceptionFixtureBase Fixture { get; } = fixture;
+    protected InterceptionTestBase(InterceptionFixtureBase fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected InterceptionFixtureBase Fixture { get; }
 
     protected class Singularity
     {
@@ -27,8 +30,13 @@ public abstract class InterceptionTestBase(InterceptionTestBase.InterceptionFixt
         public string Type { get; set; }
     }
 
-    public class UniverseContext(DbContextOptions options) : PoolableDbContext(options)
+    public class UniverseContext : PoolableDbContext
     {
+        public UniverseContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder
@@ -45,29 +53,29 @@ public abstract class InterceptionTestBase(InterceptionTestBase.InterceptionFixt
         }
     }
 
-    protected async Task<(DbContext, TInterceptor)> CreateContextAsync<TInterceptor>(bool inject = false)
+    protected (DbContext, TInterceptor) CreateContext<TInterceptor>(bool inject = false)
         where TInterceptor : class, IInterceptor, new()
     {
         var interceptor = new TInterceptor();
 
-        var context = inject ? await CreateContextAsync(null, interceptor) : await CreateContextAsync(interceptor);
+        var context = inject ? CreateContext(null, interceptor) : CreateContext(interceptor);
 
         return (context, interceptor);
     }
 
-    public Task<UniverseContext> CreateContextAsync(IInterceptor appInterceptor, params IInterceptor[] injectedInterceptors)
-        => SeedAsync(
+    public UniverseContext CreateContext(IInterceptor appInterceptor, params IInterceptor[] injectedInterceptors)
+        => Seed(
             new UniverseContext(
                 Fixture.CreateOptions(
                     new[] { appInterceptor }, injectedInterceptors)));
 
-    public Task<UniverseContext> CreateContextAsync(
+    public UniverseContext CreateContext(
         IEnumerable<IInterceptor> appInterceptors,
         IEnumerable<IInterceptor> injectedInterceptors = null)
-        => SeedAsync(new UniverseContext(Fixture.CreateOptions(appInterceptors, injectedInterceptors ?? Enumerable.Empty<IInterceptor>())));
+        => Seed(new UniverseContext(Fixture.CreateOptions(appInterceptors, injectedInterceptors ?? Enumerable.Empty<IInterceptor>())));
 
-    public virtual Task<UniverseContext> SeedAsync(UniverseContext context)
-        => Task.FromResult(context);
+    public virtual UniverseContext Seed(UniverseContext context)
+        => context;
 
     public interface ITestDiagnosticListener : IDisposable
     {
@@ -91,7 +99,7 @@ public abstract class InterceptionTestBase(InterceptionTestBase.InterceptionFixt
     {
         private readonly DbContextId _contextId;
         private readonly IDisposable _subscription;
-        private readonly List<string> _events = [];
+        private readonly List<string> _events = new();
 
         public TestDiagnosticListener(DbContextId contextId)
         {
@@ -118,12 +126,12 @@ public abstract class InterceptionTestBase(InterceptionTestBase.InterceptionFixt
 
                 if (indexFound < 0)
                 {
-                    Assert.Fail($"Event {eventNames[i]} not found.");
+                    Assert.True(false, $"Event {eventNames[i]} not found.");
                 }
 
                 if (indexFound < lastIndex)
                 {
-                    Assert.Fail($"Event {eventNames[i]} found before {eventNames[i - 1]}.");
+                    Assert.True(false, $"Event {eventNames[i]} found before {eventNames[i - 1]}.");
                 }
 
                 lastIndex = indexFound;

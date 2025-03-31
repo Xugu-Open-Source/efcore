@@ -3,10 +3,8 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class IncompleteMappingInheritanceQuerySqliteFixture : TPHInheritanceQuerySqliteFixture
+public class IncompleteMappingInheritanceQuerySqliteFixture : InheritanceQuerySqliteFixture
 {
-    public override bool IsDiscriminatorMappingComplete
+    protected override bool IsDiscriminatorMappingComplete
         => false;
 }

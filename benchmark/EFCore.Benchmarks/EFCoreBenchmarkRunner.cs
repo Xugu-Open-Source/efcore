@@ -7,18 +7,19 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Running;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks;
-
-public static class EFCoreBenchmarkRunner
+namespace Microsoft.EntityFrameworkCore.Benchmarks
 {
-    public static void Run(string[] args, Assembly assembly, IConfig config = null)
+    public static class EFCoreBenchmarkRunner
     {
-        config ??= DefaultConfig.Instance;
+        public static void Run(string[] args, Assembly assembly, IConfig config = null)
+        {
+            config ??= DefaultConfig.Instance;
 
-        config = config
-            .AddDiagnoser(MemoryDiagnoser.Default)
-            .AddColumn(StatisticColumn.OperationsPerSecond);
+            config = config
+                .AddDiagnoser(MemoryDiagnoser.Default)
+                .AddColumn(StatisticColumn.OperationsPerSecond);
 
-        BenchmarkSwitcher.FromAssembly(assembly).Run(args, config);
+            BenchmarkSwitcher.FromAssembly(assembly).Run(args, config);
+        }
     }
 }

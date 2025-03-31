@@ -16,7 +16,6 @@ namespace Microsoft.EntityFrameworkCore.Query;
 ///     See <see href="https://aka.ms/efcore-docs-providers">Implementation of database providers and extensions</see>
 ///     and <see href="https://aka.ms/efcore-docs-how-query-works">How EF Core queries work</see> for more information and examples.
 /// </remarks>
-[DebuggerDisplay("{Microsoft.EntityFrameworkCore.Query.ExpressionPrinter.Print(QueryExpression), nq}")]
 public class ShapedQueryExpression : Expression, IPrintableExpression
 {
     /// <summary>
@@ -91,11 +90,11 @@ public class ShapedQueryExpression : Expression, IPrintableExpression
     /// <param name="queryExpression">The <see cref="QueryExpression" /> property of the result.</param>
     /// <returns>This expression if shaper expression did not change, or an expression with the updated shaper expression.</returns>
     public virtual ShapedQueryExpression UpdateQueryExpression(Expression queryExpression)
-        => ReferenceEquals(queryExpression, QueryExpression)
-            ? this
-            : new ShapedQueryExpression(
+        => !ReferenceEquals(queryExpression, QueryExpression)
+            ? new ShapedQueryExpression(
                 queryExpression,
-                ReplacingExpressionVisitor.Replace(QueryExpression, queryExpression, ShaperExpression), ResultCardinality);
+                ReplacingExpressionVisitor.Replace(QueryExpression, queryExpression, ShaperExpression), ResultCardinality)
+            : this;
 
     /// <summary>
     ///     Creates a new expression that is like this one, but using the supplied shaper expression. If shaper expression is the same, it will

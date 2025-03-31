@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
-#nullable disable
-
 public partial class NorthwindData : ISetSource
 {
     public static readonly NorthwindData Instance = new();
@@ -44,7 +42,7 @@ public partial class NorthwindData : ISetSource
 
         foreach (var customer in Customers)
         {
-            customer.Orders = [];
+            customer.Orders = new List<Order>();
 
             customerQueries.Add(
                 new CustomerQuery
@@ -64,7 +62,7 @@ public partial class NorthwindData : ISetSource
 
         foreach (var product in Products)
         {
-            product.OrderDetails = [];
+            product.OrderDetails = new List<OrderDetail>();
 
             if (!product.Discontinued)
             {
@@ -211,6 +209,13 @@ public partial class NorthwindData : ISetSource
         }
 
         throw new InvalidOperationException("Invalid entity type: " + typeof(TEntity));
+    }
+
+    public static void Seed(NorthwindContext context)
+    {
+        AddEntities(context);
+
+        context.SaveChanges();
     }
 
     public static Task SeedAsync(NorthwindContext context)

@@ -19,7 +19,9 @@ public class DetectedChangesEventArgs : EventArgs
     /// </summary>
     [EntityFrameworkInternal]
     public DetectedChangesEventArgs(bool changesFound)
-        => ChangesFound = changesFound;
+    {
+        ChangesFound = changesFound;
+    }
 
     /// <summary>
     ///     Returns <see langword="true" /> if changes were found, <see langword="false" /> otherwise.

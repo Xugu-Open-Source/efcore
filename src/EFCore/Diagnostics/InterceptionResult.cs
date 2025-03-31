@@ -29,7 +29,9 @@ public readonly struct InterceptionResult
         => new(true);
 
     private InterceptionResult(bool suppress)
-        => IsSuppressed = suppress;
+    {
+        IsSuppressed = suppress;
+    }
 
     /// <summary>
     ///     If true, then interception is suppressed.

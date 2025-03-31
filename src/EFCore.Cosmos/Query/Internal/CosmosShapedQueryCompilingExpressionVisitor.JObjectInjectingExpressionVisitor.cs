@@ -5,7 +5,6 @@
 
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Newtonsoft.Json.Linq;
-using static System.Linq.Expressions.Expression;
 
 namespace Microsoft.EntityFrameworkCore.Cosmos.Query.Internal;
 
@@ -19,31 +18,31 @@ public partial class CosmosShapedQueryCompilingExpressionVisitor
         {
             switch (extensionExpression)
             {
-                case StructuralTypeShaperExpression shaperExpression:
+                case EntityShaperExpression shaperExpression:
                 {
                     _currentEntityIndex++;
 
                     var valueBufferExpression = shaperExpression.ValueBufferExpression;
 
-                    var jObjectVariable = Variable(
+                    var jObjectVariable = Expression.Variable(
                         typeof(JObject),
                         "jObject" + _currentEntityIndex);
                     var variables = new List<ParameterExpression> { jObjectVariable };
 
                     var expressions = new List<Expression>
                     {
-                        Assign(
+                        Expression.Assign(
                             jObjectVariable,
-                            TypeAs(
+                            Expression.TypeAs(
                                 valueBufferExpression,
                                 typeof(JObject))),
-                        Condition(
-                            Equal(jObjectVariable, Constant(null, jObjectVariable.Type)),
-                            Constant(null, shaperExpression.Type),
+                        Expression.Condition(
+                            Expression.Equal(jObjectVariable, Expression.Constant(null, jObjectVariable.Type)),
+                            Expression.Constant(null, shaperExpression.Type),
                             shaperExpression)
                     };
 
-                    return Block(
+                    return Expression.Block(
                         shaperExpression.Type,
                         variables,
                         expressions);
@@ -53,25 +52,25 @@ public partial class CosmosShapedQueryCompilingExpressionVisitor
                 {
                     _currentEntityIndex++;
 
-                    var jArrayVariable = Variable(
+                    var jArrayVariable = Expression.Variable(
                         typeof(JArray),
                         "jArray" + _currentEntityIndex);
                     var variables = new List<ParameterExpression> { jArrayVariable };
 
                     var expressions = new List<Expression>
                     {
-                        Assign(
+                        Expression.Assign(
                             jArrayVariable,
-                            TypeAs(
+                            Expression.TypeAs(
                                 collectionShaperExpression.Projection,
                                 typeof(JArray))),
-                        Condition(
-                            Equal(jArrayVariable, Constant(null, jArrayVariable.Type)),
-                            Constant(null, collectionShaperExpression.Type),
+                        Expression.Condition(
+                            Expression.Equal(jArrayVariable, Expression.Constant(null, jArrayVariable.Type)),
+                            Expression.Constant(null, collectionShaperExpression.Type),
                             collectionShaperExpression)
                     };
 
-                    return Block(
+                    return Expression.Block(
                         collectionShaperExpression.Type,
                         variables,
                         expressions);

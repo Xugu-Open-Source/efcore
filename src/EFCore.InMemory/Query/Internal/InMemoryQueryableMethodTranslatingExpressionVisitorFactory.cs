@@ -19,7 +19,9 @@ public class InMemoryQueryableMethodTranslatingExpressionVisitorFactory : IQuery
     /// </summary>
     public InMemoryQueryableMethodTranslatingExpressionVisitorFactory(
         QueryableMethodTranslatingExpressionVisitorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.

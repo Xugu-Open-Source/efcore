@@ -20,20 +20,20 @@ public class CreateTableOperation : TableOperation
     /// <summary>
     ///     An ordered list of <see cref="AddColumnOperation" /> for adding columns to the table.
     /// </summary>
-    public virtual List<AddColumnOperation> Columns { get; } = [];
+    public virtual List<AddColumnOperation> Columns { get; } = new();
 
     /// <summary>
     ///     A list of <see cref="AddForeignKeyOperation" /> for creating foreign key constraints in the table.
     /// </summary>
-    public virtual List<AddForeignKeyOperation> ForeignKeys { get; } = [];
+    public virtual List<AddForeignKeyOperation> ForeignKeys { get; } = new();
 
     /// <summary>
     ///     A list of <see cref="AddUniqueConstraintOperation" /> for creating unique constraints in the table.
     /// </summary>
-    public virtual List<AddUniqueConstraintOperation> UniqueConstraints { get; } = [];
+    public virtual List<AddUniqueConstraintOperation> UniqueConstraints { get; } = new();
 
     /// <summary>
     ///     A list of <see cref="AddCheckConstraintOperation" /> for creating check constraints in the table.
     /// </summary>
-    public virtual List<AddCheckConstraintOperation> CheckConstraints { get; } = [];
+    public virtual List<AddCheckConstraintOperation> CheckConstraints { get; } = new();
 }

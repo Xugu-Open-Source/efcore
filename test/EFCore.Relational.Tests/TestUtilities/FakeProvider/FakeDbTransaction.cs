@@ -5,11 +5,17 @@ using System.Data;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities.FakeProvider;
 
-public class FakeDbTransaction(FakeDbConnection connection, IsolationLevel isolationLevel = IsolationLevel.Unspecified) : DbTransaction
+public class FakeDbTransaction : DbTransaction
 {
-    protected override DbConnection DbConnection { get; } = connection;
+    public FakeDbTransaction(FakeDbConnection connection, IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+    {
+        DbConnection = connection;
+        IsolationLevel = isolationLevel;
+    }
 
-    public override IsolationLevel IsolationLevel { get; } = isolationLevel;
+    protected override DbConnection DbConnection { get; }
+
+    public override IsolationLevel IsolationLevel { get; }
 
     public int CommitCount { get; private set; }
 

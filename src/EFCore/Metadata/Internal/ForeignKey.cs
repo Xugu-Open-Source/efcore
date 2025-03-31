@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
-using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -34,14 +33,6 @@ public class ForeignKey : ConventionAnnotatable, IMutableForeignKey, IConvention
     private ConfigurationSource? _principalToDependentConfigurationSource;
     private IDependentKeyValueFactory? _dependentKeyValueFactory;
     private Func<IDependentsMap>? _dependentsMapFactory;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public static readonly int LongestFkChainAllowedLength = 10000;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -117,10 +108,7 @@ public class ForeignKey : ConventionAnnotatable, IMutableForeignKey, IConvention
     public virtual InternalForeignKeyBuilder Builder
     {
         [DebuggerStepThrough]
-        get => _builder
-            ?? throw new InvalidOperationException(
-                CoreStrings.ObjectRemovedFromModel(
-                    Property.Format(Properties.Select(p => p.Name))));
+        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
     /// <summary>
@@ -131,8 +119,7 @@ public class ForeignKey : ConventionAnnotatable, IMutableForeignKey, IConvention
     /// </summary>
     public virtual bool IsInModel
         => _builder is not null
-            && DeclaringEntityType.IsInModel
-            && PrincipalEntityType.IsInModel;
+            && DeclaringEntityType.IsInModel;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -938,7 +925,7 @@ public class ForeignKey : ConventionAnnotatable, IMutableForeignKey, IConvention
     public virtual EntityType ResolveOtherEntityType(EntityType entityType)
         => (EntityType)((IReadOnlyForeignKey)this).GetRelatedEntityType(entityType);
 
-    // Note: This is set and used only by KeyValueFactoryFactory, which ensures thread-safety
+    // Note: This is set and used only by IdentityMapFactoryFactory, which ensures thread-safety
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -965,7 +952,7 @@ public class ForeignKey : ConventionAnnotatable, IMutableForeignKey, IConvention
         }
     }
 
-    // Note: This is set and used only by KeyValueFactoryFactory, which ensures thread-safety
+    // Note: This is set and used only by IdentityMapFactoryFactory, which ensures thread-safety
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -1030,7 +1017,7 @@ public class ForeignKey : ConventionAnnotatable, IMutableForeignKey, IConvention
             }
 
             var actualProperty = declaringEntityType.FindProperty(property.Name);
-            if (actualProperty?.DeclaringType.IsAssignableFrom(property.DeclaringType) != true
+            if (actualProperty?.DeclaringEntityType.IsAssignableFrom(property.DeclaringEntityType) != true
                 || !property.IsInModel)
             {
                 throw new InvalidOperationException(

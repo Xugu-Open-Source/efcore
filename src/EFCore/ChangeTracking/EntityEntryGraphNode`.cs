@@ -28,7 +28,9 @@ public class EntityEntryGraphNode<TState> : EntityEntryGraphNode
         InternalEntityEntry? sourceEntry,
         INavigationBase? inboundNavigation)
         : base(entry, sourceEntry, inboundNavigation)
-        => NodeState = state;
+    {
+        NodeState = state;
+    }
 
     /// <summary>
     ///     Creates a new node in the entity graph.

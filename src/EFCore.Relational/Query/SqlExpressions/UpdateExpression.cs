@@ -12,12 +12,8 @@ namespace Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 ///         not used in application code.
 ///     </para>
 /// </summary>
-[DebuggerDisplay("{Microsoft.EntityFrameworkCore.Query.ExpressionPrinter.Print(this), nq}")]
-public sealed class UpdateExpression : Expression, IRelationalQuotableExpression, IPrintableExpression
+public sealed class UpdateExpression : Expression, IPrintableExpression
 {
-    private static ConstructorInfo? _quotingConstructor;
-    private static ConstructorInfo? _columnValueSetterQuotingConstructor;
-
     /// <summary>
     ///     Creates a new instance of the <see cref="UpdateExpression" /> class.
     /// </summary>
@@ -32,14 +28,7 @@ public sealed class UpdateExpression : Expression, IRelationalQuotableExpression
     {
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal] // For precompiled queries
-    public UpdateExpression(
+    private UpdateExpression(
         TableExpression table,
         SelectExpression selectExpression,
         IReadOnlyList<ColumnValueSetter> columnValueSetters,
@@ -80,7 +69,7 @@ public sealed class UpdateExpression : Expression, IRelationalQuotableExpression
 
     /// <inheritdoc />
     public override Type Type
-        => typeof(void);
+        => typeof(object);
 
     /// <inheritdoc />
     public override ExpressionType NodeType
@@ -94,14 +83,12 @@ public sealed class UpdateExpression : Expression, IRelationalQuotableExpression
         for (var (i, n) = (0, ColumnValueSetters.Count); i < n; i++)
         {
             var columnValueSetter = ColumnValueSetters[i];
-            var newColumn = (ColumnExpression)visitor.Visit(columnValueSetter.Column);
             var newValue = (SqlExpression)visitor.Visit(columnValueSetter.Value);
-
             if (columnValueSetters != null)
             {
-                columnValueSetters.Add(new ColumnValueSetter(newColumn, newValue));
+                columnValueSetters.Add(new ColumnValueSetter(columnValueSetter.Column, newValue));
             }
-            else if (!ReferenceEquals(newColumn, columnValueSetter.Column) || !ReferenceEquals(newValue, columnValueSetter.Value))
+            else if (!ReferenceEquals(newValue, columnValueSetter.Value))
             {
                 columnValueSetters = new List<ColumnValueSetter>(n);
                 for (var j = 0; j < i; j++)
@@ -109,15 +96,14 @@ public sealed class UpdateExpression : Expression, IRelationalQuotableExpression
                     columnValueSetters.Add(ColumnValueSetters[j]);
                 }
 
-                columnValueSetters.Add(new ColumnValueSetter(newColumn, newValue));
+                columnValueSetters.Add(new ColumnValueSetter(columnValueSetter.Column, newValue));
             }
         }
 
-        var table = (TableExpression)visitor.Visit(Table);
-
-        return selectExpression == SelectExpression && table == Table && columnValueSetters is null
-            ? this
-            : new UpdateExpression(table, selectExpression, columnValueSetters ?? ColumnValueSetters);
+        return selectExpression != SelectExpression
+            || columnValueSetters != null
+                ? new UpdateExpression(Table, selectExpression, columnValueSetters ?? ColumnValueSetters)
+                : this;
     }
 
     /// <summary>
@@ -133,38 +119,14 @@ public sealed class UpdateExpression : Expression, IRelationalQuotableExpression
             : this;
 
     /// <inheritdoc />
-    public Expression Quote()
-        => New(
-            _quotingConstructor ??= typeof(UpdateExpression).GetConstructor(
-            [
-                typeof(TableExpression), typeof(SelectExpression), typeof(IReadOnlyList<ColumnValueSetter>), typeof(ISet<string>)
-            ])!,
-            Table.Quote(),
-            SelectExpression.Quote(),
-            NewArrayInit(
-                typeof(ColumnValueSetter),
-                ColumnValueSetters
-                    .Select(
-                        s => New(
-                            _columnValueSetterQuotingConstructor ??=
-                                typeof(ColumnValueSetter).GetConstructor([typeof(ColumnExpression), typeof(SqlExpression)])!,
-                            s.Column.Quote(),
-                            s.Value.Quote()))),
-            RelationalExpressionQuotingUtilities.QuoteTags(Tags));
-
-    /// <inheritdoc />
     public void Print(ExpressionPrinter expressionPrinter)
     {
-        if (Tags.Count > 0)
+        foreach (var tag in Tags)
         {
-            foreach (var tag in Tags)
-            {
-                expressionPrinter.Append($"-- {tag}");
-            }
-
-            expressionPrinter.AppendLine();
+            expressionPrinter.Append($"-- {tag}");
         }
 
+        expressionPrinter.AppendLine();
         expressionPrinter.AppendLine($"UPDATE {Table.Name} AS {Table.Alias}");
         expressionPrinter.AppendLine("SET ");
         expressionPrinter.Visit(ColumnValueSetters[0].Column);

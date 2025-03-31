@@ -3,30 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class OwnedQueryRelationalTestBase<TFixture>(TFixture fixture) : OwnedQueryTestBase<TFixture>(fixture)
+public abstract class OwnedQueryRelationalTestBase<TFixture> : OwnedQueryTestBase<TFixture>
     where TFixture : OwnedQueryRelationalTestBase<TFixture>.RelationalOwnedQueryFixture, new()
 {
-    public override Task Contains_over_owned_collection(bool async)
-        => Assert.ThrowsAsync<InvalidOperationException>(() => base.Contains_over_owned_collection(async));
-
-    // The query uses a row limiting operator ('Skip'/'Take') without an 'OrderBy' operator.
-    public override Task ElementAt_over_owned_collection(bool async)
-        => Assert.ThrowsAsync<InvalidOperationException>(() => base.ElementAt_over_owned_collection(async));
-
-    // The query uses a row limiting operator ('Skip'/'Take') without an 'OrderBy' operator.
-    public override Task ElementAtOrDefault_over_owned_collection(bool async)
-        => Assert.ThrowsAsync<InvalidOperationException>(() => base.ElementAtOrDefault_over_owned_collection(async));
-
-    // The query uses a row limiting operator ('Skip'/'Take') without an 'OrderBy' operator.
-    public override Task Skip_Take_over_owned_collection(bool async)
-        => Assert.ThrowsAsync<InvalidOperationException>(() => base.Skip_Take_over_owned_collection(async));
-
-    // This test is non-deterministic on relational, since FirstOrDefault is used without an ordering.
-    // Since this is FirstOrDefault with a filter, we don't issue our usual "missing ordering" warning (see #33997).
-    public override Task FirstOrDefault_over_owned_collection(bool async)
-        => Task.CompletedTask;
+    protected OwnedQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -96,7 +79,8 @@ public abstract class OwnedQueryRelationalTestBase<TFixture>(TFixture fixture) :
     public virtual Task Unmapped_property_projection_loads_owned_navigations_split(bool async)
         => AssertQuery(
             async,
-            ss => ss.Set<OwnedPerson>().Where(e => e.Id == 1).AsTracking().Select(e => new { e.ReadOnlyProperty }).AsSplitQuery());
+            ss => ss.Set<OwnedPerson>().Where(e => e.Id == 1).AsTracking().Select(e => new { e.ReadOnlyProperty }).AsSplitQuery(),
+            entryCount: 7);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -128,11 +112,14 @@ public abstract class OwnedQueryRelationalTestBase<TFixture>(TFixture fixture) :
     protected FormattableString NormalizeDelimitersInInterpolatedString(FormattableString sql)
         => Fixture.TestStore.NormalizeDelimitersInInterpolatedString(sql);
 
+    protected virtual bool CanExecuteQueryString
+        => false;
+
     protected override QueryAsserter CreateQueryAsserter(TFixture fixture)
         => new RelationalQueryAsserter(
-            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression);
+            fixture, RewriteExpectedQueryExpression, RewriteServerQueryExpression, canExecuteQueryString: CanExecuteQueryString);
 
-    public abstract class RelationalOwnedQueryFixture : OwnedQueryFixtureBase, ITestSqlLoggerFactory
+    public abstract class RelationalOwnedQueryFixture : OwnedQueryFixtureBase
     {
         public new RelationalTestStore TestStore
             => (RelationalTestStore)base.TestStore;

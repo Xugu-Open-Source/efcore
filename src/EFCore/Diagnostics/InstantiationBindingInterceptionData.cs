@@ -1,8 +1,6 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using JetBrains.Annotations;
-
 namespace Microsoft.EntityFrameworkCore.Diagnostics;
 
 /// <summary>
@@ -16,14 +14,14 @@ public readonly struct InstantiationBindingInterceptionData
     /// <summary>
     ///     Constructs the parameter object.
     /// </summary>
-    /// <param name="typeBase">The entity type for which the binding is being used.</param>
-    [EntityFrameworkInternal]
-    [UsedImplicitly]
-    public InstantiationBindingInterceptionData(ITypeBase typeBase)
-        => TypeBase = typeBase;
+    /// <param name="entityType">The entity type for which the binding is being used.</param>
+    public InstantiationBindingInterceptionData(IEntityType entityType)
+    {
+        EntityType = entityType;
+    }
 
     /// <summary>
     ///     The entity type for which the binding is being used.
     /// </summary>
-    public ITypeBase TypeBase { get; }
+    public IEntityType EntityType { get; }
 }

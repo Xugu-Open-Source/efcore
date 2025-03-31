@@ -3,7 +3,6 @@
 
 using System.ComponentModel;
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -24,7 +23,9 @@ public class DatabaseFacade : IInfrastructure<IServiceProvider>, IDatabaseFacade
     /// </summary>
     /// <param name="context">The context this database API belongs to.</param>
     public DatabaseFacade(DbContext context)
-        => _context = context;
+    {
+        _context = context;
+    }
 
     private IDatabaseFacadeDependencies Dependencies
         => _dependencies ??= _context.GetService<IDatabaseFacadeDependencies>();
@@ -70,9 +71,6 @@ public class DatabaseFacade : IInfrastructure<IServiceProvider>, IDatabaseFacade
     ///     </para>
     /// </remarks>
     /// <returns><see langword="true" /> if the database is created, <see langword="false" /> if it already existed.</returns>
-    [RequiresDynamicCode(
-        "Migrations operations require building the design-time model which is not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
     public virtual bool EnsureCreated()
         => Dependencies.DatabaseCreator.EnsureCreated();
 
@@ -129,9 +127,6 @@ public class DatabaseFacade : IInfrastructure<IServiceProvider>, IDatabaseFacade
     ///     <see langword="false" /> if it already existed.
     /// </returns>
     /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
-    [RequiresDynamicCode(
-        "Migrations operations require building the design-time model which is not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
     public virtual Task<bool> EnsureCreatedAsync(CancellationToken cancellationToken = default)
         => Dependencies.DatabaseCreator.EnsureCreatedAsync(cancellationToken);
 
@@ -157,9 +152,6 @@ public class DatabaseFacade : IInfrastructure<IServiceProvider>, IDatabaseFacade
     ///     </para>
     /// </remarks>
     /// <returns><see langword="true" /> if the database is deleted, <see langword="false" /> if it did not exist.</returns>
-    [RequiresDynamicCode(
-        "Migrations operations require building the design-time model which is not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
     public virtual bool EnsureDeleted()
         => Dependencies.DatabaseCreator.EnsureDeleted();
 
@@ -197,9 +189,6 @@ public class DatabaseFacade : IInfrastructure<IServiceProvider>, IDatabaseFacade
     ///     <see langword="false" /> if it did not exist.
     /// </returns>
     /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
-    [RequiresDynamicCode(
-        "Migrations operations require building the design-time model which is not supported with NativeAOT"
-        + " Use a migration bundle or an alternate way of executing migration operations.")]
     public virtual Task<bool> EnsureDeletedAsync(CancellationToken cancellationToken = default)
         => Dependencies.DatabaseCreator.EnsureDeletedAsync(cancellationToken);
 
@@ -407,7 +396,7 @@ public class DatabaseFacade : IInfrastructure<IServiceProvider>, IDatabaseFacade
     ///         See <see href="https://aka.ms/efcore-docs-transactions">Transactions in EF Core</see> for more information and examples.
     ///     </para>
     /// </remarks>
-    [Obsolete("Use " + nameof(AutoTransactionBehavior) + " instead")]
+    [Obsolete("Use EnableAutoTransactions instead")]
     public virtual bool AutoTransactionsEnabled
     {
         get => AutoTransactionBehavior is AutoTransactionBehavior.Always or AutoTransactionBehavior.WhenNeeded;

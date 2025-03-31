@@ -5,11 +5,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class AutoincrementTest(AutoincrementTest.AutoincrementFixture fixture) : IClassFixture<AutoincrementTest.AutoincrementFixture>
+public class AutoincrementTest : IClassFixture<AutoincrementTest.AutoincrementFixture>
 {
-    protected AutoincrementFixture Fixture { get; } = fixture;
+    public AutoincrementTest(AutoincrementFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected AutoincrementFixture Fixture { get; }
 
     [ConditionalFact]
     public void Autoincrement_prevents_reusing_rowid()
@@ -48,8 +51,13 @@ public class AutoincrementTest(AutoincrementTest.AutoincrementFixture fixture) :
             => typeof(BatContext);
     }
 
-    protected class BatContext(DbContextOptions options) : PoolableDbContext(options)
+    protected class BatContext : PoolableDbContext
     {
+        public BatContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public DbSet<PersonA> People { get; set; }
     }
 

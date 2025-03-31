@@ -3,15 +3,16 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#if !EXCLUDE_ON_MAC
-
-public class GrpcSqliteTest(GrpcSqliteTest.GrpcSqliteFixture fixture) : GrpcTestBase<GrpcSqliteTest.GrpcSqliteFixture>(fixture)
+public class GrpcSqliteTest : GrpcTestBase<GrpcSqliteTest.GrpcSqliteFixture>
 {
+    public GrpcSqliteTest(GrpcSqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class GrpcSqliteFixture : GrpcFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory
             => SqliteTestStoreFactory.Instance;
     }
 }
-
-#endif

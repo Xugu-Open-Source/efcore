@@ -21,7 +21,9 @@ public class CSharpMigrationsGenerator : MigrationsCodeGenerator
         MigrationsCodeGeneratorDependencies dependencies,
         CSharpMigrationsGeneratorDependencies csharpDependencies)
         : base(dependencies)
-        => CSharpDependencies = csharpDependencies;
+    {
+        CSharpDependencies = csharpDependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.

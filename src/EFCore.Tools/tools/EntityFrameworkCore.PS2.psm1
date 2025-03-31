@@ -277,16 +277,16 @@ function Remove-Migration(
     The name of the DbContext. Defaults to the database name.
 
 .PARAMETER Schemas
-    The schemas of tables and views to generate entity types for. All tables and views in the schemas will be included in the model, even if they are not explicitly included with the 'Tables' parameter.
+    The schemas of tables to generate entity types for.
 
 .PARAMETER Tables
-    The tables and views to generate entity types for. Tables or views in a specific schema can be included using the 'schema.table' or 'schema.view' format.
+    The tables to generate entity types for.
 
 .PARAMETER DataAnnotations
     Use attributes to configure the model (where possible). If omitted, only the fluent API is used.
 
 .PARAMETER UseDatabaseNames
-    Use table, view, sequence, and column names directly from the database.
+    Use table and column names directly from the database.
 
 .PARAMETER Force
     Overwrite existing files.

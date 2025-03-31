@@ -3,11 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class GraphUpdatesSqliteChangedChangingNotificationsTest(GraphUpdatesSqliteChangedChangingNotificationsTest.SqliteFixture fixture)
-    : GraphUpdatesSqliteTestBase<GraphUpdatesSqliteChangedChangingNotificationsTest.SqliteFixture>(fixture)
+public class GraphUpdatesSqliteChangedChangingNotificationsTest
+    : GraphUpdatesSqliteTestBase<GraphUpdatesSqliteChangedChangingNotificationsTest.SqliteFixture>
 {
+    public GraphUpdatesSqliteChangedChangingNotificationsTest(SqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
         => facade.UseTransaction(transaction.GetDbTransaction());
 

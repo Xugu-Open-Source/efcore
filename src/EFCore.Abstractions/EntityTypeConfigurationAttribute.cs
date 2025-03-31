@@ -13,7 +13,7 @@ namespace Microsoft.EntityFrameworkCore;
 ///     See <see href="https://aka.ms/efcore-docs-modeling">Modeling entity types and relationships</see> for more information and examples.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Class)]
-public class EntityTypeConfigurationAttribute : Attribute
+public sealed class EntityTypeConfigurationAttribute : Attribute
 {
     /// <summary>
     ///     Initializes a new instance of the <see cref="EntityTypeConfigurationAttribute" /> class.

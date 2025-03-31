@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.EntityFrameworkCore.Infrastructure;
@@ -37,7 +36,9 @@ public class ModelSource : IModelSource
     /// </summary>
     /// <param name="dependencies">The dependencies to use.</param>
     public ModelSource(ModelSourceDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.
@@ -65,40 +66,18 @@ public class ModelSource : IModelSource
             {
                 if (!cache.TryGetValue(cacheKey, out model))
                 {
-                    var designTimeModel = CreateModel(context, modelCreationDependencies, designTime: true);
+                    model = CreateModel(
+                        context, modelCreationDependencies.ConventionSetBuilder, modelCreationDependencies.ModelDependencies);
 
-                    var runtimeModel = (IModel)designTimeModel.FindRuntimeAnnotationValue(CoreAnnotationNames.ReadOnlyModel)!;
+                    model = modelCreationDependencies.ModelRuntimeInitializer.Initialize(
+                        model, designTime, modelCreationDependencies.ValidationLogger);
 
-                    var designTimeKey = designTime ? cacheKey : Dependencies.ModelCacheKeyFactory.Create(context, designTime: true);
-                    var runtimeKey = designTime ? Dependencies.ModelCacheKeyFactory.Create(context, designTime: false) : cacheKey;
-
-                    cache.Set(
-                        designTimeKey, designTimeModel, new MemoryCacheEntryOptions { Size = 150, Priority = CacheItemPriority.High });
-                    cache.Set(runtimeKey, runtimeModel, new MemoryCacheEntryOptions { Size = 100, Priority = CacheItemPriority.High });
-
-                    model = designTime ? designTimeModel : runtimeModel;
+                    model = cache.Set(cacheKey, model, new MemoryCacheEntryOptions { Size = 100, Priority = CacheItemPriority.High });
                 }
             }
         }
 
         return model!;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual IModel CreateModel(
-        DbContext context,
-        ModelCreationDependencies modelCreationDependencies,
-        bool designTime)
-    {
-        var model = CreateModel(context, modelCreationDependencies.ConventionSetBuilder, modelCreationDependencies.ModelDependencies);
-        return modelCreationDependencies.ModelRuntimeInitializer.Initialize(
-            model, designTime, modelCreationDependencies.ValidationLogger);
     }
 
     /// <summary>

@@ -3,8 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities.FakeProvider;
 
-public class FakeSqlGenerator(UpdateSqlGeneratorDependencies dependencies) : UpdateSqlGenerator(dependencies)
+public class FakeSqlGenerator : UpdateSqlGenerator
 {
+    public FakeSqlGenerator(UpdateSqlGeneratorDependencies dependencies)
+        : base(dependencies)
+    {
+    }
+
     public override ResultSetMapping AppendInsertOperation(
         StringBuilder commandStringBuilder,
         IReadOnlyModificationCommand command,

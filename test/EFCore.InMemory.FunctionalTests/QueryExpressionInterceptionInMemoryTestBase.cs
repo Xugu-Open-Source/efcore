@@ -3,13 +3,16 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public abstract class QueryExpressionInterceptionInMemoryTestBase(
-    QueryExpressionInterceptionInMemoryTestBase.InterceptionInMemoryFixtureBase fixture)
-    : QueryExpressionInterceptionTestBase(fixture)
+public abstract class QueryExpressionInterceptionInMemoryTestBase : QueryExpressionInterceptionTestBase
 {
-    public override async Task<UniverseContext> SeedAsync(UniverseContext context)
+    protected QueryExpressionInterceptionInMemoryTestBase(InterceptionInMemoryFixtureBase fixture)
+        : base(fixture)
     {
-        await base.SeedAsync(context);
+    }
+
+    public override UniverseContext Seed(UniverseContext context)
+    {
+        base.Seed(context);
 
         context.AddRange(
             new Singularity { Id = 77, Type = "Black Hole" },
@@ -17,7 +20,7 @@ public abstract class QueryExpressionInterceptionInMemoryTestBase(
             new Brane { Id = 77, Type = "Black Hole?" },
             new Brane { Id = 88, Type = "Bing Bang?" });
 
-        await context.SaveChangesAsync();
+        context.SaveChanges();
         context.ChangeTracker.Clear();
 
         return context;
@@ -40,10 +43,14 @@ public abstract class QueryExpressionInterceptionInMemoryTestBase(
             => base.AddOptions(builder).ConfigureWarnings(c => c.Ignore(InMemoryEventId.TransactionIgnoredWarning));
     }
 
-    public class QueryExpressionInterceptionInMemoryTest(QueryExpressionInterceptionInMemoryTest.InterceptionInMemoryFixture fixture)
-        : QueryExpressionInterceptionInMemoryTestBase(fixture),
-            IClassFixture<QueryExpressionInterceptionInMemoryTest.InterceptionInMemoryFixture>
+    public class QueryExpressionInterceptionInMemoryTest
+        : QueryExpressionInterceptionInMemoryTestBase, IClassFixture<QueryExpressionInterceptionInMemoryTest.InterceptionInMemoryFixture>
     {
+        public QueryExpressionInterceptionInMemoryTest(InterceptionInMemoryFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionInMemoryFixture : InterceptionInMemoryFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener
@@ -51,11 +58,15 @@ public abstract class QueryExpressionInterceptionInMemoryTestBase(
         }
     }
 
-    public class QueryExpressionInterceptionWithDiagnosticsInMemoryTest(
-        QueryExpressionInterceptionWithDiagnosticsInMemoryTest.InterceptionInMemoryFixture fixture)
-        : QueryExpressionInterceptionInMemoryTestBase(fixture),
+    public class QueryExpressionInterceptionWithDiagnosticsInMemoryTest
+        : QueryExpressionInterceptionInMemoryTestBase,
             IClassFixture<QueryExpressionInterceptionWithDiagnosticsInMemoryTest.InterceptionInMemoryFixture>
     {
+        public QueryExpressionInterceptionWithDiagnosticsInMemoryTest(InterceptionInMemoryFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionInMemoryFixture : InterceptionInMemoryFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener

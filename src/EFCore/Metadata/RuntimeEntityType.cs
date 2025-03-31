@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -15,35 +14,57 @@ namespace Microsoft.EntityFrameworkCore.Metadata;
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-modeling">Modeling entity types and relationships</see> for more information and examples.
 /// </remarks>
-public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
+public class RuntimeEntityType : AnnotatableBase, IRuntimeEntityType
 {
-    private readonly List<RuntimeForeignKey> _foreignKeys;
-    private readonly Utilities.OrderedDictionary<string, RuntimeNavigation> _navigations;
-    private Utilities.OrderedDictionary<string, RuntimeSkipNavigation>? _skipNavigations;
-    private Utilities.OrderedDictionary<string, RuntimeServiceProperty>? _serviceProperties;
-    private readonly Utilities.OrderedDictionary<IReadOnlyList<IReadOnlyProperty>, RuntimeIndex> _unnamedIndexes;
-    private Utilities.OrderedDictionary<string, RuntimeIndex>? _namedIndexes;
-    private readonly Utilities.OrderedDictionary<IReadOnlyList<IReadOnlyProperty>, RuntimeKey> _keys;
-    private Utilities.OrderedDictionary<string, RuntimeTrigger>? _triggers;
-    private readonly object? _discriminatorValue;
-    private readonly bool _hasSharedClrType;
+    private readonly List<RuntimeForeignKey> _foreignKeys = new();
+
+    private readonly SortedDictionary<string, RuntimeNavigation> _navigations
+        = new(StringComparer.Ordinal);
+
+    private readonly SortedDictionary<string, RuntimeSkipNavigation> _skipNavigations
+        = new(StringComparer.Ordinal);
+
+    private readonly SortedDictionary<string, RuntimeServiceProperty> _serviceProperties
+        = new(StringComparer.Ordinal);
+
+    private readonly SortedDictionary<string, RuntimeProperty> _properties;
+
+    private readonly SortedDictionary<IReadOnlyList<IReadOnlyProperty>, RuntimeIndex> _unnamedIndexes
+        = new(PropertyListComparer.Instance);
+
+    private readonly SortedDictionary<string, RuntimeIndex> _namedIndexes
+        = new(StringComparer.Ordinal);
+
+    private readonly SortedDictionary<IReadOnlyList<IReadOnlyProperty>, RuntimeKey> _keys
+        = new(PropertyListComparer.Instance);
+
+    private readonly SortedDictionary<string, RuntimeTrigger> _triggers
+        = new(StringComparer.Ordinal);
+
     private RuntimeKey? _primaryKey;
+    private readonly bool _hasSharedClrType;
+    [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)]
+    private readonly Type _clrType;
+    private readonly RuntimeEntityType? _baseType;
+    private readonly SortedSet<RuntimeEntityType> _directlyDerivedTypes = new(EntityTypeFullNameComparer.Instance);
+    private readonly ChangeTrackingStrategy _changeTrackingStrategy;
     private InstantiationBinding? _constructorBinding;
     private InstantiationBinding? _serviceOnlyConstructorBinding;
+    private readonly PropertyInfo? _indexerPropertyInfo;
+    private readonly bool _isPropertyBag;
+    private readonly object? _discriminatorValue;
 
     // Warning: Never access these fields directly as access needs to be thread-safe
     private PropertyCounts? _counts;
+
     private Func<InternalEntityEntry, ISnapshot>? _relationshipSnapshotFactory;
-    private IProperty[]? _foreignKeyProperties;
-    private IProperty[]? _valueGeneratingProperties;
     private Func<InternalEntityEntry, ISnapshot>? _originalValuesFactory;
     private Func<InternalEntityEntry, ISnapshot>? _temporaryValuesFactory;
     private Func<ISnapshot>? _storeGeneratedValuesFactory;
-    private Func<IDictionary<string, object?>, ISnapshot>? _shadowValuesFactory;
+    private Func<ValueBuffer, ISnapshot>? _shadowValuesFactory;
     private Func<ISnapshot>? _emptyShadowValuesFactory;
-    private RuntimePropertyBase[]? _snapshottableProperties;
-    private Func<MaterializationContext, object>? _materializer;
-    private Func<MaterializationContext, object>? _emptyMaterializer;
+    private IProperty[]? _foreignKeyProperties;
+    private IProperty[]? _valueGeneratingProperties;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -62,66 +83,61 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         ChangeTrackingStrategy changeTrackingStrategy,
         PropertyInfo? indexerPropertyInfo,
         bool propertyBag,
-        object? discriminatorValue,
-        int derivedTypesCount,
-        int propertyCount,
-        int complexPropertyCount,
-        int foreignKeyCount,
-        int navigationCount,
-        int skipNavigationCount,
-        int servicePropertyCount,
-        int unnamedIndexCount,
-        int namedIndexCount,
-        int keyCount,
-        int triggerCount)
-        : base(
-            name, type, model, baseType, changeTrackingStrategy, indexerPropertyInfo, propertyBag,
-            derivedTypesCount: derivedTypesCount,
-            propertyCount: propertyCount,
-            complexPropertyCount: complexPropertyCount)
+        object? discriminatorValue)
     {
+        Name = name;
+        _clrType = type;
         _hasSharedClrType = sharedClrType;
+        Model = model;
+        if (baseType != null)
+        {
+            _baseType = baseType;
+            baseType._directlyDerivedTypes.Add(this);
+        }
 
+        _changeTrackingStrategy = changeTrackingStrategy;
+        _indexerPropertyInfo = indexerPropertyInfo;
+        _isPropertyBag = propertyBag;
         SetAnnotation(CoreAnnotationNames.DiscriminatorProperty, discriminatorProperty);
         _discriminatorValue = discriminatorValue;
-        _foreignKeys = new List<RuntimeForeignKey>(foreignKeyCount);
-        _navigations = new Utilities.OrderedDictionary<string, RuntimeNavigation>(navigationCount, StringComparer.Ordinal);
-        if (skipNavigationCount > 0)
-        {
-            _skipNavigations = new Utilities.OrderedDictionary<string, RuntimeSkipNavigation>(skipNavigationCount, StringComparer.Ordinal);
-        }
 
-        if (servicePropertyCount > 0)
-        {
-            _serviceProperties = new Utilities.OrderedDictionary<string, RuntimeServiceProperty>(servicePropertyCount, StringComparer.Ordinal);
-        }
-
-        _unnamedIndexes =
-            new Utilities.OrderedDictionary<IReadOnlyList<IReadOnlyProperty>, RuntimeIndex>(unnamedIndexCount, PropertyListComparer.Instance);
-        if (namedIndexCount > 0)
-        {
-            _namedIndexes = new Utilities.OrderedDictionary<string, RuntimeIndex>(namedIndexCount, StringComparer.Ordinal);
-        }
-
-        _keys = new Utilities.OrderedDictionary<IReadOnlyList<IReadOnlyProperty>, RuntimeKey>(keyCount, PropertyListComparer.Instance);
-        if (triggerCount > 0)
-        {
-            _triggers = new Utilities.OrderedDictionary<string, RuntimeTrigger>(triggerCount, StringComparer.Ordinal);
-        }
+        _properties = new SortedDictionary<string, RuntimeProperty>(new PropertyNameComparer(this));
     }
 
-    private new RuntimeEntityType? BaseType
-        => (RuntimeEntityType?)base.BaseType;
+    /// <summary>
+    ///     Gets the name of this type.
+    /// </summary>
+    public virtual string Name { [DebuggerStepThrough] get; }
 
     /// <summary>
-    ///     Re-parents this entity type to the given model.
+    ///     Gets the model that this type belongs to.
     /// </summary>
-    /// <param name="model">The new parent model.</param>
-    public virtual void Reparent(RuntimeModel model)
-        => Model = model;
+    public virtual RuntimeModel Model { [DebuggerStepThrough] get; }
+
+    private IEnumerable<RuntimeEntityType> GetDerivedTypes()
+    {
+        if (_directlyDerivedTypes.Count == 0)
+        {
+            return Enumerable.Empty<RuntimeEntityType>();
+        }
+
+        var derivedTypes = new List<RuntimeEntityType>();
+        var type = this;
+        var currentTypeIndex = 0;
+        while (type != null)
+        {
+            derivedTypes.AddRange(type._directlyDerivedTypes);
+            type = derivedTypes.Count > currentTypeIndex
+                ? derivedTypes[currentTypeIndex]
+                : null;
+            currentTypeIndex++;
+        }
+
+        return derivedTypes;
+    }
 
     private RuntimeKey? FindPrimaryKey()
-        => BaseType?.FindPrimaryKey() ?? _primaryKey;
+        => _baseType?.FindPrimaryKey() ?? _primaryKey;
 
     /// <summary>
     ///     Sets the primary key for this entity type.
@@ -131,10 +147,16 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     {
         foreach (var property in key.Properties)
         {
+            _properties.Remove(property.Name);
             property.PrimaryKey = key;
         }
 
         _primaryKey = key;
+
+        foreach (var property in key.Properties)
+        {
+            _properties.Add(property.Name, property);
+        }
     }
 
     /// <summary>
@@ -151,7 +173,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         {
             if (property.Keys == null)
             {
-                property.Keys = [key];
+                property.Keys = new List<RuntimeKey> { key };
             }
             else
             {
@@ -171,26 +193,13 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     public virtual RuntimeKey? FindKey(IReadOnlyList<IReadOnlyProperty> properties)
         => _keys.TryGetValue(properties, out var key)
             ? key
-            : BaseType?.FindKey(properties);
+            : _baseType?.FindKey(properties);
 
-    /// <summary>
-    ///     Gets all keys declared on this entity type.
-    /// </summary>
-    /// <remarks>
-    ///     This method does not return keys declared on base types.
-    ///     It is useful when iterating over all entity types to avoid processing the same key more than once.
-    ///     Use <see cref="GetKeys" /> to also return keys declared on base types.
-    /// </remarks>
-    /// <returns>Declared keys.</returns>
-    public virtual IEnumerable<RuntimeKey> GetDeclaredKeys()
+    private IEnumerable<RuntimeKey> GetDeclaredKeys()
         => _keys.Values;
 
-    /// <summary>
-    ///     Gets the primary and alternate keys for this entity type.
-    /// </summary>
-    /// <returns>The primary and alternate keys.</returns>
-    public virtual IEnumerable<RuntimeKey> GetKeys()
-        => BaseType?.GetKeys().Concat(_keys.Values) ?? _keys.Values;
+    private IEnumerable<RuntimeKey> GetKeys()
+        => _baseType?.GetKeys().Concat(_keys.Values) ?? _keys.Values;
 
     /// <summary>
     ///     Adds a new relationship to this entity type.
@@ -230,7 +239,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         {
             if (property.ForeignKeys == null)
             {
-                property.ForeignKeys = new SortedSet<RuntimeForeignKey>(ForeignKeyComparer.Instance) { foreignKey };
+                property.ForeignKeys = new List<RuntimeForeignKey> { foreignKey };
             }
             else
             {
@@ -261,10 +270,10 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     }
 
     private IEnumerable<RuntimeForeignKey> FindForeignKeys(IReadOnlyList<IReadOnlyProperty> properties)
-        => BaseType != null
+        => _baseType != null
             ? _foreignKeys.Count == 0
-                ? BaseType.FindForeignKeys(properties)
-                : BaseType.FindForeignKeys(properties).Concat(FindDeclaredForeignKeys(properties))
+                ? _baseType.FindForeignKeys(properties)
+                : _baseType.FindForeignKeys(properties).Concat(FindDeclaredForeignKeys(properties))
             : FindDeclaredForeignKeys(properties);
 
     /// <summary>
@@ -284,34 +293,18 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         IReadOnlyKey principalKey,
         IReadOnlyEntityType principalEntityType)
         => FindDeclaredForeignKey(properties, principalKey, principalEntityType)
-            ?? BaseType?.FindForeignKey(properties, principalKey, principalEntityType);
-
-    /// <summary>
-    ///     Gets all foreign keys declared on this entity type..
-    /// </summary>
-    /// <remarks>
-    ///     This method does not return foreign keys declared on base types.
-    ///     It is useful when iterating over all entity types to avoid processing the same foreign key more than once.
-    ///     Use <see cref="GetForeignKeys" /> to also return foreign keys declared on base types.
-    /// </remarks>
-    /// <returns>Declared foreign keys.</returns>
-    public virtual List<RuntimeForeignKey> GetDeclaredForeignKeys()
-        => _foreignKeys;
+            ?? _baseType?.FindForeignKey(properties, principalKey, principalEntityType);
 
     private IEnumerable<RuntimeForeignKey> GetDerivedForeignKeys()
-        => !HasDirectlyDerivedTypes
+        => _directlyDerivedTypes.Count == 0
             ? Enumerable.Empty<RuntimeForeignKey>()
-            : GetDerivedTypes().Cast<RuntimeEntityType>().SelectMany(et => et._foreignKeys);
+            : GetDerivedTypes().SelectMany(et => et._foreignKeys);
 
-    /// <summary>
-    ///     Gets the foreign keys defined on this entity type.
-    /// </summary>
-    /// <returns>The foreign keys defined on this entity type.</returns>
-    public virtual IEnumerable<RuntimeForeignKey> GetForeignKeys()
-        => BaseType != null
+    private IEnumerable<RuntimeForeignKey> GetForeignKeys()
+        => _baseType != null
             ? _foreignKeys.Count == 0
-                ? BaseType.GetForeignKeys()
-                : BaseType.GetForeignKeys().Concat(_foreignKeys)
+                ? _baseType.GetForeignKeys()
+                : _baseType.GetForeignKeys().Concat(_foreignKeys)
             : _foreignKeys;
 
     /// <summary>
@@ -347,10 +340,10 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     }
 
     private IEnumerable<RuntimeForeignKey> GetReferencingForeignKeys()
-        => BaseType != null
+        => _baseType != null
             ? (DeclaredReferencingForeignKeys?.Count ?? 0) == 0
-                ? BaseType.GetReferencingForeignKeys()
-                : BaseType.GetReferencingForeignKeys().Concat(GetDeclaredReferencingForeignKeys())
+                ? _baseType.GetReferencingForeignKeys()
+                : _baseType.GetReferencingForeignKeys().Concat(GetDeclaredReferencingForeignKeys())
             : GetDeclaredReferencingForeignKeys();
 
     private IEnumerable<RuntimeForeignKey> GetDeclaredReferencingForeignKeys()
@@ -361,7 +354,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <summary>
     ///     Adds a new navigation property to this entity type.
     /// </summary>
-    /// <param name="name">The name of the navigation property to add.</param>
+    /// <param name="name">The name of the skip navigation property to add.</param>
     /// <param name="foreignKey">The foreign key that defines the relationship this navigation property will navigate.</param>
     /// <param name="onDependent">
     ///     A value indicating whether the navigation property is defined on the dependent side of the underlying foreign key.
@@ -371,7 +364,6 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <param name="fieldInfo">The corresponding CLR field or <see langword="null" /> for a shadow navigation.</param>
     /// <param name="propertyAccessMode">The <see cref="PropertyAccessMode" /> used for this navigation.</param>
     /// <param name="eagerLoaded">A value indicating whether this navigation should be eager loaded by default.</param>
-    /// <param name="lazyLoadingEnabled">A value indicating whether this navigation should be enabled for lazy-loading.</param>
     /// <returns>The newly created navigation property.</returns>
     public virtual RuntimeNavigation AddNavigation(
         string name,
@@ -381,13 +373,11 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         PropertyInfo? propertyInfo = null,
         FieldInfo? fieldInfo = null,
         PropertyAccessMode propertyAccessMode = Internal.Model.DefaultPropertyAccessMode,
-        bool eagerLoaded = false,
-        bool lazyLoadingEnabled = true)
+        bool eagerLoaded = false)
     {
-        var navigation = new RuntimeNavigation(
-            name, clrType, propertyInfo, fieldInfo, foreignKey, propertyAccessMode, eagerLoaded, lazyLoadingEnabled);
+        var navigation = new RuntimeNavigation(name, clrType, propertyInfo, fieldInfo, foreignKey, propertyAccessMode, eagerLoaded);
 
-        _navigations.Insert(name, navigation);
+        _navigations.Add(name, navigation);
 
         foreignKey.AddNavigation(navigation, onDependent);
 
@@ -403,34 +393,17 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         => (RuntimeNavigation?)((IReadOnlyEntityType)this).FindNavigation(name);
 
     private RuntimeNavigation? FindDeclaredNavigation(string name)
-        => _navigations.GetValueOrDefault(name);
+        => _navigations.TryGetValue(name, out var navigation)
+            ? navigation
+            : null;
 
     private IEnumerable<RuntimeNavigation> GetDeclaredNavigations()
         => _navigations.Values;
 
     private IEnumerable<RuntimeNavigation> GetNavigations()
-        => BaseType != null
-            ? _navigations.Count == 0 ? BaseType.GetNavigations() : BaseType.GetNavigations().Concat(_navigations.Values)
+        => _baseType != null
+            ? _navigations.Count == 0 ? _baseType.GetNavigations() : _baseType.GetNavigations().Concat(_navigations.Values)
             : _navigations.Values;
-
-    private IEnumerable<RuntimeNavigation> FindDerivedNavigations(string name)
-    {
-        Check.NotNull(name, nameof(name));
-
-        return !HasDirectlyDerivedTypes
-            ? Enumerable.Empty<RuntimeNavigation>()
-            : (IEnumerable<RuntimeNavigation>)GetDerivedTypes<RuntimeEntityType>()
-                .Select(et => et.FindDeclaredNavigation(name)).Where(n => n != null);
-    }
-
-    /// <summary>
-    ///     Gets the navigations with the given name on this type, base types or derived types.
-    /// </summary>
-    /// <returns>Type navigations.</returns>
-    public virtual IEnumerable<RuntimeNavigation> FindNavigationsInHierarchy(string name)
-        => !HasDirectlyDerivedTypes
-            ? ToEnumerable(FindNavigation(name))
-            : ToEnumerable(FindNavigation(name)).Concat(FindDerivedNavigations(name));
 
     /// <summary>
     ///     Adds a new skip navigation property to this entity type.
@@ -447,7 +420,6 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <param name="fieldInfo">The corresponding CLR field or <see langword="null" /> for a shadow navigation.</param>
     /// <param name="propertyAccessMode">The <see cref="PropertyAccessMode" /> used for this navigation.</param>
     /// <param name="eagerLoaded">A value indicating whether this navigation should be eager loaded by default.</param>
-    /// <param name="lazyLoadingEnabled">A value indicating whether this navigation should be enabled for lazy-loading.</param>
     /// <returns>The newly created skip navigation property.</returns>
     public virtual RuntimeSkipNavigation AddSkipNavigation(
         string name,
@@ -459,8 +431,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         PropertyInfo? propertyInfo = null,
         FieldInfo? fieldInfo = null,
         PropertyAccessMode propertyAccessMode = Internal.Model.DefaultPropertyAccessMode,
-        bool eagerLoaded = false,
-        bool lazyLoadingEnabled = true)
+        bool eagerLoaded = false)
     {
         var skipNavigation = new RuntimeSkipNavigation(
             name,
@@ -473,10 +444,8 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
             collection,
             onDependent,
             propertyAccessMode,
-            eagerLoaded,
-            lazyLoadingEnabled);
+            eagerLoaded);
 
-        _skipNavigations ??= new Utilities.OrderedDictionary<string, RuntimeSkipNavigation>(StringComparer.Ordinal);
         _skipNavigations.Add(name, skipNavigation);
 
         return skipNavigation;
@@ -488,49 +457,30 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <param name="name">The name of the navigation property on the entity class.</param>
     /// <returns>The navigation property, or <see langword="null" /> if none is found.</returns>
     public virtual RuntimeSkipNavigation? FindSkipNavigation(string name)
-        => FindDeclaredSkipNavigation(name) ?? BaseType?.FindSkipNavigation(name);
+        => FindDeclaredSkipNavigation(name) ?? _baseType?.FindSkipNavigation(name);
 
     private RuntimeSkipNavigation? FindSkipNavigation(MemberInfo memberInfo)
         => FindSkipNavigation(memberInfo.GetSimpleMemberName());
 
     private RuntimeSkipNavigation? FindDeclaredSkipNavigation(string name)
-        => _skipNavigations != null && _skipNavigations.TryGetValue(name, out var navigation)
+        => _skipNavigations.TryGetValue(name, out var navigation)
             ? navigation
             : null;
 
     private IEnumerable<RuntimeSkipNavigation> GetDeclaredSkipNavigations()
-        => _skipNavigations?.Values ?? Enumerable.Empty<RuntimeSkipNavigation>();
+        => _skipNavigations.Values;
 
     private IEnumerable<RuntimeSkipNavigation> GetDerivedSkipNavigations()
-        => !HasDirectlyDerivedTypes
+        => _directlyDerivedTypes.Count == 0
             ? Enumerable.Empty<RuntimeSkipNavigation>()
-            : GetDerivedTypes().Cast<RuntimeEntityType>().SelectMany(et => et.GetDeclaredSkipNavigations());
+            : GetDerivedTypes().SelectMany(et => et.GetDeclaredSkipNavigations());
 
     private IEnumerable<RuntimeSkipNavigation> GetSkipNavigations()
-        => BaseType != null
-            ? _skipNavigations == null
-                ? BaseType.GetSkipNavigations()
-                : BaseType.GetSkipNavigations().Concat(_skipNavigations.Values)
-            : GetDeclaredSkipNavigations();
-
-    private IEnumerable<RuntimeSkipNavigation> FindDerivedSkipNavigations(string name)
-    {
-        Check.NotNull(name, nameof(name));
-
-        return !HasDirectlyDerivedTypes
-            ? Enumerable.Empty<RuntimeSkipNavigation>()
-            : (IEnumerable<RuntimeSkipNavigation>)GetDerivedTypes<RuntimeEntityType>()
-                .Select(et => et.FindDeclaredSkipNavigation(name)).Where(n => n != null);
-    }
-
-    /// <summary>
-    ///     Gets the skip navigations with the given name on this type, base types or derived types.
-    /// </summary>
-    /// <returns>Type skip navigations.</returns>
-    public virtual IEnumerable<RuntimeSkipNavigation> FindSkipNavigationsInHierarchy(string name)
-        => !HasDirectlyDerivedTypes
-            ? ToEnumerable(FindSkipNavigation(name))
-            : ToEnumerable(FindSkipNavigation(name)).Concat(FindDerivedSkipNavigations(name));
+        => _baseType != null
+            ? _skipNavigations.Count == 0
+                ? _baseType.GetSkipNavigations()
+                : _baseType.GetSkipNavigations().Concat(_skipNavigations.Values)
+            : _skipNavigations.Values;
 
     /// <summary>
     ///     Adds an index to this entity type.
@@ -547,7 +497,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         var index = new RuntimeIndex(properties, this, name, unique);
         if (name != null)
         {
-            (_namedIndexes ??= new Utilities.OrderedDictionary<string, RuntimeIndex>(StringComparer.Ordinal)).Add(name, index);
+            _namedIndexes.Add(name, index);
         }
         else
         {
@@ -558,7 +508,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         {
             if (property.Indexes == null)
             {
-                property.Indexes = [index];
+                property.Indexes = new List<RuntimeIndex> { index };
             }
             else
             {
@@ -580,7 +530,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     public virtual RuntimeIndex? FindIndex(IReadOnlyList<IReadOnlyProperty> properties)
         => _unnamedIndexes.TryGetValue(properties, out var index)
             ? index
-            : BaseType?.FindIndex(properties);
+            : _baseType?.FindIndex(properties);
 
     /// <summary>
     ///     Gets the index with the given name. Returns <see langword="null" /> if no such index exists.
@@ -588,39 +538,169 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <param name="name">The name of the index.</param>
     /// <returns>The index, or <see langword="null" /> if none is found.</returns>
     public virtual RuntimeIndex? FindIndex(string name)
-        => _namedIndexes != null && _namedIndexes.TryGetValue(name, out var index)
+        => _namedIndexes.TryGetValue(name, out var index)
             ? index
-            : BaseType?.FindIndex(name);
+            : _baseType?.FindIndex(name);
 
-    /// <summary>
-    ///     Gets all indexes declared on this entity type.
-    /// </summary>
-    /// <remarks>
-    ///     This method does not return indexes declared on base types.
-    ///     It is useful when iterating over all entity types to avoid processing the same index more than once.
-    ///     Use <see cref="GetForeignKeys" /> to also return indexes declared on base types.
-    /// </remarks>
-    /// <returns>Declared indexes.</returns>
-    public virtual IEnumerable<RuntimeIndex> GetDeclaredIndexes()
-        => _namedIndexes == null
+    private IEnumerable<RuntimeIndex> GetDeclaredIndexes()
+        => _namedIndexes.Count == 0
             ? _unnamedIndexes.Values
             : _unnamedIndexes.Values.Concat(_namedIndexes.Values);
 
     private IEnumerable<RuntimeIndex> GetDerivedIndexes()
-        => !HasDirectlyDerivedTypes
+        => _directlyDerivedTypes.Count == 0
             ? Enumerable.Empty<RuntimeIndex>()
-            : GetDerivedTypes().Cast<RuntimeEntityType>().SelectMany(et => et.GetDeclaredIndexes());
+            : GetDerivedTypes().SelectMany(et => et.GetDeclaredIndexes());
+
+    private IEnumerable<RuntimeIndex> GetIndexes()
+        => _baseType != null
+            ? _namedIndexes.Count == 0 && _unnamedIndexes.Count == 0
+                ? _baseType.GetIndexes()
+                : _baseType.GetIndexes().Concat(GetDeclaredIndexes())
+            : GetDeclaredIndexes();
 
     /// <summary>
-    ///     Gets the indexes defined on this entity type.
+    ///     Adds a property to this entity type.
     /// </summary>
-    /// <returns>The indexes defined on this entity type.</returns>
-    public virtual IEnumerable<RuntimeIndex> GetIndexes()
-        => BaseType != null
-            ? _namedIndexes == null
-                ? BaseType.GetIndexes()
-                : BaseType.GetIndexes().Concat(GetDeclaredIndexes())
-            : GetDeclaredIndexes();
+    /// <param name="name">The name of the property to add.</param>
+    /// <param name="clrType">The type of value the property will hold.</param>
+    /// <param name="propertyInfo">The corresponding CLR property or <see langword="null" /> for a shadow property.</param>
+    /// <param name="fieldInfo">The corresponding CLR field or <see langword="null" /> for a shadow property.</param>
+    /// <param name="propertyAccessMode">The <see cref="PropertyAccessMode" /> used for this property.</param>
+    /// <param name="nullable">A value indicating whether this property can contain <see langword="null" />.</param>
+    /// <param name="concurrencyToken">A value indicating whether this property is used as a concurrency token.</param>
+    /// <param name="valueGenerated">A value indicating when a value for this property will be generated by the database.</param>
+    /// <param name="beforeSaveBehavior">
+    ///     A value indicating whether or not this property can be modified before the entity is saved to the database.
+    /// </param>
+    /// <param name="afterSaveBehavior">
+    ///     A value indicating whether or not this property can be modified after the entity is saved to the database.
+    /// </param>
+    /// <param name="maxLength">The maximum length of data that is allowed in this property.</param>
+    /// <param name="unicode">A value indicating whether or not the property can persist Unicode characters.</param>
+    /// <param name="precision">The precision of data that is allowed in this property.</param>
+    /// <param name="scale">The scale of data that is allowed in this property.</param>
+    /// <param name="providerPropertyType">
+    ///     The type that the property value will be converted to before being sent to the database provider.
+    /// </param>
+    /// <param name="valueGeneratorFactory">The factory that has been set to generate values for this property, if any.</param>
+    /// <param name="valueConverter">The custom <see cref="ValueConverter" /> set for this property.</param>
+    /// <param name="valueComparer">The <see cref="ValueComparer" /> for this property.</param>
+    /// <param name="keyValueComparer">The <see cref="ValueComparer" /> to use with keys for this property.</param>
+    /// <param name="providerValueComparer">The <see cref="ValueComparer" /> to use for the provider values for this property.</param>
+    /// <param name="typeMapping">The <see cref="CoreTypeMapping" /> for this property.</param>
+    /// <returns>The newly created property.</returns>
+    public virtual RuntimeProperty AddProperty(
+        string name,
+        Type clrType,
+        PropertyInfo? propertyInfo = null,
+        FieldInfo? fieldInfo = null,
+        PropertyAccessMode propertyAccessMode = Internal.Model.DefaultPropertyAccessMode,
+        bool nullable = false,
+        bool concurrencyToken = false,
+        ValueGenerated valueGenerated = ValueGenerated.Never,
+        PropertySaveBehavior beforeSaveBehavior = PropertySaveBehavior.Save,
+        PropertySaveBehavior afterSaveBehavior = PropertySaveBehavior.Save,
+        int? maxLength = null,
+        bool? unicode = null,
+        int? precision = null,
+        int? scale = null,
+        Type? providerPropertyType = null,
+        Func<IProperty, IEntityType, ValueGenerator>? valueGeneratorFactory = null,
+        ValueConverter? valueConverter = null,
+        ValueComparer? valueComparer = null,
+        ValueComparer? keyValueComparer = null,
+        ValueComparer? providerValueComparer = null,
+        CoreTypeMapping? typeMapping = null)
+    {
+        var property = new RuntimeProperty(
+            name,
+            clrType,
+            propertyInfo,
+            fieldInfo,
+            this,
+            propertyAccessMode,
+            nullable,
+            concurrencyToken,
+            valueGenerated,
+            beforeSaveBehavior,
+            afterSaveBehavior,
+            maxLength,
+            unicode,
+            precision,
+            scale,
+            providerPropertyType,
+            valueGeneratorFactory,
+            valueConverter,
+            valueComparer,
+            keyValueComparer,
+            providerValueComparer,
+            typeMapping);
+
+        _properties.Add(property.Name, property);
+
+        return property;
+    }
+
+    /// <summary>
+    ///     Gets the property with a given name. Returns <see langword="null" /> if no property with the given name is defined.
+    /// </summary>
+    /// <remarks>
+    ///     This API only finds scalar properties and does not find navigation properties. Use
+    ///     <see cref="FindNavigation(string)" /> to find a navigation property.
+    /// </remarks>
+    /// <param name="name">The name of the property.</param>
+    /// <returns>The property, or <see langword="null" /> if none is found.</returns>
+    public virtual RuntimeProperty? FindProperty(string name)
+        => FindDeclaredProperty(name) ?? _baseType?.FindProperty(name);
+
+    private RuntimeProperty? FindDeclaredProperty(string name)
+        => _properties.TryGetValue(name, out var property)
+            ? property
+            : null;
+
+    private IEnumerable<RuntimeProperty> GetDeclaredProperties()
+        => _properties.Values;
+
+    private IEnumerable<RuntimeProperty> GetDerivedProperties()
+        => _directlyDerivedTypes.Count == 0
+            ? Enumerable.Empty<RuntimeProperty>()
+            : GetDerivedTypes().SelectMany(et => et.GetDeclaredProperties());
+
+    /// <summary>
+    ///     Finds matching properties on the given entity type. Returns <see langword="null" /> if any property is not found.
+    /// </summary>
+    /// <remarks>
+    ///     This API only finds scalar properties and does not find navigations or service properties.
+    /// </remarks>
+    /// <param name="propertyNames">The property names.</param>
+    /// <returns>The properties, or <see langword="null" /> if any property is not found.</returns>
+    public virtual IReadOnlyList<RuntimeProperty>? FindProperties(IEnumerable<string> propertyNames)
+    {
+        var properties = new List<RuntimeProperty>();
+        foreach (var propertyName in propertyNames)
+        {
+            var property = FindProperty(propertyName);
+            if (property == null)
+            {
+                return null;
+            }
+
+            properties.Add(property);
+        }
+
+        return properties;
+    }
+
+    private IEnumerable<RuntimeProperty> GetProperties()
+        => _baseType != null
+            ? _baseType.GetProperties().Concat(_properties.Values)
+            : _properties.Values;
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    public virtual PropertyInfo? FindIndexerPropertyInfo()
+        => _indexerPropertyInfo;
 
     /// <summary>
     ///     Adds a service property to this entity type.
@@ -628,26 +708,22 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <param name="name">The name of the property to add.</param>
     /// <param name="propertyInfo">The corresponding CLR property or <see langword="null" /> for a shadow property.</param>
     /// <param name="fieldInfo">The corresponding CLR field or <see langword="null" /> for a shadow property.</param>
-    /// <param name="serviceType">The type of the service, or <see langword="null" /> to use the type of the member.</param>
     /// <param name="propertyAccessMode">The <see cref="PropertyAccessMode" /> used for this property.</param>
     /// <returns>The newly created service property.</returns>
     public virtual RuntimeServiceProperty AddServiceProperty(
         string name,
         PropertyInfo? propertyInfo = null,
         FieldInfo? fieldInfo = null,
-        Type? serviceType = null,
         PropertyAccessMode propertyAccessMode = Internal.Model.DefaultPropertyAccessMode)
     {
         var serviceProperty = new RuntimeServiceProperty(
             name,
             propertyInfo,
             fieldInfo,
-            serviceType ?? (propertyInfo?.PropertyType ?? fieldInfo?.FieldType)!,
             this,
             propertyAccessMode);
 
-        (_serviceProperties ??= new Utilities.OrderedDictionary<string, RuntimeServiceProperty>(StringComparer.Ordinal))[serviceProperty.Name] =
-            serviceProperty;
+        _serviceProperties[serviceProperty.Name] = serviceProperty;
 
         return serviceProperty;
     }
@@ -662,108 +738,27 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <param name="name">The name of the service property.</param>
     /// <returns>The service property, or <see langword="null" /> if none is found.</returns>
     public virtual RuntimeServiceProperty? FindServiceProperty(string name)
-        => FindDeclaredServiceProperty(name) ?? BaseType?.FindServiceProperty(name);
+        => FindDeclaredServiceProperty(name) ?? _baseType?.FindServiceProperty(name);
 
     private RuntimeServiceProperty? FindDeclaredServiceProperty(string name)
-        => _serviceProperties != null && _serviceProperties.TryGetValue(name, out var property)
+        => _serviceProperties.TryGetValue(name, out var property)
             ? property
             : null;
 
-    private bool HasServiceProperties()
-        => _serviceProperties != null || BaseType != null && BaseType.HasServiceProperties();
-
     private IEnumerable<RuntimeServiceProperty> GetServiceProperties()
-        => BaseType != null
-            ? _serviceProperties != null
-                ? BaseType.GetServiceProperties().Concat(_serviceProperties.Values)
-                : BaseType.GetServiceProperties()
-            : GetDeclaredServiceProperties();
+        => _baseType != null
+            ? _serviceProperties.Count == 0
+                ? _baseType.GetServiceProperties()
+                : _baseType.GetServiceProperties().Concat(_serviceProperties.Values)
+            : _serviceProperties.Values;
 
     private IEnumerable<RuntimeServiceProperty> GetDeclaredServiceProperties()
-        => _serviceProperties?.Values ?? Enumerable.Empty<RuntimeServiceProperty>();
+        => _serviceProperties.Values;
 
     private IEnumerable<RuntimeServiceProperty> GetDerivedServiceProperties()
-        => !HasDirectlyDerivedTypes
+        => _directlyDerivedTypes.Count == 0
             ? Enumerable.Empty<RuntimeServiceProperty>()
-            : GetDerivedTypes().Cast<RuntimeEntityType>().SelectMany(et => et.GetDeclaredServiceProperties());
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    private IEnumerable<RuntimeServiceProperty> FindDerivedServiceProperties(string propertyName)
-    {
-        Check.NotNull(propertyName, nameof(propertyName));
-
-        return !HasDirectlyDerivedTypes
-            ? Enumerable.Empty<RuntimeServiceProperty>()
-            : (IEnumerable<RuntimeServiceProperty>)GetDerivedTypes<RuntimeEntityType>()
-                .Select(et => et.FindDeclaredServiceProperty(propertyName))
-                .Where(p => p != null);
-    }
-
-    /// <summary>
-    ///     Gets the service properties with the given name on this type, base types or derived types.
-    /// </summary>
-    /// <returns>Type service properties.</returns>
-    public virtual IEnumerable<RuntimeServiceProperty> FindServicePropertiesInHierarchy(string propertyName)
-        => !HasDirectlyDerivedTypes
-            ? ToEnumerable(FindServiceProperty(propertyName))
-            : ToEnumerable(FindServiceProperty(propertyName)).Concat(FindDerivedServiceProperties(propertyName));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override IEnumerable<RuntimePropertyBase> GetMembers()
-        => GetProperties()
-            .Concat<RuntimePropertyBase>(GetComplexProperties())
-            .Concat(GetServiceProperties())
-            .Concat(GetNavigations())
-            .Concat(GetSkipNavigations());
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override IEnumerable<RuntimePropertyBase> GetDeclaredMembers()
-        => GetDeclaredProperties()
-            .Concat<RuntimePropertyBase>(GetDeclaredComplexProperties())
-            .Concat(GetDeclaredServiceProperties())
-            .Concat(GetDeclaredNavigations())
-            .Concat(GetDeclaredSkipNavigations());
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override RuntimePropertyBase? FindMember(string name)
-        => FindProperty(name)
-            ?? FindNavigation(name)
-            ?? FindComplexProperty(name)
-            ?? FindSkipNavigation(name)
-            ?? ((RuntimePropertyBase?)FindServiceProperty(name));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override IEnumerable<RuntimePropertyBase> FindMembersInHierarchy(string name)
-        => FindPropertiesInHierarchy(name)
-            .Concat<RuntimePropertyBase>(FindComplexPropertiesInHierarchy(name))
-            .Concat(FindServicePropertiesInHierarchy(name))
-            .Concat(FindNavigationsInHierarchy(name))
-            .Concat(FindSkipNavigationsInHierarchy(name));
+            : GetDerivedTypes().SelectMany(et => et.GetDeclaredServiceProperties());
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -775,7 +770,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     {
         var trigger = new RuntimeTrigger(this, modelName);
 
-        (_triggers ??= new Utilities.OrderedDictionary<string, RuntimeTrigger>(StringComparer.Ordinal)).Add(modelName, trigger);
+        _triggers.Add(modelName, trigger);
 
         return trigger;
     }
@@ -789,37 +784,27 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     {
         Check.NotEmpty(modelName, nameof(modelName));
 
-        return _triggers != null && _triggers.TryGetValue(modelName, out var trigger)
+        return _triggers.TryGetValue(modelName, out var trigger)
             ? trigger
             : null;
     }
 
     private IEnumerable<RuntimeTrigger> GetDeclaredTriggers()
-        => _triggers?.Values ?? Enumerable.Empty<RuntimeTrigger>();
+        => _triggers.Values;
 
     private IEnumerable<RuntimeTrigger> GetTriggers()
-        => BaseType != null
-            ? BaseType.GetTriggers().Concat(GetDeclaredTriggers())
+        => _baseType != null
+            ? _baseType.GetTriggers().Concat(GetDeclaredTriggers())
             : GetDeclaredTriggers();
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual void SetRelationshipSnapshotFactory(Func<InternalEntityEntry, ISnapshot> factory)
-        => _relationshipSnapshotFactory = factory;
 
     /// <summary>
     ///     Gets or sets the <see cref="InstantiationBinding" /> for the preferred constructor.
     /// </summary>
-    public override InstantiationBinding? ConstructorBinding
+    public virtual InstantiationBinding? ConstructorBinding
     {
-        get => !base.ClrType.IsAbstract
+        get => !_clrType.IsAbstract
             ? NonCapturingLazyInitializer.EnsureInitialized(
-                ref _constructorBinding, this, entityType =>
+                ref _constructorBinding, this, static entityType =>
                 {
                     ((IModel)entityType.Model).GetModelDependencies().ConstructorBindingFactory.GetBindings(
                         entityType,
@@ -849,81 +834,14 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     }
 
     /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    ///     Returns the default indexer property that takes a <see cref="string" /> value if one exists.
     /// </summary>
-    [EntityFrameworkInternal]
-    public virtual PropertyCounts Counts
-    {
-        get => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _counts, this, static entityType =>
-                entityType.CalculateCounts());
-
-        [DebuggerStepThrough]
-        set => _counts = value;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override IEnumerable<RuntimePropertyBase> GetSnapshottableMembers()
-    {
-        return NonCapturingLazyInitializer.EnsureInitialized(
-            ref _snapshottableProperties, this,
-            static type => Create(type).ToArray());
-
-        static IEnumerable<RuntimePropertyBase> Create(RuntimeEntityType type)
-        {
-            foreach (var property in type.GetProperties())
-            {
-                yield return property;
-            }
-
-            foreach (var complexProperty in type.GetComplexProperties())
-            {
-                yield return complexProperty;
-
-                foreach (var property in complexProperty.ComplexType.GetSnapshottableMembers())
-                {
-                    yield return property;
-                }
-            }
-
-            foreach (var navigation in type.GetNavigations())
-            {
-                yield return navigation;
-            }
-        }
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual Func<MaterializationContext, object> GetOrCreateMaterializer(IEntityMaterializerSource source)
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _materializer, this, source,
-            static (e, s) => s.GetMaterializer(e));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual Func<MaterializationContext, object> GetOrCreateEmptyMaterializer(IEntityMaterializerSource source)
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _emptyMaterializer, this, source,
-            static (e, s) => s.GetEmptyMaterializer(e));
+    /// <param name="type">The type to look for the indexer on.</param>
+    /// <returns>An indexer property or <see langword="null" />.</returns>
+    public static PropertyInfo? FindIndexerProperty(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+        Type type)
+        => type.FindIndexerProperty();
 
     /// <summary>
     ///     Returns a string that represents the current object.
@@ -945,6 +863,19 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
             () => ((IReadOnlyEntityType)this).ToDebugString(MetadataDebugStringOptions.LongDefault));
 
     /// <inheritdoc />
+    [DynamicallyAccessedMembers(IEntityType.DynamicallyAccessedMemberTypes)]
+    Type IReadOnlyTypeBase.ClrType
+    {
+        [DebuggerStepThrough]
+        get => _clrType;
+    }
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    ChangeTrackingStrategy IReadOnlyEntityType.GetChangeTrackingStrategy()
+        => _changeTrackingStrategy;
+
+    /// <inheritdoc />
     [DebuggerStepThrough]
     LambdaExpression? IReadOnlyEntityType.GetQueryFilter()
         => (LambdaExpression?)this[CoreAnnotationNames.QueryFilter];
@@ -953,7 +884,7 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     [DebuggerStepThrough]
     string? IReadOnlyEntityType.GetDiscriminatorPropertyName()
     {
-        if (BaseType != null)
+        if (_baseType != null)
         {
             return ((IReadOnlyEntityType)this).GetRootType().GetDiscriminatorPropertyName();
         }
@@ -974,6 +905,13 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     }
 
     /// <inheritdoc />
+    bool IReadOnlyTypeBase.IsPropertyBag
+    {
+        [DebuggerStepThrough]
+        get => _isPropertyBag;
+    }
+
+    /// <inheritdoc />
     IReadOnlyModel IReadOnlyTypeBase.Model
     {
         [DebuggerStepThrough]
@@ -991,36 +929,36 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     IReadOnlyEntityType? IReadOnlyEntityType.BaseType
     {
         [DebuggerStepThrough]
-        get => BaseType;
+        get => _baseType;
     }
 
     /// <inheritdoc />
     IEntityType? IEntityType.BaseType
     {
         [DebuggerStepThrough]
-        get => BaseType;
+        get => _baseType;
     }
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     IEnumerable<IReadOnlyEntityType> IReadOnlyEntityType.GetDerivedTypes()
-        => GetDerivedTypes<RuntimeEntityType>();
+        => GetDerivedTypes();
 
     /// <inheritdoc />
     IEnumerable<IReadOnlyEntityType> IReadOnlyEntityType.GetDerivedTypesInclusive()
-        => !HasDirectlyDerivedTypes
+        => _directlyDerivedTypes.Count == 0
             ? new[] { this }
-            : new[] { this }.Concat(GetDerivedTypes<RuntimeEntityType>());
+            : new[] { this }.Concat(GetDerivedTypes());
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     IEnumerable<IReadOnlyEntityType> IReadOnlyEntityType.GetDirectlyDerivedTypes()
-        => DirectlyDerivedTypes.Cast<RuntimeEntityType>();
+        => _directlyDerivedTypes;
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     IEnumerable<IEntityType> IEntityType.GetDirectlyDerivedTypes()
-        => DirectlyDerivedTypes.Cast<RuntimeEntityType>();
+        => _directlyDerivedTypes;
 
     /// <inheritdoc />
     [DebuggerStepThrough]
@@ -1111,12 +1049,12 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <inheritdoc />
     [DebuggerStepThrough]
     IEnumerable<IReadOnlyForeignKey> IReadOnlyEntityType.GetDeclaredForeignKeys()
-        => GetDeclaredForeignKeys();
+        => _foreignKeys;
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     IEnumerable<IForeignKey> IEntityType.GetDeclaredForeignKeys()
-        => GetDeclaredForeignKeys();
+        => _foreignKeys;
 
     /// <inheritdoc />
     [DebuggerStepThrough]
@@ -1171,9 +1109,9 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     /// <inheritdoc />
     [DebuggerStepThrough]
     IEnumerable<IReadOnlyNavigation> IReadOnlyEntityType.GetDerivedNavigations()
-        => !HasDirectlyDerivedTypes
+        => _directlyDerivedTypes.Count == 0
             ? Enumerable.Empty<RuntimeNavigation>()
-            : GetDerivedTypes().Cast<RuntimeEntityType>().SelectMany(et => et.GetDeclaredNavigations());
+            : GetDerivedTypes().SelectMany(et => et.GetDeclaredNavigations());
 
     /// <inheritdoc />
     [DebuggerStepThrough]
@@ -1292,6 +1230,56 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
 
     /// <inheritdoc />
     [DebuggerStepThrough]
+    IReadOnlyProperty? IReadOnlyEntityType.FindDeclaredProperty(string name)
+        => FindDeclaredProperty(name);
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IProperty? IEntityType.FindDeclaredProperty(string name)
+        => FindDeclaredProperty(name);
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IReadOnlyList<IReadOnlyProperty>? IReadOnlyEntityType.FindProperties(IReadOnlyList<string> propertyNames)
+        => FindProperties(propertyNames);
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IReadOnlyProperty? IReadOnlyEntityType.FindProperty(string name)
+        => FindProperty(name);
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IProperty? IEntityType.FindProperty(string name)
+        => FindProperty(name);
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IEnumerable<IReadOnlyProperty> IReadOnlyEntityType.GetDeclaredProperties()
+        => GetDeclaredProperties();
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IEnumerable<IProperty> IEntityType.GetDeclaredProperties()
+        => GetDeclaredProperties();
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IEnumerable<IReadOnlyProperty> IReadOnlyEntityType.GetDerivedProperties()
+        => GetDerivedProperties();
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IEnumerable<IReadOnlyProperty> IReadOnlyEntityType.GetProperties()
+        => GetProperties();
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
+    IEnumerable<IProperty> IEntityType.GetProperties()
+        => GetProperties();
+
+    /// <inheritdoc />
+    [DebuggerStepThrough]
     IReadOnlyTrigger? IReadOnlyEntityType.FindDeclaredTrigger(string name)
         => FindDeclaredTrigger(name);
 
@@ -1311,43 +1299,58 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
         => GetDeclaredTriggers();
 
     /// <inheritdoc />
-    [DebuggerStepThrough]
-    IProperty? IEntityType.FindProperty(string name)
-        => FindProperty(name);
+    PropertyCounts IRuntimeEntityType.Counts
+        => NonCapturingLazyInitializer.EnsureInitialized(ref _counts, this, static entityType => entityType.CalculateCounts());
 
     /// <inheritdoc />
-    [DebuggerStepThrough]
-    IReadOnlyList<IProperty>? IEntityType.FindProperties(IReadOnlyList<string> propertyNames)
-        => FindProperties(propertyNames);
+    Func<InternalEntityEntry, ISnapshot> IRuntimeEntityType.RelationshipSnapshotFactory
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _relationshipSnapshotFactory, this,
+            static entityType => new RelationshipSnapshotFactoryFactory().Create(entityType));
 
     /// <inheritdoc />
-    [DebuggerStepThrough]
-    IProperty? IEntityType.FindDeclaredProperty(string name)
-        => FindDeclaredProperty(name);
+    Func<InternalEntityEntry, ISnapshot> IRuntimeEntityType.OriginalValuesFactory
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _originalValuesFactory, this,
+            static entityType => new OriginalValuesFactoryFactory().Create(entityType));
 
     /// <inheritdoc />
-    [DebuggerStepThrough]
-    IEnumerable<IProperty> IEntityType.GetDeclaredProperties()
-        => GetDeclaredProperties();
+    Func<ISnapshot> IRuntimeEntityType.StoreGeneratedValuesFactory
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _storeGeneratedValuesFactory, this,
+            static entityType => new StoreGeneratedValuesFactoryFactory().CreateEmpty(entityType));
 
     /// <inheritdoc />
-    [DebuggerStepThrough]
-    IEnumerable<IProperty> IEntityType.GetProperties()
-        => GetProperties();
+    Func<InternalEntityEntry, ISnapshot> IRuntimeEntityType.TemporaryValuesFactory
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _temporaryValuesFactory, this,
+            static entityType => new TemporaryValuesFactoryFactory().Create(entityType));
+
+    /// <inheritdoc />
+    Func<ValueBuffer, ISnapshot> IRuntimeEntityType.ShadowValuesFactory
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _shadowValuesFactory, this,
+            static entityType => new ShadowValuesFactoryFactory().Create(entityType));
+
+    /// <inheritdoc />
+    Func<ISnapshot> IRuntimeEntityType.EmptyShadowValuesFactory
+        => NonCapturingLazyInitializer.EnsureInitialized(
+            ref _emptyShadowValuesFactory, this,
+            static entityType => new EmptyShadowValuesFactoryFactory().CreateEmpty(entityType));
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     IEnumerable<IProperty> IEntityType.GetForeignKeyProperties()
         => NonCapturingLazyInitializer.EnsureInitialized(
             ref _foreignKeyProperties, this,
-            static entityType => entityType.GetProperties().Where(p => ((IReadOnlyProperty)p).IsForeignKey()).ToArray());
+            static entityType => { return entityType.GetProperties().Where(p => ((IReadOnlyProperty)p).IsForeignKey()).ToArray(); });
 
     /// <inheritdoc />
     [DebuggerStepThrough]
     IEnumerable<IProperty> IEntityType.GetValueGeneratingProperties()
         => NonCapturingLazyInitializer.EnsureInitialized(
             ref _valueGeneratingProperties, this,
-            static entityType => entityType.GetProperties().Where(p => p.RequiresValueGenerator()).ToArray());
+            static entityType => { return entityType.GetProperties().Where(p => p.RequiresValueGenerator()).ToArray(); });
 
     /// <inheritdoc />
     [DebuggerStepThrough]
@@ -1376,11 +1379,6 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
 
     /// <inheritdoc />
     [DebuggerStepThrough]
-    bool IReadOnlyEntityType.HasServiceProperties()
-        => HasServiceProperties();
-
-    /// <inheritdoc />
-    [DebuggerStepThrough]
     IEnumerable<IReadOnlyServiceProperty> IReadOnlyEntityType.GetServiceProperties()
         => GetServiceProperties();
 
@@ -1392,104 +1390,15 @@ public class RuntimeEntityType : RuntimeTypeBase, IRuntimeEntityType
     IEnumerable<IDictionary<string, object?>> IReadOnlyEntityType.GetSeedData(bool providerValues)
         => throw new InvalidOperationException(CoreStrings.RuntimeModelMissingData);
 
-    PropertyAccessMode IReadOnlyEntityType.GetNavigationAccessMode()
+    PropertyAccessMode IReadOnlyTypeBase.GetPropertyAccessMode()
         => throw new InvalidOperationException(CoreStrings.RuntimeModelMissingData);
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual void SetOriginalValuesFactory(Func<InternalEntityEntry, ISnapshot> factory)
-        => _originalValuesFactory = factory;
+    PropertyAccessMode IReadOnlyTypeBase.GetNavigationAccessMode()
+        => throw new InvalidOperationException(CoreStrings.RuntimeModelMissingData);
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual void SetStoreGeneratedValuesFactory(Func<ISnapshot> factory)
-        => _storeGeneratedValuesFactory = factory;
+    ConfigurationSource? IRuntimeEntityType.GetConstructorBindingConfigurationSource()
+        => throw new InvalidOperationException(CoreStrings.RuntimeModelMissingData);
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual void SetTemporaryValuesFactory(Func<InternalEntityEntry, ISnapshot> factory)
-        => _temporaryValuesFactory = factory;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual void SetEmptyShadowValuesFactory(Func<ISnapshot> factory)
-        => _emptyShadowValuesFactory = factory;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public virtual void SetShadowValuesFactory(Func<IDictionary<string, object?>, ISnapshot> factory)
-        => _shadowValuesFactory = factory;
-
-    /// <inheritdoc />
-    Func<InternalEntityEntry, ISnapshot> IRuntimeEntityType.OriginalValuesFactory
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _originalValuesFactory, this,
-            static entityType => RuntimeFeature.IsDynamicCodeSupported
-                ? OriginalValuesFactoryFactory.Instance.Create(entityType)
-                : throw new InvalidOperationException(CoreStrings.NativeAotNoCompiledModel));
-
-    /// <inheritdoc />
-    Func<ISnapshot> IRuntimeEntityType.StoreGeneratedValuesFactory
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _storeGeneratedValuesFactory, this,
-            static entityType => RuntimeFeature.IsDynamicCodeSupported
-                ? StoreGeneratedValuesFactoryFactory.Instance.CreateEmpty(entityType)
-                : throw new InvalidOperationException(CoreStrings.NativeAotNoCompiledModel));
-
-    /// <inheritdoc />
-    Func<InternalEntityEntry, ISnapshot> IRuntimeEntityType.TemporaryValuesFactory
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _temporaryValuesFactory, this,
-            static entityType => RuntimeFeature.IsDynamicCodeSupported
-                ? TemporaryValuesFactoryFactory.Instance.Create(entityType)
-                : throw new InvalidOperationException(CoreStrings.NativeAotNoCompiledModel));
-
-    /// <inheritdoc />
-    Func<IDictionary<string, object?>, ISnapshot> IRuntimeEntityType.ShadowValuesFactory
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _shadowValuesFactory, this,
-            static entityType => RuntimeFeature.IsDynamicCodeSupported
-                ? ShadowValuesFactoryFactory.Instance.Create(entityType)
-                : throw new InvalidOperationException(CoreStrings.NativeAotNoCompiledModel));
-
-    /// <inheritdoc />
-    Func<ISnapshot> IRuntimeEntityType.EmptyShadowValuesFactory
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _emptyShadowValuesFactory, this,
-            static entityType => RuntimeFeature.IsDynamicCodeSupported
-                ? EmptyShadowValuesFactoryFactory.Instance.CreateEmpty(entityType)
-                : throw new InvalidOperationException(CoreStrings.NativeAotNoCompiledModel));
-
-    /// <inheritdoc />
-    Func<InternalEntityEntry, ISnapshot> IRuntimeEntityType.RelationshipSnapshotFactory
-        => NonCapturingLazyInitializer.EnsureInitialized(
-            ref _relationshipSnapshotFactory, this,
-            static entityType => RuntimeFeature.IsDynamicCodeSupported
-                ? RelationshipSnapshotFactoryFactory.Instance.Create(entityType)
-                : throw new InvalidOperationException(CoreStrings.NativeAotNoCompiledModel));
+    ConfigurationSource? IRuntimeEntityType.GetServiceOnlyConstructorBindingConfigurationSource()
+        => throw new InvalidOperationException(CoreStrings.RuntimeModelMissingData);
 }

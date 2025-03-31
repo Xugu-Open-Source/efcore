@@ -4,6 +4,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
+using Microsoft.EntityFrameworkCore.Internal;
 
 // ReSharper disable UnusedParameter.Local
 // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -16,7 +17,7 @@ public class OwnedFixupTest
     private class Thing
     {
         public Guid ThingId { get; set; }
-        public List<OwnedByThing> OwnedByThings { get; set; } = [];
+        public List<OwnedByThing> OwnedByThings { get; set; } = new();
     }
 
     private class OwnedByThing
@@ -36,7 +37,10 @@ public class OwnedFixupTest
         var thing = new Thing
         {
             ThingId = Guid.NewGuid(),
-            OwnedByThings = [new OwnedByThing { OwnedByThingId = Guid.NewGuid() }, new OwnedByThing { OwnedByThingId = Guid.NewGuid() }]
+            OwnedByThings = new List<OwnedByThing>
+            {
+                new() { OwnedByThingId = Guid.NewGuid() }, new() { OwnedByThingId = Guid.NewGuid() }
+            }
         };
 
         context.Attach(thing);
@@ -4297,6 +4301,7 @@ public class OwnedFixupTest
         Assert.Same(dependent2, subDependent2.Parent);
     }
 
+
     [ConditionalTheory]
     [InlineData(EntityState.Added, true, true, true)]
     [InlineData(EntityState.Modified, true, true, true)]
@@ -4461,9 +4466,14 @@ public class OwnedFixupTest
         public string Size { get; set; }
     }
 
-    private class OwnedModifiedContext(string databaseName) : DbContext
+    private class OwnedModifiedContext : DbContext
     {
-        private readonly string _databaseName = databaseName;
+        private readonly string _databaseName;
+
+        public OwnedModifiedContext(string databaseName)
+        {
+            _databaseName = databaseName;
+        }
 
         protected internal override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseInMemoryDatabase(_databaseName);
@@ -4521,9 +4531,14 @@ public class OwnedFixupTest
         public ICollection<StreetAddress> ShippingCenters { get; set; }
     }
 
-    private class StreetContext(string databaseName) : DbContext
+    private class StreetContext : DbContext
     {
-        private readonly string _databaseName = databaseName;
+        private readonly string _databaseName;
+
+        public StreetContext(string databaseName)
+        {
+            _databaseName = databaseName;
+        }
 
         protected internal override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseInMemoryDatabase(_databaseName);
@@ -4729,9 +4744,14 @@ public class OwnedFixupTest
             => rob.Property(e => e.Title);
     }
 
-    private class BooksContext(string databaseName) : DbContext
+    private class BooksContext : DbContext
     {
-        private readonly string _databaseName = databaseName;
+        private readonly string _databaseName;
+
+        public BooksContext(string databaseName)
+        {
+            _databaseName = databaseName;
+        }
 
         public DbSet<Book> Books { get; set; }
 
@@ -4820,9 +4840,14 @@ public class OwnedFixupTest
         public int NumericCode { get; }
     }
 
-    private class TestCurrencyContext(string databaseName) : DbContext
+    private class TestCurrencyContext : DbContext
     {
-        private readonly string _databaseName = databaseName;
+        private readonly string _databaseName;
+
+        public TestCurrencyContext(string databaseName)
+        {
+            _databaseName = databaseName;
+        }
 
         protected internal override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseInMemoryDatabase(_databaseName);
@@ -4894,9 +4919,14 @@ public class OwnedFixupTest
         Assert.Equal("USD", order.TestOrderItems.Single(e => e.ProductName == "Test Product 4").Price.Currency.Code);
     }
 
-    private class TestCurrencyContextRevisited(string databaseName) : DbContext
+    private class TestCurrencyContextRevisited : DbContext
     {
-        private readonly string _databaseName = databaseName;
+        private readonly string _databaseName;
+
+        public TestCurrencyContextRevisited(string databaseName)
+        {
+            _databaseName = databaseName;
+        }
 
         protected internal override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseInMemoryDatabase(_databaseName);
@@ -5020,9 +5050,14 @@ public class OwnedFixupTest
         }
     }
 
-    private class OneRowContext(bool async) : DbContext
+    private class OneRowContext : DbContext
     {
-        private readonly bool _async = async;
+        private readonly bool _async;
+
+        public OneRowContext(bool async)
+        {
+            _async = async;
+        }
 
         protected internal override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseInMemoryDatabase(nameof(OneRowContext) + _async);
@@ -5051,7 +5086,7 @@ public class OwnedFixupTest
         public IReadOnlyList<Role> Roles
             => _roles.AsReadOnly();
 
-        private readonly List<Role> _roles = [];
+        private readonly List<Role> _roles = new();
 
         public void SetRoles(IList<Role> roles)
         {
@@ -5075,9 +5110,14 @@ public class OwnedFixupTest
             => Value == other.Value;
     }
 
-    private class EquatableEntitiesContext(string databaseName) : DbContext
+    private class EquatableEntitiesContext : DbContext
     {
-        private readonly string _databaseName = databaseName;
+        private readonly string _databaseName;
+
+        public EquatableEntitiesContext(string databaseName)
+        {
+            _databaseName = databaseName;
+        }
 
         protected internal override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseInMemoryDatabase(_databaseName);
@@ -5543,8 +5583,8 @@ public class OwnedFixupTest
             CollectionType.SortedSet => new SortedSet<T> { dependent },
             CollectionType.Collection => new Collection<T> { dependent },
             CollectionType.ObservableCollection => new ObservableCollection<T> { dependent },
-            CollectionType.ObservableHashSet => new ObservableHashSet<T>(ReferenceEqualityComparer.Instance) { dependent },
-            _ => new HashSet<T>(ReferenceEqualityComparer.Instance) { dependent }
+            CollectionType.ObservableHashSet => new ObservableHashSet<T>(LegacyReferenceEqualityComparer.Instance) { dependent },
+            _ => new HashSet<T>(LegacyReferenceEqualityComparer.Instance) { dependent }
         };
 
     private void AssertFixup(DbContext context, Action asserts)

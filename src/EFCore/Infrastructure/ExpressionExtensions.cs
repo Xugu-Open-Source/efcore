@@ -29,7 +29,7 @@ public static class ExpressionExtensions
     /// <param name="characterLimit">An optional limit to the number of characters included. Additional output will be truncated.</param>
     /// <returns>The printable representation.</returns>
     public static string Print(this Expression expression, int? characterLimit = null)
-        => new ExpressionPrinter().PrintExpression(expression, characterLimit);
+        => new ExpressionPrinter().Print(expression, characterLimit);
 
     /// <summary>
     ///     Creates a <see cref="MemberExpression"></see> that represents accessing either a field or a property.
@@ -72,7 +72,7 @@ public static class ExpressionExtensions
                 GetAssignBinaryExpressionType(),
                 BindingFlags.NonPublic | BindingFlags.Instance,
                 null,
-                [memberExpression, valueExpression],
+                new object[] { memberExpression, valueExpression },
                 null)!;
         }
 
@@ -288,13 +288,11 @@ public static class ExpressionExtensions
         Type type,
         int index,
         IPropertyBase? property)
-        => property is INavigationBase
-            ? Expression.Constant(null, typeof(object))
-            : Expression.Call(
-                MakeValueBufferTryReadValueMethod(type),
-                valueBuffer,
-                Expression.Constant(index),
-                Expression.Constant(property, typeof(IPropertyBase)));
+        => Expression.Call(
+            MakeValueBufferTryReadValueMethod(type),
+            valueBuffer,
+            Expression.Constant(index),
+            Expression.Constant(property, typeof(IPropertyBase)));
 
     /// <summary>
     ///     <para>
@@ -309,8 +307,7 @@ public static class ExpressionExtensions
     public static readonly MethodInfo ValueBufferTryReadValueMethod
         = typeof(ExpressionExtensions).GetTypeInfo().GetDeclaredMethod(nameof(ValueBufferTryReadValue))!;
 
-    [UnconditionalSuppressMessage(
-        "ReflectionAnalysis", "IL2060",
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2060",
         Justification = "ValueBufferTryReadValueMethod has no DynamicallyAccessedMembers annotations and is safe to construct.")]
     private static MethodInfo MakeValueBufferTryReadValueMethod(Type type)
         => ValueBufferTryReadValueMethod.MakeGenericMethod(type);
@@ -367,14 +364,7 @@ public static class ExpressionExtensions
         bool makeNullable = true) // No shadow entities in runtime
         => CreateEFPropertyExpression(target, property.DeclaringType.ClrType, property.ClrType, property.Name, makeNullable);
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal]
-    public static Expression CreateEFPropertyExpression(
+    private static Expression CreateEFPropertyExpression(
         Expression target,
         Type propertyDeclaringType,
         Type propertyType,
@@ -392,13 +382,6 @@ public static class ExpressionExtensions
             propertyType = propertyType.MakeNullable();
         }
 
-        // EF.Property expects an object as its first argument. If the target is a struct (complex type), we need an explicit up-cast to
-        // object.
-        if (target.Type.IsValueType)
-        {
-            target = Expression.Convert(target, typeof(object));
-        }
-
         return Expression.Call(
             EF.MakePropertyMethod(propertyType),
             target,
@@ -406,7 +389,7 @@ public static class ExpressionExtensions
     }
 
     private static readonly MethodInfo ObjectEqualsMethodInfo
-        = typeof(object).GetRuntimeMethod(nameof(object.Equals), [typeof(object), typeof(object)])!;
+        = typeof(object).GetRuntimeMethod(nameof(object.Equals), new[] { typeof(object), typeof(object) })!;
 
     /// <summary>
     ///     <para>

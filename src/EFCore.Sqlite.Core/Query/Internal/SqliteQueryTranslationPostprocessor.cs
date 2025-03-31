@@ -25,7 +25,7 @@ public class SqliteQueryTranslationPostprocessor : RelationalQueryTranslationPos
     public SqliteQueryTranslationPostprocessor(
         QueryTranslationPostprocessorDependencies dependencies,
         RelationalQueryTranslationPostprocessorDependencies relationalDependencies,
-        RelationalQueryCompilationContext queryCompilationContext)
+        QueryCompilationContext queryCompilationContext)
         : base(dependencies, relationalDependencies, queryCompilationContext)
     {
     }
@@ -44,15 +44,6 @@ public class SqliteQueryTranslationPostprocessor : RelationalQueryTranslationPos
         return result;
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    protected override Expression ProcessTypeMappings(Expression expression)
-        => new SqliteTypeMappingPostprocessor(Dependencies, RelationalDependencies, RelationalQueryCompilationContext).Process(expression);
-
     private sealed class ApplyValidatingVisitor : ExpressionVisitor
     {
         protected override Expression VisitExtension(Expression extensionExpression)
@@ -66,7 +57,7 @@ public class SqliteQueryTranslationPostprocessor : RelationalQueryTranslationPos
             }
 
             if (extensionExpression is SelectExpression selectExpression
-                && selectExpression.Tables.Any(t => t is CrossApplyExpression or OuterApplyExpression))
+                && selectExpression.Tables.Any(t => t is CrossApplyExpression || t is OuterApplyExpression))
             {
                 throw new InvalidOperationException(SqliteStrings.ApplyNotSupported);
             }

@@ -3,12 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class MonsterFixupChangedChangingSqlServerTest(
-    MonsterFixupChangedChangingSqlServerTest.MonsterFixupChangedChangingSqlServerFixture fixture) :
-    MonsterFixupTestBase<MonsterFixupChangedChangingSqlServerTest.MonsterFixupChangedChangingSqlServerFixture>(fixture)
+public class MonsterFixupChangedChangingSqlServerTest :
+    MonsterFixupTestBase<MonsterFixupChangedChangingSqlServerTest.MonsterFixupChangedChangingSqlServerFixture>
 {
+    public MonsterFixupChangedChangingSqlServerTest(MonsterFixupChangedChangingSqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class MonsterFixupChangedChangingSqlServerFixture : MonsterFixupChangedChangingFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

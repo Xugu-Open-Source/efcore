@@ -5,7 +5,13 @@ using System;
 
 namespace Microsoft.DotNet.Cli.CommandLine;
 
-internal class CommandParsingException(CommandLineApplication command, string message) : Exception(message)
+internal class CommandParsingException : Exception
 {
-    public CommandLineApplication Command { get; } = command;
+    public CommandParsingException(CommandLineApplication command, string message)
+        : base(message)
+    {
+        Command = command;
+    }
+
+    public CommandLineApplication Command { get; }
 }

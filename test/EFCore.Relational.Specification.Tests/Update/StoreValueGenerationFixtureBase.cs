@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.TestModels.StoreValueGenerationModel;
 
 namespace Microsoft.EntityFrameworkCore.Update;
 
-#nullable disable
+#nullable enable
 
 public abstract class StoreValueGenerationFixtureBase : SharedStoreFixtureBase<StoreValueGenerationContext>
 {
@@ -58,7 +58,7 @@ public abstract class StoreValueGenerationFixtureBase : SharedStoreFixtureBase<S
         }
     }
 
-    protected override Task SeedAsync(StoreValueGenerationContext context)
+    protected override void Seed(StoreValueGenerationContext context)
     {
         context.WithSomeDatabaseGenerated.AddRange(new StoreValueGenerationData { Data2 = 1 }, new StoreValueGenerationData { Data2 = 2 });
         context.WithSomeDatabaseGenerated2.AddRange(new StoreValueGenerationData { Data2 = 1 }, new StoreValueGenerationData { Data2 = 2 });
@@ -91,13 +91,13 @@ public abstract class StoreValueGenerationFixtureBase : SharedStoreFixtureBase<S
         context.WithAllDatabaseGenerated.AddRange(new StoreValueGenerationData(), new StoreValueGenerationData());
         context.WithAllDatabaseGenerated2.AddRange(new StoreValueGenerationData(), new StoreValueGenerationData());
 
-        return context.SaveChangesAsync();
+        context.SaveChanges();
     }
 
-    public async Task SeedAsync()
+    public void Seed()
     {
         using var context = CreateContext();
-        await SeedAsync(context);
+        Seed(context);
     }
 
     public virtual void CleanData()

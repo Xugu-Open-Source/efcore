@@ -130,8 +130,8 @@ public class Sequence : ConventionAnnotatable, IMutableSequence, IConventionSequ
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public static IEnumerable<ISequence> GetSequences(IReadOnlyModel model)
-        => ((Dictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences])
-            ?.OrderBy(t => t.Key).Select(t => t.Value)
+        => ((SortedDictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences])
+            ?.Values
             ?? Enumerable.Empty<ISequence>();
 
     /// <summary>
@@ -142,7 +142,7 @@ public class Sequence : ConventionAnnotatable, IMutableSequence, IConventionSequ
     /// </summary>
     public static ISequence? FindSequence(IReadOnlyModel model, string name, string? schema)
     {
-        var sequences = (Dictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences];
+        var sequences = (SortedDictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences];
         if (sequences == null
             || !sequences.TryGetValue((name, schema), out var sequence))
         {
@@ -165,10 +165,10 @@ public class Sequence : ConventionAnnotatable, IMutableSequence, IConventionSequ
         ConfigurationSource configurationSource)
     {
         var sequence = new Sequence(name, schema, model, configurationSource);
-        var sequences = (Dictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences];
+        var sequences = (SortedDictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences];
         if (sequences == null)
         {
-            sequences = new Dictionary<(string, string?), ISequence>();
+            sequences = new SortedDictionary<(string, string?), ISequence>();
             model[RelationalAnnotationNames.Sequences] = sequences;
         }
 
@@ -189,7 +189,7 @@ public class Sequence : ConventionAnnotatable, IMutableSequence, IConventionSequ
     {
         sequence.EnsureMutable();
 
-        var sequences = (Dictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences];
+        var sequences = (SortedDictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences];
         var tuple = (sequence.Name, sequence.ModelSchema);
         if (sequences == null
             || !sequences.ContainsKey(tuple))
@@ -214,7 +214,7 @@ public class Sequence : ConventionAnnotatable, IMutableSequence, IConventionSequ
     /// </summary>
     public static Sequence? RemoveSequence(IMutableModel model, string name, string? schema)
     {
-        var sequences = (Dictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences];
+        var sequences = (SortedDictionary<(string, string?), ISequence>?)model[RelationalAnnotationNames.Sequences];
         if (sequences == null
             || !sequences.TryGetValue((name, schema), out var sequence))
         {
@@ -237,7 +237,7 @@ public class Sequence : ConventionAnnotatable, IMutableSequence, IConventionSequ
     public virtual InternalSequenceBuilder Builder
     {
         [DebuggerStepThrough]
-        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel(Name));
+        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
     /// <summary>

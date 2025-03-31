@@ -5,12 +5,17 @@ using Microsoft.EntityFrameworkCore.Sqlite.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class NorthwindEFPropertyIncludeQuerySqliteTest(
-    NorthwindQuerySqliteFixture<NoopModelCustomizer> fixture)
-    : NorthwindEFPropertyIncludeQueryTestBase<NorthwindQuerySqliteFixture<NoopModelCustomizer>>(fixture)
+public class NorthwindEFPropertyIncludeQuerySqliteTest : NorthwindEFPropertyIncludeQueryTestBase<
+    NorthwindQuerySqliteFixture<NoopModelCustomizer>>
 {
+    public NorthwindEFPropertyIncludeQuerySqliteTest(
+        NorthwindQuerySqliteFixture<NoopModelCustomizer> fixture,
+        ITestOutputHelper testOutputHelper)
+        : base(fixture)
+    {
+        //TestSqlLoggerFactory.CaptureOutput(testOutputHelper);
+    }
+
     public override async Task Filtered_include_with_multiple_ordering(bool async)
         => Assert.Equal(
             SqliteStrings.ApplyNotSupported,

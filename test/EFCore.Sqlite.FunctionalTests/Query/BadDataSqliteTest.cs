@@ -9,11 +9,14 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class BadDataSqliteTest(BadDataSqliteTest.BadDataSqliteFixture fixture) : IClassFixture<BadDataSqliteTest.BadDataSqliteFixture>
+public class BadDataSqliteTest : IClassFixture<BadDataSqliteTest.BadDataSqliteFixture>
 {
-    public BadDataSqliteFixture Fixture { get; } = fixture;
+    public BadDataSqliteTest(BadDataSqliteFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    public BadDataSqliteFixture Fixture { get; }
 
     [ConditionalFact]
     public void Bad_data_error_handling_invalid_cast_key()
@@ -89,7 +92,7 @@ public class BadDataSqliteTest(BadDataSqliteTest.BadDataSqliteFixture fixture) :
     [ConditionalFact]
     public void Bad_data_error_handling_null_projection()
     {
-        using var context = CreateContext([null]);
+        using var context = CreateContext(new object[] { null });
         Assert.Equal(
             RelationalStrings.ErrorMaterializingValueNullReference(typeof(bool)),
             Assert.Throws<InvalidOperationException>(
@@ -115,30 +118,47 @@ public class BadDataSqliteTest(BadDataSqliteTest.BadDataSqliteFixture fixture) :
     }
 
     // ReSharper disable once ClassNeverInstantiated.Local
-    private class BadDataCommandBuilderFactory(
-        RelationalCommandBuilderDependencies dependencies) : RelationalCommandBuilderFactory(dependencies)
+    private class BadDataCommandBuilderFactory : RelationalCommandBuilderFactory
     {
+        public BadDataCommandBuilderFactory(
+            RelationalCommandBuilderDependencies dependencies)
+            : base(dependencies)
+        {
+        }
+
         public object[] Values { private get; set; }
 
         public override IRelationalCommandBuilder Create()
             => new BadDataRelationalCommandBuilder(Dependencies, Values);
 
-        private class BadDataRelationalCommandBuilder(
-            RelationalCommandBuilderDependencies dependencies,
-            object[] values) : RelationalCommandBuilder(dependencies)
+        private class BadDataRelationalCommandBuilder : RelationalCommandBuilder
         {
-            private readonly object[] _values = values;
+            private readonly object[] _values;
+
+            public BadDataRelationalCommandBuilder(
+                RelationalCommandBuilderDependencies dependencies,
+                object[] values)
+                : base(dependencies)
+            {
+                _values = values;
+            }
 
             public override IRelationalCommand Build()
                 => new BadDataRelationalCommand(Dependencies, ToString(), Parameters, _values);
 
-            private class BadDataRelationalCommand(
-                RelationalCommandBuilderDependencies dependencies,
-                string commandText,
-                IReadOnlyList<IRelationalParameter> parameters,
-                object[] values) : RelationalCommand(dependencies, commandText, parameters)
+            private class BadDataRelationalCommand : RelationalCommand
             {
-                private object[] _values = values;
+                private object[] _values;
+
+                public BadDataRelationalCommand(
+                    RelationalCommandBuilderDependencies dependencies,
+                    string commandText,
+                    IReadOnlyList<IRelationalParameter> parameters,
+                    object[] values)
+                    : base(dependencies, commandText, parameters)
+                {
+                    _values = values;
+                }
 
                 public override RelationalDataReader ExecuteReader(
                     RelationalCommandParameterObject parameterObject)
@@ -161,11 +181,18 @@ public class BadDataSqliteTest(BadDataSqliteTest.BadDataSqliteFixture fixture) :
                     _values = ((BadDataRelationalCommand)commandTemplate)._values;
                 }
 
-                private class BadDataRelationalDataReader : RelationalDataReader;
-
-                private class BadDataDataReader(object[] values) : DbDataReader
+                private class BadDataRelationalDataReader : RelationalDataReader
                 {
-                    private readonly object[] _values = values;
+                }
+
+                private class BadDataDataReader : DbDataReader
+                {
+                    private readonly object[] _values;
+
+                    public BadDataDataReader(object[] values)
+                    {
+                        _values = values;
+                    }
 
                     public override bool Read()
                         => true;
@@ -312,9 +339,6 @@ public class BadDataSqliteTest(BadDataSqliteTest.BadDataSqliteFixture fixture) :
 
         public string ConnectionString { get; set; }
         public DbConnection DbConnection { get; set; } = new SqliteConnection();
-
-        public void SetDbConnection(DbConnection value, bool contextOwnsConnection)
-            => throw new NotImplementedException();
 
         public DbContext Context
             => null;

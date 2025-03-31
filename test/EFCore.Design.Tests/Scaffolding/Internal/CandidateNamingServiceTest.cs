@@ -1,9 +1,10 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
-namespace Microsoft.EntityFrameworkCore.Scaffolding.Internal;
+namespace Microsoft.EntityFrameworkCore;
 
 public class CandidateNamingServiceTest
 {

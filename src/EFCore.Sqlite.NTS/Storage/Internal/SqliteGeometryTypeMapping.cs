@@ -4,7 +4,6 @@
 using System.Text;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Sqlite.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Storage.Json;
 using Microsoft.EntityFrameworkCore.Sqlite.Storage.ValueConversion.Internal;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
@@ -21,7 +20,7 @@ public class SqliteGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMappin
     where TGeometry : Geometry
 {
     private static readonly MethodInfo _getBytes
-        = typeof(DbDataReader).GetRuntimeMethod(nameof(DbDataReader.GetFieldValue), [typeof(int)])!
+        = typeof(DbDataReader).GetRuntimeMethod(nameof(DbDataReader.GetFieldValue), new[] { typeof(int) })!
             .MakeGenericMethod(typeof(byte[]));
 
     /// <summary>
@@ -32,10 +31,7 @@ public class SqliteGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMappin
     /// </summary>
     [UsedImplicitly]
     public SqliteGeometryTypeMapping(NtsGeometryServices geometryServices, string storeType)
-        : base(
-            new GeometryValueConverter<TGeometry>(CreateReader(geometryServices), CreateWriter(storeType)),
-            storeType,
-            SqliteJsonGeometryWktReaderWriter.Instance)
+        : base(new GeometryValueConverter<TGeometry>(CreateReader(geometryServices), CreateWriter(storeType)), storeType)
     {
     }
 
@@ -122,7 +118,7 @@ public class SqliteGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMappin
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected override Type WktReaderType
+    protected override Type WKTReaderType
         => typeof(WKTReader);
 
     private static GaiaGeoReader CreateReader(NtsGeometryServices geometryServices)

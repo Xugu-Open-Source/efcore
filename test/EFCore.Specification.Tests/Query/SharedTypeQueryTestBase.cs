@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public abstract class SharedTypeQueryTestBase : NonSharedModelTestBase
 {
     protected override string StoreName
@@ -15,7 +13,7 @@ public abstract class SharedTypeQueryTestBase : NonSharedModelTestBase
     public virtual async Task Can_use_shared_type_entity_type_in_query_filter(bool async)
     {
         var contextFactory = await InitializeAsync<MyContext24601>(
-            seed: c => c.SeedAsync());
+            seed: c => c.Seed());
 
         using var context = contextFactory.CreateContext();
         var query = context.Set<ViewQuery24601>();
@@ -26,13 +24,18 @@ public abstract class SharedTypeQueryTestBase : NonSharedModelTestBase
         Assert.Empty(result);
     }
 
-    protected class MyContext24601(DbContextOptions options) : DbContext(options)
+    protected class MyContext24601 : DbContext
     {
-        public Task SeedAsync()
+        public MyContext24601(DbContextOptions options)
+            : base(options)
+        {
+        }
+
+        public void Seed()
         {
             Set<Dictionary<string, object>>("STET").Add(new Dictionary<string, object> { ["Value"] = "Maumar" });
 
-            return SaveChangesAsync();
+            SaveChanges();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

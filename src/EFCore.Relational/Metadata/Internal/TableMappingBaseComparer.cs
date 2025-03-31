@@ -69,39 +69,24 @@ public sealed class TableMappingBaseComparer : IEqualityComparer<ITableMappingBa
             }
         }
 
-        if (y.IncludesDerivedTypes == null)
+        result = y.IncludesDerivedTypes.CompareTo(x.IncludesDerivedTypes);
+        if (result != 0)
         {
-            if (x.IncludesDerivedTypes != null)
-            {
-                return -1;
-            }
-        }
-        else
-        {
-            if (x.IncludesDerivedTypes == null)
-            {
-                return 1;
-            }
-
-            result = y.IncludesDerivedTypes.Value.CompareTo(x.IncludesDerivedTypes.Value);
-            if (result != 0)
-            {
-                return result;
-            }
+            return result;
         }
 
         if (y.IsSplitEntityTypePrincipal == null)
         {
             if (x.IsSplitEntityTypePrincipal != null)
             {
-                return -1;
+                return 1;
             }
         }
         else
         {
             if (x.IsSplitEntityTypePrincipal == null)
             {
-                return 1;
+                return -1;
             }
 
             result = y.IsSplitEntityTypePrincipal.Value.CompareTo(x.IsSplitEntityTypePrincipal.Value);
@@ -111,7 +96,7 @@ public sealed class TableMappingBaseComparer : IEqualityComparer<ITableMappingBa
             }
         }
 
-        result = TypeBaseNameComparer.Instance.Compare(x.TypeBase, y.TypeBase);
+        result = EntityTypeFullNameComparer.Instance.Compare(x.EntityType, y.EntityType);
         if (result != 0)
         {
             return result;
@@ -154,7 +139,7 @@ public sealed class TableMappingBaseComparer : IEqualityComparer<ITableMappingBa
         => ReferenceEquals(x, y)
             || x is not null
             && y is not null
-            && (x.TypeBase == y.TypeBase
+            && (x.EntityType == y.EntityType
                 && x.Table == y.Table
                 && x.IncludesDerivedTypes == y.IncludesDerivedTypes
                 && x.ColumnMappings.SequenceEqual(y.ColumnMappings));
@@ -168,7 +153,7 @@ public sealed class TableMappingBaseComparer : IEqualityComparer<ITableMappingBa
     public int GetHashCode(ITableMappingBase obj)
     {
         var hashCode = new HashCode();
-        hashCode.Add(obj.TypeBase, TypeBaseNameComparer.Instance);
+        hashCode.Add(obj.EntityType, EntityTypeFullNameComparer.Instance);
         hashCode.Add(obj.Table.Name);
         hashCode.Add(obj.Table.Schema);
         foreach (var columnMapping in obj.ColumnMappings)

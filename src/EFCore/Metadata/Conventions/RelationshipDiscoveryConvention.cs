@@ -3,7 +3,6 @@
 
 using System.Collections.Immutable;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
@@ -16,8 +15,8 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
 ///     See <see href="https://aka.ms/efcore-docs-conventions">Model building conventions</see> for more information and examples.
 /// </remarks>
 public class RelationshipDiscoveryConvention :
-    ITypeIgnoredConvention,
     IEntityTypeAddedConvention,
+    IEntityTypeIgnoredConvention,
     IEntityTypeBaseTypeChangedConvention,
     IEntityTypeMemberIgnoredConvention,
     INavigationRemovedConvention,
@@ -30,13 +29,9 @@ public class RelationshipDiscoveryConvention :
     ///     Creates a new instance of <see cref="RelationshipDiscoveryConvention" />.
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this convention.</param>
-    /// <param name="useAttributes">Whether the convention will use attributes found on the members.</param>
-    public RelationshipDiscoveryConvention(
-        ProviderConventionSetBuilderDependencies dependencies,
-        bool useAttributes = true)
+    public RelationshipDiscoveryConvention(ProviderConventionSetBuilderDependencies dependencies)
     {
         Dependencies = dependencies;
-        UseAttributes = useAttributes;
     }
 
     /// <summary>
@@ -44,38 +39,24 @@ public class RelationshipDiscoveryConvention :
     /// </summary>
     protected virtual ProviderConventionSetBuilderDependencies Dependencies { get; }
 
-    /// <summary>
-    ///     A value indicating whether the convention will use attributes found on the members.
-    /// </summary>
-    protected virtual bool UseAttributes { get; }
-
-    /// <summary>
-    ///     Discovers the relationships for the given entity type.
-    /// </summary>
-    /// <param name="entityTypeBuilder">The entity type builder.</param>
-    /// <param name="context">Additional information associated with convention execution.</param>
-    /// <param name="discoverUnmatchedInverses">Whether to discover unmatched inverse navigations.</param>
-    protected virtual void DiscoverRelationships(
+    private void DiscoverRelationships(
         IConventionEntityTypeBuilder entityTypeBuilder,
         IConventionContext context,
-        bool discoverUnmatchedInverses = false)
+        HashSet<Type>? otherInverseCandidateTypes = null)
     {
-        var unmatchedInverseCandidates = discoverUnmatchedInverses
-            ? Dependencies.MemberClassifier.GetInverseCandidateTypes(entityTypeBuilder.Metadata, UseAttributes).ToList()
-            : null;
-        var relationshipCandidates = FindRelationshipCandidates(entityTypeBuilder, unmatchedInverseCandidates);
+        var relationshipCandidates = FindRelationshipCandidates(entityTypeBuilder, otherInverseCandidateTypes);
         relationshipCandidates = RemoveIncompatibleWithExistingRelationships(relationshipCandidates, entityTypeBuilder);
         relationshipCandidates = RemoveInheritedInverseNavigations(relationshipCandidates);
         relationshipCandidates = RemoveSingleSidedBaseNavigations(relationshipCandidates, entityTypeBuilder);
 
         CreateRelationships(relationshipCandidates, entityTypeBuilder);
 
-        DiscoverUnidirectionalInverses(entityTypeBuilder, context, unmatchedInverseCandidates);
+        DiscoverUnidirectionalInverses(entityTypeBuilder, context, otherInverseCandidateTypes);
     }
 
     private IReadOnlyList<RelationshipCandidate> FindRelationshipCandidates(
         IConventionEntityTypeBuilder entityTypeBuilder,
-        List<Type>? otherInverseCandidateTypes)
+        HashSet<Type>? otherInverseCandidateTypes)
     {
         var entityType = entityTypeBuilder.Metadata;
         var relationshipCandidates = new Dictionary<IConventionEntityType, RelationshipCandidate>();
@@ -87,7 +68,7 @@ public class RelationshipDiscoveryConvention :
             return relationshipCandidates.Values.ToList();
         }
 
-        foreach (var candidateTuple in Dependencies.MemberClassifier.GetNavigationCandidates(entityType, UseAttributes))
+        foreach (var candidateTuple in Dependencies.MemberClassifier.GetNavigationCandidates(entityType))
         {
             var navigationPropertyInfo = candidateTuple.Key;
             var (targetClrType, shouldBeOwned) = candidateTuple.Value;
@@ -96,11 +77,6 @@ public class RelationshipDiscoveryConvention :
                 && entityType.FindSkipNavigation(navigationPropertyInfo) == null
                 && (!IsCandidateNavigationProperty(entityType, navigationPropertyInfo.GetSimpleMemberName(), navigationPropertyInfo)
                     || IsNewSharedType(targetClrType, entityType)))
-            {
-                continue;
-            }
-
-            if (((Model)entityType.Model).FindIsComplexConfigurationSource(targetClrType) != null)
             {
                 continue;
             }
@@ -118,7 +94,7 @@ public class RelationshipDiscoveryConvention :
                 // Current entity type was removed while the target entity type was being added
                 relationshipCandidates[candidateTargetEntityType] =
                     new RelationshipCandidate(
-                        candidateTargetEntityTypeBuilder, [], [], false);
+                        candidateTargetEntityTypeBuilder, new List<PropertyInfo>(), new List<PropertyInfo>(), false);
                 break;
             }
 
@@ -129,7 +105,7 @@ public class RelationshipDiscoveryConvention :
             {
                 relationshipCandidates[candidateTargetEntityType] =
                     new RelationshipCandidate(
-                        candidateTargetEntityTypeBuilder, [], [], false);
+                        candidateTargetEntityTypeBuilder, new List<PropertyInfo>(), new List<PropertyInfo>(), false);
                 continue;
             }
 
@@ -164,7 +140,7 @@ public class RelationshipDiscoveryConvention :
                 // Also skip non-ownership navigations from the owner
                 relationshipCandidates[candidateTargetEntityType] =
                     new RelationshipCandidate(
-                        candidateTargetEntityTypeBuilder, [], [], false);
+                        candidateTargetEntityTypeBuilder, new List<PropertyInfo>(), new List<PropertyInfo>(), false);
                 continue;
             }
 
@@ -175,7 +151,7 @@ public class RelationshipDiscoveryConvention :
                 // Don't try to configure a collection on an owned type unless it represents a sub-ownership
                 relationshipCandidates[candidateTargetEntityType] =
                     new RelationshipCandidate(
-                        candidateTargetEntityTypeBuilder, [], [], false);
+                        candidateTargetEntityTypeBuilder, new List<PropertyInfo>(), new List<PropertyInfo>(), false);
                 continue;
             }
 
@@ -211,7 +187,7 @@ public class RelationshipDiscoveryConvention :
 
             if (!entityType.IsKeyless)
             {
-                var inverseCandidates = Dependencies.MemberClassifier.GetNavigationCandidates(candidateTargetEntityType, UseAttributes);
+                var inverseCandidates = Dependencies.MemberClassifier.GetNavigationCandidates(candidateTargetEntityType);
                 foreach (var (inversePropertyInfo, value) in inverseCandidates)
                 {
                     if (navigationPropertyInfo.IsSameAs(inversePropertyInfo)
@@ -445,8 +421,8 @@ public class RelationshipDiscoveryConvention :
                     filteredRelationshipCandidates.Add(
                         new RelationshipCandidate(
                             targetEntityTypeBuilder,
-                            [navigationProperty],
-                            [],
+                            new List<PropertyInfo> { navigationProperty },
+                            new List<PropertyInfo>(),
                             relationshipCandidate.IsOwnership));
 
                     if (relationshipCandidate.TargetTypeBuilder.Metadata == entityTypeBuilder.Metadata
@@ -495,8 +471,8 @@ public class RelationshipDiscoveryConvention :
                     filteredRelationshipCandidates.Add(
                         new RelationshipCandidate(
                             targetEntityTypeBuilder,
-                            [navigationProperty],
-                            [compatibleInverse],
+                            new List<PropertyInfo> { navigationProperty },
+                            new List<PropertyInfo> { compatibleInverse },
                             relationshipCandidate.IsOwnership)
                     );
 
@@ -824,21 +800,19 @@ public class RelationshipDiscoveryConvention :
     private void DiscoverUnidirectionalInverses(
         IConventionEntityTypeBuilder entityTypeBuilder,
         IConventionContext context,
-        List<Type>? otherInverseCandidateTypes)
+        HashSet<Type>? otherInverseCandidateTypes)
     {
         var model = entityTypeBuilder.Metadata.Model;
-        if (otherInverseCandidateTypes == null)
+        if (otherInverseCandidateTypes != null)
         {
-            return;
-        }
-
-        foreach (var inverseCandidateType in otherInverseCandidateTypes)
-        {
-            foreach (var inverseCandidateEntityType in model.FindEntityTypes(inverseCandidateType).ToList())
+            foreach (var inverseCandidateType in otherInverseCandidateTypes)
             {
-                if (inverseCandidateEntityType.IsInModel)
+                foreach (var inverseCandidateEntityType in model.FindEntityTypes(inverseCandidateType).ToList())
                 {
-                    DiscoverRelationships(inverseCandidateEntityType.Builder, context);
+                    if (inverseCandidateEntityType.IsInModel)
+                    {
+                        DiscoverRelationships(inverseCandidateEntityType.Builder, context);
+                    }
                 }
             }
         }
@@ -1032,7 +1006,11 @@ public class RelationshipDiscoveryConvention :
         IConventionEntityTypeBuilder entityTypeBuilder,
         IConventionContext<IConventionEntityTypeBuilder> context)
     {
-        DiscoverRelationships(entityTypeBuilder, context, discoverUnmatchedInverses: true);
+        DiscoverRelationships(
+            entityTypeBuilder,
+            context,
+            Dependencies.MemberClassifier.GetInverseCandidateTypes(entityTypeBuilder.Metadata).ToHashSet());
+
         if (!entityTypeBuilder.Metadata.IsInModel)
         {
             context.StopProcessing();
@@ -1101,7 +1079,10 @@ public class RelationshipDiscoveryConvention :
             && foreignKey.IsOwnership
             && !entityTypeBuilder.Metadata.IsOwned())
         {
-            DiscoverRelationships(entityTypeBuilder, context, discoverUnmatchedInverses: true);
+            DiscoverRelationships(
+                entityTypeBuilder,
+                context,
+                Dependencies.MemberClassifier.GetInverseCandidateTypes(entityTypeBuilder.Metadata).ToHashSet());
         }
     }
 
@@ -1121,8 +1102,7 @@ public class RelationshipDiscoveryConvention :
             && IsCandidateNavigationProperty(
                 sourceEntityTypeBuilder.Metadata, navigationName, memberInfo)
             && Dependencies.MemberClassifier.FindCandidateNavigationPropertyType(
-                memberInfo, targetEntityTypeBuilder.Metadata.Model, UseAttributes, out _)
-            != null)
+                memberInfo, targetEntityTypeBuilder.Metadata.Model, out _) != null)
         {
             Process(sourceEntityTypeBuilder.Metadata, navigationName, memberInfo, context);
         }
@@ -1154,13 +1134,12 @@ public class RelationshipDiscoveryConvention :
         => sourceEntityType.Builder.IsIgnored(navigationName) == false
             && sourceEntityType.FindProperty(navigationName) == null
             && sourceEntityType.FindServiceProperty(navigationName) == null
-            && sourceEntityType.FindComplexProperty(navigationName) == null
             && (memberInfo is not PropertyInfo propertyInfo || propertyInfo.GetIndexParameters().Length == 0)
             && (!sourceEntityType.IsKeyless
                 || (memberInfo as PropertyInfo)?.PropertyType.TryGetSequenceType() == null);
 
     /// <inheritdoc />
-    public virtual void ProcessTypeIgnored(
+    public virtual void ProcessEntityTypeIgnored(
         IConventionModelBuilder modelBuilder,
         string name,
         Type? type,
@@ -1299,24 +1278,17 @@ public class RelationshipDiscoveryConvention :
             if (ambiguityRemoved)
             {
                 DiscoverRelationships(entityType.Builder, context);
-
-                if (!navigationBuilder.Metadata.IsInModel)
-                {
-                    context.StopProcessing();
-                    return;
-                }
             }
 
             if (targetAmbiguityRemoved)
             {
                 DiscoverRelationships(targetEntityType.Builder, context);
-
-                if (!navigationBuilder.Metadata.IsInModel)
-                {
-                    context.StopProcessing();
-                    return;
-                }
             }
+        }
+
+        if (!navigationBuilder.Metadata.IsInModel)
+        {
+            context.StopProcessing();
         }
     }
 
@@ -1324,7 +1296,12 @@ public class RelationshipDiscoveryConvention :
     public virtual void ProcessForeignKeyOwnershipChanged(
         IConventionForeignKeyBuilder relationshipBuilder,
         IConventionContext<bool?> context)
-        => DiscoverRelationships(relationshipBuilder.Metadata.DeclaringEntityType.Builder, context, discoverUnmatchedInverses: true);
+    {
+        var entityType = relationshipBuilder.Metadata.DeclaringEntityType;
+        DiscoverRelationships(
+            entityType.Builder, context,
+            Dependencies.MemberClassifier.GetInverseCandidateTypes(entityType).ToHashSet());
+    }
 
     // TODO: Rely on layering to remove these when no longer referenced #15898
     private static bool IsImplicitlyCreatedUnusedType(IConventionEntityType entityType)
@@ -1427,16 +1404,24 @@ public class RelationshipDiscoveryConvention :
         => entityTypeBuilder.HasAnnotation(CoreAnnotationNames.AmbiguousNavigations, ambiguousNavigations);
 
     [DebuggerDisplay("{DebuggerDisplay(),nq}")]
-    private sealed class RelationshipCandidate(
-        IConventionEntityTypeBuilder targetTypeBuilder,
-        List<PropertyInfo> navigations,
-        List<PropertyInfo> inverseNavigations,
-        bool ownership)
+    private sealed class RelationshipCandidate
     {
-        public IConventionEntityTypeBuilder TargetTypeBuilder { [DebuggerStepThrough] get; } = targetTypeBuilder;
-        public List<PropertyInfo> NavigationProperties { [DebuggerStepThrough] get; } = navigations;
-        public List<PropertyInfo> InverseProperties { [DebuggerStepThrough] get; } = inverseNavigations;
-        public bool IsOwnership { [DebuggerStepThrough] get; } = ownership;
+        public RelationshipCandidate(
+            IConventionEntityTypeBuilder targetTypeBuilder,
+            List<PropertyInfo> navigations,
+            List<PropertyInfo> inverseNavigations,
+            bool ownership)
+        {
+            TargetTypeBuilder = targetTypeBuilder;
+            NavigationProperties = navigations;
+            InverseProperties = inverseNavigations;
+            IsOwnership = ownership;
+        }
+
+        public IConventionEntityTypeBuilder TargetTypeBuilder { [DebuggerStepThrough] get; }
+        public List<PropertyInfo> NavigationProperties { [DebuggerStepThrough] get; }
+        public List<PropertyInfo> InverseProperties { [DebuggerStepThrough] get; }
+        public bool IsOwnership { [DebuggerStepThrough] get; }
 
         private string DebuggerDisplay()
             => TargetTypeBuilder.Metadata.ToDebugString(MetadataDebugStringOptions.SingleLineDefault)

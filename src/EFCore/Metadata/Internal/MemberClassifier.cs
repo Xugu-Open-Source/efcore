@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -38,41 +39,35 @@ public class MemberClassifier : IMemberClassifier
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual IReadOnlyDictionary<PropertyInfo, (Type Type, bool? ShouldBeOwned)> GetNavigationCandidates(
-        IConventionEntityType entityType,
-        bool useAttributes)
+    public virtual ImmutableSortedDictionary<PropertyInfo, (Type Type, bool? ShouldBeOwned)> GetNavigationCandidates(
+        IConventionEntityType entityType)
     {
-        var candidatesAnnotationName = useAttributes
-            ? CoreAnnotationNames.NavigationCandidates
-            : CoreAnnotationNames.NavigationCandidatesNoAttribute;
-        var inverseAnnotationName = useAttributes
-            ? CoreAnnotationNames.InverseNavigations
-            : CoreAnnotationNames.InverseNavigationsNoAttribute;
-        if (entityType.FindAnnotation(candidatesAnnotationName)?.Value
-            is Utilities.OrderedDictionary<PropertyInfo, (Type Type, bool? ShouldBeOwned)> navigationCandidates)
+        if (entityType.FindAnnotation(CoreAnnotationNames.NavigationCandidates)?.Value
+            is ImmutableSortedDictionary<PropertyInfo, (Type Type, bool? ShouldBeOwned)> navigationCandidates)
         {
             return navigationCandidates;
         }
 
-        navigationCandidates = new Utilities.OrderedDictionary<PropertyInfo, (Type Type, bool? ShouldBeOwned)>();
+        var dictionaryBuilder = ImmutableSortedDictionary.CreateBuilder<PropertyInfo, (Type Type, bool? shouldBeOwned)>(
+            MemberInfoNameComparer.Instance);
 
         var model = entityType.Model;
-        if (model.FindAnnotation(inverseAnnotationName)?.Value
+        if (model.FindAnnotation(CoreAnnotationNames.InverseNavigationCandidates)?.Value
             is not Dictionary<Type, SortedSet<Type>> inverseCandidatesLookup)
         {
             inverseCandidatesLookup = new Dictionary<Type, SortedSet<Type>>();
-            model.SetAnnotation(inverseAnnotationName, inverseCandidatesLookup);
+            model.SetAnnotation(CoreAnnotationNames.InverseNavigationCandidates, inverseCandidatesLookup);
         }
 
         foreach (var propertyInfo in entityType.GetRuntimeProperties().Values)
         {
-            var targetType = FindCandidateNavigationPropertyType(propertyInfo, entityType.Model, useAttributes, out var shouldBeOwned);
+            var targetType = FindCandidateNavigationPropertyType(propertyInfo, entityType.Model, out var shouldBeOwned);
             if (targetType == null)
             {
                 continue;
             }
 
-            navigationCandidates.Insert(propertyInfo, (targetType, shouldBeOwned), MemberInfoNameComparer.Instance);
+            dictionaryBuilder[propertyInfo] = (targetType, shouldBeOwned);
 
             if (!inverseCandidatesLookup.TryGetValue(targetType, out var inverseCandidates))
             {
@@ -83,10 +78,12 @@ public class MemberClassifier : IMemberClassifier
             inverseCandidates.Add(entityType.ClrType);
         }
 
+        navigationCandidates = dictionaryBuilder.ToImmutable();
+
         if (!((Annotatable)entityType).IsReadOnly
             && entityType.IsInModel)
         {
-            entityType.Builder.HasAnnotation(candidatesAnnotationName, navigationCandidates);
+            entityType.Builder.HasAnnotation(CoreAnnotationNames.NavigationCandidates, navigationCandidates);
         }
 
         return navigationCandidates;
@@ -98,14 +95,9 @@ public class MemberClassifier : IMemberClassifier
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual IReadOnlyCollection<Type> GetInverseCandidateTypes(
-        IConventionEntityType entityType,
-        bool useAttributes)
+    public virtual IReadOnlyCollection<Type> GetInverseCandidateTypes(IConventionEntityType entityType)
     {
-        var annotationName = useAttributes
-            ? CoreAnnotationNames.InverseNavigations
-            : CoreAnnotationNames.InverseNavigationsNoAttribute;
-        if (entityType.Model.FindAnnotation(annotationName)?.Value
+        if (entityType.Model.FindAnnotation(CoreAnnotationNames.InverseNavigationCandidates)?.Value
                 is not Dictionary<Type, SortedSet<Type>> inverseCandidatesLookup
             || !inverseCandidatesLookup.TryGetValue(entityType.ClrType, out var inverseCandidates))
         {
@@ -124,7 +116,6 @@ public class MemberClassifier : IMemberClassifier
     public virtual Type? FindCandidateNavigationPropertyType(
         MemberInfo memberInfo,
         IConventionModel model,
-        bool useAttributes,
         out bool? shouldBeOwned)
     {
         shouldBeOwned = null;
@@ -134,11 +125,11 @@ public class MemberClassifier : IMemberClassifier
         return targetSequenceType != null
             && (propertyInfo == null
                 || propertyInfo.IsCandidateProperty(needsWrite: false))
-            && IsCandidateNavigationPropertyType(targetSequenceType, memberInfo, (Model)model, useAttributes, out shouldBeOwned)
+            && IsCandidateNavigationPropertyType(targetSequenceType, memberInfo, (Model)model, out shouldBeOwned)
                 ? targetSequenceType
                 : (propertyInfo == null
                     || propertyInfo.IsCandidateProperty(needsWrite: true))
-                && IsCandidateNavigationPropertyType(targetType, memberInfo, (Model)model, useAttributes, out shouldBeOwned)
+                && IsCandidateNavigationPropertyType(targetType, memberInfo, (Model)model, out shouldBeOwned)
                     ? targetType
                     : null;
     }
@@ -147,7 +138,6 @@ public class MemberClassifier : IMemberClassifier
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type targetType,
         MemberInfo memberInfo,
         Model model,
-        bool useAttributes,
         out bool? shouldBeOwned)
     {
         shouldBeOwned = null;
@@ -165,12 +155,10 @@ public class MemberClassifier : IMemberClassifier
             shouldBeOwned = configurationType == TypeConfigurationType.OwnedEntityType;
         }
 
-        var memberType = memberInfo.GetMemberType();
         return isConfiguredAsEntityType == true
-            || targetType != typeof(object)
-            && (memberType != targetType
-                || (_parameterBindingFactories.FindFactory(memberType, memberInfo.GetSimpleMemberName()) == null
-                    && _typeMappingSource.FindMapping(memberInfo, model, useAttributes) == null));
+            || (targetType != typeof(object)
+                && _parameterBindingFactories.FindFactory(memberInfo.GetMemberType(), memberInfo.GetSimpleMemberName()) == null
+                && _typeMappingSource.FindMapping(targetType, model) == null);
     }
 
     /// <summary>
@@ -179,68 +167,16 @@ public class MemberClassifier : IMemberClassifier
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool IsCandidatePrimitiveProperty(
-        MemberInfo memberInfo,
-        IConventionModel model,
-        bool useAttributes,
-        out CoreTypeMapping? typeMapping)
+    public virtual bool IsCandidatePrimitiveProperty(PropertyInfo propertyInfo, IConventionModel model)
     {
-        typeMapping = null;
-        if (!memberInfo.IsCandidateProperty())
+        if (!propertyInfo.IsCandidateProperty())
         {
             return false;
         }
 
-        var configurationType = ((Model)model).Configuration?.GetConfigurationType(memberInfo.GetMemberType());
+        var configurationType = ((Model)model).Configuration?.GetConfigurationType(propertyInfo.PropertyType);
         return configurationType == TypeConfigurationType.Property
-            || (configurationType == null
-                && (typeMapping = _typeMappingSource.FindMapping(memberInfo, (IModel)model, useAttributes)) != null);
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual bool IsCandidateComplexProperty(
-        MemberInfo memberInfo,
-        IConventionModel model,
-        bool useAttributes,
-        out Type? elementType,
-        out bool explicitlyConfigured)
-    {
-        explicitlyConfigured = false;
-        elementType = null;
-        if (!memberInfo.IsCandidateProperty())
-        {
-            return false;
-        }
-
-        var targetType = memberInfo.GetMemberType();
-        if (targetType.TryGetSequenceType() is Type sequenceType
-            && IsCandidateComplexType(sequenceType, model, out explicitlyConfigured))
-        {
-            elementType = sequenceType;
-            return true;
-        }
-
-        return IsCandidateComplexType(targetType, model, out explicitlyConfigured);
-    }
-
-    private static bool IsCandidateComplexType(Type targetType, IConventionModel model, out bool explicitlyConfigured)
-    {
-        if (targetType.IsGenericType
-            && targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
-        {
-            explicitlyConfigured = false;
-            return false;
-        }
-
-        var configurationType = ((Model)model).Configuration?.GetConfigurationType(targetType);
-        explicitlyConfigured = configurationType != null;
-        return configurationType == TypeConfigurationType.ComplexType
-            || configurationType == null;
+            || (configurationType == null && _typeMappingSource.FindMapping(propertyInfo) != null);
     }
 
     /// <summary>
@@ -250,16 +186,15 @@ public class MemberClassifier : IMemberClassifier
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual IParameterBindingFactory? FindServicePropertyCandidateBindingFactory(
-        MemberInfo memberInfo,
-        IConventionModel model,
-        bool useAttributes)
+        PropertyInfo propertyInfo,
+        IConventionModel model)
     {
-        if (!memberInfo.IsCandidateProperty(publicOnly: false))
+        if (!propertyInfo.IsCandidateProperty(publicOnly: false))
         {
             return null;
         }
 
-        var type = memberInfo.GetMemberType();
+        var type = propertyInfo.PropertyType;
         var configurationType = ((Model)model).Configuration?.GetConfigurationType(type);
         if (configurationType != TypeConfigurationType.ServiceProperty)
         {
@@ -268,13 +203,13 @@ public class MemberClassifier : IMemberClassifier
                 return null;
             }
 
-            if (memberInfo.IsCandidateProperty()
-                && _typeMappingSource.FindMapping(memberInfo, (IModel)model, useAttributes) != null)
+            if (propertyInfo.IsCandidateProperty()
+                && _typeMappingSource.FindMapping(propertyInfo.GetMemberType(), (IModel)model) != null)
             {
                 return null;
             }
         }
 
-        return _parameterBindingFactories.FindFactory(type, memberInfo.GetSimpleMemberName());
+        return _parameterBindingFactories.FindFactory(type, propertyInfo.GetSimpleMemberName());
     }
 }

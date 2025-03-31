@@ -84,7 +84,7 @@ public interface IStateManager : IResettableService
     InternalEntityEntry StartTrackingFromQuery(
         IEntityType baseEntityType,
         object entity,
-        in ISnapshot snapshot);
+        in ValueBuffer valueBuffer);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -92,15 +92,7 @@ public interface IStateManager : IResettableService
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    InternalEntityEntry? TryGetEntry(IKey key, IReadOnlyList<object?> keyValues);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    InternalEntityEntry? TryGetEntryTyped<TKey>(IKey key, TKey keyValue);
+    InternalEntityEntry? TryGetEntry(IKey key, object?[] keyValues);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -125,14 +117,6 @@ public interface IStateManager : IResettableService
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     InternalEntityEntry? TryGetEntry(object entity, IEntityType type, bool throwOnTypeMismatch = true);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    InternalEntityEntry? TryGetExistingEntry(object entity, IKey key);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -383,23 +367,7 @@ public interface IStateManager : IResettableService
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    IEnumerable<InternalEntityEntry> GetEntries(IKey key);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     IEnumerable<IUpdateEntry> GetDependents(IUpdateEntry principalEntry, IForeignKey foreignKey);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    IEnumerable<IUpdateEntry> GetDependents(IReadOnlyList<object> keyValues, IForeignKey foreignKey);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -457,7 +425,7 @@ public interface IStateManager : IResettableService
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    void Unsubscribe(bool resetting);
+    void Unsubscribe();
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -584,5 +552,5 @@ public interface IStateManager : IResettableService
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    void Clear(bool resetting);
+    void Clear();
 }

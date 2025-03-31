@@ -1,17 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>Azure Cosmos provider for Entity Framework Core.</Description>
-    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <MinClientVersion>3.6</MinClientVersion>
     <AssemblyName>Microsoft.EntityFrameworkCore.Cosmos</AssemblyName>
     <RootNamespace>Microsoft.EntityFrameworkCore.Cosmos</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageTags>$(PackageTags);CosmosDb;SQL API</PackageTags>
     <ImplicitUsings>true</ImplicitUsings>
-    <NoWarn>$(NoWarn);EF9101</NoWarn> <!-- Metrics is experimental -->
-    <NoWarn>$(NoWarn);EF9102</NoWarn> <!-- Paging is experimental -->
-    <NoWarn>$(NoWarn);EF9103</NoWarn> <!-- Vector search is experimental -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,13 +40,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EFCore\EFCore.csproj" />
-    <ProjectReference Include="..\EFCore.Analyzers\EFCore.Analyzers.csproj" ReferenceOutputAssembly="False" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\EFCore\EFCore.csproj" PrivateAssets="contentfiles;build" />
+    <ProjectReference Condition="'$(BuildingByReSharper)' != 'true'" Include="..\EFCore.Analyzers\EFCore.Analyzers.csproj" ReferenceOutputAssembly="False" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Cosmos" />
-    <PackageReference Include="Newtonsoft.JSON" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.30.1" />
   </ItemGroup>
 
   <ItemGroup>

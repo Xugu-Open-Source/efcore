@@ -5,8 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Microsoft.EntityFrameworkCore.SqlAzure.Model;
 
-#nullable disable
-
 [Table("SalesOrderDetail", Schema = "SalesLT")]
 public class SalesOrderDetail
 {

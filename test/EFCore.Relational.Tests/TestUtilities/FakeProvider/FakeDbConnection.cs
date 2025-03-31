@@ -5,16 +5,23 @@ using System.Data;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities.FakeProvider;
 
-public class FakeDbConnection(
-    string connectionString,
-    FakeCommandExecutor commandExecutor = null,
-    ConnectionState state = ConnectionState.Closed) : DbConnection
+public class FakeDbConnection : DbConnection
 {
-    private readonly FakeCommandExecutor _commandExecutor = commandExecutor ?? new FakeCommandExecutor();
+    private readonly FakeCommandExecutor _commandExecutor;
 
-    private ConnectionState _state = state;
-    private readonly List<FakeDbCommand> _dbCommands = [];
-    private readonly List<FakeDbTransaction> _dbTransactions = [];
+    private ConnectionState _state;
+    private readonly List<FakeDbCommand> _dbCommands = new();
+    private readonly List<FakeDbTransaction> _dbTransactions = new();
+
+    public FakeDbConnection(
+        string connectionString,
+        FakeCommandExecutor commandExecutor = null,
+        ConnectionState state = ConnectionState.Closed)
+    {
+        ConnectionString = connectionString;
+        _commandExecutor = commandExecutor ?? new FakeCommandExecutor();
+        _state = state;
+    }
 
     public void SetState(ConnectionState state)
         => _state = state;
@@ -25,7 +32,7 @@ public class FakeDbConnection(
     public IReadOnlyList<FakeDbCommand> DbCommands
         => _dbCommands;
 
-    public override string ConnectionString { get; set; } = connectionString;
+    public override string ConnectionString { get; set; }
 
     public override string Database { get; } = "Fake Database";
 

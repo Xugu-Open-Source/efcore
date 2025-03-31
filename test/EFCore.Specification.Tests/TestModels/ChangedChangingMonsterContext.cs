@@ -11,9 +11,7 @@ using System.Runtime.CompilerServices;
 // ReSharper disable ConvertToAutoProperty
 namespace Microsoft.EntityFrameworkCore.TestModels;
 
-#nullable disable
-
-public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterContext<
+public class ChangedChangingMonsterContext : MonsterContext<
     ChangedChangingMonsterContext.Customer, ChangedChangingMonsterContext.Barcode, ChangedChangingMonsterContext.IncorrectScan,
     ChangedChangingMonsterContext.BarcodeDetail, ChangedChangingMonsterContext.Complaint, ChangedChangingMonsterContext.Resolution,
     ChangedChangingMonsterContext.Login, ChangedChangingMonsterContext.SuspiciousActivity, ChangedChangingMonsterContext.SmartCard,
@@ -27,8 +25,13 @@ public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterCo
     ChangedChangingMonsterContext.License, ChangedChangingMonsterContext.ConcurrencyInfo, ChangedChangingMonsterContext.AuditInfo,
     ChangedChangingMonsterContext.ContactDetails, ChangedChangingMonsterContext.Dimensions, ChangedChangingMonsterContext.Phone,
     ChangedChangingMonsterContext.BackOrderLine, ChangedChangingMonsterContext.DiscontinuedProduct,
-    ChangedChangingMonsterContext.ProductPageView>(options)
+    ChangedChangingMonsterContext.ProductPageView>
 {
+    public ChangedChangingMonsterContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public class NotificationEntity : INotifyPropertyChanged, INotifyPropertyChanging
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -51,7 +54,9 @@ public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterCo
         }
     }
 
-    public class BackOrderLine2 : BackOrderLine;
+    public class BackOrderLine2 : BackOrderLine
+    {
+    }
 
     public class BackOrderLine : OrderLine, IBackOrderLine
     {
@@ -60,7 +65,9 @@ public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterCo
         private DateTime _eta;
 
         public BackOrderLine()
-            => ETA = DateTime.Now;
+        {
+            ETA = DateTime.Now;
+        }
 
         public DateTime ETA
         {
@@ -213,7 +220,9 @@ public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterCo
         private IComputer _computer;
 
         public ComputerDetail()
-            => Dimensions = new Dimensions();
+        {
+            Dimensions = new Dimensions();
+        }
 
         public int ComputerDetailId
         {
@@ -556,7 +565,9 @@ public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterCo
         private IDriver _driver;
 
         public License()
-            => LicenseClass = "C";
+        {
+            LicenseClass = "C";
+        }
 
         public string Name
         {
@@ -678,7 +689,9 @@ public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterCo
         private IProduct _product;
 
         public OrderLine()
-            => Quantity = 1;
+        {
+            Quantity = 1;
+        }
 
         public int OrderId
         {
@@ -730,7 +743,9 @@ public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterCo
         private ILogin _login;
 
         public AnOrder()
-            => Concurrency = new ConcurrencyInfo();
+        {
+            Concurrency = new ConcurrencyInfo();
+        }
 
         public void InitializeCollections()
         {
@@ -1618,7 +1633,9 @@ public class ChangedChangingMonsterContext(DbContextOptions options) : MonsterCo
         private string _phoneNumber;
 
         public Phone()
-            => Extension = "None";
+        {
+            Extension = "None";
+        }
 
         public string PhoneNumber
         {

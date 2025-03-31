@@ -5,13 +5,14 @@ using Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class ManyToManyTrackingGeneratedKeysSqlServerTest(
-    ManyToManyTrackingGeneratedKeysSqlServerTest.ManyToManyTrackingGeneratedKeysSqlServerFixture fixture)
-    : ManyToManyTrackingSqlServerTestBase<ManyToManyTrackingGeneratedKeysSqlServerTest.ManyToManyTrackingGeneratedKeysSqlServerFixture>(
-        fixture)
+public class ManyToManyTrackingGeneratedKeysSqlServerTest
+    : ManyToManyTrackingSqlServerTestBase<ManyToManyTrackingGeneratedKeysSqlServerTest.ManyToManyTrackingGeneratedKeysSqlServerFixture>
 {
+    public ManyToManyTrackingGeneratedKeysSqlServerTest(ManyToManyTrackingGeneratedKeysSqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class ManyToManyTrackingGeneratedKeysSqlServerFixture : ManyToManyTrackingSqlServerFixtureBase
     {
         protected override string StoreName

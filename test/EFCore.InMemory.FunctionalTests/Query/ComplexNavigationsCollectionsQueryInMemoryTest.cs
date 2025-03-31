@@ -5,9 +5,17 @@ using Microsoft.EntityFrameworkCore.InMemory.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class ComplexNavigationsCollectionsQueryInMemoryTest(ComplexNavigationsQueryInMemoryFixture fixture)
-    : ComplexNavigationsCollectionsQueryTestBase<ComplexNavigationsQueryInMemoryFixture>(fixture)
+public class ComplexNavigationsCollectionsQueryInMemoryTest
+    : ComplexNavigationsCollectionsQueryTestBase<ComplexNavigationsQueryInMemoryFixture>
 {
+    public ComplexNavigationsCollectionsQueryInMemoryTest(
+        ComplexNavigationsQueryInMemoryFixture fixture,
+        ITestOutputHelper testOutputHelper)
+        : base(fixture)
+    {
+        //TestLoggerFactory.TestOutputHelper = testOutputHelper;
+    }
+
     public override Task Final_GroupBy_property_entity_Include_collection(bool async)
         => AssertTranslationFailedWithDetails(
             () => base.Final_GroupBy_property_entity_Include_collection(async),

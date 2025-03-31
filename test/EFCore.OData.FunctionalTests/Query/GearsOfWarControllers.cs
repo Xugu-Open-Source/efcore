@@ -8,9 +8,14 @@ using Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class GearsController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class GearsController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public GearsController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -36,9 +41,14 @@ public class GearsController(GearsOfWarODataContext context) : TestODataControll
     }
 }
 
-public class SquadsController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class SquadsController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public SquadsController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -59,9 +69,14 @@ public class SquadsController(GearsOfWarODataContext context) : TestODataControl
     }
 }
 
-public class TagsController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class TagsController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public TagsController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -82,9 +97,14 @@ public class TagsController(GearsOfWarODataContext context) : TestODataControlle
     }
 }
 
-public class WeaponsController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class WeaponsController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public WeaponsController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -105,9 +125,14 @@ public class WeaponsController(GearsOfWarODataContext context) : TestODataContro
     }
 }
 
-public class CitiesController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class CitiesController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public CitiesController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -128,9 +153,14 @@ public class CitiesController(GearsOfWarODataContext context) : TestODataControl
     }
 }
 
-public class MissionsController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class MissionsController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public MissionsController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -151,9 +181,14 @@ public class MissionsController(GearsOfWarODataContext context) : TestODataContr
     }
 }
 
-public class SquadMissionsController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class SquadMissionsController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public SquadMissionsController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -174,9 +209,14 @@ public class SquadMissionsController(GearsOfWarODataContext context) : TestOData
     }
 }
 
-public class FactionsController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class FactionsController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public FactionsController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -202,9 +242,14 @@ public class FactionsController(GearsOfWarODataContext context) : TestODataContr
     }
 }
 
-public class LocustLeadersController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class LocustLeadersController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public LocustLeadersController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]
@@ -230,9 +275,14 @@ public class LocustLeadersController(GearsOfWarODataContext context) : TestOData
     }
 }
 
-public class LocustHighCommandsController(GearsOfWarODataContext context) : TestODataController, IDisposable
+public class LocustHighCommandsController : TestODataController, IDisposable
 {
-    private readonly GearsOfWarODataContext _context = context;
+    private readonly GearsOfWarODataContext _context;
+
+    public LocustHighCommandsController(GearsOfWarODataContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [EnableQuery]

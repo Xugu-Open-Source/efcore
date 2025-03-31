@@ -3,11 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class OwnedQuerySqliteTest(OwnedQuerySqliteTest.OwnedQuerySqliteFixture fixture)
-    : OwnedQueryRelationalTestBase<OwnedQuerySqliteTest.OwnedQuerySqliteFixture>(fixture)
+public class OwnedQuerySqliteTest : OwnedQueryRelationalTestBase<OwnedQuerySqliteTest.OwnedQuerySqliteFixture>
 {
+    public OwnedQuerySqliteTest(OwnedQuerySqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class OwnedQuerySqliteFixture : RelationalOwnedQueryFixture
     {
         public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)

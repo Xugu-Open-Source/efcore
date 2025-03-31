@@ -5,8 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
-#nullable disable
-
 public class CustomerQuery
 {
     public string CompanyName { get; set; }

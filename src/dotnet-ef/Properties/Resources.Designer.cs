@@ -50,7 +50,7 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("ConnectionDescription");
 
         /// <summary>
-        ///     The DbContext to use. "*" can be used to run the command for all contexts found. This will also disable service discovery through the startup project if a corresponding IDesignTimeDbContextFactory implementation is found.
+        ///     The DbContext to use.
         /// </summary>
         public static string ContextDescription
             => GetString("ContextDescription");
@@ -176,7 +176,7 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("FrameworkDescription");
 
         /// <summary>
-        ///     Unable to retrieve project metadata. Ensure it's an SDK-style project.
+        ///     Unable to retrieve project metadata. Ensure it's an SDK-style project. If you're using a custom BaseIntermediateOutputPath or MSBuildProjectExtensionsPath values, Use the --msbuildprojectextensionspath option.
         /// </summary>
         public static string GetMetadataFailed
             => GetString("GetMetadataFailed");
@@ -188,7 +188,7 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("IdempotentDescription");
 
         /// <summary>
-        ///     Show JSON output. Use with --prefix-output to parse programmatically.
+        ///     Show JSON output. Use with --prefix-output to parse programatically.
         /// </summary>
         public static string JsonDescription
             => GetString("JsonDescription");
@@ -242,12 +242,6 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("MigrationsDescription");
 
         /// <summary>
-        ///     Checks if any changes have been made to the model since the last migration.
-        /// </summary>
-        public static string MigrationsHasPendingModelChangesDescription
-            => GetString("MigrationsHasPendingModelChangesDescription");
-
-        /// <summary>
         ///     Lists available migrations.
         /// </summary>
         public static string MigrationsListDescription
@@ -290,14 +284,6 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("MigrationToDescription");
 
         /// <summary>
-        ///     Option '--{requiredOption}' must be specified if '--{conditionalOption}' is used.
-        /// </summary>
-        public static string MissingConditionalOption(object? requiredOption, object? conditionalOption)
-            => string.Format(
-                GetString("MissingConditionalOption", nameof(requiredOption), nameof(conditionalOption)),
-                requiredOption, conditionalOption);
-
-        /// <summary>
         ///     More than one project was found in the current working directory. Use the --project option.
         /// </summary>
         public static string MultipleProjects
@@ -322,18 +308,6 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
         /// </summary>
         public static string NamespaceDescription
             => GetString("NamespaceDescription");
-
-        /// <summary>
-        ///     Additionally generate all the code required for NativeAOT compilation and precompiled queries (experimental).
-        /// </summary>
-        public static string NativeAotDescription
-            => GetString("NativeAotDescription");
-
-        /// <summary>
-        ///     NativeAOT support is experimental and can change in the future.
-        /// </summary>
-        public static string NativeAotWarning
-            => GetString("NativeAotWarning");
 
         /// <summary>
         ///     Startup project '{startupProject}' targets framework '.NETCoreApp' version '{targetFrameworkVersion}'. This version of the Entity Framework Core .NET Command-line Tools only supports version 2.0 or higher. For information on using older versions of the tools, see https://go.microsoft.com/fwlink/?linkid=871254
@@ -390,12 +364,6 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
                 projectDir);
 
         /// <summary>
-        ///     Don't generate a compiled model.
-        /// </summary>
-        public static string NoScaffoldDescription
-            => GetString("NoScaffoldDescription");
-
-        /// <summary>
         ///     Don't generate SQL transaction statements.
         /// </summary>
         public static string NoTransactionsDescription
@@ -414,18 +382,6 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("OutputDirDescription");
 
         /// <summary>
-        ///     Generate precompiled queries.
-        /// </summary>
-        public static string PrecompileQueriesDescription
-            => GetString("PrecompileQueriesDescription");
-
-        /// <summary>
-        ///     Query precompilation is an experimental feature and should be used with caution.
-        /// </summary>
-        public static string PrecompileQueriesWarning
-            => GetString("PrecompileQueriesWarning");
-
-        /// <summary>
         ///     Prefix output with level.
         /// </summary>
         public static string PrefixDescription
@@ -438,7 +394,7 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("ProjectDescription");
 
         /// <summary>
-        ///     Obsolete
+        ///     The MSBuild project extensions path. Defaults to "obj".
         /// </summary>
         public static string ProjectExtensionsDescription
             => GetString("ProjectExtensionsDescription");
@@ -456,7 +412,7 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("RuntimeDescription");
 
         /// <summary>
-        ///     The schemas of tables and views to generate entity types for. All tables and views in the schemas will be included in the model, even if they are not explicitly included with the --table parameter.
+        ///     The schemas of tables to generate entity types for.
         /// </summary>
         public static string SchemasDescription
             => GetString("SchemasDescription");
@@ -474,19 +430,13 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
             => GetString("StartupProjectDescription");
 
         /// <summary>
-        ///     The suffix to attach to the name of all the generated files
-        /// </summary>
-        public static string SuffixDescription
-            => GetString("SuffixDescription");
-
-        /// <summary>
         ///     Don't generate DbContext.OnConfiguring.
         /// </summary>
         public static string SuppressOnConfiguringDescription
             => GetString("SuppressOnConfiguringDescription");
 
         /// <summary>
-        ///     The tables and views to generate entity types for. Tables or views in a specific schema can be included using the 'schema.table' or 'schema.view' format.
+        ///     The tables to generate entity types for.
         /// </summary>
         public static string TablesDescription
             => GetString("TablesDescription");
@@ -508,7 +458,7 @@ namespace Microsoft.EntityFrameworkCore.Tools.Properties
                 startupProject, targetPlatform);
 
         /// <summary>
-        ///     Use table, view, sequence, and column names directly from the database.
+        ///     Use table and column names directly from the database.
         /// </summary>
         public static string UseDatabaseNamesDescription
             => GetString("UseDatabaseNamesDescription");

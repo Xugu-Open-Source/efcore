@@ -52,11 +52,8 @@ public readonly struct ValueBuffer : IEquatable<ValueBuffer>
         set => _values[index] = value;
     }
 
-    internal static readonly PropertyInfo Indexer
-        = typeof(ValueBuffer).GetRuntimeProperties().Single(p => p.GetIndexParameters().Length > 0);
-
     internal static readonly MethodInfo GetValueMethod
-        = Indexer.GetMethod!;
+        = typeof(ValueBuffer).GetRuntimeProperties().Single(p => p.GetIndexParameters().Length > 0).GetMethod!;
 
     /// <summary>
     ///     Gets the number of values in this buffer.

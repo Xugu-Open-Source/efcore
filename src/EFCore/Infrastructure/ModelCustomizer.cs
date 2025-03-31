@@ -31,7 +31,9 @@ public class ModelCustomizer : IModelCustomizer
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     public ModelCustomizer(ModelCustomizerDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.

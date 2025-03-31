@@ -13,7 +13,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
 /// </summary>
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-conventions">Model building conventions</see>, and
-///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
 ///     for more information and examples.
 /// </remarks>
 public class SqlServerIndexConvention :
@@ -161,7 +161,8 @@ public class SqlServerIndexConvention :
         var index = indexBuilder.Metadata;
         if (index.IsUnique
             && index.IsClustered() != true
-            && GetNullableColumns(index) is { Count: > 0 } nullableColumns)
+            && GetNullableColumns(index) is List<string> nullableColumns
+            && nullableColumns.Count > 0)
         {
             if (columnNameChanged
                 || index.GetFilter() == null)

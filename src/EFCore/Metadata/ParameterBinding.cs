@@ -24,7 +24,7 @@ public abstract class ParameterBinding
         Check.NotNull(parameterType, nameof(parameterType));
 
         ParameterType = parameterType;
-        ConsumedProperties = consumedProperties ?? [];
+        ConsumedProperties = consumedProperties ?? Array.Empty<IPropertyBase>();
     }
 
     /// <summary>

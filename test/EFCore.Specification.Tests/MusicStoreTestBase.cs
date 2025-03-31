@@ -6,8 +6,6 @@ using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public abstract class MusicStoreTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : MusicStoreTestBase<TFixture>.MusicStoreFixtureBase, new()
 {
@@ -327,7 +325,7 @@ public abstract class MusicStoreTestBase<TFixture> : IClassFixture<TFixture>
     }
 
     [ConditionalFact]
-    public virtual async Task Music_store_project_to_mapped_entity()
+    public virtual async void Music_store_project_to_mapped_entity()
     {
         using var context = CreateContext();
         await context.Database.CreateExecutionStrategy().ExecuteAsync(
@@ -528,10 +526,16 @@ public abstract class MusicStoreTestBase<TFixture> : IClassFixture<TFixture>
                     Genre = genre
                 }).ToArray();
 
-    protected class CartSummaryComponent(MusicStoreContext context, string cartId)
+    protected class CartSummaryComponent
     {
-        private readonly MusicStoreContext _context = context;
-        private readonly string _cartId = cartId;
+        private readonly MusicStoreContext _context;
+        private readonly string _cartId;
+
+        public CartSummaryComponent(MusicStoreContext context, string cartId)
+        {
+            _context = context;
+            _cartId = cartId;
+        }
 
         public async Task<CartSummaryViewBag> InvokeAsync()
         {
@@ -553,10 +557,16 @@ public abstract class MusicStoreTestBase<TFixture> : IClassFixture<TFixture>
         public string CartSummary { get; set; }
     }
 
-    protected class ShoppingCartController(MusicStoreContext context, string cartId)
+    protected class ShoppingCartController
     {
-        private readonly MusicStoreContext _context = context;
-        private readonly string _cartId = cartId;
+        private readonly MusicStoreContext _context;
+        private readonly string _cartId;
+
+        public ShoppingCartController(MusicStoreContext context, string cartId)
+        {
+            _context = context;
+            _cartId = cartId;
+        }
 
         public virtual async Task<ShoppingCartRemoveViewModel> RemoveFromCart(int cartItemId)
         {
@@ -617,10 +627,15 @@ public abstract class MusicStoreTestBase<TFixture> : IClassFixture<TFixture>
         }
     }
 
-    public class CheckoutController(Dictionary<string, StringValues> formCollection = null)
+    public class CheckoutController
     {
-        private readonly Dictionary<string, StringValues> _formCollection = formCollection ?? new Dictionary<string, StringValues>();
+        private readonly Dictionary<string, StringValues> _formCollection;
         private const string PromoCode = "FREE";
+
+        public CheckoutController(Dictionary<string, StringValues> formCollection = null)
+        {
+            _formCollection = formCollection ?? new Dictionary<string, StringValues>();
+        }
 
         public async Task<object> AddressAndPayment(MusicStoreContext context, string cartId, Order order)
         {
@@ -644,7 +659,7 @@ public abstract class MusicStoreTestBase<TFixture> : IClassFixture<TFixture>
 
                 return order.OrderId;
             }
-            catch
+            catch (Exception)
             {
                 return null;
             }
@@ -666,9 +681,14 @@ public abstract class MusicStoreTestBase<TFixture> : IClassFixture<TFixture>
         }
     }
 
-    public class GenreMenuComponent(MusicStoreContext context)
+    public class GenreMenuComponent
     {
-        private readonly MusicStoreContext _context = context;
+        private readonly MusicStoreContext _context;
+
+        public GenreMenuComponent(MusicStoreContext context)
+        {
+            _context = context;
+        }
 
         public async Task<List<string>> InvokeAsync()
         {
@@ -694,9 +714,14 @@ public abstract class MusicStoreTestBase<TFixture> : IClassFixture<TFixture>
                 .ToListAsync();
     }
 
-    public class StoreController(MusicStoreContext context)
+    public class StoreController
     {
-        private readonly MusicStoreContext _context = context;
+        private readonly MusicStoreContext _context;
+
+        public StoreController(MusicStoreContext context)
+        {
+            _context = context;
+        }
 
         public async Task<List<Genre>> Index()
         {

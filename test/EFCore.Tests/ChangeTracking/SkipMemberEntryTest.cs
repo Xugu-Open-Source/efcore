@@ -128,7 +128,7 @@ public class SkipMemberEntryTest
     private class Cherry
     {
         public int Id { get; set; }
-        public ICollection<Chunky> Chunkies { get; }
+        public ICollection<Chunky> Chunkies { get; set; }
     }
 
     private class FreezerContext : DbContext

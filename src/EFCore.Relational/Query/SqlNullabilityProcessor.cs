@@ -17,7 +17,7 @@ namespace Microsoft.EntityFrameworkCore.Query;
 ///         not used in application code.
 ///     </para>
 /// </summary>
-public class SqlNullabilityProcessor : ExpressionVisitor
+public class SqlNullabilityProcessor
 {
     private readonly List<ColumnExpression> _nonNullableColumns;
     private readonly List<ColumnExpression> _nullValueColumns;
@@ -28,17 +28,17 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     ///     Creates a new instance of the <see cref="SqlNullabilityProcessor" /> class.
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this class.</param>
-    /// <param name="parameters">Parameter object containing parameters for this class.</param>
+    /// <param name="useRelationalNulls">A bool value indicating whether relational null semantics are in use.</param>
     public SqlNullabilityProcessor(
         RelationalParameterBasedSqlProcessorDependencies dependencies,
-        RelationalParameterBasedSqlProcessorParameters parameters)
+        bool useRelationalNulls)
     {
         Dependencies = dependencies;
-        UseRelationalNulls = parameters.UseRelationalNulls;
 
         _sqlExpressionFactory = dependencies.SqlExpressionFactory;
-        _nonNullableColumns = [];
-        _nullValueColumns = [];
+        UseRelationalNulls = useRelationalNulls;
+        _nonNullableColumns = new List<ColumnExpression>();
+        _nullValueColumns = new List<ColumnExpression>();
         ParameterValues = null!;
     }
 
@@ -74,11 +74,47 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         _nullValueColumns.Clear();
         ParameterValues = parameterValues;
 
-        var result = Visit(queryExpression);
+        var result = queryExpression switch
+        {
+            SelectExpression selectExpression => (Expression)Visit(selectExpression),
+            DeleteExpression deleteExpression => deleteExpression.Update(Visit(deleteExpression.SelectExpression)),
+            UpdateExpression updateExpression => VisitUpdate(updateExpression),
+            _ => throw new InvalidOperationException(),
+        };
 
         canCache = _canCache;
 
         return result;
+    }
+
+    private UpdateExpression VisitUpdate(UpdateExpression updateExpression)
+    {
+        var selectExpression = Visit(updateExpression.SelectExpression);
+        List<ColumnValueSetter>? columnValueSetters = null;
+        for (var (i, n) = (0, updateExpression.ColumnValueSetters.Count); i < n; i++)
+        {
+            var columnValueSetter = updateExpression.ColumnValueSetters[i];
+            var newValue = Visit(columnValueSetter.Value, out _);
+            if (columnValueSetters != null)
+            {
+                columnValueSetters.Add(new ColumnValueSetter(columnValueSetter.Column, newValue));
+            }
+            else if (!ReferenceEquals(newValue, columnValueSetter.Value))
+            {
+                columnValueSetters = new List<ColumnValueSetter>(n);
+                for (var j = 0; j < i; j++)
+                {
+                    columnValueSetters.Add(updateExpression.ColumnValueSetters[j]);
+                }
+
+                columnValueSetters.Add(new ColumnValueSetter(columnValueSetter.Column, newValue));
+            }
+        }
+
+        return selectExpression != updateExpression.SelectExpression
+            || columnValueSetters != null
+                ? updateExpression.Update(selectExpression, columnValueSetters ?? updateExpression.ColumnValueSetters)
+                : updateExpression;
     }
 
     /// <summary>
@@ -94,85 +130,90 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     protected virtual void AddNonNullableColumn(ColumnExpression columnExpression)
         => _nonNullableColumns.Add(columnExpression);
 
-    /// <inheritdoc />
-    protected override Expression VisitExtension(Expression node)
+    /// <summary>
+    ///     Visits a <see cref="TableExpressionBase" />.
+    /// </summary>
+    /// <param name="tableExpressionBase">A table expression base to visit.</param>
+    /// <returns>An optimized table expression base.</returns>
+    protected virtual TableExpressionBase Visit(TableExpressionBase tableExpressionBase)
     {
-        switch (node)
+        switch (tableExpressionBase)
         {
-            case SqlExpression sqlExpression:
-                return Visit(sqlExpression, allowOptimizedExpansion: false, out _);
+            case CrossApplyExpression crossApplyExpression:
+                return crossApplyExpression.Update(Visit(crossApplyExpression.Table));
 
-            case SelectExpression select:
-                return Visit(select);
+            case CrossJoinExpression crossJoinExpression:
+                return crossJoinExpression.Update(Visit(crossJoinExpression.Table));
 
-            case PredicateJoinExpressionBase join:
+            case ExceptExpression exceptExpression:
             {
-                var newTable = VisitAndConvert(join.Table, nameof(VisitExtension));
-                var newJoinPredicate = ProcessJoinPredicate(join.JoinPredicate);
+                var source1 = Visit(exceptExpression.Source1);
+                var source2 = Visit(exceptExpression.Source2);
 
-                return join.Update(newTable, newJoinPredicate);
+                return exceptExpression.Update(source1, source2);
             }
 
-            case ValuesExpression { ValuesParameter: SqlParameterExpression valuesParameter } valuesExpression:
-            {
-                DoNotCache();
-                Check.DebugAssert(valuesParameter.TypeMapping is not null, "valuesParameter.TypeMapping is not null");
-                Check.DebugAssert(
-                    valuesParameter.TypeMapping.ElementTypeMapping is not null,
-                    "valuesParameter.TypeMapping.ElementTypeMapping is not null");
-                var typeMapping = (RelationalTypeMapping)valuesParameter.TypeMapping.ElementTypeMapping;
-                var values = (IEnumerable?)ParameterValues[valuesParameter.Name] ?? Array.Empty<object>();
+            case FromSqlExpression fromSqlExpression:
+                return fromSqlExpression;
 
-                var processedValues = new List<RowValueExpression>();
-                foreach (var value in values)
+            case InnerJoinExpression innerJoinExpression:
+            {
+                var newTable = Visit(innerJoinExpression.Table);
+                var newJoinPredicate = ProcessJoinPredicate(innerJoinExpression.JoinPredicate);
+
+                return TryGetBoolConstantValue(newJoinPredicate) == true
+                    ? new CrossJoinExpression(newTable)
+                    : innerJoinExpression.Update(newTable, newJoinPredicate);
+            }
+
+            case IntersectExpression intersectExpression:
+            {
+                var source1 = Visit(intersectExpression.Source1);
+                var source2 = Visit(intersectExpression.Source2);
+
+                return intersectExpression.Update(source1, source2);
+            }
+
+            case LeftJoinExpression leftJoinExpression:
+            {
+                var newTable = Visit(leftJoinExpression.Table);
+                var newJoinPredicate = ProcessJoinPredicate(leftJoinExpression.JoinPredicate);
+
+                return leftJoinExpression.Update(newTable, newJoinPredicate);
+            }
+
+            case OuterApplyExpression outerApplyExpression:
+                return outerApplyExpression.Update(Visit(outerApplyExpression.Table));
+
+            case SelectExpression selectExpression:
+                return Visit(selectExpression);
+
+            case TableValuedFunctionExpression tableValuedFunctionExpression:
+            {
+                var arguments = new List<SqlExpression>();
+                foreach (var argument in tableValuedFunctionExpression.Arguments)
                 {
-                    processedValues.Add(
-                        new RowValueExpression(
-                        [
-                            _sqlExpressionFactory.Constant(value, value?.GetType() ?? typeof(object), typeMapping)
-                        ]));
+                    arguments.Add(Visit(argument, out _));
                 }
 
-                return processedValues is not []
-                    ? valuesExpression.Update(processedValues)
-                    : valuesExpression;
+                return tableValuedFunctionExpression.Update(arguments);
+            }
+
+            case TableExpression tableExpression:
+                return tableExpression;
+
+            case UnionExpression unionExpression:
+            {
+                var source1 = Visit(unionExpression.Source1);
+                var source2 = Visit(unionExpression.Source2);
+
+                return unionExpression.Update(source1, source2);
             }
 
             default:
-                return base.VisitExtension(node);
-        }
-
-        SqlExpression ProcessJoinPredicate(SqlExpression predicate)
-        {
-            switch (predicate)
-            {
-                case SqlBinaryExpression { OperatorType: ExpressionType.Equal } binary:
-                    var left = Visit(binary.Left, allowOptimizedExpansion: true, out var leftNullable);
-                    var right = Visit(binary.Right, allowOptimizedExpansion: true, out var rightNullable);
-
-                    var result = OptimizeComparison(
-                        binary.Update(left, right),
-                        left,
-                        right,
-                        leftNullable,
-                        rightNullable,
-                        out _);
-
-                    return result;
-
-                case SqlBinaryExpression { OperatorType:
-                    ExpressionType.AndAlso
-                    or ExpressionType.NotEqual
-                    or ExpressionType.GreaterThan
-                    or ExpressionType.GreaterThanOrEqual
-                    or ExpressionType.LessThan
-                    or ExpressionType.LessThanOrEqual } binary:
-                    return Visit(binary, allowOptimizedExpansion: true, out _);
-
-                default:
-                    throw new InvalidOperationException(
-                        RelationalStrings.UnhandledExpressionInVisitor(predicate, predicate.GetType(), nameof(SqlNullabilityProcessor)));
-            }
+                throw new InvalidOperationException(
+                    RelationalStrings.UnhandledExpressionInVisitor(
+                        tableExpressionBase, tableExpressionBase.GetType(), nameof(SqlNullabilityProcessor)));
         }
     }
 
@@ -180,20 +221,130 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     ///     Visits a <see cref="SelectExpression" />.
     /// </summary>
     /// <param name="selectExpression">A select expression to visit.</param>
-    /// <param name="visitProjection">Allows skipping visiting the projection, for when it will be visited outside.</param>
     /// <returns>An optimized select expression.</returns>
-    protected virtual SelectExpression Visit(SelectExpression selectExpression, bool visitProjection = true)
+    protected virtual SelectExpression Visit(SelectExpression selectExpression)
     {
-        var tables = this.VisitAndConvert(selectExpression.Tables);
-        var predicate = Visit(selectExpression.Predicate, allowOptimizedExpansion: true, out _);
-        var groupBy = this.VisitAndConvert(selectExpression.GroupBy);
-        var having = Visit(selectExpression.Having, allowOptimizedExpansion: true, out _);
-        var projections = visitProjection ? this.VisitAndConvert(selectExpression.Projection) : selectExpression.Projection;
-        var orderings = this.VisitAndConvert(selectExpression.Orderings);
-        var offset = Visit(selectExpression.Offset, out _);
-        var limit = Visit(selectExpression.Limit, out _);
+        var changed = false;
+        var projections = (List<ProjectionExpression>)selectExpression.Projection;
+        for (var i = 0; i < selectExpression.Projection.Count; i++)
+        {
+            var item = selectExpression.Projection[i];
+            var projection = item.Update(Visit(item.Expression, out _));
+            if (projection != item
+                && projections == selectExpression.Projection)
+            {
+                projections = new List<ProjectionExpression>();
+                for (var j = 0; j < i; j++)
+                {
+                    projections.Add(selectExpression.Projection[j]);
+                }
 
-        return selectExpression.Update(tables, predicate, groupBy, having, projections, orderings, offset, limit);
+                changed = true;
+            }
+
+            if (projections != selectExpression.Projection)
+            {
+                projections.Add(projection);
+            }
+        }
+
+        var tables = (List<TableExpressionBase>)selectExpression.Tables;
+        for (var i = 0; i < selectExpression.Tables.Count; i++)
+        {
+            var item = selectExpression.Tables[i];
+            var table = Visit(item);
+            if (table != item
+                && tables == selectExpression.Tables)
+            {
+                tables = new List<TableExpressionBase>();
+                for (var j = 0; j < i; j++)
+                {
+                    tables.Add(selectExpression.Tables[j]);
+                }
+
+                changed = true;
+            }
+
+            if (tables != selectExpression.Tables)
+            {
+                tables.Add(table);
+            }
+        }
+
+        var predicate = Visit(selectExpression.Predicate, allowOptimizedExpansion: true, out _);
+        changed |= predicate != selectExpression.Predicate;
+
+        if (TryGetBoolConstantValue(predicate) == true)
+        {
+            predicate = null;
+            changed = true;
+        }
+
+        var groupBy = (List<SqlExpression>)selectExpression.GroupBy;
+        for (var i = 0; i < selectExpression.GroupBy.Count; i++)
+        {
+            var item = selectExpression.GroupBy[i];
+            var groupingKey = Visit(item, out _);
+            if (groupingKey != item
+                && groupBy == selectExpression.GroupBy)
+            {
+                groupBy = new List<SqlExpression>();
+                for (var j = 0; j < i; j++)
+                {
+                    groupBy.Add(selectExpression.GroupBy[j]);
+                }
+
+                changed = true;
+            }
+
+            if (groupBy != selectExpression.GroupBy)
+            {
+                groupBy.Add(groupingKey);
+            }
+        }
+
+        var having = Visit(selectExpression.Having, allowOptimizedExpansion: true, out _);
+        changed |= having != selectExpression.Having;
+
+        if (TryGetBoolConstantValue(having) == true)
+        {
+            having = null;
+            changed = true;
+        }
+
+        var orderings = (List<OrderingExpression>)selectExpression.Orderings;
+        for (var i = 0; i < selectExpression.Orderings.Count; i++)
+        {
+            var item = selectExpression.Orderings[i];
+            var ordering = item.Update(Visit(item.Expression, out _));
+            if (ordering != item
+                && orderings == selectExpression.Orderings)
+            {
+                orderings = new List<OrderingExpression>();
+                for (var j = 0; j < i; j++)
+                {
+                    orderings.Add(selectExpression.Orderings[j]);
+                }
+
+                changed = true;
+            }
+
+            if (orderings != selectExpression.Orderings)
+            {
+                orderings.Add(ordering);
+            }
+        }
+
+        var offset = Visit(selectExpression.Offset, out _);
+        changed |= offset != selectExpression.Offset;
+
+        var limit = Visit(selectExpression.Limit, out _);
+        changed |= limit != selectExpression.Limit;
+
+        return changed
+            ? selectExpression.Update(
+                projections, tables, predicate, groupBy, having, orderings, limit, offset)
+            : selectExpression;
     }
 
     /// <summary>
@@ -202,7 +353,7 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     /// <param name="sqlExpression">A sql expression to visit.</param>
     /// <param name="nullable">A bool value indicating whether the sql expression is nullable.</param>
     /// <returns>An optimized sql expression.</returns>
-    [return: NotNullIfNotNull(nameof(sqlExpression))]
+    [return: NotNullIfNotNull("sqlExpression")]
     protected virtual SqlExpression? Visit(SqlExpression? sqlExpression, out bool nullable)
         => Visit(sqlExpression, allowOptimizedExpansion: false, out nullable);
 
@@ -213,11 +364,11 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     /// <param name="allowOptimizedExpansion">A bool value indicating if optimized expansion which considers null value as false value is allowed.</param>
     /// <param name="nullable">A bool value indicating whether the sql expression is nullable.</param>
     /// <returns>An optimized sql expression.</returns>
-    [return: NotNullIfNotNull(nameof(sqlExpression))]
+    [return: NotNullIfNotNull("sqlExpression")]
     protected virtual SqlExpression? Visit(SqlExpression? sqlExpression, bool allowOptimizedExpansion, out bool nullable)
         => Visit(sqlExpression, allowOptimizedExpansion, preserveColumnNullabilityInformation: false, out nullable);
 
-    [return: NotNullIfNotNull(nameof(sqlExpression))]
+    [return: NotNullIfNotNull("sqlExpression")]
     private SqlExpression? Visit(
         SqlExpression? sqlExpression,
         bool allowOptimizedExpansion,
@@ -252,8 +403,6 @@ public class SqlNullabilityProcessor : ExpressionVisitor
                 => VisitLike(likeExpression, allowOptimizedExpansion, out nullable),
             RowNumberExpression rowNumberExpression
                 => VisitRowNumber(rowNumberExpression, allowOptimizedExpansion, out nullable),
-            RowValueExpression rowValueExpression
-                => VisitRowValue(rowValueExpression, allowOptimizedExpansion, out nullable),
             ScalarSubqueryExpression scalarSubqueryExpression
                 => VisitScalarSubquery(scalarSubqueryExpression, allowOptimizedExpansion, out nullable),
             SqlBinaryExpression sqlBinaryExpression
@@ -324,7 +473,9 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     /// <returns>An optimized sql expression.</returns>
     protected virtual SqlExpression VisitCase(CaseExpression caseExpression, bool allowOptimizedExpansion, out bool nullable)
     {
-        nullable = false;
+        // if there is no 'else' there is a possibility of null, when none of the conditions are met
+        // otherwise the result is nullable if any of the WhenClause results OR ElseResult is nullable
+        nullable = caseExpression.ElseResult == null;
         var currentNonNullableColumnsCount = _nonNullableColumns.Count;
         var currentNullValueColumnsCount = _nullValueColumns.Count;
 
@@ -339,26 +490,23 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             var test = Visit(
                 whenClause.Test, allowOptimizedExpansion: testIsCondition, preserveColumnNullabilityInformation: true, out _);
 
-            var testCondition = testIsCondition
-                ? test
-                : Visit(
-                    _sqlExpressionFactory.Equal(operand!, test),
-                    allowOptimizedExpansion: testIsCondition, preserveColumnNullabilityInformation: true, out _);
-
-            if (IsTrue(testCondition))
+            if (TryGetBoolConstantValue(test) is bool testConstantBool)
             {
-                testEvaluatesToTrue = true;
-            }
-            else if (IsFalse(testCondition))
-            {
-                // if test evaluates to 'false' we can remove the WhenClause
-                RestoreNonNullableColumnsList(currentNonNullableColumnsCount);
-                RestoreNullValueColumnsList(currentNullValueColumnsCount);
+                if (testConstantBool)
+                {
+                    testEvaluatesToTrue = true;
+                }
+                else
+                {
+                    // if test evaluates to 'false' we can remove the WhenClause
+                    RestoreNonNullableColumnsList(currentNonNullableColumnsCount);
+                    RestoreNullValueColumnsList(currentNullValueColumnsCount);
 
-                continue;
+                    continue;
+                }
             }
 
-            var newResult = Visit(whenClause.Result, allowOptimizedExpansion, out var resultNullable);
+            var newResult = Visit(whenClause.Result, out var resultNullable);
 
             nullable |= resultNullable;
             whenClauses.Add(new CaseWhenClause(test, newResult));
@@ -368,12 +516,6 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             // if test evaluates to 'true' we can remove every condition that comes after, including ElseResult
             if (testEvaluatesToTrue)
             {
-                // if the first When clause is always satisfied, simply return its result
-                if (whenClauses.Count == 1)
-                {
-                    return whenClauses[0].Result;
-                }
-
                 break;
             }
         }
@@ -381,12 +523,8 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         SqlExpression? elseResult = null;
         if (!testEvaluatesToTrue)
         {
-            elseResult = Visit(caseExpression.ElseResult, allowOptimizedExpansion, out var elseResultNullable);
+            elseResult = Visit(caseExpression.ElseResult, out var elseResultNullable);
             nullable |= elseResultNullable;
-
-            // if there is no 'else' there is a possibility of null, when none of the conditions are met
-            // otherwise the result is nullable if any of the WhenClause results OR ElseResult is nullable
-            nullable |= elseResult == null;
         }
 
         RestoreNonNullableColumnsList(currentNonNullableColumnsCount);
@@ -397,10 +535,15 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         // - if there is no Else block, return null
         if (whenClauses.Count == 0)
         {
-            return elseResult ?? _sqlExpressionFactory.Constant(null, caseExpression.Type, caseExpression.TypeMapping);
+            return elseResult ?? _sqlExpressionFactory.Constant(null, caseExpression.TypeMapping);
         }
 
-        return _sqlExpressionFactory.Case(operand, whenClauses, elseResult, caseExpression);
+        // if there is only one When clause and it's test evaluates to 'true' AND there is no else block, simply return the result
+        return elseResult == null
+            && whenClauses.Count == 1
+            && TryGetBoolConstantValue(whenClauses[0].Test) == true
+                ? whenClauses[0].Result
+                : caseExpression.Update(operand, whenClauses, elseResult);
     }
 
     /// <summary>
@@ -462,9 +605,9 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         nullable = false;
 
         // if subquery has predicate which evaluates to false, we can simply return false
-        // if the exists is negated we need to return true instead
-        return IsFalse(subquery.Predicate)
-            ? _sqlExpressionFactory.Constant(false, existsExpression.TypeMapping)
+        // if the exisits is negated we need to return true instead
+        return TryGetBoolConstantValue(subquery.Predicate) == false
+            ? _sqlExpressionFactory.Constant(existsExpression.IsNegated, existsExpression.TypeMapping)
             : existsExpression.Update(subquery);
     }
 
@@ -477,354 +620,154 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     /// <returns>An optimized sql expression.</returns>
     protected virtual SqlExpression VisitIn(InExpression inExpression, bool allowOptimizedExpansion, out bool nullable)
     {
-        // SQL IN returns null when the item is null, and when the values (or subquery projection) contains NULL and no match was made.
-
         var item = Visit(inExpression.Item, out var itemNullable);
-        inExpression = inExpression.Update(item, inExpression.Subquery, inExpression.Values, inExpression.ValuesParameter);
 
         if (inExpression.Subquery != null)
         {
-            if (inExpression.Subquery.Projection is not [{ Expression: var subqueryProjection }])
-            {
-                // We don't currently support more than one projection in an IN subquery; but that's supported by SQL and may be supported
-                // in the future (e.g. WHERE (x,y) IN ((1,2), (3,4))).
-                throw new UnreachableException("Subqueries with multiple projections not yet supported in IN");
-            }
-
-            // There's a single column being projected out of the IN subquery; visit it separately so we get nullability info out.
-            var subquery = Visit(inExpression.Subquery, visitProjection: false);
+            var subquery = Visit(inExpression.Subquery);
 
             // a IN (SELECT * FROM table WHERE false) => false
-            if (IsFalse(subquery.Predicate))
+            if (TryGetBoolConstantValue(subquery.Predicate) == false)
             {
                 nullable = false;
 
-                return _sqlExpressionFactory.Constant(false, inExpression.TypeMapping);
+                return subquery.Predicate!;
             }
 
-            var projectionExpression = Visit(subqueryProjection, allowOptimizedExpansion, out var projectionNullable);
-            inExpression = inExpression.Update(
-                item, subquery.Update(
-                    subquery.Tables,
-                    subquery.Predicate,
-                    subquery.GroupBy,
-                    subquery.Having,
-                    projections: [subquery.Projection[0].Update(projectionExpression)],
-                    subquery.Orderings,
-                    subquery.Offset,
-                    subquery.Limit));
+            // if item is not nullable, and subquery contains a non-nullable column we know the result can never be null
+            // note: in this case we could broaden the optimization if we knew the nullability of the projection
+            // but we don't keep that information and we want to avoid double visitation
+            nullable = !(!itemNullable
+                && subquery.Projection.Count == 1
+                && subquery.Projection[0].Expression is ColumnExpression columnProjection
+                && !columnProjection.IsNullable);
 
-            if (UseRelationalNulls)
-            {
-                nullable = itemNullable || projectionNullable;
+            return inExpression.Update(item, values: null, subquery);
+        }
 
-                return inExpression;
-            }
-
+        // for relational null semantics we don't need to extract null values from the array
+        if (UseRelationalNulls
+            || !(inExpression.Values is SqlConstantExpression || inExpression.Values is SqlParameterExpression))
+        {
+            var (valuesExpression, valuesList, _) = ProcessInExpressionValues(inExpression.Values!, extractNullValues: false);
             nullable = false;
 
-            switch ((itemNullable, projectionNullable))
-            {
-                // If both sides are non-nullable, IN never returns null, so is safe to use as-is.
-                case (false, false):
-                    return inExpression;
-
-                case (true, false):
-                    NullableItemWithNonNullableProjection:
-                    // If the item is actually null (not just nullable) and the projection is non-nullable, just return false immediately:
-                    // WHERE NULL IN (SELECT NonNullable FROM foo) -> false
-                    if (IsNull(item))
-                    {
-                        return _sqlExpressionFactory.Constant(false, inExpression.TypeMapping);
-                    }
-
-                    // Otherwise, since the projection is non-nullable, NULL will only be returned if the item wasn't found. Use as-is
-                    // in optimized expansion (NULL is interpreted as false anyway), or compensate for the item being possibly null:
-                    // WHERE Nullable IN (SELECT NonNullable FROM foo) -> WHERE Nullable IN (SELECT NonNullable FROM foo) AND Nullable IS NOT NULL
-                    // WHERE Nullable NOT IN (SELECT NonNullable FROM foo) -> WHERE Nullable NOT IN (SELECT NonNullable FROM foo) OR Nullable IS NULL
-                    return allowOptimizedExpansion
-                        ? inExpression
-                        : _sqlExpressionFactory.AndAlso(inExpression, _sqlExpressionFactory.IsNotNull(item));
-
-                case (false, true):
-                {
-                    // If the item is non-nullable but the projection is nullable, NULL will only be returned if the item wasn't found
-                    // (as with the above case).
-                    // Use as-is in optimized expansion (NULL is interpreted as false anyway), or compensate by coalescing NULL to false:
-                    // WHERE NonNullable IN (SELECT Nullable FROM foo) -> WHERE COALESCE(NonNullable IN (SELECT Nullable FROM foo), false)
-                    if (allowOptimizedExpansion)
-                    {
-                        return inExpression;
-                    }
-
-                    // If the subquery happens to be a primitive collection (e.g. OPENJSON), pull out the null values from the parameter.
-                    // Since the item is non-nullable, it can never match those null values, and all they do is cause the IN expression
-                    // to return NULL if the item isn't found. So just remove them.
-                    if (TryMakeNonNullable(subquery, out var nonNullableSubquery, out _))
-                    {
-                        return inExpression.Update(item, nonNullableSubquery);
-                    }
-
-                    // On SQL Server, EXISTS isn't less efficient than IN, and the additional COALESCE (and CASE/WHEN which it requires)
-                    // add unneeded clutter (and possibly hurt perf). So allow providers to prefer EXISTS.
-                    if (PreferExistsToInWithCoalesce)
-                    {
-                        goto TransformToExists;
-                    }
-
-                    return _sqlExpressionFactory.Coalesce(inExpression, _sqlExpressionFactory.Constant(false));
-                }
-
-                case (true, true):
-                    // Worst case: both sides are nullable; that means that with IN, there's no way to distinguish between:
-                    // a) The item was NULL and was found (e.g. NULL IN (1, 2, NULL) should yield true), and
-                    // b) The item wasn't found (e.g. 3 IN (1, 2, NULL) should yield false)
-
-                    // As a last resort, we can rewrite to an EXISTS subquery where we can generate a precise predicate to check for what we
-                    // need. This unfortunately performs (significantly) worse than an IN expression, since it involves a correlated
-                    // subquery, and can cause indexes to not get used.
-
-                    // But before doing this, we check whether the subquery represents a simple parameterized collection (e.g. a bare
-                    // OPENJSON call over a parameter in SQL Server), and if it is, rewrite the parameter to remove nulls so we can keep
-                    // using IN.
-                    if (TryMakeNonNullable(subquery, out var nonNullableSubquery2, out var foundNull))
-                    {
-                        inExpression = inExpression.Update(item, nonNullableSubquery2);
-
-                        if (!foundNull.Value)
-                        {
-                            // There weren't any actual nulls inside the parameterized collection - we can jump to the case which handles
-                            // that.
-                            goto NullableItemWithNonNullableProjection;
-                        }
-
-                        // Nulls were found inside the parameterized collection, and removed. If the item is a null constant, just convert
-                        // the whole thing to true.
-                        if (IsNull(item))
-                        {
-                            return _sqlExpressionFactory.Constant(true, inExpression.TypeMapping);
-                        }
-
-                        // Otherwise we now need to compensate for the removed nulls outside, by adding OR item IS NULL.
-                        // Note that this is safe in negated (non-optimized) contexts:
-                        // WHERE item NOT IN ("foo", "bar") AND item IS NOT NULL
-                        // When item is NULL, the item IS NOT NULL clause causes the whole thing to return false. Otherwise that clause
-                        // can be ignored, and we have non-null item IN non-null list-of-values.
-                        return _sqlExpressionFactory.OrElse(inExpression, _sqlExpressionFactory.IsNull(item));
-                    }
-
-                    TransformToExists:
-                    // We unfortunately need to rewrite to EXISTS. We'll need to mutate the subquery to introduce the predicate inside it,
-                    // but it might be referenced by other places in the tree, so we create a copy to work on.
-
-                    // No need for a projection with EXISTS, clear it to get SELECT 1
-                    subquery = subquery.Update(
-                        subquery.Tables,
-                        subquery.Predicate,
-                        subquery.GroupBy,
-                        subquery.Having,
-                        [],
-                        subquery.Orderings,
-                        subquery.Offset,
-                        subquery.Limit);
-
-                    var predicate = Visit(
-                        _sqlExpressionFactory.Equal(subqueryProjection, item), allowOptimizedExpansion: true, out _);
-                    subquery.ApplyPredicate(predicate);
-                    subquery.ClearOrdering();
-
-                    return _sqlExpressionFactory.Exists(subquery);
-            }
+            return valuesList.Count == 0
+                ? _sqlExpressionFactory.Constant(false, inExpression.TypeMapping)
+                : SimplifyInExpression(
+                    inExpression.Update(item, valuesExpression, subquery: null),
+                    valuesExpression,
+                    valuesList);
         }
 
-        // Non-subquery case
+        // for c# null semantics we need to remove nulls from Values and add IsNull/IsNotNull when necessary
+        var (inValuesExpression, inValuesList, hasNullValue) = ProcessInExpressionValues(inExpression.Values, extractNullValues: true);
 
-        nullable = false;
-
-        // For relational null semantics we don't need to extract null values from the array
-        if (UseRelationalNulls)
+        // either values array is empty or only contains null
+        if (inValuesList.Count == 0)
         {
-            inExpression = ProcessInExpressionValues(inExpression, removeNulls: false, removeNullables: false, out _, out _);
-
-            return inExpression.Values! switch
-            {
-                [] => _sqlExpressionFactory.Constant(false, inExpression.TypeMapping),
-                [var v] => _sqlExpressionFactory.Equal(inExpression.Item, v),
-                [..] => inExpression
-            };
-        }
-
-        // For all other scenarios, we need to compensate for the presence of nulls (constants/parameters) and nullables
-        // (columns/arbitrary expressions) in the value list. The following visits all the values, removing nulls (but not nullables)
-        // and returns the visited values with some information on what was found.
-        inExpression = ProcessInExpressionValues(
-            inExpression, removeNulls: true, removeNullables: false, out var valuesHasNull, out var nullableValues);
-
-        // Do some simplifications for when the value list contains only zero or one values
-        switch (inExpression.Values!)
-        {
-            // nullable IN (NULL) -> nullable IS NULL
-            case [] when valuesHasNull && itemNullable:
-                return _sqlExpressionFactory.IsNull(item);
+            nullable = false;
 
             // a IN () -> false
             // non_nullable IN (NULL) -> false
-            case []:
-                return _sqlExpressionFactory.Constant(false, inExpression.TypeMapping);
-
-            // a IN (1) -> a = 1
-            // nullable IN (1, NULL) -> nullable IS NULL OR nullable = 1
-            case [var singleValue]:
-                return Visit(
-                    itemNullable && valuesHasNull
-                        ? _sqlExpressionFactory.OrElse(_sqlExpressionFactory.IsNull(item), _sqlExpressionFactory.Equal(item, singleValue))
-                        : _sqlExpressionFactory.Equal(item, singleValue),
-                    allowOptimizedExpansion,
-                    out _);
+            // a NOT IN () -> true
+            // non_nullable NOT IN (NULL) -> true
+            // nullable IN (NULL) -> nullable IS NULL
+            // nullable NOT IN (NULL) -> nullable IS NOT NULL
+            return !hasNullValue || !itemNullable
+                ? _sqlExpressionFactory.Constant(
+                    inExpression.IsNegated,
+                    inExpression.TypeMapping)
+                : inExpression.IsNegated
+                    ? _sqlExpressionFactory.IsNotNull(item)
+                    : _sqlExpressionFactory.IsNull(item);
         }
 
-        // If the item is non-nullable and there are no nullables, return the expression without compensation; null has already been removed
-        // as it will never match, and the expression doesn't return NULL in any case:
-        // non_nullable IN (1, 2) -> non_nullable IN (1, 2)
-        // non_nullable IN (1, 2, NULL) -> non_nullable IN (1, 2)
-        if (!itemNullable && nullableValues.Count == 0)
+        var simplifiedInExpression = SimplifyInExpression(
+            inExpression.Update(item, inValuesExpression, subquery: null),
+            inValuesExpression,
+            inValuesList);
+
+        if (!itemNullable
+            || (allowOptimizedExpansion && !inExpression.IsNegated && !hasNullValue))
         {
-            return inExpression;
+            nullable = false;
+
+            // non_nullable IN (1, 2) -> non_nullable IN (1, 2)
+            // non_nullable IN (1, 2, NULL) -> non_nullable IN (1, 2)
+            // non_nullable NOT IN (1, 2) -> non_nullable NOT IN (1, 2)
+            // non_nullable NOT IN (1, 2, NULL) -> non_nullable NOT IN (1, 2)
+            // nullable IN (1, 2) -> nullable IN (1, 2) (optimized)
+            return simplifiedInExpression;
         }
 
-        // If we're in optimized mode and the item isn't nullable (no matter what the values have), or there are no nulls/nullable values,
-        // also return without compensation; null will only be returned if the item isn't found, and that will evaluate to false in
-        // optimized mode:
-        // non_nullable IN (1, 2, NULL, nullable) -> non_nullable IN (1, 2, nullable) (optimized)
-        // nullable IN (1, 2) -> nullable IN (1, 2) (optimized)
-        if (allowOptimizedExpansion && (!itemNullable || !valuesHasNull && nullableValues.Count == 0))
-        {
-            return inExpression;
-        }
+        nullable = false;
 
-        // At this point, if there are any nullable values, we need to extract them out to create a pure, non-nullable/non-null list of
-        // values. We'll add them back via separate equality checks.
-        if (nullableValues.Count > 0)
-        {
-            inExpression = ProcessInExpressionValues(inExpression, removeNulls: true, removeNullables: true, out _, out nullableValues);
-        }
-
-        SqlExpression result = inExpression;
-
-        // If the item is nullable, we need to add compensation based on whether null was found in the values or not:
         // nullable IN (1, 2) -> nullable IN (1, 2) AND nullable IS NOT NULL (full)
         // nullable IN (1, 2, NULL) -> nullable IN (1, 2) OR nullable IS NULL (full)
-        if (itemNullable)
+        // nullable NOT IN (1, 2) -> nullable NOT IN (1, 2) OR nullable IS NULL (full)
+        // nullable NOT IN (1, 2, NULL) -> nullable NOT IN (1, 2) AND nullable IS NOT NULL (full)
+        return inExpression.IsNegated == hasNullValue
+            ? _sqlExpressionFactory.AndAlso(
+                simplifiedInExpression,
+                _sqlExpressionFactory.IsNotNull(item))
+            : _sqlExpressionFactory.OrElse(
+                simplifiedInExpression,
+                _sqlExpressionFactory.IsNull(item));
+
+        (SqlConstantExpression ProcessedValuesExpression, List<object?> ProcessedValuesList, bool HasNullValue)
+            ProcessInExpressionValues(SqlExpression valuesExpression, bool extractNullValues)
         {
-            result = valuesHasNull
-                ? _sqlExpressionFactory.OrElse(inExpression, _sqlExpressionFactory.IsNull(item))
-                : _sqlExpressionFactory.AndAlso(inExpression, _sqlExpressionFactory.IsNotNull(item));
-        }
+            var inValues = new List<object?>();
+            var hasNullValue = false;
+            RelationalTypeMapping? typeMapping = null;
 
-        // If there are no nullables, we're done.
-        if (nullableValues.Count == 0)
-        {
-            return result;
-        }
-
-        // At this point we know that there are nullable values; we need to extract these out and add regular individual equality checks
-        // for each one.
-        // non_nullable IN (1, 2, nullable) -> non_nullable IN (1, 2) OR (non_nullable = nullable AND nullable IS NOT NULL) (full)
-        // non_nullable IN (1, 2, NULL, nullable) -> non_nullable IN (1, 2) OR (non_nullable = nullable AND nullable IS NOT NULL) (full)
-        return nullableValues.Aggregate(
-            result,
-            (expr, nullableValue) => _sqlExpressionFactory.OrElse(
-                expr,
-                Visit(_sqlExpressionFactory.Equal(item, nullableValue), allowOptimizedExpansion, out _)));
-
-        InExpression ProcessInExpressionValues(
-            InExpression inExpression,
-            bool removeNulls,
-            bool removeNullables,
-            out bool hasNull,
-            out List<SqlExpression> nullables)
-        {
-            List<SqlExpression>? processedValues = null;
-            (hasNull, nullables) = (false, []);
-
-            if (inExpression.ValuesParameter is SqlParameterExpression valuesParameter)
+            IEnumerable? values = null;
+            if (valuesExpression is SqlConstantExpression sqlConstant)
             {
-                // The InExpression has a values parameter. Expand it out, embedding its values as constants into the SQL; disable SQL
-                // caching.
+                typeMapping = sqlConstant.TypeMapping;
+                values = (IEnumerable)sqlConstant.Value!;
+            }
+            else if (valuesExpression is SqlParameterExpression sqlParameter)
+            {
                 DoNotCache();
-                var typeMapping = inExpression.ValuesParameter.TypeMapping;
-                var values = (IEnumerable?)ParameterValues[valuesParameter.Name] ?? Array.Empty<object>();
-
-                processedValues = [];
-
-                foreach (var value in values)
+                typeMapping = sqlParameter.TypeMapping;
+                values = (IEnumerable?)ParameterValues[sqlParameter.Name];
+                if (values == null)
                 {
-                    if (value is null && removeNulls)
-                    {
-                        hasNull = true;
-                        continue;
-                    }
-
-                    processedValues.Add(_sqlExpressionFactory.Constant(value, value?.GetType() ?? typeof(object), typeMapping));
+                    throw new NullReferenceException();
                 }
             }
-            else
+
+            foreach (var value in values!)
             {
-                Check.DebugAssert(inExpression.Values is not null, "inExpression.Values is not null");
-
-                for (var i = 0; i < inExpression.Values.Count; i++)
+                if (value == null && extractNullValues)
                 {
-                    var value = inExpression.Values[i];
-
-                    if (IsNull(value))
-                    {
-                        hasNull = true;
-
-                        if (removeNulls && processedValues is null)
-                        {
-                            CreateProcessedValues();
-                        }
-
-                        continue;
-                    }
-
-                    var visitedValue = Visit(value, out var valueNullable);
-
-                    if (valueNullable)
-                    {
-                        nullables.Add(visitedValue);
-
-                        if (removeNullables)
-                        {
-                            if (processedValues is null)
-                            {
-                                CreateProcessedValues();
-                            }
-
-                            continue;
-                        }
-                    }
-
-                    if (value != visitedValue && processedValues is null)
-                    {
-                        CreateProcessedValues();
-                    }
-
-                    processedValues?.Add(visitedValue);
-
-                    void CreateProcessedValues()
-                    {
-                        processedValues = new List<SqlExpression>(inExpression.Values!.Count - 1);
-                        for (var j = 0; j < i; j++)
-                        {
-                            processedValues.Add(inExpression.Values[j]);
-                        }
-                    }
+                    hasNullValue = true;
+                    continue;
                 }
+
+                inValues.Add(value);
             }
 
-            return inExpression.Update(inExpression.Item, processedValues ?? inExpression.Values!);
+            var processedValuesExpression = _sqlExpressionFactory.Constant(inValues, typeMapping);
+
+            return (processedValuesExpression, inValues, hasNullValue);
         }
+
+        SqlExpression SimplifyInExpression(
+            InExpression inExpression,
+            SqlConstantExpression inValuesExpression,
+            List<object?> inValuesList)
+            => inValuesList.Count == 1
+                ? inExpression.IsNegated
+                    ? (SqlExpression)_sqlExpressionFactory.NotEqual(
+                        inExpression.Item,
+                        _sqlExpressionFactory.Constant(inValuesList[0], inValuesExpression.TypeMapping))
+                    : _sqlExpressionFactory.Equal(
+                        inExpression.Item,
+                        _sqlExpressionFactory.Constant(inValuesList[0], inExpression.Values!.TypeMapping))
+                : inExpression;
     }
 
     /// <summary>
@@ -840,63 +783,9 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         var pattern = Visit(likeExpression.Pattern, out var patternNullable);
         var escapeChar = Visit(likeExpression.EscapeChar, out var escapeCharNullable);
 
-        SqlExpression result = likeExpression.Update(match, pattern, escapeChar);
+        nullable = matchNullable || patternNullable || escapeCharNullable;
 
-        if (UseRelationalNulls)
-        {
-            nullable = matchNullable || patternNullable || escapeCharNullable;
-
-            return result;
-        }
-
-        nullable = false;
-
-        // The null semantics behavior we implement for LIKE is that it only returns true when both sides are non-null and match; any other
-        // input returns false:
-        // foo LIKE f% -> true
-        // foo LIKE null -> false
-        // null LIKE f% -> false
-        // null LIKE null -> false
-
-        if (IsNull(match) || IsNull(pattern) || IsNull(escapeChar))
-        {
-            return _sqlExpressionFactory.Constant(false, likeExpression.TypeMapping);
-        }
-
-        // A constant match-all pattern (%) returns true for all cases, except where the match string is null:
-        // nullable_foo LIKE % -> foo IS NOT NULL
-        // non_nullable_foo LIKE % -> true
-        if (pattern is SqlConstantExpression { Value: "%" })
-        {
-            return matchNullable
-                ? _sqlExpressionFactory.IsNotNull(match)
-                : _sqlExpressionFactory.Constant(true, likeExpression.TypeMapping);
-        }
-
-        if (!allowOptimizedExpansion)
-        {
-            if (matchNullable)
-            {
-                result = _sqlExpressionFactory.AndAlso(result, GenerateNotNullCheck(match));
-            }
-
-            if (patternNullable)
-            {
-                result = _sqlExpressionFactory.AndAlso(result, GenerateNotNullCheck(pattern));
-            }
-
-            if (escapeChar is not null && escapeCharNullable)
-            {
-                result = _sqlExpressionFactory.AndAlso(result, GenerateNotNullCheck(escapeChar));
-            }
-        }
-
-        return result;
-
-        SqlExpression GenerateNotNullCheck(SqlExpression operand)
-            => _sqlExpressionFactory.Not(
-                ProcessNullNotNull(
-                    _sqlExpressionFactory.IsNull(operand), operandNullable: true));
+        return likeExpression.Update(match, pattern, escapeChar);
     }
 
     /// <summary>
@@ -936,27 +825,6 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     }
 
     /// <summary>
-    ///     Visits a <see cref="RowValueExpression" /> and computes its nullability.
-    /// </summary>
-    /// <param name="rowValueExpression">A row value expression to visit.</param>
-    /// <param name="allowOptimizedExpansion">A bool value indicating if optimized expansion which considers null value as false value is allowed.</param>
-    /// <param name="nullable">A bool value indicating whether the sql expression is nullable.</param>
-    /// <returns>An optimized sql expression.</returns>
-    protected virtual SqlExpression VisitRowValue(
-        RowValueExpression rowValueExpression,
-        bool allowOptimizedExpansion,
-        out bool nullable)
-    {
-        // Note that we disallow optimized expansion, since the null vs. false distinction does matter inside the row's values
-        var newValues = this.VisitAndConvert(rowValueExpression.Values);
-
-        // The row value expression itself can never be null
-        nullable = false;
-
-        return rowValueExpression.Update(newValues);
-    }
-
-    /// <summary>
     ///     Visits a <see cref="ScalarSubqueryExpression" /> and computes its nullability.
     /// </summary>
     /// <param name="scalarSubqueryExpression">A scalar subquery expression to visit.</param>
@@ -968,9 +836,6 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         bool allowOptimizedExpansion,
         out bool nullable)
     {
-        // Note that even if the subquery's projection is non-nullable, the scalar subquery still returns NULL if no rows are found
-        // (e.g. SELECT (SELECT 1 WHERE 1 = 2) IS NULL), so a scalar subquery is always nullable. Compare this with IN, where if the
-        // subquery's projection is non-nullable, we can optimize based on that.
         nullable = true;
 
         return scalarSubqueryExpression.Update(Visit(scalarSubqueryExpression.Subquery));
@@ -988,34 +853,11 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         bool allowOptimizedExpansion,
         out bool nullable)
     {
-        // Most optimizations are done in OptimizeComparison below, but this one
-        // benefits from being done early.
-        // Consider query: (x.NullableString == "Foo") == true
-        // We recursively visit Left and Right, but when processing the left
-        // side, allowOptimizedExpansion would be set to false (we only allow it
-        // to trickle down to child nodes for AndAlso & OrElse operations), so
-        // the comparison would get unnecessarily expanded. In order to avoid
-        // this, we would need to modify the allowOptimizedExpansion calculation
-        // to capture this scenario and then flow allowOptimizedExpansion to
-        // OptimizeComparison. Instead, we just do the optimization right away
-        // and the resulting code is clearer.
-        if (allowOptimizedExpansion && sqlBinaryExpression.OperatorType == ExpressionType.Equal)
-        {
-            if (IsTrue(sqlBinaryExpression.Left) && sqlBinaryExpression.Left.TypeMapping!.Converter == null)
-            {
-                return Visit(sqlBinaryExpression.Right, allowOptimizedExpansion, out nullable);
-            }
-
-            if (IsTrue(sqlBinaryExpression.Right) && sqlBinaryExpression.Right.TypeMapping!.Converter == null)
-            {
-                return Visit(sqlBinaryExpression.Left, allowOptimizedExpansion, out nullable);
-            }
-        }
-
         var optimize = allowOptimizedExpansion;
 
         allowOptimizedExpansion = allowOptimizedExpansion
-            && sqlBinaryExpression.OperatorType is ExpressionType.AndAlso or ExpressionType.OrElse;
+            && (sqlBinaryExpression.OperatorType == ExpressionType.AndAlso
+                || sqlBinaryExpression.OperatorType == ExpressionType.OrElse);
 
         var currentNonNullableColumnsCount = _nonNullableColumns.Count;
         var currentNullValueColumnsCount = _nullValueColumns.Count;
@@ -1087,7 +929,8 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             return sqlBinaryExpression.Update(left, right);
         }
 
-        if (sqlBinaryExpression.OperatorType is ExpressionType.Equal or ExpressionType.NotEqual)
+        if (sqlBinaryExpression.OperatorType == ExpressionType.Equal
+            || sqlBinaryExpression.OperatorType == ExpressionType.NotEqual)
         {
             var updated = sqlBinaryExpression.Update(left, right);
 
@@ -1099,7 +942,8 @@ public class SqlNullabilityProcessor : ExpressionVisitor
                 rightNullable,
                 out nullable);
 
-            if (optimized is SqlUnaryExpression { Operand: ColumnExpression optimizedUnaryColumnOperand } optimizedUnary)
+            if (optimized is SqlUnaryExpression optimizedUnary
+                && optimizedUnary.Operand is ColumnExpression optimizedUnaryColumnOperand)
             {
                 if (optimizedUnary.OperatorType == ExpressionType.NotEqual)
                 {
@@ -1114,7 +958,7 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             // we assume that NullSemantics rewrite is only needed (on the current level)
             // if the optimization didn't make any changes.
             // Reason is that optimization can/will change the nullability of the resulting expression
-            // and that information is not tracked/stored anywhere
+            // and that inforation is not tracked/stored anywhere
             // so we can no longer rely on nullabilities that we computed earlier (leftNullable, rightNullable)
             // when performing null semantics rewrite.
             // It should be fine because current optimizations *radically* change the expression
@@ -1142,43 +986,14 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         nullable = leftNullable || rightNullable;
         var result = sqlBinaryExpression.Update(left, right);
 
-        if (nullable
-            && !optimize
-            && result.OperatorType
-                is ExpressionType.GreaterThan
-                or ExpressionType.GreaterThanOrEqual
-                or ExpressionType.LessThan
-                or ExpressionType.LessThanOrEqual)
-        {
-            // https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types#lifted-operators
-            // For the comparison operators <, >, <=, and >=, if one or both
-            // operands are null, the result is false; otherwise, the contained
-            // values of operands are compared.
-
-            // if either operand is NULL, the SQL comparison would return NULL;
-            // to match the C# semantics, replace expr with
-            // CASE WHEN expr THEN TRUE ELSE FALSE
-
-            nullable = false;
-            return _sqlExpressionFactory.Case(
-                [new CaseWhenClause(result, _sqlExpressionFactory.Constant(true, result.TypeMapping))],
-                _sqlExpressionFactory.Constant(false, result.TypeMapping)
-            );
-        }
-
         return result is SqlBinaryExpression sqlBinaryResult
-            && sqlBinaryResult.OperatorType is ExpressionType.AndAlso or ExpressionType.OrElse
-                ? _sqlExpressionFactory.MakeBinary( // invoke MakeBinary simplifications
-                    sqlBinaryResult.OperatorType,
-                    sqlBinaryResult.Left,
-                    sqlBinaryResult.Right,
-                    sqlBinaryResult.TypeMapping,
-                    sqlBinaryResult
-                )!
+            && (sqlBinaryExpression.OperatorType == ExpressionType.AndAlso
+                || sqlBinaryExpression.OperatorType == ExpressionType.OrElse)
+                ? SimplifyLogicalSqlBinaryExpression(sqlBinaryResult)
                 : result;
 
         SqlExpression AddNullConcatenationProtection(SqlExpression argument, RelationalTypeMapping typeMapping)
-            => argument is SqlConstantExpression or SqlParameterExpression
+            => argument is SqlConstantExpression || argument is SqlParameterExpression
                 ? _sqlExpressionFactory.Constant(string.Empty, typeMapping)
                 : _sqlExpressionFactory.Coalesce(argument, _sqlExpressionFactory.Constant(string.Empty, typeMapping));
     }
@@ -1229,7 +1044,8 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         bool allowOptimizedExpansion,
         out bool nullable)
     {
-        if (sqlFunctionExpression is { IsBuiltIn: true, Arguments: not null }
+        if (sqlFunctionExpression.IsBuiltIn
+            && sqlFunctionExpression.Arguments != null
             && string.Equals(sqlFunctionExpression.Name, "COALESCE", StringComparison.OrdinalIgnoreCase))
         {
             var coalesceArguments = new List<SqlExpression>();
@@ -1237,44 +1053,26 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             foreach (var argument in sqlFunctionExpression.Arguments)
             {
                 coalesceArguments.Add(Visit(argument, out var argumentNullable));
-                if (!argumentNullable)
-                {
-                    coalesceNullable = false;
-                    break;
-                }
+                coalesceNullable = coalesceNullable && argumentNullable;
             }
 
             nullable = coalesceNullable;
 
-            return coalesceArguments.Count == 1
-                ? coalesceArguments[0]
-                : sqlFunctionExpression.Update(
-                    sqlFunctionExpression.Instance,
-                    coalesceArguments,
-                    argumentsPropagateNullability: coalesceArguments.Select(_ => false).ToArray()
-                );
+            return sqlFunctionExpression.Update(sqlFunctionExpression.Instance, coalesceArguments);
         }
 
-        var useNullabilityPropagation = sqlFunctionExpression is { InstancePropagatesNullability: true };
-
-        var instance = Visit(sqlFunctionExpression.Instance, out var nullableInstance);
-        var hasNullableArgument = nullableInstance && sqlFunctionExpression is { InstancePropagatesNullability: true };
+        var instance = Visit(sqlFunctionExpression.Instance, out _);
+        nullable = sqlFunctionExpression.IsNullable;
 
         if (sqlFunctionExpression.IsNiladic)
         {
-            sqlFunctionExpression = sqlFunctionExpression.Update(instance, sqlFunctionExpression.Arguments);
+            return sqlFunctionExpression.Update(instance, sqlFunctionExpression.Arguments);
         }
-        else
-        {
-            var arguments = new SqlExpression[sqlFunctionExpression.Arguments.Count];
-            for (var i = 0; i < arguments.Length; i++)
-            {
-                arguments[i] = Visit(sqlFunctionExpression.Arguments[i], out var nullableArgument);
-                useNullabilityPropagation |= sqlFunctionExpression.ArgumentsPropagateNullability[i];
-                hasNullableArgument |= nullableArgument && sqlFunctionExpression.ArgumentsPropagateNullability[i];
-            }
 
-            sqlFunctionExpression = sqlFunctionExpression.Update(instance, arguments);
+        var arguments = new SqlExpression[sqlFunctionExpression.Arguments.Count];
+        for (var i = 0; i < arguments.Length; i++)
+        {
+            arguments[i] = Visit(sqlFunctionExpression.Arguments[i], out _);
         }
 
         if (sqlFunctionExpression.IsBuiltIn
@@ -1283,15 +1081,12 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             nullable = false;
 
             return _sqlExpressionFactory.Coalesce(
-                sqlFunctionExpression,
+                sqlFunctionExpression.Update(instance, arguments),
                 _sqlExpressionFactory.Constant(0, sqlFunctionExpression.TypeMapping),
                 sqlFunctionExpression.TypeMapping);
         }
 
-        // if some of the {Instance,Arguments}PropagateNullability are true, use
-        // the computed nullability information; otherwise rely only on IsNullable
-        nullable = sqlFunctionExpression.IsNullable && (!useNullabilityPropagation || hasNullableArgument);
-        return sqlFunctionExpression;
+        return sqlFunctionExpression.Update(instance, arguments);
     }
 
     /// <summary>
@@ -1306,33 +1101,11 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         bool allowOptimizedExpansion,
         out bool nullable)
     {
-        if (!ParameterValues.TryGetValue(sqlParameterExpression.Name, out var parameterValue))
-        {
-            throw new UnreachableException(
-                $"Encountered SqlParameter with name '{sqlParameterExpression.Name}', but such a parameter does not exist.");
-        }
+        nullable = ParameterValues[sqlParameterExpression.Name] == null;
 
-        nullable = parameterValue == null;
-
-        if (nullable)
-        {
-            return _sqlExpressionFactory.Constant(
-                null,
-                sqlParameterExpression.Type,
-                sqlParameterExpression.TypeMapping);
-        }
-
-        if (sqlParameterExpression.ShouldBeConstantized)
-        {
-            DoNotCache();
-
-            return _sqlExpressionFactory.Constant(
-                parameterValue,
-                sqlParameterExpression.Type,
-                sqlParameterExpression.TypeMapping);
-        }
-
-        return sqlParameterExpression;
+        return nullable
+            ? _sqlExpressionFactory.Constant(null, sqlParameterExpression.TypeMapping)
+            : sqlParameterExpression;
     }
 
     /// <summary>
@@ -1350,14 +1123,16 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         var operand = Visit(sqlUnaryExpression.Operand, out var operandNullable);
         var updated = sqlUnaryExpression.Update(operand);
 
-        if (sqlUnaryExpression.OperatorType is ExpressionType.Equal or ExpressionType.NotEqual)
+        if (sqlUnaryExpression.OperatorType == ExpressionType.Equal
+            || sqlUnaryExpression.OperatorType == ExpressionType.NotEqual)
         {
             var result = ProcessNullNotNull(updated, operandNullable);
 
             // result of IsNull/IsNotNull can never be null
             nullable = false;
 
-            if (result is SqlUnaryExpression { Operand: ColumnExpression resultColumnOperand } resultUnary)
+            if (result is SqlUnaryExpression resultUnary
+                && resultUnary.Operand is ColumnExpression resultColumnOperand)
             {
                 if (resultUnary.OperatorType == ExpressionType.NotEqual)
                 {
@@ -1374,7 +1149,9 @@ public class SqlNullabilityProcessor : ExpressionVisitor
 
         nullable = operandNullable;
 
-        return OptimizeNotExpression(updated);
+        return !operandNullable && sqlUnaryExpression.OperatorType == ExpressionType.Not
+            ? OptimizeNonNullableNotExpression(updated)
+            : updated;
     }
 
     /// <summary>
@@ -1394,35 +1171,11 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         return jsonScalarExpression;
     }
 
-    /// <summary>
-    ///     Determines whether an <see cref="InExpression" /> will be transformed to an <see cref="ExistsExpression" /> when it would
-    ///     otherwise require complex compensation for null semantics.
-    /// </summary>
-    protected virtual bool PreferExistsToInWithCoalesce
-        => false;
-
-    // Note that we can check parameter values for null since we cache by the parameter nullability; but we cannot do the same for bool.
-    private bool IsNull(SqlExpression? expression)
-        => expression is SqlConstantExpression { Value: null }
-            || expression is SqlParameterExpression { Name: string parameterName } && ParameterValues[parameterName] is null;
-
-    private bool IsTrue(SqlExpression? expression)
-        => expression is SqlConstantExpression { Value: true };
-
-    private bool IsFalse(SqlExpression? expression)
-        => expression is SqlConstantExpression { Value: false };
-
-    private bool TryGetBool(SqlExpression? expression, out bool value)
-    {
-        if (expression is SqlConstantExpression { Value: bool b })
-        {
-            value = b;
-            return true;
-        }
-
-        value = false;
-        return false;
-    }
+    private static bool? TryGetBoolConstantValue(SqlExpression? expression)
+        => expression is SqlConstantExpression constantExpression
+            && constantExpression.Value is bool boolValue
+                ? boolValue
+                : null;
 
     private void RestoreNonNullableColumnsList(int counter)
     {
@@ -1440,6 +1193,41 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         }
     }
 
+    private SqlExpression ProcessJoinPredicate(SqlExpression predicate)
+    {
+        if (predicate is SqlBinaryExpression sqlBinaryExpression)
+        {
+            if (sqlBinaryExpression.OperatorType == ExpressionType.Equal)
+            {
+                var left = Visit(sqlBinaryExpression.Left, allowOptimizedExpansion: true, out var leftNullable);
+                var right = Visit(sqlBinaryExpression.Right, allowOptimizedExpansion: true, out var rightNullable);
+
+                var result = OptimizeComparison(
+                    sqlBinaryExpression.Update(left, right),
+                    left,
+                    right,
+                    leftNullable,
+                    rightNullable,
+                    out _);
+
+                return result;
+            }
+
+            if (sqlBinaryExpression.OperatorType == ExpressionType.AndAlso
+                || sqlBinaryExpression.OperatorType == ExpressionType.NotEqual
+                || sqlBinaryExpression.OperatorType == ExpressionType.GreaterThan
+                || sqlBinaryExpression.OperatorType == ExpressionType.GreaterThanOrEqual
+                || sqlBinaryExpression.OperatorType == ExpressionType.LessThan
+                || sqlBinaryExpression.OperatorType == ExpressionType.LessThanOrEqual)
+            {
+                return Visit(sqlBinaryExpression, allowOptimizedExpansion: true, out _);
+            }
+        }
+
+        throw new InvalidOperationException(
+            RelationalStrings.UnhandledExpressionInVisitor(predicate, predicate.GetType(), nameof(SqlNullabilityProcessor)));
+    }
+
     private SqlExpression OptimizeComparison(
         SqlBinaryExpression sqlBinaryExpression,
         SqlExpression left,
@@ -1448,8 +1236,8 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         bool rightNullable,
         out bool nullable)
     {
-        var leftNullValue = leftNullable && left is SqlConstantExpression or SqlParameterExpression;
-        var rightNullValue = rightNullable && right is SqlConstantExpression or SqlParameterExpression;
+        var leftNullValue = leftNullable && (left is SqlConstantExpression || left is SqlParameterExpression);
+        var rightNullValue = rightNullable && (right is SqlConstantExpression || right is SqlParameterExpression);
 
         // a == null -> a IS NULL
         // a != null -> a IS NOT NULL
@@ -1477,7 +1265,7 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             return result;
         }
 
-        if (TryGetBool(right, out var rightBoolValue)
+        if (TryGetBoolConstantValue(right) is bool rightBoolValue
             && !leftNullable
             && left.TypeMapping!.Converter == null)
         {
@@ -1489,11 +1277,11 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             // a != true -> !a
             // a != false -> a
             return sqlBinaryExpression.OperatorType == ExpressionType.Equal ^ rightBoolValue
-                ? OptimizeNotExpression(_sqlExpressionFactory.Not(left))
+                ? OptimizeNonNullableNotExpression(_sqlExpressionFactory.Not(left))
                 : left;
         }
 
-        if (TryGetBool(left, out var leftBoolValue)
+        if (TryGetBoolConstantValue(left) is bool leftBoolValue
             && !rightNullable
             && right.TypeMapping!.Converter == null)
         {
@@ -1505,7 +1293,7 @@ public class SqlNullabilityProcessor : ExpressionVisitor
             // true != a -> !a
             // false != a -> a
             return sqlBinaryExpression.OperatorType == ExpressionType.Equal ^ leftBoolValue
-                ? OptimizeNotExpression(_sqlExpressionFactory.Not(right))
+                ? OptimizeNonNullableNotExpression(_sqlExpressionFactory.Not(right))
                 : right;
         }
 
@@ -1524,7 +1312,8 @@ public class SqlNullabilityProcessor : ExpressionVisitor
 
         if (!leftNullable
             && !rightNullable
-            && sqlBinaryExpression.OperatorType is ExpressionType.Equal or ExpressionType.NotEqual)
+            && (sqlBinaryExpression.OperatorType == ExpressionType.Equal
+                || sqlBinaryExpression.OperatorType == ExpressionType.NotEqual))
         {
             var leftUnary = left as SqlUnaryExpression;
             var rightUnary = right as SqlUnaryExpression;
@@ -1585,85 +1374,275 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         }
 
         var leftIsNull = ProcessNullNotNull(_sqlExpressionFactory.IsNull(left), leftNullable);
-        var leftIsNotNull = _sqlExpressionFactory.Not(leftIsNull);
+        var leftIsNotNull = OptimizeNonNullableNotExpression(_sqlExpressionFactory.Not(leftIsNull));
 
         var rightIsNull = ProcessNullNotNull(_sqlExpressionFactory.IsNull(right), rightNullable);
-        var rightIsNotNull = _sqlExpressionFactory.Not(rightIsNull);
-
-        SqlExpression body;
-        if (leftNegated == rightNegated)
-        {
-            body = _sqlExpressionFactory.Equal(left, right);
-        }
-        else
-        {
-            // a == !b and !a == b in SQL evaluate the same as a != b
-            body = _sqlExpressionFactory.NotEqual(left, right);
-        }
+        var rightIsNotNull = OptimizeNonNullableNotExpression(_sqlExpressionFactory.Not(rightIsNull));
 
         // optimized expansion which doesn't distinguish between null and false
-        if (optimize && sqlBinaryExpression.OperatorType == ExpressionType.Equal)
+        if (optimize
+            && sqlBinaryExpression.OperatorType == ExpressionType.Equal
+            && !leftNegated
+            && !rightNegated)
         {
-            nullable = leftNullable || rightNullable;
+            // when we use optimized form, the result can still be nullable
+            if (leftNullable && rightNullable)
+            {
+                nullable = true;
 
-            return _sqlExpressionFactory.OrElse(body, _sqlExpressionFactory.AndAlso(leftIsNull, rightIsNull));
+                return SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.OrElse(
+                        _sqlExpressionFactory.Equal(left, right),
+                        SimplifyLogicalSqlBinaryExpression(
+                            _sqlExpressionFactory.AndAlso(leftIsNull, rightIsNull))));
+            }
+
+            if ((leftNullable && !rightNullable)
+                || (!leftNullable && rightNullable))
+            {
+                nullable = true;
+
+                return _sqlExpressionFactory.Equal(left, right);
+            }
         }
 
         // doing a full null semantics rewrite - removing all nulls from truth table
         nullable = false;
 
-        // (a == b && (a != null && b != null)) || (a == null && b == null)
-        body = _sqlExpressionFactory.OrElse(
-            _sqlExpressionFactory.AndAlso(body, _sqlExpressionFactory.AndAlso(leftIsNotNull, rightIsNotNull)),
-            _sqlExpressionFactory.AndAlso(leftIsNull, rightIsNull));
+        if (sqlBinaryExpression.OperatorType == ExpressionType.Equal)
+        {
+            if (leftNullable && rightNullable)
+            {
+                // ?a == ?b <=> !(?a) == !(?b) -> [(a == b) && (a != null && b != null)] || (a == null && b == null))
+                // !(?a) == ?b <=> ?a == !(?b) -> [(a != b) && (a != null && b != null)] || (a == null && b == null)
+                return leftNegated == rightNegated
+                    ? ExpandNullableEqualNullable(left, right, leftIsNull, leftIsNotNull, rightIsNull, rightIsNotNull)
+                    : ExpandNegatedNullableEqualNullable(left, right, leftIsNull, leftIsNotNull, rightIsNull, rightIsNotNull);
+            }
+
+            if (leftNullable && !rightNullable)
+            {
+                // ?a == b <=> !(?a) == !b -> (a == b) && (a != null)
+                // !(?a) == b <=> ?a == !b -> (a != b) && (a != null)
+                return leftNegated == rightNegated
+                    ? ExpandNullableEqualNonNullable(left, right, leftIsNotNull)
+                    : ExpandNegatedNullableEqualNonNullable(left, right, leftIsNotNull);
+            }
+
+            if (rightNullable && !leftNullable)
+            {
+                // a == ?b <=> !a == !(?b) -> (a == b) && (b != null)
+                // !a == ?b <=> a == !(?b) -> (a != b) && (b != null)
+                return leftNegated == rightNegated
+                    ? ExpandNullableEqualNonNullable(left, right, rightIsNotNull)
+                    : ExpandNegatedNullableEqualNonNullable(left, right, rightIsNotNull);
+            }
+        }
 
         if (sqlBinaryExpression.OperatorType == ExpressionType.NotEqual)
         {
-            // the factory takes care of simplifying using DeMorgan
-            body = _sqlExpressionFactory.Not(body);
+            if (leftNullable && rightNullable)
+            {
+                // ?a != ?b <=> !(?a) != !(?b) -> [(a != b) || (a == null || b == null)] && (a != null || b != null)
+                // !(?a) != ?b <=> ?a != !(?b) -> [(a == b) || (a == null || b == null)] && (a != null || b != null)
+                return leftNegated == rightNegated
+                    ? ExpandNullableNotEqualNullable(left, right, leftIsNull, leftIsNotNull, rightIsNull, rightIsNotNull)
+                    : ExpandNegatedNullableNotEqualNullable(left, right, leftIsNull, leftIsNotNull, rightIsNull, rightIsNotNull);
+            }
+
+            if (leftNullable && !rightNullable)
+            {
+                // ?a != b <=> !(?a) != !b -> (a != b) || (a == null)
+                // !(?a) != b <=> ?a != !b -> (a == b) || (a == null)
+                return leftNegated == rightNegated
+                    ? ExpandNullableNotEqualNonNullable(left, right, leftIsNull)
+                    : ExpandNegatedNullableNotEqualNonNullable(left, right, leftIsNull);
+            }
+
+            if (rightNullable && !leftNullable)
+            {
+                // a != ?b <=> !a != !(?b) -> (a != b) || (b == null)
+                // !a != ?b <=> a != !(?b) -> (a == b) || (b == null)
+                return leftNegated == rightNegated
+                    ? ExpandNullableNotEqualNonNullable(left, right, rightIsNull)
+                    : ExpandNegatedNullableNotEqualNonNullable(left, right, rightIsNull);
+            }
         }
 
-        return body;
+        return sqlBinaryExpression.Update(left, right);
     }
 
-    /// <summary>
-    ///     Attempts to simplify a unary not operation.
-    /// </summary>
-    /// <param name="expression">The expression to simplify.</param>
-    /// <returns>The simplified expression, or the original expression if it cannot be simplified.</returns>
-    protected virtual SqlExpression OptimizeNotExpression(SqlExpression expression)
+    private SqlExpression SimplifyLogicalSqlBinaryExpression(SqlBinaryExpression sqlBinaryExpression)
     {
-        if (expression is not SqlUnaryExpression { OperatorType: ExpressionType.Not } sqlUnaryExpression)
+        if (sqlBinaryExpression.Left is SqlUnaryExpression leftUnary
+            && sqlBinaryExpression.Right is SqlUnaryExpression rightUnary
+            && (leftUnary.OperatorType == ExpressionType.Equal || leftUnary.OperatorType == ExpressionType.NotEqual)
+            && (rightUnary.OperatorType == ExpressionType.Equal || rightUnary.OperatorType == ExpressionType.NotEqual)
+            && leftUnary.Operand.Equals(rightUnary.Operand))
         {
-            return expression;
+            // a is null || a is null -> a is null
+            // a is not null || a is not null -> a is not null
+            // a is null && a is null -> a is null
+            // a is not null && a is not null -> a is not null
+            // a is null || a is not null -> true
+            // a is null && a is not null -> false
+            return leftUnary.OperatorType == rightUnary.OperatorType
+                ? leftUnary
+                : _sqlExpressionFactory.Constant(
+                    sqlBinaryExpression.OperatorType == ExpressionType.OrElse, sqlBinaryExpression.TypeMapping);
         }
 
-        // !(a > b) -> a <= b
-        // !(a >= b) -> a < b
-        // !(a < b) -> a >= b
-        // !(a <= b) -> a > b
-        if (sqlUnaryExpression.Operand is SqlBinaryExpression sqlBinaryOperand
-            && TryNegate(sqlBinaryOperand.OperatorType, out var negated))
+        // true && a -> a
+        // true || a -> true
+        // false && a -> false
+        // false || a -> a
+        if (sqlBinaryExpression.Left is SqlConstantExpression newLeftConstant
+            && newLeftConstant.Value is bool leftBoolValue)
         {
-            return _sqlExpressionFactory.MakeBinary(
-                negated,
-                sqlBinaryOperand.Left,
-                sqlBinaryOperand.Right,
-                sqlBinaryOperand.TypeMapping)!;
+            return sqlBinaryExpression.OperatorType == ExpressionType.AndAlso
+                ? leftBoolValue
+                    ? sqlBinaryExpression.Right
+                    : newLeftConstant
+                : leftBoolValue
+                    ? newLeftConstant
+                    : sqlBinaryExpression.Right;
         }
 
-        // the factory can optimize most `NOT` expressions
-        return _sqlExpressionFactory.MakeUnary(
-            sqlUnaryExpression.OperatorType,
-            sqlUnaryExpression.Operand,
-            sqlUnaryExpression.Type,
-            sqlUnaryExpression.TypeMapping,
-            sqlUnaryExpression)!;
+        if (sqlBinaryExpression.Right is SqlConstantExpression newRightConstant
+            && newRightConstant.Value is bool rightBoolValue)
+        {
+            // a && true -> a
+            // a || true -> true
+            // a && false -> false
+            // a || false -> a
+            return sqlBinaryExpression.OperatorType == ExpressionType.AndAlso
+                ? rightBoolValue
+                    ? sqlBinaryExpression.Left
+                    : newRightConstant
+                : rightBoolValue
+                    ? newRightConstant
+                    : sqlBinaryExpression.Left;
+        }
+
+        return sqlBinaryExpression;
+    }
+
+    private SqlExpression OptimizeNonNullableNotExpression(SqlUnaryExpression sqlUnaryExpression)
+    {
+        if (sqlUnaryExpression.OperatorType != ExpressionType.Not)
+        {
+            return sqlUnaryExpression;
+        }
+
+        switch (sqlUnaryExpression.Operand)
+        {
+            // !(true) -> false
+            // !(false) -> true
+            case SqlConstantExpression constantOperand
+                when constantOperand.Value is bool value:
+            {
+                return _sqlExpressionFactory.Constant(!value, sqlUnaryExpression.TypeMapping);
+            }
+
+            case InExpression inOperand:
+                return inOperand.Negate();
+
+            case SqlUnaryExpression sqlUnaryOperand:
+            {
+                switch (sqlUnaryOperand.OperatorType)
+                {
+                    // !(!a) -> a
+                    case ExpressionType.Not:
+                        return sqlUnaryOperand.Operand;
+
+                    //!(a IS NULL) -> a IS NOT NULL
+                    case ExpressionType.Equal:
+                        return _sqlExpressionFactory.IsNotNull(sqlUnaryOperand.Operand);
+
+                    //!(a IS NOT NULL) -> a IS NULL
+                    case ExpressionType.NotEqual:
+                        return _sqlExpressionFactory.IsNull(sqlUnaryOperand.Operand);
+                }
+
+                break;
+            }
+
+            case SqlBinaryExpression sqlBinaryOperand:
+            {
+                // optimizations below are only correct in 2-value logic
+                // De Morgan's
+                if (sqlBinaryOperand.OperatorType == ExpressionType.AndAlso
+                    || sqlBinaryOperand.OperatorType == ExpressionType.OrElse)
+                {
+                    // since entire AndAlso/OrElse expression is non-nullable, both sides of it (left and right) must also be non-nullable
+                    // so it's safe to perform recursive optimization here
+                    var left = OptimizeNonNullableNotExpression(_sqlExpressionFactory.Not(sqlBinaryOperand.Left));
+                    var right = OptimizeNonNullableNotExpression(_sqlExpressionFactory.Not(sqlBinaryOperand.Right));
+
+                    return SimplifyLogicalSqlBinaryExpression(
+                        _sqlExpressionFactory.MakeBinary(
+                            sqlBinaryOperand.OperatorType == ExpressionType.AndAlso
+                                ? ExpressionType.OrElse
+                                : ExpressionType.AndAlso,
+                            left,
+                            right,
+                            sqlBinaryOperand.TypeMapping)!);
+                }
+
+                // use equality where possible
+                // !(a == true) -> a == false
+                // !(a == false) -> a == true
+                // !(true == a) -> false == a
+                // !(false == a) -> true == a
+                if (sqlBinaryOperand.OperatorType == ExpressionType.Equal)
+                {
+                    if (sqlBinaryOperand.Left is SqlConstantExpression leftConstant
+                        && leftConstant.Type == typeof(bool))
+                    {
+                        return _sqlExpressionFactory.MakeBinary(
+                            ExpressionType.Equal,
+                            _sqlExpressionFactory.Constant(!(bool)leftConstant.Value!, leftConstant.TypeMapping),
+                            sqlBinaryOperand.Right,
+                            sqlBinaryOperand.TypeMapping)!;
+                    }
+
+                    if (sqlBinaryOperand.Right is SqlConstantExpression rightConstant
+                        && rightConstant.Type == typeof(bool))
+                    {
+                        return _sqlExpressionFactory.MakeBinary(
+                            ExpressionType.Equal,
+                            sqlBinaryOperand.Left,
+                            _sqlExpressionFactory.Constant(!(bool)rightConstant.Value!, rightConstant.TypeMapping),
+                            sqlBinaryOperand.TypeMapping)!;
+                    }
+                }
+
+                // !(a == b) -> a != b
+                // !(a != b) -> a == b
+                // !(a > b) -> a <= b
+                // !(a >= b) -> a < b
+                // !(a < b) -> a >= b
+                // !(a <= b) -> a > b
+                if (TryNegate(sqlBinaryOperand.OperatorType, out var negated))
+                {
+                    return _sqlExpressionFactory.MakeBinary(
+                        negated,
+                        sqlBinaryOperand.Left,
+                        sqlBinaryOperand.Right,
+                        sqlBinaryOperand.TypeMapping)!;
+                }
+            }
+                break;
+        }
+
+        return sqlUnaryExpression;
 
         static bool TryNegate(ExpressionType expressionType, out ExpressionType result)
         {
             var negated = expressionType switch
             {
+                ExpressionType.Equal => ExpressionType.NotEqual,
+                ExpressionType.NotEqual => ExpressionType.Equal,
                 ExpressionType.GreaterThan => ExpressionType.LessThanOrEqual,
                 ExpressionType.GreaterThanOrEqual => ExpressionType.LessThan,
                 ExpressionType.LessThan => ExpressionType.GreaterThanOrEqual,
@@ -1677,141 +1656,8 @@ public class SqlNullabilityProcessor : ExpressionVisitor
         }
     }
 
-    /// <summary>
-    ///     Attempts to convert the given <paramref name="selectExpression" />, which has a nullable projection, to an identical expression
-    ///     which does not have a nullable projection. This is used to extract NULLs out of e.g. the parameter argument of SQL Server
-    ///     OPENJSON, in order to allow a more efficient translation.
-    /// </summary>
-    [EntityFrameworkInternal]
-    protected virtual bool TryMakeNonNullable(
-        SelectExpression selectExpression,
-        [NotNullWhen(true)] out SelectExpression? rewrittenSelectExpression,
-        [NotNullWhen(true)] out bool? foundNull)
+    private SqlExpression ProcessNullNotNull(SqlUnaryExpression sqlUnaryExpression, bool operandNullable)
     {
-        if (selectExpression is
-            {
-                Tables: [var collectionTable],
-                GroupBy: [],
-                Having: null,
-                Limit: null,
-                Offset: null,
-                Predicate: null,
-                // Note that a orderings and distinct are OK - they don't interact with our null removal.
-                // We exclude the predicate since it may actually filter out nulls
-                Projection: [{ Expression: ColumnExpression projectedColumn }] projection
-            }
-            && projectedColumn.TableAlias == collectionTable.Alias
-            && IsCollectionTable(collectionTable, out var collection)
-            && collection is SqlParameterExpression collectionParameter
-            && ParameterValues[collectionParameter.Name] is IList values)
-        {
-            // We're looking at a parameter beyond its simple nullability, so we can't use the 2nd-level cache for this query.
-            DoNotCache();
-
-            IList? processedValues = null;
-
-            for (var i = 0; i < values.Count; i++)
-            {
-                var value = values[i];
-
-                if (value is null)
-                {
-                    if (processedValues is null)
-                    {
-                        var elementClrType = values.GetType().GetSequenceType();
-                        processedValues = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementClrType), values.Count)!;
-                        for (var j = 0; j < i; j++)
-                        {
-                            processedValues.Add(values[j]!);
-                        }
-                    }
-
-                    // Skip the value
-                    continue;
-                }
-
-                processedValues?.Add(value);
-            }
-
-            if (processedValues is null)
-            {
-                // No null was found in the parameter's elements - the select expression is already non-nullable.
-                // TODO: We should change the project column to be non-nullable, but it's too closed down for that.
-                rewrittenSelectExpression = selectExpression;
-                foundNull = false;
-                return true;
-            }
-
-            foundNull = true;
-
-            // TODO: We currently only have read-only access to the parameter values in the nullability processor (and in all of the
-            // 2nd-level query pipeline); to need to flow the mutable dictionary in. Note that any modification of parameter values (as
-            // here) must immediately entail DoNotCache().
-            Check.DebugAssert(ParameterValues is Dictionary<string, object?>, "ParameterValues isn't a Dictionary");
-            if (ParameterValues is not Dictionary<string, object?> mutableParameterValues)
-            {
-                rewrittenSelectExpression = null;
-                foundNull = null;
-                return false;
-            }
-
-            var rewrittenParameter = new SqlParameterExpression(
-                collectionParameter.Name + "_without_nulls", collectionParameter.Type, collectionParameter.TypeMapping);
-            mutableParameterValues[rewrittenParameter.Name] = processedValues;
-            var rewrittenCollectionTable = UpdateParameterCollection(collectionTable, rewrittenParameter);
-
-            // We clone the select expression since Update below doesn't create a pure copy, mutating the original as well (because of
-            // TableReferenceExpression). TODO: Remove this after #31327.
-#pragma warning disable EF1001
-            rewrittenSelectExpression = selectExpression.Clone();
-#pragma warning restore EF1001
-
-            rewrittenSelectExpression = rewrittenSelectExpression.Update(
-                new[] { rewrittenCollectionTable },
-                selectExpression.Predicate,
-                selectExpression.GroupBy,
-                selectExpression.Having,
-                // TODO: We should change the project column to be non-nullable, but it's too closed down for that.
-                projection,
-                selectExpression.Orderings,
-                selectExpression.Offset,
-                selectExpression.Limit);
-
-            return true;
-        }
-
-        rewrittenSelectExpression = null;
-        foundNull = null;
-        return false;
-    }
-
-    /// <summary>
-    ///     A provider hook for identifying a <see cref="TableExpressionBase" /> which represents a collection, e.g. OPENJSON on SQL Server.
-    /// </summary>
-    [EntityFrameworkInternal]
-    protected virtual bool IsCollectionTable(TableExpressionBase table, [NotNullWhen(true)] out Expression? collection)
-    {
-        collection = null;
-        return false;
-    }
-
-    /// <summary>
-    ///     Given a <see cref="TableExpressionBase" /> which was previously identified to be a parameterized collection table (e.g.
-    ///     OPENJSON on SQL Server, see <see cref="IsCollectionTable" />), replaces the parameter for that table.
-    /// </summary>
-    [EntityFrameworkInternal]
-    protected virtual TableExpressionBase UpdateParameterCollection(
-        TableExpressionBase table,
-        SqlParameterExpression newCollectionParameter)
-        => throw new InvalidOperationException();
-
-    private SqlExpression ProcessNullNotNull(SqlExpression sqlExpression, bool operandNullable)
-    {
-        if (sqlExpression is not SqlUnaryExpression sqlUnaryExpression)
-        {
-            return sqlExpression;
-        }
-
         if (!operandNullable)
         {
             // when we know that operand is non-nullable:
@@ -1852,19 +1698,6 @@ public class SqlNullabilityProcessor : ExpressionVisitor
                     sqlUnaryExpression.TypeMapping);
             }
 
-            case CollateExpression collate:
-            {
-                // a COLLATE collation == null -> a == null
-                // a COLLATE collation != null -> a != null
-                return ProcessNullNotNull(
-                    _sqlExpressionFactory.MakeUnary(
-                        sqlUnaryExpression.OperatorType,
-                        collate.Operand,
-                        typeof(bool),
-                        sqlUnaryExpression.TypeMapping)!,
-                    operandNullable);
-            }
-
             case SqlUnaryExpression sqlUnaryOperand:
                 switch (sqlUnaryOperand.OperatorType)
                 {
@@ -1889,35 +1722,6 @@ public class SqlNullabilityProcessor : ExpressionVisitor
                 }
 
                 break;
-
-            case AtTimeZoneExpression atTimeZone:
-            {
-                // a AT TIME ZONE b == null -> a == null || b == null
-                // a AT TIME ZONE b != null -> a != null && b != null
-                var left = ProcessNullNotNull(
-                    _sqlExpressionFactory.MakeUnary(
-                        sqlUnaryExpression.OperatorType,
-                        atTimeZone.Operand,
-                        typeof(bool),
-                        sqlUnaryExpression.TypeMapping)!,
-                    operandNullable);
-
-                var right = ProcessNullNotNull(
-                    _sqlExpressionFactory.MakeUnary(
-                        sqlUnaryExpression.OperatorType,
-                        atTimeZone.TimeZone,
-                        typeof(bool),
-                        sqlUnaryExpression.TypeMapping)!,
-                    operandNullable);
-
-                return _sqlExpressionFactory.MakeBinary(
-                    sqlUnaryExpression.OperatorType == ExpressionType.Equal
-                        ? ExpressionType.OrElse
-                        : ExpressionType.AndAlso,
-                    left,
-                    right,
-                    sqlUnaryExpression.TypeMapping)!;
-            }
 
             case SqlBinaryExpression sqlBinaryOperand
                 when sqlBinaryOperand.OperatorType != ExpressionType.AndAlso
@@ -1947,13 +1751,14 @@ public class SqlNullabilityProcessor : ExpressionVisitor
                         sqlUnaryExpression.TypeMapping)!,
                     operandNullable);
 
-                return _sqlExpressionFactory.MakeBinary(
-                    sqlUnaryExpression.OperatorType == ExpressionType.Equal
-                        ? ExpressionType.OrElse
-                        : ExpressionType.AndAlso,
-                    left,
-                    right,
-                    sqlUnaryExpression.TypeMapping)!;
+                return SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.MakeBinary(
+                        sqlUnaryExpression.OperatorType == ExpressionType.Equal
+                            ? ExpressionType.OrElse
+                            : ExpressionType.AndAlso,
+                        left,
+                        right,
+                        sqlUnaryExpression.TypeMapping)!);
             }
 
             case SqlFunctionExpression sqlFunctionExpression:
@@ -1975,13 +1780,14 @@ public class SqlNullabilityProcessor : ExpressionVisitor
                                     sqlUnaryExpression.TypeMapping)!,
                                 operandNullable))
                         .Aggregate(
-                            (l, r) => _sqlExpressionFactory.MakeBinary(
-                                sqlUnaryExpression.OperatorType == ExpressionType.Equal
-                                    ? ExpressionType.AndAlso
-                                    : ExpressionType.OrElse,
-                                l,
-                                r,
-                                sqlUnaryExpression.TypeMapping)!);
+                            (l, r) => SimplifyLogicalSqlBinaryExpression(
+                                _sqlExpressionFactory.MakeBinary(
+                                    sqlUnaryExpression.OperatorType == ExpressionType.Equal
+                                        ? ExpressionType.AndAlso
+                                        : ExpressionType.OrElse,
+                                    l,
+                                    r,
+                                    sqlUnaryExpression.TypeMapping)!));
                 }
 
                 if (!sqlFunctionExpression.IsNullable)
@@ -1997,7 +1803,8 @@ public class SqlNullabilityProcessor : ExpressionVisitor
                 // see if we can derive function nullability from it's instance and/or arguments
                 // rather than evaluating nullability of the entire function
                 var nullabilityPropagationElements = new List<SqlExpression>();
-                if (sqlFunctionExpression is { Instance: not null, InstancePropagatesNullability: true })
+                if (sqlFunctionExpression.Instance != null
+                    && sqlFunctionExpression.InstancePropagatesNullability == true)
                 {
                     nullabilityPropagationElements.Add(sqlFunctionExpression.Instance);
                 }
@@ -2027,9 +1834,10 @@ public class SqlNullabilityProcessor : ExpressionVisitor
                                     sqlUnaryExpression.TypeMapping)!,
                                 operandNullable))
                         .Aggregate(
-                            (r, e) => sqlUnaryExpression.OperatorType == ExpressionType.Equal
-                                ? _sqlExpressionFactory.OrElse(r, e)
-                                : _sqlExpressionFactory.AndAlso(r, e));
+                            (r, e) => SimplifyLogicalSqlBinaryExpression(
+                                sqlUnaryExpression.OperatorType == ExpressionType.Equal
+                                    ? _sqlExpressionFactory.OrElse(r, e)
+                                    : _sqlExpressionFactory.AndAlso(r, e)));
 
                     return result;
                 }
@@ -2041,5 +1849,251 @@ public class SqlNullabilityProcessor : ExpressionVisitor
     }
 
     private static bool IsLogicalNot(SqlUnaryExpression? sqlUnaryExpression)
-        => sqlUnaryExpression is { OperatorType: ExpressionType.Not } && sqlUnaryExpression.Type == typeof(bool);
+        => sqlUnaryExpression != null
+            && sqlUnaryExpression.OperatorType == ExpressionType.Not
+            && sqlUnaryExpression.Type == typeof(bool);
+
+    // ?a == ?b -> [(a == b) && (a != null && b != null)] || (a == null && b == null))
+    //
+    // a | b | F1 = a == b | F2 = (a != null && b != null) | F3 = F1 && F2 |
+    //   |   |             |                               |               |
+    // 0 | 0 | 1           | 1                             | 1             |
+    // 0 | 1 | 0           | 1                             | 0             |
+    // 0 | N | N           | 0                             | 0             |
+    // 1 | 0 | 0           | 1                             | 0             |
+    // 1 | 1 | 1           | 1                             | 1             |
+    // 1 | N | N           | 0                             | 0             |
+    // N | 0 | N           | 0                             | 0             |
+    // N | 1 | N           | 0                             | 0             |
+    // N | N | N           | 0                             | 0             |
+    //
+    // a | b | F4 = (a == null && b == null) | Final = F3 OR F4 |
+    //   |   |                               |                  |
+    // 0 | 0 | 0                             | 1 OR 0 = 1       |
+    // 0 | 1 | 0                             | 0 OR 0 = 0       |
+    // 0 | N | 0                             | 0 OR 0 = 0       |
+    // 1 | 0 | 0                             | 0 OR 0 = 0       |
+    // 1 | 1 | 0                             | 1 OR 0 = 1       |
+    // 1 | N | 0                             | 0 OR 0 = 0       |
+    // N | 0 | 0                             | 0 OR 0 = 0       |
+    // N | 1 | 0                             | 0 OR 0 = 0       |
+    // N | N | 1                             | 0 OR 1 = 1       |
+    private SqlExpression ExpandNullableEqualNullable(
+        SqlExpression left,
+        SqlExpression right,
+        SqlExpression leftIsNull,
+        SqlExpression leftIsNotNull,
+        SqlExpression rightIsNull,
+        SqlExpression rightIsNotNull)
+        => SimplifyLogicalSqlBinaryExpression(
+            _sqlExpressionFactory.OrElse(
+                SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.AndAlso(
+                        _sqlExpressionFactory.Equal(left, right),
+                        SimplifyLogicalSqlBinaryExpression(
+                            _sqlExpressionFactory.AndAlso(leftIsNotNull, rightIsNotNull)))),
+                SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.AndAlso(leftIsNull, rightIsNull))));
+
+    // !(?a) == ?b -> [(a != b) && (a != null && b != null)] || (a == null && b == null)
+    //
+    // a | b | F1 = a != b | F2 = (a != null && b != null) | F3 = F1 && F2 |
+    //   |   |             |                               |               |
+    // 0 | 0 | 0           | 1                             | 0             |
+    // 0 | 1 | 1           | 1                             | 1             |
+    // 0 | N | N           | 0                             | 0             |
+    // 1 | 0 | 1           | 1                             | 1             |
+    // 1 | 1 | 0           | 1                             | 0             |
+    // 1 | N | N           | 0                             | 0             |
+    // N | 0 | N           | 0                             | 0             |
+    // N | 1 | N           | 0                             | 0             |
+    // N | N | N           | 0                             | 0             |
+    //
+    // a | b | F4 = (a == null && b == null) | Final = F3 OR F4 |
+    //   |   |                               |                  |
+    // 0 | 0 | 0                             | 0 OR 0 = 0       |
+    // 0 | 1 | 0                             | 1 OR 0 = 1       |
+    // 0 | N | 0                             | 0 OR 0 = 0       |
+    // 1 | 0 | 0                             | 1 OR 0 = 1       |
+    // 1 | 1 | 0                             | 0 OR 0 = 0       |
+    // 1 | N | 0                             | 0 OR 0 = 0       |
+    // N | 0 | 0                             | 0 OR 0 = 0       |
+    // N | 1 | 0                             | 0 OR 0 = 0       |
+    // N | N | 1                             | 0 OR 1 = 1       |
+    private SqlExpression ExpandNegatedNullableEqualNullable(
+        SqlExpression left,
+        SqlExpression right,
+        SqlExpression leftIsNull,
+        SqlExpression leftIsNotNull,
+        SqlExpression rightIsNull,
+        SqlExpression rightIsNotNull)
+        => SimplifyLogicalSqlBinaryExpression(
+            _sqlExpressionFactory.OrElse(
+                SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.AndAlso(
+                        _sqlExpressionFactory.NotEqual(left, right),
+                        SimplifyLogicalSqlBinaryExpression(
+                            _sqlExpressionFactory.AndAlso(leftIsNotNull, rightIsNotNull)))),
+                SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.AndAlso(leftIsNull, rightIsNull))));
+
+    // ?a == b -> (a == b) && (a != null)
+    //
+    // a | b | F1 = a == b | F2 = (a != null) | Final = F1 && F2 |
+    //   |   |             |                  |                  |
+    // 0 | 0 | 1           | 1                | 1                |
+    // 0 | 1 | 0           | 1                | 0                |
+    // 1 | 0 | 0           | 1                | 0                |
+    // 1 | 1 | 1           | 1                | 1                |
+    // N | 0 | N           | 0                | 0                |
+    // N | 1 | N           | 0                | 0                |
+    private SqlExpression ExpandNullableEqualNonNullable(
+        SqlExpression left,
+        SqlExpression right,
+        SqlExpression leftIsNotNull)
+        => SimplifyLogicalSqlBinaryExpression(
+            _sqlExpressionFactory.AndAlso(
+                _sqlExpressionFactory.Equal(left, right),
+                leftIsNotNull));
+
+    // !(?a) == b -> (a != b) && (a != null)
+    //
+    // a | b | F1 = a != b | F2 = (a != null) | Final = F1 && F2 |
+    //   |   |             |                  |                  |
+    // 0 | 0 | 0           | 1                | 0                |
+    // 0 | 1 | 1           | 1                | 1                |
+    // 1 | 0 | 1           | 1                | 1                |
+    // 1 | 1 | 0           | 1                | 0                |
+    // N | 0 | N           | 0                | 0                |
+    // N | 1 | N           | 0                | 0                |
+    private SqlExpression ExpandNegatedNullableEqualNonNullable(
+        SqlExpression left,
+        SqlExpression right,
+        SqlExpression leftIsNotNull)
+        => SimplifyLogicalSqlBinaryExpression(
+            _sqlExpressionFactory.AndAlso(
+                _sqlExpressionFactory.NotEqual(left, right),
+                leftIsNotNull));
+
+    // ?a != ?b -> [(a != b) || (a == null || b == null)] && (a != null || b != null)
+    //
+    // a | b | F1 = a != b | F2 = (a == null || b == null) | F3 = F1 || F2 |
+    //   |   |             |                               |               |
+    // 0 | 0 | 0           | 0                             | 0             |
+    // 0 | 1 | 1           | 0                             | 1             |
+    // 0 | N | N           | 1                             | 1             |
+    // 1 | 0 | 1           | 0                             | 1             |
+    // 1 | 1 | 0           | 0                             | 0             |
+    // 1 | N | N           | 1                             | 1             |
+    // N | 0 | N           | 1                             | 1             |
+    // N | 1 | N           | 1                             | 1             |
+    // N | N | N           | 1                             | 1             |
+    //
+    // a | b | F4 = (a != null || b != null) | Final = F3 && F4 |
+    //   |   |                               |                  |
+    // 0 | 0 | 1                             | 0 && 1 = 0       |
+    // 0 | 1 | 1                             | 1 && 1 = 1       |
+    // 0 | N | 1                             | 1 && 1 = 1       |
+    // 1 | 0 | 1                             | 1 && 1 = 1       |
+    // 1 | 1 | 1                             | 0 && 1 = 0       |
+    // 1 | N | 1                             | 1 && 1 = 1       |
+    // N | 0 | 1                             | 1 && 1 = 1       |
+    // N | 1 | 1                             | 1 && 1 = 1       |
+    // N | N | 0                             | 1 && 0 = 0       |
+    private SqlExpression ExpandNullableNotEqualNullable(
+        SqlExpression left,
+        SqlExpression right,
+        SqlExpression leftIsNull,
+        SqlExpression leftIsNotNull,
+        SqlExpression rightIsNull,
+        SqlExpression rightIsNotNull)
+        => SimplifyLogicalSqlBinaryExpression(
+            _sqlExpressionFactory.AndAlso(
+                SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.OrElse(
+                        _sqlExpressionFactory.NotEqual(left, right),
+                        SimplifyLogicalSqlBinaryExpression(
+                            _sqlExpressionFactory.OrElse(leftIsNull, rightIsNull)))),
+                SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.OrElse(leftIsNotNull, rightIsNotNull))));
+
+    // !(?a) != ?b -> [(a == b) || (a == null || b == null)] && (a != null || b != null)
+    //
+    // a | b | F1 = a == b | F2 = (a == null || b == null) | F3 = F1 || F2 |
+    //   |   |             |                               |               |
+    // 0 | 0 | 1           | 0                             | 1             |
+    // 0 | 1 | 0           | 0                             | 0             |
+    // 0 | N | N           | 1                             | 1             |
+    // 1 | 0 | 0           | 0                             | 0             |
+    // 1 | 1 | 1           | 0                             | 1             |
+    // 1 | N | N           | 1                             | 1             |
+    // N | 0 | N           | 1                             | 1             |
+    // N | 1 | N           | 1                             | 1             |
+    // N | N | N           | 1                             | 1             |
+    //
+    // a | b | F4 = (a != null || b != null) | Final = F3 && F4 |
+    //   |   |                               |                  |
+    // 0 | 0 | 1                             | 1 && 1 = 1       |
+    // 0 | 1 | 1                             | 0 && 1 = 0       |
+    // 0 | N | 1                             | 1 && 1 = 1       |
+    // 1 | 0 | 1                             | 0 && 1 = 0       |
+    // 1 | 1 | 1                             | 1 && 1 = 1       |
+    // 1 | N | 1                             | 1 && 1 = 1       |
+    // N | 0 | 1                             | 1 && 1 = 1       |
+    // N | 1 | 1                             | 1 && 1 = 1       |
+    // N | N | 0                             | 1 && 0 = 0       |
+    private SqlExpression ExpandNegatedNullableNotEqualNullable(
+        SqlExpression left,
+        SqlExpression right,
+        SqlExpression leftIsNull,
+        SqlExpression leftIsNotNull,
+        SqlExpression rightIsNull,
+        SqlExpression rightIsNotNull)
+        => SimplifyLogicalSqlBinaryExpression(
+            _sqlExpressionFactory.AndAlso(
+                SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.OrElse(
+                        _sqlExpressionFactory.Equal(left, right),
+                        SimplifyLogicalSqlBinaryExpression(
+                            _sqlExpressionFactory.OrElse(leftIsNull, rightIsNull)))),
+                SimplifyLogicalSqlBinaryExpression(
+                    _sqlExpressionFactory.OrElse(leftIsNotNull, rightIsNotNull))));
+
+    // ?a != b -> (a != b) || (a == null)
+    //
+    // a | b | F1 = a != b | F2 = (a == null) | Final = F1 OR F2 |
+    //   |   |             |                  |                  |
+    // 0 | 0 | 0           | 0                | 0                |
+    // 0 | 1 | 1           | 0                | 1                |
+    // 1 | 0 | 1           | 0                | 1                |
+    // 1 | 1 | 0           | 0                | 0                |
+    // N | 0 | N           | 1                | 1                |
+    // N | 1 | N           | 1                | 1                |
+    private SqlExpression ExpandNullableNotEqualNonNullable(
+        SqlExpression left,
+        SqlExpression right,
+        SqlExpression leftIsNull)
+        => SimplifyLogicalSqlBinaryExpression(
+            _sqlExpressionFactory.OrElse(
+                _sqlExpressionFactory.NotEqual(left, right),
+                leftIsNull));
+
+    // !(?a) != b -> (a == b) || (a == null)
+    //
+    // a | b | F1 = a == b | F2 = (a == null) | F3 = F1 OR F2 |
+    //   |   |             |                  |               |
+    // 0 | 0 | 1           | 0                | 1             |
+    // 0 | 1 | 0           | 0                | 0             |
+    // 1 | 0 | 0           | 0                | 0             |
+    // 1 | 1 | 1           | 0                | 1             |
+    // N | 0 | N           | 1                | 1             |
+    // N | 1 | N           | 1                | 1             |
+    private SqlExpression ExpandNegatedNullableNotEqualNonNullable(
+        SqlExpression left,
+        SqlExpression right,
+        SqlExpression leftIsNull)
+        => SimplifyLogicalSqlBinaryExpression(
+            _sqlExpressionFactory.OrElse(
+                _sqlExpressionFactory.Equal(left, right),
+                leftIsNull));
 }

@@ -12,7 +12,9 @@ public class RelationalSqlTranslatingExpressionVisitorFactory : IRelationalSqlTr
     /// <param name="dependencies">The service dependencies.</param>
     public RelationalSqlTranslatingExpressionVisitorFactory(
         RelationalSqlTranslatingExpressionVisitorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.

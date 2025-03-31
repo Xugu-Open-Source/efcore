@@ -13,7 +13,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 /// </summary>
 public class EntryCurrentValueComparer : IComparer<IUpdateEntry>, IEqualityComparer<IUpdateEntry>
 {
-    private readonly IProperty _property;
+    private readonly IPropertyBase _property;
     private readonly IComparer _underlyingComparer;
 
     /// <summary>
@@ -22,7 +22,7 @@ public class EntryCurrentValueComparer : IComparer<IUpdateEntry>, IEqualityCompa
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EntryCurrentValueComparer(IProperty property)
+    public EntryCurrentValueComparer(IPropertyBase property)
         : this(property, Comparer.Default)
     {
     }
@@ -33,7 +33,7 @@ public class EntryCurrentValueComparer : IComparer<IUpdateEntry>, IEqualityCompa
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EntryCurrentValueComparer(IProperty property, IComparer underlyingComparer)
+    public EntryCurrentValueComparer(IPropertyBase property, IComparer underlyingComparer)
     {
         _property = property;
         _underlyingComparer = underlyingComparer;

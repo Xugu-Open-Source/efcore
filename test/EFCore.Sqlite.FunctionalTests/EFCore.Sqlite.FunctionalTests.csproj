@@ -1,24 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <AssemblyName>Microsoft.EntityFrameworkCore.Sqlite.FunctionalTests</AssemblyName>
     <RootNamespace>Microsoft.EntityFrameworkCore</RootNamespace>
     <ImplicitUsings>true</ImplicitUsings>
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Scaffolding\Baselines\**\*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Scaffolding\Baselines\**\*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\Shared\ModuleInitializer.cs" Link="ModuleInitializer.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <Using Include="System.Data.Common" />
@@ -65,7 +53,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.2" />
   </ItemGroup>
 
 </Project>

@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class TemporalGearsOfWarQuerySqlServerFixture : GearsOfWarQuerySqlServerFixture
 {
     protected override string StoreName
@@ -36,23 +34,22 @@ public class TemporalGearsOfWarQuerySqlServerFixture : GearsOfWarQuerySqlServerF
         base.OnModelCreating(modelBuilder, context);
     }
 
-    protected override async Task SeedAsync(GearsOfWarContext context)
+    protected override void Seed(GearsOfWarContext context)
     {
-        await base.SeedAsync(context);
+        base.Seed(context);
 
         ChangesDate = new DateTime(2010, 1, 1);
 
         //// clean up intermittent history - we do the data fixup in 2 steps (due to cycle)
         //// so we want to remove the temporary states, so that further manipulation is easier
-        await context.Database.ExecuteSqlRawAsync("ALTER TABLE [LocustLeaders] SET (SYSTEM_VERSIONING = OFF)");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM [LocustLeadersHistory]");
-        await context.Database.ExecuteSqlRawAsync(
+        context.Database.ExecuteSqlRaw("ALTER TABLE [LocustLeaders] SET (SYSTEM_VERSIONING = OFF)");
+        context.Database.ExecuteSqlRaw("DELETE FROM [LocustLeadersHistory]");
+        context.Database.ExecuteSqlRaw(
             "ALTER TABLE [LocustLeaders] SET (SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[LocustLeadersHistory]))");
 
-        await context.Database.ExecuteSqlRawAsync("ALTER TABLE [Missions] SET (SYSTEM_VERSIONING = OFF)");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM [MissionsHistory]");
-        await context.Database.ExecuteSqlRawAsync(
-            "ALTER TABLE [Missions] SET (SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[MissionsHistory]))");
+        context.Database.ExecuteSqlRaw("ALTER TABLE [Missions] SET (SYSTEM_VERSIONING = OFF)");
+        context.Database.ExecuteSqlRaw("DELETE FROM [MissionsHistory]");
+        context.Database.ExecuteSqlRaw("ALTER TABLE [Missions] SET (SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[MissionsHistory]))");
 
         context.RemoveRange(context.ChangeTracker.Entries().Where(e => e.Entity is City).Select(e => e.Entity));
         context.RemoveRange(context.ChangeTracker.Entries().Where(e => e.Entity is CogTag).Select(e => e.Entity));
@@ -62,17 +59,16 @@ public class TemporalGearsOfWarQuerySqlServerFixture : GearsOfWarQuerySqlServerF
         context.RemoveRange(context.ChangeTracker.Entries().Where(e => e.Entity is Squad).Select(e => e.Entity));
         context.RemoveRange(context.ChangeTracker.Entries().Where(e => e.Entity is SquadMission).Select(e => e.Entity));
         context.RemoveRange(context.ChangeTracker.Entries().Where(e => e.Entity is Weapon).Select(e => e.Entity));
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         context.RemoveRange(context.ChangeTracker.Entries().Where(e => e.Entity is Faction).Select(e => e.Entity));
         context.RemoveRange(context.ChangeTracker.Entries().Where(e => e.Entity is LocustLeader).Select(e => e.Entity));
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         // clean up Faction history
-        await context.Database.ExecuteSqlRawAsync("ALTER TABLE [Factions] SET (SYSTEM_VERSIONING = OFF)");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM [FactionsHistory] WHERE CommanderName IS NULL");
-        await context.Database.ExecuteSqlRawAsync(
-            "ALTER TABLE [Factions] SET (SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[FactionsHistory]))");
+        context.Database.ExecuteSqlRaw("ALTER TABLE [Factions] SET (SYSTEM_VERSIONING = OFF)");
+        context.Database.ExecuteSqlRaw("DELETE FROM [FactionsHistory] WHERE CommanderName IS NULL");
+        context.Database.ExecuteSqlRaw("ALTER TABLE [Factions] SET (SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[FactionsHistory]))");
 
         var tableNames = new List<string>
         {

@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore.Sqlite.Design.Internal;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class DesignTimeSqliteTest(DesignTimeSqliteTest.DesignTimeSqliteFixture fixture)
-    : DesignTimeTestBase<DesignTimeSqliteTest.DesignTimeSqliteFixture>(fixture)
+public class DesignTimeSqliteTest : DesignTimeTestBase<DesignTimeSqliteTest.DesignTimeSqliteFixture>
 {
+    public DesignTimeSqliteTest(DesignTimeSqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected override Assembly ProviderAssembly
         => typeof(SqliteDesignTimeServices).Assembly;
 

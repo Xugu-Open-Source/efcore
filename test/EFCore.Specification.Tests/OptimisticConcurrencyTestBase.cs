@@ -7,8 +7,6 @@ using Microsoft.EntityFrameworkCore.TestModels.ConcurrencyModel;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : IClassFixture<TFixture>
     where TFixture : F1FixtureBase<TRowVersion>, new()
 {
@@ -68,20 +66,20 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     [ConditionalFact]
     public virtual Task Simple_concurrency_exception_can_be_resolved_with_client_values()
         => ConcurrencyTestAsync(
-            ClientPodiums, async (_, ex) =>
+            ClientPodiums, (c, ex) =>
             {
                 var driverEntry = ex.Entries.Single();
-                driverEntry.OriginalValues.SetValues(await driverEntry.GetDatabaseValuesAsync());
+                driverEntry.OriginalValues.SetValues(driverEntry.GetDatabaseValues());
                 ResolveConcurrencyTokens(driverEntry);
             });
 
     [ConditionalFact]
     public virtual Task Simple_concurrency_exception_can_be_resolved_with_store_values()
         => ConcurrencyTestAsync(
-            StorePodiums, async (_, ex) =>
+            StorePodiums, (c, ex) =>
             {
                 var driverEntry = ex.Entries.Single();
-                var storeValues = await driverEntry.GetDatabaseValuesAsync();
+                var storeValues = driverEntry.GetDatabaseValues();
                 driverEntry.CurrentValues.SetValues(storeValues);
                 driverEntry.OriginalValues.SetValues(storeValues);
                 ResolveConcurrencyTokens(driverEntry);
@@ -90,10 +88,10 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     [ConditionalFact]
     public virtual Task Simple_concurrency_exception_can_be_resolved_with_new_values()
         => ConcurrencyTestAsync(
-            10, async (_, ex) =>
+            10, (c, ex) =>
             {
                 var driverEntry = ex.Entries.Single();
-                driverEntry.OriginalValues.SetValues(await driverEntry.GetDatabaseValuesAsync());
+                driverEntry.OriginalValues.SetValues(driverEntry.GetDatabaseValues());
                 ResolveConcurrencyTokens(driverEntry);
                 ((Driver)driverEntry.Entity).Podiums = 10;
             });
@@ -101,10 +99,10 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     [ConditionalFact]
     public virtual Task Simple_concurrency_exception_can_be_resolved_with_store_values_using_equivalent_of_accept_changes()
         => ConcurrencyTestAsync(
-            StorePodiums, async (_, ex) =>
+            StorePodiums, (c, ex) =>
             {
                 var driverEntry = ex.Entries.Single();
-                var storeValues = await driverEntry.GetDatabaseValuesAsync();
+                var storeValues = driverEntry.GetDatabaseValues();
                 driverEntry.CurrentValues.SetValues(storeValues);
                 driverEntry.OriginalValues.SetValues(storeValues);
                 driverEntry.State = EntityState.Unchanged;
@@ -112,35 +110,35 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
 
     [ConditionalFact]
     public virtual Task Simple_concurrency_exception_can_be_resolved_with_store_values_using_Reload()
-        => ConcurrencyTestAsync(StorePodiums, (_, ex) => ex.Entries.Single().ReloadAsync());
+        => ConcurrencyTestAsync(StorePodiums, (c, ex) => ex.Entries.Single().Reload());
 
     [ConditionalFact]
     public virtual Task Two_concurrency_issues_in_one_to_one_related_entities_can_be_handled_by_dealing_with_dependent_first()
         => ConcurrencyTestAsync(
-            async c =>
+            c =>
             {
-                var chassis = await c.Set<Chassis>().SingleAsync(c => c.Name == "MP4-25");
-                var team = await c.Teams.SingleAsync(t => t.Id == Team.McLaren);
+                var chassis = c.Set<Chassis>().Single(c => c.Name == "MP4-25");
+                var team = c.Teams.Single(t => t.Id == Team.McLaren);
                 chassis.Name = "MP4-25b";
                 team.Principal = "Larry David";
             },
-            async c =>
+            c =>
             {
-                var chassis = await c.Set<Chassis>().SingleAsync(c => c.Name == "MP4-25");
-                var team = await c.Teams.SingleAsync(t => t.Id == Team.McLaren);
+                var chassis = c.Set<Chassis>().Single(c => c.Name == "MP4-25");
+                var team = c.Teams.Single(t => t.Id == Team.McLaren);
                 chassis.Name = "MP4-25c";
                 team.Principal = "Jerry Seinfeld";
             },
-            async (c, ex) =>
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Chassis>(entry.Entity);
-                await entry.ReloadAsync();
+                entry.Reload();
 
                 try
                 {
-                    await c.SaveChangesAsync();
-                    Assert.Fail("Expected second exception due to conflict in principals.");
+                    c.SaveChanges();
+                    Assert.True(false, "Expected second exception due to conflict in principals.");
                 }
                 catch (DbUpdateConcurrencyException ex2)
                 {
@@ -151,12 +149,12 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
 
                     var entry2 = ex2.Entries.Single();
                     Assert.IsAssignableFrom<Team>(entry2.Entity);
-                    await entry2.ReloadAsync();
+                    entry2.Reload();
                 }
             },
-            async c =>
+            c =>
             {
-                var team = await c.Teams.SingleAsync(t => t.Id == Team.McLaren);
+                var team = c.Teams.Single(t => t.Id == Team.McLaren);
                 Assert.Equal("MP4-25b", team.Chassis.Name);
                 Assert.Equal("Larry David", team.Principal);
             });
@@ -164,30 +162,30 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     [ConditionalFact]
     public virtual Task Two_concurrency_issues_in_one_to_many_related_entities_can_be_handled_by_dealing_with_dependent_first()
         => ConcurrencyTestAsync(
-            async c =>
+            c =>
             {
-                var driver = await c.Drivers.SingleAsync(d => d.Name == "Jenson Button");
-                var team = await c.Teams.SingleAsync(t => t.Id == Team.McLaren);
+                var driver = c.Drivers.Single(d => d.Name == "Jenson Button");
+                var team = c.Teams.Single(t => t.Id == Team.McLaren);
                 driver.Poles = 1;
                 team.Principal = "Larry David";
             },
-            async c =>
+            c =>
             {
-                var driver = await c.Drivers.SingleAsync(d => d.Name == "Jenson Button");
-                var team = await c.Teams.SingleAsync(t => t.Id == Team.McLaren);
+                var driver = c.Drivers.Single(d => d.Name == "Jenson Button");
+                var team = c.Teams.Single(t => t.Id == Team.McLaren);
                 driver.Poles = 2;
                 team.Principal = "Jerry Seinfeld";
             },
-            async (c, ex) =>
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Driver>(entry.Entity);
-                await entry.ReloadAsync();
+                entry.Reload();
 
                 try
                 {
-                    await c.SaveChangesAsync();
-                    Assert.Fail("Expected second exception due to conflict in principals.");
+                    c.SaveChanges();
+                    Assert.True(false, "Expected second exception due to conflict in principals.");
                 }
                 catch (DbUpdateConcurrencyException ex2)
                 {
@@ -198,12 +196,12 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
 
                     var entry2 = ex2.Entries.Single();
                     Assert.IsAssignableFrom<Team>(entry2.Entity);
-                    await entry2.ReloadAsync();
+                    entry2.Reload();
                 }
             },
-            async c =>
+            c =>
             {
-                var team = await c.Teams.SingleAsync(t => t.Id == Team.McLaren);
+                var team = c.Teams.Single(t => t.Id == Team.McLaren);
                 Assert.Equal(1, team.Drivers.Single(d => d.Name == "Jenson Button").Poles);
                 Assert.Equal("Larry David", team.Principal);
             });
@@ -211,20 +209,20 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     [ConditionalFact]
     public virtual Task Concurrency_issue_where_the_FK_is_the_concurrency_token_can_be_handled()
         => ConcurrencyTestAsync(
-            async c => (await c.Engines.SingleAsync(e => e.Name == "056")).EngineSupplierId =
-                (await c.EngineSuppliers.SingleAsync(s => s.Name == "Cosworth")).Name,
-            async c => (await c.Engines.SingleAsync(e => e.Name == "056")).EngineSupplier =
-                await c.EngineSuppliers.SingleAsync(s => s.Name == "Renault"),
-            async (c, ex) =>
+            c => c.Engines.Single(e => e.Name == "056").EngineSupplierId =
+                c.EngineSuppliers.Single(s => s.Name == "Cosworth").Name,
+            c => c.Engines.Single(e => e.Name == "056").EngineSupplier =
+                c.EngineSuppliers.Single(s => s.Name == "Renault"),
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single(e => e.Metadata.ClrType == typeof(Engine));
                 Assert.IsAssignableFrom<Engine>(entry.Entity);
-                await entry.ReloadAsync();
+                entry.Reload();
             },
-            async c =>
+            c =>
                 Assert.Equal(
                     "Cosworth",
-                    (await c.Engines.SingleAsync(e => e.Name == "056")).EngineSupplier.Name));
+                    c.Engines.Single(e => e.Name == "056").EngineSupplier.Name));
 
     #endregion
 
@@ -233,13 +231,11 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     [ConditionalFact]
     public virtual Task Change_in_independent_association_results_in_independent_association_exception()
         => ConcurrencyTestAsync(
-            async c => (await c.Teams.SingleAsync(t => t.Id == Team.Ferrari)).Engine =
-                await c.Engines.SingleAsync(s => s.Name == "FO 108X"),
-            (_, ex) =>
+            c => c.Teams.Single(t => t.Id == Team.Ferrari).Engine = c.Engines.Single(s => s.Name == "FO 108X"),
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Team>(entry.Entity);
-                return Task.CompletedTask;
             },
             null);
 
@@ -247,31 +243,29 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     public virtual Task
         Change_in_independent_association_after_change_in_different_concurrency_token_results_in_independent_association_exception()
         => ConcurrencyTestAsync(
-            async c => (await c.Teams.SingleAsync(t => t.Id == Team.Ferrari)).FastestLaps = 0, async c =>
-                (await c.Teams.SingleAsync(t => t.Constructor == "Ferrari")).Engine =
-                await c.Engines.SingleAsync(s => s.Name == "FO 108X"),
-            (_, ex) =>
+            c => c.Teams.Single(t => t.Id == Team.Ferrari).FastestLaps = 0,
+            c =>
+                c.Teams.Single(t => t.Constructor == "Ferrari").Engine =
+                    c.Engines.Single(s => s.Name == "FO 108X"),
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Team>(entry.Entity);
-                return Task.CompletedTask;
             },
             null);
 
     [ConditionalFact]
     public virtual Task Attempting_to_delete_same_relationship_twice_for_many_to_many_results_in_independent_association_exception()
         => ConcurrencyTestAsync(
-            async c =>
+            c =>
             {
-                await c.Teams.Include(e => e.Sponsors).LoadAsync();
-                (await c.Teams.SingleAsync(t => t.Id == Team.McLaren)).Sponsors.Remove(
-                    await c.Sponsors.SingleAsync(s => s.Name.Contains("FIA")));
+                c.Teams.Include(e => e.Sponsors).Load();
+                c.Teams.Single(t => t.Id == Team.McLaren).Sponsors.Remove(c.Sponsors.Single(s => s.Name.Contains("FIA")));
             },
-            (_, ex) =>
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<TeamSponsor>(entry.Entity);
-                return Task.CompletedTask;
             },
             null);
 
@@ -285,15 +279,13 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<TeamSponsor>(entry.Entity);
-                return Task.CompletedTask;
             },
             null);
 
-        async Task Change(F1Context c)
+        void Change(F1Context c)
         {
-            await c.Teams.Include(e => e.Sponsors).LoadAsync();
-            (await c.Teams.SingleAsync(t => t.Id == Team.McLaren)).Sponsors.Add(
-                await c.Sponsors.SingleAsync(s => s.Name.Contains("Shell")));
+            c.Teams.Include(e => e.Sponsors).Load();
+            c.Teams.Single(t => t.Id == Team.McLaren).Sponsors.Add(c.Sponsors.Single(s => s.Name.Contains("Shell")));
         }
     }
 
@@ -305,15 +297,15 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     [ConditionalFact(Skip = "Issue#13890")]
     public virtual Task Concurrency_issue_where_a_complex_type_nested_member_is_the_concurrency_token_can_be_handled()
         => ConcurrencyTestAsync(
-            async c => (await c.Engines.SingleAsync(s => s.Name == "CA2010")).StorageLocation.Latitude = 47.642576,
-            (_, ex) =>
+            c => c.Engines.Single(s => s.Name == "CA2010").StorageLocation.Latitude = 47.642576,
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Location>(entry.Entity);
                 entry.Reload();
-                return Task.CompletedTask;
-            }, async c =>
-                Assert.Equal(47.642576, (await c.Engines.SingleAsync(s => s.Name == "CA2010")).StorageLocation.Latitude));
+            },
+            c =>
+                Assert.Equal(47.642576, c.Engines.Single(s => s.Name == "CA2010").StorageLocation.Latitude));
 
     #endregion
 
@@ -354,74 +346,75 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     [ConditionalFact]
     public virtual Task Deleting_the_same_entity_twice_results_in_DbUpdateConcurrencyException()
         => ConcurrencyTestAsync(
-            async c => c.Drivers.Remove(await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")),
-            async (_, ex) =>
+            c => c.Drivers.Remove(c.Drivers.Single(d => d.Name == "Fernando Alonso")),
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Driver>(entry.Entity);
-                await entry.ReloadAsync();
-            }, async c => Assert.Null(await c.Drivers.SingleOrDefaultAsync(d => d.Name == "Fernando Alonso")));
+                entry.Reload();
+            },
+            c => Assert.Null(c.Drivers.SingleOrDefault(d => d.Name == "Fernando Alonso")));
 
     [ConditionalFact]
     public virtual Task Updating_then_deleting_the_same_entity_results_in_DbUpdateConcurrencyException()
         => ConcurrencyTestAsync(
-            async c => (await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")).Wins = 1,
-            async c => c.Drivers.Remove(await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")),
-            async (_, ex) =>
+            c => c.Drivers.Single(d => d.Name == "Fernando Alonso").Wins = 1,
+            c => c.Drivers.Remove(c.Drivers.Single(d => d.Name == "Fernando Alonso")),
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Driver>(entry.Entity);
-                await entry.ReloadAsync();
+                entry.Reload();
             },
-            async c => Assert.Equal(1, (await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")).Wins));
+            c => Assert.Equal(1, c.Drivers.Single(d => d.Name == "Fernando Alonso").Wins));
 
     [ConditionalFact]
     public virtual Task
         Updating_then_deleting_the_same_entity_results_in_DbUpdateConcurrencyException_which_can_be_resolved_with_store_values()
         => ConcurrencyTestAsync(
-            async c => (await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")).Wins = 1,
-            async c => c.Drivers.Remove(await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")),
-            async (_, ex) =>
+            c => c.Drivers.Single(d => d.Name == "Fernando Alonso").Wins = 1,
+            c => c.Drivers.Remove(c.Drivers.Single(d => d.Name == "Fernando Alonso")),
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Driver>(entry.Entity);
 
                 entry.State = EntityState.Unchanged;
-                var storeValues = await entry.GetDatabaseValuesAsync();
+                var storeValues = entry.GetDatabaseValues();
                 entry.OriginalValues.SetValues(storeValues);
                 entry.CurrentValues.SetValues(storeValues);
                 ResolveConcurrencyTokens(entry);
             },
-            async c => Assert.Equal(1, (await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")).Wins));
+            c => Assert.Equal(1, c.Drivers.Single(d => d.Name == "Fernando Alonso").Wins));
 
     [ConditionalFact]
     public virtual Task Deleting_then_updating_the_same_entity_results_in_DbUpdateConcurrencyException()
         => ConcurrencyTestAsync(
-            async c => c.Drivers.Remove(await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")),
-            async c => (await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")).Wins = 1,
-            async (_, ex) =>
+            c => c.Drivers.Remove(c.Drivers.Single(d => d.Name == "Fernando Alonso")),
+            c => c.Drivers.Single(d => d.Name == "Fernando Alonso").Wins = 1,
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Driver>(entry.Entity);
-                await entry.ReloadAsync();
+                entry.Reload();
             },
-            async c => Assert.Null(await c.Drivers.SingleOrDefaultAsync(d => d.Name == "Fernando Alonso")));
+            c => Assert.Null(c.Drivers.SingleOrDefault(d => d.Name == "Fernando Alonso")));
 
     [ConditionalFact]
     public virtual Task
         Deleting_then_updating_the_same_entity_results_in_DbUpdateConcurrencyException_which_can_be_resolved_with_store_values()
         => ConcurrencyTestAsync(
-            async c => c.Drivers.Remove(await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")),
-            async c => (await c.Drivers.SingleAsync(d => d.Name == "Fernando Alonso")).Wins = 1,
-            async (_, ex) =>
+            c => c.Drivers.Remove(c.Drivers.Single(d => d.Name == "Fernando Alonso")),
+            c => c.Drivers.Single(d => d.Name == "Fernando Alonso").Wins = 1,
+            (c, ex) =>
             {
                 var entry = ex.Entries.Single();
                 Assert.IsAssignableFrom<Driver>(entry.Entity);
-                var storeValues = await entry.GetDatabaseValuesAsync();
+                var storeValues = entry.GetDatabaseValues();
                 Assert.Null(storeValues);
                 entry.State = EntityState.Detached;
             },
-            async c => Assert.Null(await c.Drivers.SingleOrDefaultAsync(d => d.Name == "Fernando Alonso")));
+            c => Assert.Null(c.Drivers.SingleOrDefault(d => d.Name == "Fernando Alonso")));
 
     #endregion
 
@@ -549,10 +542,7 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
             {
                 using (BeginTransaction(context.Database))
                 {
-                    var larry = async
-                        ? await context.Drivers.SingleAsync(d => d.Name == "Jenson Button")
-                        : context.Drivers.Single(d => d.Name == "Jenson Button");
-
+                    var larry = context.Drivers.Single(d => d.Name == "Jenson Button");
                     larry.Name = "Rory Gilmore";
                     var entry = context.Entry(larry);
                     entry.Property(e => e.Name).CurrentValue = "Emily Gilmore";
@@ -584,9 +574,7 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
             c, async context =>
             {
                 using var transaction = BeginTransaction(context.Database);
-                var titleSponsor = async
-                    ? await context.Set<TitleSponsor>().SingleAsync(t => t.Name == "Vodafone")
-                    : context.Set<TitleSponsor>().Single(t => t.Name == "Vodafone");
+                var titleSponsor = context.Set<TitleSponsor>().Single(t => t.Name == "Vodafone");
 
                 var ownerEntry = context.Entry(titleSponsor);
                 var ownedEntry = ownerEntry.Reference(e => e.Details).TargetEntry;
@@ -616,9 +604,7 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
             c, async context =>
             {
                 using var transaction = BeginTransaction(context.Database);
-                var titleSponsor = async
-                    ? await context.Set<TitleSponsor>().SingleAsync(t => t.Name == "Vodafone")
-                    : context.Set<TitleSponsor>().Single(t => t.Name == "Vodafone");
+                var titleSponsor = context.Set<TitleSponsor>().Single(t => t.Name == "Vodafone");
 
                 var ownerEntry = context.Entry(titleSponsor);
                 var ownedEntry = ownerEntry.Reference(e => e.Details).TargetEntry;
@@ -659,12 +645,12 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     protected F1Context CreateF1Context()
         => Fixture.CreateContext();
 
-    private Task ConcurrencyTestAsync(int expectedPodiums, Func<F1Context, DbUpdateConcurrencyException, Task> resolver)
+    private Task ConcurrencyTestAsync(int expectedPodiums, Action<F1Context, DbUpdateConcurrencyException> resolver)
         => ConcurrencyTestAsync(
-            async c => (await c.Drivers.SingleAsync(d => d.CarNumber == 1)).Podiums = StorePodiums,
-            async c => (await c.Drivers.SingleAsync(d => d.CarNumber == 1)).Podiums = ClientPodiums,
+            c => c.Drivers.Single(d => d.CarNumber == 1).Podiums = StorePodiums,
+            c => c.Drivers.Single(d => d.CarNumber == 1).Podiums = ClientPodiums,
             resolver,
-            async c => Assert.Equal(expectedPodiums, (await c.Drivers.SingleAsync(d => d.CarNumber == 1)).Podiums));
+            c => Assert.Equal(expectedPodiums, c.Drivers.Single(d => d.CarNumber == 1).Podiums));
 
     /// <summary>
     ///     Runs the same action twice inside a transaction scope but with two different contexts and calling
@@ -675,9 +661,9 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     ///     the database at the end of the process can be validated.
     /// </summary>
     private Task ConcurrencyTestAsync(
-        Func<F1Context, Task> change,
-        Func<F1Context, DbUpdateConcurrencyException, Task> resolver,
-        Func<F1Context, Task> validator)
+        Action<F1Context> change,
+        Action<F1Context, DbUpdateConcurrencyException> resolver,
+        Action<F1Context> validator)
         => ConcurrencyTestAsync(change, change, resolver, validator);
 
     /// <summary>
@@ -689,10 +675,10 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     ///     the database at the end of the process can be validated.
     /// </summary>
     protected virtual Task ConcurrencyTestAsync(
-        Func<F1Context, Task> storeChange,
-        Func<F1Context, Task> clientChange,
-        Func<F1Context, DbUpdateConcurrencyException, Task> resolver,
-        Func<F1Context, Task> validator)
+        Action<F1Context> storeChange,
+        Action<F1Context> clientChange,
+        Action<F1Context, DbUpdateConcurrencyException> resolver,
+        Action<F1Context> validator)
         => ConcurrencyTestAsync<DbUpdateConcurrencyException>(storeChange, clientChange, resolver, validator);
 
     /// <summary>
@@ -704,10 +690,10 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
     ///     the database at the end of the process can be validated.
     /// </summary>
     protected virtual async Task ConcurrencyTestAsync<TException>(
-        Func<F1Context, Task> storeChange,
-        Func<F1Context, Task> clientChange,
-        Func<F1Context, TException, Task> resolver,
-        Func<F1Context, Task> validator)
+        Action<F1Context> storeChange,
+        Action<F1Context> clientChange,
+        Action<F1Context, TException> resolver,
+        Action<F1Context> validator)
         where TException : DbUpdateException
     {
         using var c = CreateF1Context();
@@ -715,11 +701,11 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
             c, async context =>
             {
                 using var transaction = BeginTransaction(context.Database);
-                await clientChange(context);
+                clientChange(context);
 
                 using var innerContext = CreateF1Context();
                 UseTransaction(innerContext.Database, transaction);
-                await storeChange(innerContext);
+                storeChange(innerContext);
                 await innerContext.SaveChangesAsync();
 
                 var updateException =
@@ -734,7 +720,7 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
 
                 Fixture.ListLoggerFactory.Clear();
 
-                await resolver(context, updateException);
+                resolver(context, updateException);
 
                 using var validationContext = CreateF1Context();
                 UseTransaction(validationContext.Database, transaction);
@@ -742,7 +728,7 @@ public abstract class OptimisticConcurrencyTestBase<TFixture, TRowVersion> : ICl
                 {
                     await context.SaveChangesAsync();
 
-                    await validator(validationContext);
+                    validator(validationContext);
                 }
             });
     }

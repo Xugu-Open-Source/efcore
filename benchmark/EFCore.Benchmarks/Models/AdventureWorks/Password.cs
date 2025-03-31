@@ -3,17 +3,18 @@
 
 using System;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class Password
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public int BusinessEntityID { get; set; }
-    public DateTime ModifiedDate { get; set; }
-    public string PasswordHash { get; set; }
-    public string PasswordSalt { get; set; }
+    public class Password
+    {
+        public int BusinessEntityID { get; set; }
+        public DateTime ModifiedDate { get; set; }
+        public string PasswordHash { get; set; }
+        public string PasswordSalt { get; set; }
 #pragma warning disable IDE1006 // Naming Styles
-    public Guid rowguid { get; set; }
+        public Guid rowguid { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
 
-    public virtual Person BusinessEntity { get; set; }
+        public virtual Person BusinessEntity { get; set; }
+    }
 }

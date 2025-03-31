@@ -5,12 +5,15 @@ using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class UdfDbFunctionTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : SharedStoreFixtureBase<DbContext>, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected UdfDbFunctionTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     protected UDFSqlContext CreateContext()
         => (UDFSqlContext)Fixture.CreateContext();
@@ -99,7 +102,7 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
         public string LastName { get; set; }
     }
 
-    protected class UDFSqlContext(DbContextOptions options) : PoolableDbContext(options)
+    protected class UDFSqlContext : PoolableDbContext
     {
         #region DbSets
 
@@ -221,9 +224,6 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
         public static string IdentityStringNonNullableFluent(string s)
             => throw new Exception();
 
-        public static int? NullableValueReturnType()
-            => throw new NotImplementedException();
-
         public string StringLength(string s)
             => throw new Exception();
 
@@ -257,6 +257,11 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
 
         #endregion
 
+        public UDFSqlContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //Static
@@ -274,54 +279,35 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
             var isDateMethodInfo = typeof(UDFSqlContext).GetMethod(nameof(IsDateStatic));
             modelBuilder.HasDbFunction(isDateMethodInfo).HasName("IsDate").IsBuiltIn();
 
-            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(AddValues), [typeof(int), typeof(int)]));
+            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(AddValues), new[] { typeof(int), typeof(int) }));
 
-            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(IdentityStringPropagateNull), [typeof(string)]))
+            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(IdentityStringPropagateNull), new[] { typeof(string) }))
                 .HasParameter("s").PropagatesNullability();
 
             modelBuilder.HasDbFunction(
-                    typeof(UDFSqlContext).GetMethod(nameof(IdentityStringNonNullableFluent), [typeof(string)]))
+                    typeof(UDFSqlContext).GetMethod(nameof(IdentityStringNonNullableFluent), new[] { typeof(string) }))
                 .IsNullable(false);
 
             var abc = new[] { "A", "B", "C" };
-            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(IsABC), [typeof(string)]))
+            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(IsABC), new[] { typeof(string) }))
                 .HasTranslation(
                     args => new InExpression(
                         args.First(),
-                        new[]
-                        {
-                            new SqlConstantExpression(abc[0], typeMapping: null),
-                            new SqlConstantExpression(abc[1], typeMapping: null),
-                            new SqlConstantExpression(abc[2], typeMapping: null)
-                        }, // args.First().TypeMapping)
+                        new SqlConstantExpression(Expression.Constant(abc), typeMapping: null), // args.First().TypeMapping),
+                        negated: false,
                         typeMapping: null));
 
             var trueFalse = new[] { true, false };
-            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(IsOrIsNotABC), [typeof(string)]))
+            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(IsOrIsNotABC), new[] { typeof(string) }))
                 .HasTranslation(
                     args => new InExpression(
                         new InExpression(
                             args.First(),
-                            new[]
-                            {
-                                new SqlConstantExpression(abc[0], args.First().TypeMapping),
-                                new SqlConstantExpression(abc[1], args.First().TypeMapping),
-                                new SqlConstantExpression(abc[2], args.First().TypeMapping)
-                            },
+                            new SqlConstantExpression(Expression.Constant(abc), args.First().TypeMapping),
+                            negated: false,
                             typeMapping: null),
-                        new[]
-                        {
-                            new SqlConstantExpression(trueFalse[0], typeMapping: null),
-                            new SqlConstantExpression(trueFalse[1], typeMapping: null)
-                        },
-                        typeMapping: null));
-
-            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(NullableValueReturnType), []))
-                .HasTranslation(
-                    _ => new SqlFunctionExpression(
-                        "foo",
-                        nullable: true,
-                        typeof(int?),
+                        new SqlConstantExpression(Expression.Constant(trueFalse), typeMapping: null),
+                        negated: false,
                         typeMapping: null));
 
             //Instance
@@ -346,13 +332,13 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
 
             modelBuilder.Entity<MultProductOrders>().ToTable("MultProductOrders").HasKey(mpo => mpo.OrderId);
 
-            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(StringLength), [typeof(string)]))
+            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(StringLength), new[] { typeof(string) }))
                 .HasParameter("s").PropagatesNullability();
 
             //Table
-            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(GetCustomerOrderCountByYear), [typeof(int)]));
+            modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(GetCustomerOrderCountByYear), new[] { typeof(int) }));
             modelBuilder.HasDbFunction(
-                typeof(UDFSqlContext).GetMethod(nameof(GetCustomerOrderCountByYearOnlyFrom2000), [typeof(int), typeof(bool)]));
+                typeof(UDFSqlContext).GetMethod(nameof(GetCustomerOrderCountByYearOnlyFrom2000), new[] { typeof(int), typeof(bool) }));
             modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(GetTopTwoSellingProducts)));
             modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(GetTopSellingProductsForCustomer)));
             modelBuilder.HasDbFunction(typeof(UDFSqlContext).GetMethod(nameof(GetOrdersWithMultipleProducts)));
@@ -364,7 +350,7 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
         }
     }
 
-    public abstract class UdfFixtureBase : SharedStoreFixtureBase<DbContext>, ITestSqlLoggerFactory
+    public abstract class UdfFixtureBase : SharedStoreFixtureBase<DbContext>
     {
         protected override Type ContextType { get; } = typeof(UDFSqlContext);
 
@@ -374,9 +360,9 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
         protected override bool ShouldLogCategory(string logCategory)
             => logCategory == DbLoggerCategory.Query.Name;
 
-        protected override async Task SeedAsync(DbContext context)
+        protected override void Seed(DbContext context)
         {
-            await context.Database.EnsureCreatedResilientlyAsync();
+            context.Database.EnsureCreatedResiliently();
 
             var product1 = new Product { Name = "Product1" };
             var product2 = new Product { Name = "Product2" };
@@ -388,52 +374,52 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
             {
                 Name = "Order11",
                 OrderDate = new DateTime(2000, 1, 20),
-                Items = [new LineItem { Quantity = 5, Product = product1 }, new LineItem { Quantity = 15, Product = product3 }]
+                Items = new List<LineItem> { new() { Quantity = 5, Product = product1 }, new() { Quantity = 15, Product = product3 } }
             };
 
             var order12 = new Order
             {
                 Name = "Order12",
                 OrderDate = new DateTime(2000, 2, 21),
-                Items =
-                [
-                    new LineItem { Quantity = 1, Product = product1 },
-                    new LineItem { Quantity = 6, Product = product2 },
-                    new LineItem { Quantity = 200, Product = product3 }
-                ]
+                Items = new List<LineItem>
+                {
+                    new() { Quantity = 1, Product = product1 },
+                    new() { Quantity = 6, Product = product2 },
+                    new() { Quantity = 200, Product = product3 }
+                }
             };
 
             var order13 = new Order
             {
                 Name = "Order13",
                 OrderDate = new DateTime(2001, 3, 20),
-                Items = [new LineItem { Quantity = 50, Product = product4 }]
+                Items = new List<LineItem> { new() { Quantity = 50, Product = product4 }, }
             };
 
             var order21 = new Order
             {
                 Name = "Order21",
                 OrderDate = new DateTime(2000, 4, 21),
-                Items =
-                [
-                    new LineItem { Quantity = 1, Product = product1 },
-                    new LineItem { Quantity = 34, Product = product4 },
-                    new LineItem { Quantity = 100, Product = product5 }
-                ]
+                Items = new List<LineItem>
+                {
+                    new() { Quantity = 1, Product = product1 },
+                    new() { Quantity = 34, Product = product4 },
+                    new() { Quantity = 100, Product = product5 }
+                }
             };
 
             var order22 = new Order
             {
                 Name = "Order22",
                 OrderDate = new DateTime(2000, 5, 20),
-                Items = [new LineItem { Quantity = 34, Product = product3 }, new LineItem { Quantity = 100, Product = product4 }]
+                Items = new List<LineItem> { new() { Quantity = 34, Product = product3 }, new() { Quantity = 100, Product = product4 } }
             };
 
             var order31 = new Order
             {
                 Name = "Order31",
                 OrderDate = new DateTime(2001, 6, 21),
-                Items = [new LineItem { Quantity = 5, Product = product5 }]
+                Items = new List<LineItem> { new() { Quantity = 5, Product = product5 } }
             };
 
             var address11 = new Address
@@ -489,41 +475,41 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
             {
                 FirstName = "Customer",
                 LastName = "One",
-                Orders =
-                [
+                Orders = new List<Order>
+                {
                     order11,
                     order12,
                     order13
-                ],
-                Addresses = [address11, address12]
+                },
+                Addresses = new List<Address> { address11, address12 }
             };
 
             var customer2 = new Customer
             {
                 FirstName = "Customer",
                 LastName = "Two",
-                Orders = [order21, order22],
-                Addresses = [address21]
+                Orders = new List<Order> { order21, order22 },
+                Addresses = new List<Address> { address21 }
             };
 
             var customer3 = new Customer
             {
                 FirstName = "Customer",
                 LastName = "Three",
-                Orders = [order31],
-                Addresses = [address31, address32]
+                Orders = new List<Order> { order31 },
+                Addresses = new List<Address> { address31, address32 }
             };
 
             var customer4 = new Customer
             {
                 FirstName = "Customer",
                 LastName = "Four",
-                Addresses =
-                [
+                Addresses = new List<Address>
+                {
                     address41,
                     address42,
                     address43
-                ]
+                }
             };
 
             ((UDFSqlContext)context).Products.AddRange(product1, product2, product3, product4, product5);
@@ -1022,23 +1008,6 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
 
         Assert.Equal(4, query.Count);
     }
-
-#if RELEASE
-    [ConditionalFact]
-    public virtual void Scalar_Function_with_nullable_value_return_type_throws()
-    {
-        using var context = CreateContext();
-
-        var exception = Assert.Throws<InvalidOperationException>(
-            () => context.Customers.Where(c => c.Id == UDFSqlContext.NullableValueReturnType()).ToList());
-
-        Assert.Equal(
-            RelationalStrings.DbFunctionNullableValueReturnType(
-                context.Model.FindDbFunction(typeof(UDFSqlContext).GetMethod(nameof(UDFSqlContext.NullableValueReturnType)))!.ModelName,
-                "int?"),
-            exception.Message);
-    }
-#endif
 
     #endregion
 
@@ -2133,54 +2102,6 @@ public abstract class UdfDbFunctionTestBase<TFixture>(TFixture fixture) : IClass
             Assert.Equal(249, products[0].AmountSold);
             Assert.Equal(4, products[1].ProductId);
             Assert.Equal(184, products[1].AmountSold);
-        }
-    }
-
-    [ConditionalFact]
-    public virtual void TVF_with_navigation_in_projection_groupby_aggregate()
-    {
-        using (var context = CreateContext())
-        {
-            var query = context.Orders
-                .Where(c => !context.Set<TopSellingProduct>().Select(x => x.ProductId).Contains(25))
-                .Select(x => new { x.Customer.FirstName, x.Customer.LastName })
-                .GroupBy(x => new { x.LastName })
-                .Select(x => new { x.Key.LastName, SumOfLengths = x.Sum(xx => xx.FirstName.Length) })
-                .ToList();
-
-            Assert.Equal(3, query.Count);
-            var orderedResult = query.OrderBy(x => x.LastName).ToList();
-            Assert.Equal("One", orderedResult[0].LastName);
-            Assert.Equal(24, orderedResult[0].SumOfLengths);
-            Assert.Equal("Three", orderedResult[1].LastName);
-            Assert.Equal(8, orderedResult[1].SumOfLengths);
-            Assert.Equal("Two", orderedResult[2].LastName);
-            Assert.Equal(16, orderedResult[2].SumOfLengths);
-        }
-    }
-
-    [ConditionalFact]
-    public virtual void TVF_with_argument_being_a_subquery_with_navigation_in_projection_groupby_aggregate()
-    {
-        using (var context = CreateContext())
-        {
-            var query = context.Orders
-                .Where(
-                    c => !context.GetOrdersWithMultipleProducts(context.Customers.OrderBy(x => x.Id).FirstOrDefault().Id)
-                        .Select(x => x.CustomerId).Contains(25))
-                .Select(x => new { x.Customer.FirstName, x.Customer.LastName })
-                .GroupBy(x => new { x.LastName })
-                .Select(x => new { x.Key.LastName, SumOfLengths = x.Sum(xx => xx.FirstName.Length) })
-                .ToList();
-
-            Assert.Equal(3, query.Count);
-            var orderedResult = query.OrderBy(x => x.LastName).ToList();
-            Assert.Equal("One", orderedResult[0].LastName);
-            Assert.Equal(24, orderedResult[0].SumOfLengths);
-            Assert.Equal("Three", orderedResult[1].LastName);
-            Assert.Equal(8, orderedResult[1].SumOfLengths);
-            Assert.Equal("Two", orderedResult[2].LastName);
-            Assert.Equal(16, orderedResult[2].SumOfLengths);
         }
     }
 

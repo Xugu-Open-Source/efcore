@@ -5,18 +5,25 @@ using Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixture) : ManyToManyQueryTestBase<TFixture>(fixture)
+public abstract class ManyToManyQueryRelationalTestBase<TFixture> : ManyToManyQueryTestBase<TFixture>
     where TFixture : ManyToManyQueryFixtureBase, new()
 {
+    protected ManyToManyQueryRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
+    protected virtual bool CanExecuteQueryString
+        => false;
+
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public virtual Task Include_skip_navigation_split(bool async)
         => AssertQuery(
             async,
             ss => ss.Set<EntityCompositeKey>().Include(e => e.RootSkipShared).AsSplitQuery(),
-            elementAsserter: (e, a) => AssertInclude(e, a, new ExpectedInclude<EntityCompositeKey>(et => et.RootSkipShared)));
+            elementAsserter: (e, a) => AssertInclude(e, a, new ExpectedInclude<EntityCompositeKey>(et => et.RootSkipShared)),
+            entryCount: 76);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -27,7 +34,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedInclude<EntityTwo>(et => et.OneSkip),
-                new ExpectedInclude<EntityOne>(et => et.Reference, "OneSkip")));
+                new ExpectedInclude<EntityOne>(et => et.Reference, "OneSkip")),
+            entryCount: 151);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -38,7 +46,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedInclude<EntityCompositeKey>(et => et.LeafSkipFull),
-                new ExpectedInclude<EntityLeaf>(et => et.OneSkip, "LeafSkipFull")));
+                new ExpectedInclude<EntityLeaf>(et => et.OneSkip, "LeafSkipFull")),
+            entryCount: 83);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -51,7 +60,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 e, a,
                 new ExpectedInclude<EntityThree>(et => et.OneSkipPayloadFull),
                 new ExpectedInclude<EntityOne>(et => et.Reference, "OneSkipPayloadFull"),
-                new ExpectedInclude<EntityOne>(et => et.SelfSkipPayloadRight, "OneSkipPayloadFull")));
+                new ExpectedInclude<EntityOne>(et => et.SelfSkipPayloadRight, "OneSkipPayloadFull")),
+            entryCount: 192);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -62,7 +72,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedInclude<EntityTwo>(et => et.OneSkipShared),
-                new ExpectedInclude<EntityTwo>(et => et.Reference)));
+                new ExpectedInclude<EntityTwo>(et => et.Reference)),
+            entryCount: 93);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -73,7 +84,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedFilteredInclude<EntityThree, EntityOne>(
-                    et => et.OneSkipPayloadFullShared, includeFilter: x => x.Where(i => i.Id < 10))));
+                    et => et.OneSkipPayloadFullShared, includeFilter: x => x.Where(i => i.Id < 10))),
+            entryCount: 42);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -84,7 +96,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedFilteredInclude<EntityThree, EntityTwo>(
-                    et => et.TwoSkipFull, includeFilter: x => x.OrderBy(i => i.Id))));
+                    et => et.TwoSkipFull, includeFilter: x => x.OrderBy(i => i.Id))),
+            entryCount: 91);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -95,7 +108,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedFilteredInclude<EntityTwo, EntityTwo>(
-                    et => et.SelfSkipSharedRight, includeFilter: x => x.OrderBy(i => i.Id).Skip(2))));
+                    et => et.SelfSkipSharedRight, includeFilter: x => x.OrderBy(i => i.Id).Skip(2))),
+            entryCount: 31);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -106,7 +120,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedFilteredInclude<EntityCompositeKey, EntityTwo>(
-                    et => et.TwoSkipShared, includeFilter: x => x.OrderBy(i => i.Id).Take(2))));
+                    et => et.TwoSkipShared, includeFilter: x => x.OrderBy(i => i.Id).Take(2))),
+            entryCount: 63);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -117,7 +132,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedFilteredInclude<EntityCompositeKey, EntityThree>(
-                    et => et.ThreeSkipFull, includeFilter: x => x.OrderBy(i => i.Id).Skip(1).Take(2))));
+                    et => et.ThreeSkipFull, includeFilter: x => x.OrderBy(i => i.Id).Skip(1).Take(2))),
+            entryCount: 57);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -131,7 +147,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 e, a,
                 new ExpectedInclude<EntityRoot>(et => et.ThreeSkipShared),
                 new ExpectedFilteredInclude<EntityThree, EntityOne>(
-                    et => et.OneSkipPayloadFullShared, "ThreeSkipShared", includeFilter: x => x.Where(i => i.Id < 10))));
+                    et => et.OneSkipPayloadFullShared, "ThreeSkipShared", includeFilter: x => x.Where(i => i.Id < 10))),
+            entryCount: 78);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -145,7 +162,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 e, a,
                 new ExpectedInclude<EntityRoot>(et => et.CompositeKeySkipShared),
                 new ExpectedFilteredInclude<EntityCompositeKey, EntityThree>(
-                    et => et.ThreeSkipFull, "CompositeKeySkipShared", includeFilter: x => x.OrderBy(i => i.Id).Skip(1).Take(2))));
+                    et => et.ThreeSkipFull, "CompositeKeySkipShared", includeFilter: x => x.OrderBy(i => i.Id).Skip(1).Take(2))),
+            entryCount: 104);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -158,7 +176,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 e, a,
                 new ExpectedFilteredInclude<EntityLeaf, EntityCompositeKey>(
                     et => et.CompositeKeySkipFull, includeFilter: x => x.Where(i => i.Key1 < 5)),
-                new ExpectedInclude<EntityCompositeKey>(et => et.TwoSkipShared, "CompositeKeySkipFull")));
+                new ExpectedInclude<EntityCompositeKey>(et => et.TwoSkipShared, "CompositeKeySkipFull")),
+            entryCount: 44);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -173,7 +192,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 new ExpectedFilteredInclude<EntityOne, EntityTwo>(
                     et => et.TwoSkip, includeFilter: x => x.OrderBy(i => i.Id).Skip(1).Take(2)),
                 new ExpectedFilteredInclude<EntityTwo, EntityThree>(
-                    et => et.ThreeSkipFull, "TwoSkip", includeFilter: x => x.Where(i => i.Id < 10))));
+                    et => et.ThreeSkipFull, "TwoSkip", includeFilter: x => x.Where(i => i.Id < 10))),
+            entryCount: 100);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -188,7 +208,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 new ExpectedFilteredInclude<EntityOne, EntityTwo>(
                     et => et.TwoSkip, includeFilter: x => x.Where(i => i.Id < 10)),
                 new ExpectedFilteredInclude<EntityTwo, EntityThree>(
-                    et => et.ThreeSkipFull, "TwoSkip", includeFilter: x => x.OrderBy(i => i.Id).Skip(1).Take(2))));
+                    et => et.ThreeSkipFull, "TwoSkip", includeFilter: x => x.OrderBy(i => i.Id).Skip(1).Take(2))),
+            entryCount: 106);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -202,7 +223,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 e, a,
                 new ExpectedFilteredInclude<EntityTwo, EntityOne>(et => et.OneSkip, includeFilter: x => x.Where(i => i.Id < 10)),
                 new ExpectedInclude<EntityOne>(et => et.Reference, "OneSkip"),
-                new ExpectedInclude<EntityOne>(et => et.Collection, "OneSkip")));
+                new ExpectedInclude<EntityOne>(et => et.Collection, "OneSkip")),
+            entryCount: 88);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -222,7 +244,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 new ExpectedFilteredInclude<EntityOne, EntityTwo>(
                     et => et.TwoSkip, "OneSkipPayloadFull", includeFilter: x => x.OrderBy(e => e.Id).Skip(1).Take(2)),
                 new ExpectedFilteredInclude<EntityOne, EntityBranch>(
-                    et => et.BranchSkip, "OneSkipPayloadFull", includeFilter: x => x.Where(e => e.Id < 20))));
+                    et => et.BranchSkip, "OneSkipPayloadFull", includeFilter: x => x.Where(e => e.Id < 20))),
+            entryCount: 116);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -237,7 +260,8 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 new ExpectedFilteredInclude<EntityThree, EntityOne>(
                     et => et.OneSkipPayloadFull, includeFilter: x => x.Where(i => i.Id > 15)),
                 new ExpectedFilteredInclude<EntityOne, EntityTwo>(
-                    et => et.Collection, "OneSkipPayloadFull", includeFilter: x => x.Where(i => i.Id < 5))));
+                    et => et.Collection, "OneSkipPayloadFull", includeFilter: x => x.Where(i => i.Id < 5))),
+            entryCount: 61);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -251,12 +275,14 @@ public abstract class ManyToManyQueryRelationalTestBase<TFixture>(TFixture fixtu
                 e, a,
                 new ExpectedFilteredInclude<EntityOne, EntityTwo>(et => et.Collection, includeFilter: x => x.Where(i => i.Id > 15)),
                 new ExpectedFilteredInclude<EntityTwo, EntityThree>(
-                    et => et.ThreeSkipFull, "Collection", includeFilter: x => x.Where(i => i.Id < 5))));
+                    et => et.ThreeSkipFull, "Collection", includeFilter: x => x.Where(i => i.Id < 5))),
+            entryCount: 29);
 
     protected override QueryAsserter CreateQueryAsserter(TFixture fixture)
         => new RelationalQueryAsserter(
             fixture,
             RewriteExpectedQueryExpression,
             RewriteServerQueryExpression,
-            ignoreEntryCount: IgnoreEntryCount);
+            ignoreEntryCount: IgnoreEntryCount,
+            canExecuteQueryString: CanExecuteQueryString);
 }

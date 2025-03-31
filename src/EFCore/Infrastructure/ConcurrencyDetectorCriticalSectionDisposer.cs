@@ -22,7 +22,9 @@ public readonly struct ConcurrencyDetectorCriticalSectionDisposer : IDisposable
     ///     The <see cref="IConcurrencyDetector" /> on which the critical section will be exited.
     /// </param>
     public ConcurrencyDetectorCriticalSectionDisposer(IConcurrencyDetector concurrencyDetector)
-        => _concurrencyDetector = concurrencyDetector;
+    {
+        _concurrencyDetector = concurrencyDetector;
+    }
 
     /// <inheritdoc />
     public void Dispose()

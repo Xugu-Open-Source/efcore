@@ -42,12 +42,11 @@ public class MigrationsOperations
         _projectDir = projectDir;
         _rootNamespace = rootNamespace;
         _language = language;
-        args ??= [];
+        args ??= Array.Empty<string>();
         _contextOperations = new DbContextOperations(
             reporter,
             assembly,
             startupAssembly,
-            project: "",
             projectDir,
             rootNamespace,
             language,
@@ -67,16 +66,8 @@ public class MigrationsOperations
         string name,
         string? outputDir,
         string? contextType,
-        string? @namespace,
-        bool dryRun)
+        string? @namespace)
     {
-        var invalidPathChars = Path.GetInvalidFileNameChars();
-        if (name.Any(c => invalidPathChars.Contains(c)))
-        {
-            throw new OperationException(
-                DesignStrings.BadMigrationName(name, string.Join("','", invalidPathChars)));
-        }
-
         if (outputDir != null)
         {
             outputDir = Path.GetFullPath(Path.Combine(_projectDir, outputDir));
@@ -101,9 +92,9 @@ public class MigrationsOperations
         var migration =
             string.IsNullOrEmpty(@namespace)
                 // TODO: Honor _nullable (issue #18950)
-                ? scaffolder.ScaffoldMigration(name, _rootNamespace ?? string.Empty, subNamespace, _language, dryRun)
-                : scaffolder.ScaffoldMigration(name, null, @namespace, _language, dryRun);
-        return scaffolder.Save(_projectDir, migration, outputDir, dryRun);
+                ? scaffolder.ScaffoldMigration(name, _rootNamespace ?? string.Empty, subNamespace, _language)
+                : scaffolder.ScaffoldMigration(name, null, @namespace, _language);
+        return scaffolder.Save(_projectDir, migration, outputDir);
     }
 
     // if outputDir is a subfolder of projectDir, then use each subfolder as a sub-namespace
@@ -111,13 +102,12 @@ public class MigrationsOperations
     // => "namespace $(rootnamespace).A.B.C"
     private string? SubnamespaceFromOutputPath(string? outputDir)
     {
-        var fullPath = Path.GetFullPath(_projectDir);
-        if (outputDir?.StartsWith(fullPath, StringComparison.Ordinal) != true)
+        if (outputDir?.StartsWith(_projectDir, StringComparison.Ordinal) != true)
         {
             return null;
         }
 
-        var subPath = outputDir[fullPath.Length..];
+        var subPath = outputDir[_projectDir.Length..];
 
         return !string.IsNullOrWhiteSpace(subPath)
             ? string.Join(
@@ -220,6 +210,7 @@ public class MigrationsOperations
             EnsureServices(services);
 
             var migrator = services.GetRequiredService<IMigrator>();
+
             migrator.Migrate(targetMigration);
         }
 
@@ -234,8 +225,7 @@ public class MigrationsOperations
     /// </summary>
     public virtual MigrationFiles RemoveMigration(
         string? contextType,
-        bool force,
-        bool dryRun)
+        bool force)
     {
         using var context = _contextOperations.CreateContext(contextType);
         var services = _servicesBuilder.Build(context);
@@ -245,31 +235,11 @@ public class MigrationsOperations
         using var scope = services.CreateScope();
         var scaffolder = scope.ServiceProvider.GetRequiredService<IMigrationsScaffolder>();
 
-        var files = scaffolder.RemoveMigration(_projectDir, _rootNamespace, force, _language, dryRun);
+        var files = scaffolder.RemoveMigration(_projectDir, _rootNamespace, force, _language);
 
         _reporter.WriteInformation(DesignStrings.Done);
 
         return files;
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public virtual void HasPendingModelChanges(string? contextType)
-    {
-        using var context = _contextOperations.CreateContext(contextType);
-
-        var hasPendingModelChanges = context.Database.HasPendingModelChanges();
-
-        if (hasPendingModelChanges)
-        {
-            throw new OperationException(DesignStrings.PendingModelChanges);
-        }
-
-        _reporter.WriteInformation(DesignStrings.NoPendingModelChanges);
     }
 
     private static void EnsureServices(IServiceProvider services)
@@ -287,19 +257,13 @@ public class MigrationsOperations
         var assemblyName = _assembly.GetName();
         var options = services.GetRequiredService<IDbContextOptions>();
         var contextType = services.GetRequiredService<ICurrentDbContext>().Context.GetType();
-        var optionsExtension = RelationalOptionsExtension.Extract(options);
-        if (optionsExtension.MigrationsAssemblyObject == null
-            || optionsExtension.MigrationsAssemblyObject != _assembly)
+        var migrationsAssemblyName = RelationalOptionsExtension.Extract(options).MigrationsAssembly
+            ?? contextType.Assembly.GetName().Name;
+        if (assemblyName.Name != migrationsAssemblyName
+            && assemblyName.FullName != migrationsAssemblyName)
         {
-            var migrationsAssemblyName = optionsExtension.MigrationsAssembly
-                ?? optionsExtension.MigrationsAssemblyObject?.GetName().Name
-                ?? contextType.Assembly.GetName().Name;
-            if (assemblyName.Name != migrationsAssemblyName
-                && assemblyName.FullName != migrationsAssemblyName)
-            {
-                throw new OperationException(
-                    DesignStrings.MigrationsAssemblyMismatch(assemblyName.Name, migrationsAssemblyName));
-            }
+            throw new OperationException(
+                DesignStrings.MigrationsAssemblyMismatch(assemblyName.Name, migrationsAssemblyName));
         }
     }
 }

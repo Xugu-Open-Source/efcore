@@ -3,10 +3,13 @@
 
 using Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Query;
-
-public class NavigationsQuerySqliteTests : NavigationsQueryTests
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Query
 {
-    protected override AdventureWorksContextBase CreateContext()
-        => AdventureWorksSqliteFixture.CreateContext();
+    public class NavigationsQuerySqliteTests : NavigationsQueryTests
+    {
+        protected override AdventureWorksContextBase CreateContext()
+        {
+            return AdventureWorksSqliteFixture.CreateContext();
+        }
+    }
 }

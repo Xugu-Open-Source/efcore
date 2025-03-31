@@ -9,8 +9,6 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable AccessToDisposedClosure
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public abstract class NorthwindSqlQueryTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : NorthwindQueryRelationalFixture<NoopModelCustomizer>, new()
 {
@@ -22,7 +20,7 @@ public abstract class NorthwindSqlQueryTestBase<TFixture> : IClassFixture<TFixtu
 
     protected TFixture Fixture { get; }
 
-    public static IEnumerable<object[]> IsAsyncData = new object[][] { [false], [true] };
+    public static IEnumerable<object[]> IsAsyncData = new[] { new object[] { false }, new object[] { true } };
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]

@@ -21,7 +21,7 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure;
 /// </remarks>
 public class AnnotatableBase : IAnnotatable
 {
-    private Dictionary<string, Annotation>? _annotations;
+    private SortedDictionary<string, Annotation>? _annotations;
     private ConcurrentDictionary<string, Annotation>? _runtimeAnnotations;
 
     /// <summary>
@@ -52,7 +52,7 @@ public class AnnotatableBase : IAnnotatable
     ///     Gets all annotations on the current object.
     /// </summary>
     public virtual IEnumerable<Annotation> GetAnnotations()
-        => _annotations?.Values.OrderBy(a => a.Name, StringComparer.Ordinal) ?? Enumerable.Empty<Annotation>();
+        => _annotations?.Values ?? Enumerable.Empty<Annotation>();
 
     /// <summary>
     ///     Adds an annotation to this object. Throws if an annotation with the specified name already exists.
@@ -148,7 +148,7 @@ public class AnnotatableBase : IAnnotatable
     {
         EnsureMutable();
 
-        _annotations ??= new Dictionary<string, Annotation>(StringComparer.Ordinal);
+        _annotations ??= new SortedDictionary<string, Annotation>(StringComparer.Ordinal);
         _annotations[name] = annotation;
 
         return OnAnnotationSet(name, annotation, oldAnnotation);
@@ -178,7 +178,11 @@ public class AnnotatableBase : IAnnotatable
     {
         Check.NotEmpty(name, nameof(name));
 
-        return _annotations?.GetValueOrDefault(name);
+        return _annotations == null
+            ? null
+            : _annotations.TryGetValue(name, out var annotation)
+                ? annotation
+                : null;
     }
 
     /// <summary>
@@ -276,7 +280,9 @@ public class AnnotatableBase : IAnnotatable
     ///     Gets all runtime annotations on the current object.
     /// </summary>
     public virtual IEnumerable<Annotation> GetRuntimeAnnotations()
-        => _runtimeAnnotations?.OrderBy(p => p.Key).Select(p => p.Value) ?? Enumerable.Empty<Annotation>();
+        => _runtimeAnnotations == null
+            ? Enumerable.Empty<Annotation>()
+            : _runtimeAnnotations.OrderBy(p => p.Key).Select(p => p.Value);
 
     /// <summary>
     ///     Adds a runtime annotation to this object. Throws if an annotation with the specified name already exists.
@@ -385,7 +391,11 @@ public class AnnotatableBase : IAnnotatable
     {
         Check.NotEmpty(name, nameof(name));
 
-        return _runtimeAnnotations?.GetValueOrDefault(name);
+        return _runtimeAnnotations == null
+            ? null
+            : _runtimeAnnotations.TryGetValue(name, out var annotation)
+                ? annotation
+                : null;
     }
 
     /// <summary>

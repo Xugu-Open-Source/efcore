@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
-#nullable disable
-
 public class UnidirectionalEntityRoot
 {
     public virtual int Id { get; set; }

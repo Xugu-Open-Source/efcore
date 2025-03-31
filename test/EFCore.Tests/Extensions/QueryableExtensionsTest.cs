@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Collections;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 // ReSharper disable InconsistentNaming
@@ -126,9 +127,14 @@ public class QueryableExtensionsTest
         testExpression.Compile()(queryable);
     }
 
-    private class FakeAsyncQueryProvider(MethodCallExpression expectedMethodCall) : IAsyncQueryProvider
+    private class FakeAsyncQueryProvider : IAsyncQueryProvider
     {
-        private readonly MethodCallExpression _expectedMethodCall = expectedMethodCall;
+        private readonly MethodCallExpression _expectedMethodCall;
+
+        public FakeAsyncQueryProvider(MethodCallExpression expectedMethodCall)
+        {
+            _expectedMethodCall = expectedMethodCall;
+        }
 
         public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
         {
@@ -175,14 +181,19 @@ public class QueryableExtensionsTest
             => throw new NotImplementedException();
     }
 
-    private class FakeQueryable<TElement>(IQueryProvider provider = null) : IQueryable<TElement>
+    private class FakeQueryable<TElement> : IQueryable<TElement>
     {
+        public FakeQueryable(IQueryProvider provider = null)
+        {
+            Provider = provider;
+        }
+
         public Type ElementType
             => typeof(TElement);
 
         public Expression Expression { get; set; }
 
-        public IQueryProvider Provider { get; } = provider;
+        public IQueryProvider Provider { get; }
 
         public IEnumerator<TElement> GetEnumerator()
             => throw new NotImplementedException();
@@ -292,16 +303,12 @@ public class QueryableExtensionsTest
         await SourceNonAsyncQueryableTest(() => Source<decimal?>().SumAsync(e => e));
         await SourceNonAsyncEnumerableTest<int>(() => Source().ToDictionaryAsync(e => e));
         await SourceNonAsyncEnumerableTest<int>(() => Source().ToDictionaryAsync(e => e, e => e));
-        await SourceNonAsyncEnumerableTest<int>(() => Source().ToDictionaryAsync(e => e, ReferenceEqualityComparer.Instance));
-        await SourceNonAsyncEnumerableTest<int>(() => Source().ToDictionaryAsync(e => e, ReferenceEqualityComparer.Instance));
+        await SourceNonAsyncEnumerableTest<int>(() => Source().ToDictionaryAsync(e => e, LegacyReferenceEqualityComparer.Instance));
+        await SourceNonAsyncEnumerableTest<int>(() => Source().ToDictionaryAsync(e => e, LegacyReferenceEqualityComparer.Instance));
         await SourceNonAsyncEnumerableTest<int>(
-            () => Source().ToDictionaryAsync(e => e, e => e, ReferenceEqualityComparer.Instance));
+            () => Source().ToDictionaryAsync(e => e, e => e, LegacyReferenceEqualityComparer.Instance));
         await SourceNonAsyncEnumerableTest<int>(
-            () => Source().ToDictionaryAsync(e => e, e => e, ReferenceEqualityComparer.Instance, new CancellationToken()));
-        await SourceNonAsyncEnumerableTest<int>(() => Source().ToHashSetAsync());
-        await SourceNonAsyncEnumerableTest<int>(() => Source().ToHashSetAsync(EqualityComparer<int>.Default));
-        await SourceNonAsyncEnumerableTest<int>(
-            () => Source().ToHashSetAsync(EqualityComparer<int>.Default, new CancellationToken()));
+            () => Source().ToDictionaryAsync(e => e, e => e, LegacyReferenceEqualityComparer.Instance, new CancellationToken()));
         await SourceNonAsyncEnumerableTest<int>(() => Source().ToListAsync());
 
         Assert.Equal(

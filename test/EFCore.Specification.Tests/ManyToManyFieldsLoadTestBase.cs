@@ -1,15 +1,18 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.EntityFrameworkCore.TestModels.ManyToManyFieldsModel;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class ManyToManyFieldsLoadTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class ManyToManyFieldsLoadTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : ManyToManyFieldsLoadTestBase<TFixture>.ManyToManyFieldsLoadFixtureBase
 {
+    protected ManyToManyFieldsLoadTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
     [ConditionalTheory]
     [InlineData(EntityState.Unchanged, QueryTrackingBehavior.TrackAll, true)]
     [InlineData(EntityState.Unchanged, QueryTrackingBehavior.TrackAll, false)]
@@ -640,14 +643,20 @@ public abstract class ManyToManyFieldsLoadTestBase<TFixture>(TFixture fixture) :
             context.Entry(left).State = EntityState.Detached;
         }
 
-        if (async)
-        {
-            await collectionEntry.LoadAsync();
-        }
-        else
-        {
-            collectionEntry.Load();
-        }
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(left.TwoSkip), nameof(EntityOne)),
+            (await Assert.ThrowsAsync<InvalidOperationException>(
+                async () =>
+                {
+                    if (async)
+                    {
+                        await collectionEntry.LoadAsync();
+                    }
+                    else
+                    {
+                        collectionEntry.Load();
+                    }
+                })).Message);
     }
 
     [ConditionalTheory]
@@ -667,7 +676,9 @@ public abstract class ManyToManyFieldsLoadTestBase<TFixture>(TFixture fixture) :
             context.Entry(left).State = EntityState.Detached;
         }
 
-        var query = collectionEntry.Query();
+        Assert.Equal(
+            CoreStrings.CannotLoadDetached(nameof(left.TwoSkip), nameof(EntityOne)),
+            Assert.Throws<InvalidOperationException>(() => collectionEntry.Query()).Message);
     }
 
     [ConditionalTheory]
@@ -833,7 +844,7 @@ public abstract class ManyToManyFieldsLoadTestBase<TFixture>(TFixture fixture) :
             Assert.Contains(left, right.OneSkipShared);
             foreach (var three in right.ThreeSkipFull)
             {
-                Assert.True(three.Id is 11 or 13);
+                Assert.True(three.Id == 11 || three.Id == 13);
                 Assert.Contains(right, three.TwoSkipFull);
             }
         }
@@ -987,7 +998,7 @@ public abstract class ManyToManyFieldsLoadTestBase<TFixture>(TFixture fixture) :
     {
     }
 
-    protected TFixture Fixture { get; } = fixture;
+    protected TFixture Fixture { get; }
 
     public abstract class ManyToManyFieldsLoadFixtureBase : ManyToManyFieldsQueryFixtureBase
     {

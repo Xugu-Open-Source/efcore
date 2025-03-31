@@ -6,15 +6,17 @@ using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class CommandInterceptionSqlServerTestBase(CommandInterceptionSqlServerTestBase.InterceptionSqlServerFixtureBase fixture)
-    : CommandInterceptionTestBase(fixture)
+public abstract class CommandInterceptionSqlServerTestBase : CommandInterceptionTestBase
 {
+    protected CommandInterceptionSqlServerTestBase(InterceptionSqlServerFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     public override async Task<string> Intercept_query_passively(bool async, bool inject)
     {
         AssertSql(
-            """
+"""
 SELECT [s].[Id], [s].[Type] FROM [Singularity] AS [s]
 """,
             await base.Intercept_query_passively(async, inject));
@@ -25,7 +27,7 @@ SELECT [s].[Id], [s].[Type] FROM [Singularity] AS [s]
     protected override async Task<string> QueryMutationTest<TInterceptor>(bool async, bool inject)
     {
         AssertSql(
-            """
+"""
 SELECT [s].[Id], [s].[Type] FROM [Brane] AS [s]
 """,
             await base.QueryMutationTest<TInterceptor>(async, inject));
@@ -36,7 +38,7 @@ SELECT [s].[Id], [s].[Type] FROM [Brane] AS [s]
     public override async Task<string> Intercept_query_to_replace_execution(bool async, bool inject)
     {
         AssertSql(
-            """
+"""
 SELECT [s].[Id], [s].[Type] FROM [Singularity] AS [s]
 """,
             await base.Intercept_query_to_replace_execution(async, inject));
@@ -51,7 +53,7 @@ SELECT [s].[Id], [s].[Type] FROM [Singularity] AS [s]
     [InlineData(true, true)]
     public virtual async Task<string> Intercept_query_to_get_statistics(bool async, bool inject) // Issue #23535
     {
-        var (context, interceptor) = await CreateContextAsync<StatisticsCommandInterceptor>(inject);
+        var (context, interceptor) = CreateContext<StatisticsCommandInterceptor>(inject);
         using (context)
         {
             using (async
@@ -102,8 +104,13 @@ SELECT [s].[Id], [s].[Type] FROM [Singularity] AS [s]
         return interceptor.CommandText;
     }
 
-    protected class StatisticsCommandInterceptor() : CommandInterceptorBase(DbCommandMethod.ExecuteReader)
+    protected class StatisticsCommandInterceptor : CommandInterceptorBase
     {
+        public StatisticsCommandInterceptor()
+            : base(DbCommandMethod.ExecuteReader)
+        {
+        }
+
         public override InterceptionResult<DbDataReader> ReaderExecuting(
             DbCommand command,
             CommandEventData eventData,
@@ -160,9 +167,14 @@ SELECT [s].[Id], [s].[Type] FROM [Singularity] AS [s]
             => base.InjectInterceptors(serviceCollection.AddEntityFrameworkSqlServer(), injectedInterceptors);
     }
 
-    public class CommandInterceptionSqlServerTest(CommandInterceptionSqlServerTest.InterceptionSqlServerFixture fixture)
-        : CommandInterceptionSqlServerTestBase(fixture), IClassFixture<CommandInterceptionSqlServerTest.InterceptionSqlServerFixture>
+    public class CommandInterceptionSqlServerTest
+        : CommandInterceptionSqlServerTestBase, IClassFixture<CommandInterceptionSqlServerTest.InterceptionSqlServerFixture>
     {
+        public CommandInterceptionSqlServerTest(InterceptionSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqlServerFixture : InterceptionSqlServerFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener
@@ -177,11 +189,15 @@ SELECT [s].[Id], [s].[Type] FROM [Singularity] AS [s]
         }
     }
 
-    public class CommandInterceptionWithDiagnosticsSqlServerTest(
-        CommandInterceptionWithDiagnosticsSqlServerTest.InterceptionSqlServerFixture fixture)
-        : CommandInterceptionSqlServerTestBase(fixture),
+    public class CommandInterceptionWithDiagnosticsSqlServerTest
+        : CommandInterceptionSqlServerTestBase,
             IClassFixture<CommandInterceptionWithDiagnosticsSqlServerTest.InterceptionSqlServerFixture>
     {
+        public CommandInterceptionWithDiagnosticsSqlServerTest(InterceptionSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqlServerFixture : InterceptionSqlServerFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener

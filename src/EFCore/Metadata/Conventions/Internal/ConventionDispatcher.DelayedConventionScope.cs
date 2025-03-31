@@ -5,65 +5,54 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions.Internal;
 
 public partial class ConventionDispatcher
 {
-    private sealed class DelayedConventionScope(ConventionScope parent, List<ConventionNode>? children = null) : ConventionScope
+    private sealed class DelayedConventionScope : ConventionScope
     {
-        public override ConventionScope Parent { [DebuggerStepThrough] get; } = parent;
+        private List<ConventionNode>? _children;
+
+        public DelayedConventionScope(ConventionScope parent, List<ConventionNode>? children = null)
+        {
+            Parent = parent;
+            _children = children;
+        }
+
+        public override ConventionScope Parent { [DebuggerStepThrough] get; }
 
         public override IReadOnlyList<ConventionNode>? Children
         {
             [DebuggerStepThrough]
-            get => children;
+            get => _children;
         }
 
         private void Add(ConventionNode node)
         {
-            children ??= [];
+            _children ??= new List<ConventionNode>();
 
-            children.Add(node);
+            _children.Add(node);
         }
 
         public override void Run(ConventionDispatcher dispatcher)
         {
-            if (children == null)
+            if (_children == null)
             {
                 return;
             }
 
-            foreach (var conventionNode in children)
+            foreach (var conventionNode in _children)
             {
                 conventionNode.Run(dispatcher);
             }
-        }
-
-        public override IConventionAnnotation? OnModelAnnotationChanged(
-            IConventionModelBuilder modelBuilder,
-            string name,
-            IConventionAnnotation? annotation,
-            IConventionAnnotation? oldAnnotation)
-        {
-            Add(new OnModelAnnotationChangedNode(modelBuilder, name, annotation, oldAnnotation));
-            return annotation;
-        }
-
-        public override string? OnModelEmbeddedDiscriminatorNameChanged(
-            IConventionModelBuilder modelBuilder,
-            string? oldName,
-            string? newName)
-        {
-            Add(new OnModelEmbeddedDiscriminatorNameChangedNode(modelBuilder, oldName, newName));
-            return newName;
-        }
-
-        public override string OnTypeIgnored(IConventionModelBuilder modelBuilder, string name, Type? type)
-        {
-            Add(new OnTypeIgnoredNode(modelBuilder, name, type));
-            return name;
         }
 
         public override IConventionEntityTypeBuilder OnEntityTypeAdded(IConventionEntityTypeBuilder entityTypeBuilder)
         {
             Add(new OnEntityTypeAddedNode(entityTypeBuilder));
             return entityTypeBuilder;
+        }
+
+        public override string OnEntityTypeIgnored(IConventionModelBuilder modelBuilder, string name, Type? type)
+        {
+            Add(new OnEntityTypeIgnoredNode(modelBuilder, name, type));
+            return name;
         }
 
         public override IConventionEntityType OnEntityTypeRemoved(
@@ -77,12 +66,6 @@ public partial class ConventionDispatcher
         public override string OnEntityTypeMemberIgnored(IConventionEntityTypeBuilder entityTypeBuilder, string name)
         {
             Add(new OnEntityTypeMemberIgnoredNode(entityTypeBuilder, name));
-            return name;
-        }
-
-        public override string? OnDiscriminatorPropertySet(IConventionEntityTypeBuilder entityTypeBuilder, string? name)
-        {
-            Add(new OnDiscriminatorPropertySetNode(entityTypeBuilder, name));
             return name;
         }
 
@@ -105,58 +88,13 @@ public partial class ConventionDispatcher
             return annotation;
         }
 
-        public override string OnComplexTypeMemberIgnored(IConventionComplexTypeBuilder complexTypeBuilder, string name)
-        {
-            Add(new OnComplexTypeMemberIgnoredNode(complexTypeBuilder, name));
-            return name;
-        }
-
-        public override IConventionAnnotation? OnComplexTypeAnnotationChanged(
-            IConventionComplexTypeBuilder complexTypeBuilder,
+        public override IConventionAnnotation? OnModelAnnotationChanged(
+            IConventionModelBuilder modelBuilder,
             string name,
             IConventionAnnotation? annotation,
             IConventionAnnotation? oldAnnotation)
         {
-            Add(new OnComplexTypeAnnotationChangedNode(complexTypeBuilder, name, annotation, oldAnnotation));
-            return annotation;
-        }
-
-        public override IConventionComplexPropertyBuilder OnComplexPropertyAdded(IConventionComplexPropertyBuilder propertyBuilder)
-        {
-            Add(new OnComplexPropertyAddedNode(propertyBuilder));
-            return propertyBuilder;
-        }
-
-        public override IConventionComplexProperty OnComplexPropertyRemoved(
-            IConventionTypeBaseBuilder typeBaseBuilder,
-            IConventionComplexProperty property)
-        {
-            Add(new OnComplexPropertyRemovedNode(typeBaseBuilder, property));
-            return property;
-        }
-
-        public override bool? OnComplexPropertyNullabilityChanged(IConventionComplexPropertyBuilder propertyBuilder)
-        {
-            Add(new OnComplexPropertyNullabilityChangedNode(propertyBuilder));
-            return propertyBuilder.Metadata.IsNullable;
-        }
-
-        public override FieldInfo? OnComplexPropertyFieldChanged(
-            IConventionComplexPropertyBuilder propertyBuilder,
-            FieldInfo? newFieldInfo,
-            FieldInfo? oldFieldInfo)
-        {
-            Add(new OnComplexPropertyFieldChangedNode(propertyBuilder, newFieldInfo, oldFieldInfo));
-            return newFieldInfo;
-        }
-
-        public override IConventionAnnotation? OnComplexPropertyAnnotationChanged(
-            IConventionComplexPropertyBuilder propertyBuilder,
-            string name,
-            IConventionAnnotation? annotation,
-            IConventionAnnotation? oldAnnotation)
-        {
-            Add(new OnComplexPropertyAnnotationChangedNode(propertyBuilder, name, annotation, oldAnnotation));
+            Add(new OnModelAnnotationChangedNode(modelBuilder, name, annotation, oldAnnotation));
             return annotation;
         }
 
@@ -331,21 +269,6 @@ public partial class ConventionDispatcher
             return navigation;
         }
 
-        public override IConventionTriggerBuilder OnTriggerAdded(
-            IConventionTriggerBuilder navigationBuilder)
-        {
-            Add(new OnTriggerAddedNode(navigationBuilder));
-            return navigationBuilder;
-        }
-
-        public override IConventionTrigger OnTriggerRemoved(
-            IConventionEntityTypeBuilder entityTypeBuilder,
-            IConventionTrigger navigation)
-        {
-            Add(new OnTriggerRemovedNode(entityTypeBuilder, navigation));
-            return navigation;
-        }
-
         public override IReadOnlyList<IConventionProperty> OnForeignKeyPropertiesChanged(
             IConventionForeignKeyBuilder relationshipBuilder,
             IReadOnlyList<IConventionProperty> oldDependentProperties,
@@ -398,14 +321,8 @@ public partial class ConventionDispatcher
 
         public override bool? OnPropertyNullabilityChanged(IConventionPropertyBuilder propertyBuilder)
         {
-            Add(new OnPropertyNullabilityChangedNode(propertyBuilder));
+            Add(new OnPropertyNullableChangedNode(propertyBuilder));
             return propertyBuilder.Metadata.IsNullable;
-        }
-
-        public override bool? OnElementTypeNullabilityChanged(IConventionElementTypeBuilder builder)
-        {
-            Add(new OnElementTypeNullabilityChangedNode(builder));
-            return builder.Metadata.IsNullable;
         }
 
         public override FieldInfo? OnPropertyFieldChanged(
@@ -427,650 +344,687 @@ public partial class ConventionDispatcher
             return annotation;
         }
 
-        public override IConventionAnnotation? OnElementTypeAnnotationChanged(
-            IConventionElementTypeBuilder builder,
+        public override IConventionProperty OnPropertyRemoved(
+            IConventionEntityTypeBuilder entityTypeBuilder,
+            IConventionProperty property)
+        {
+            Add(new OnPropertyRemovedNode(entityTypeBuilder, property));
+            return property;
+        }
+    }
+
+    private sealed class OnModelAnnotationChangedNode : ConventionNode
+    {
+        public OnModelAnnotationChangedNode(
+            IConventionModelBuilder modelBuilder,
             string name,
             IConventionAnnotation? annotation,
             IConventionAnnotation? oldAnnotation)
         {
-            Add(new OnElementTypeAnnotationChangedNode(builder, name, annotation, oldAnnotation));
-            return annotation;
+            ModelBuilder = modelBuilder;
+            Name = name;
+            Annotation = annotation;
+            OldAnnotation = oldAnnotation;
         }
 
-        public override IConventionProperty OnPropertyRemoved(
-            IConventionTypeBaseBuilder typeBaseBuilder,
-            IConventionProperty property)
-        {
-            Add(new OnPropertyRemovedNode(typeBaseBuilder, property));
-            return property;
-        }
-
-        public override IElementType? OnPropertyElementTypeChanged(
-            IConventionPropertyBuilder propertyBuilder,
-            IElementType? newElementType,
-            IElementType? oldElementType)
-        {
-            Add(new OnPropertyElementTypeChangedNode(propertyBuilder, newElementType, oldElementType));
-            return newElementType;
-        }
-    }
-
-    private sealed class OnModelAnnotationChangedNode(
-        IConventionModelBuilder modelBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
-    {
-        public IConventionModelBuilder ModelBuilder { get; } = modelBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public IConventionModelBuilder ModelBuilder { get; }
+        public string Name { get; }
+        public IConventionAnnotation? Annotation { get; }
+        public IConventionAnnotation? OldAnnotation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnModelAnnotationChanged(
                 ModelBuilder, Name, Annotation, OldAnnotation);
     }
 
-    private sealed class OnModelEmbeddedDiscriminatorNameChangedNode(
-        IConventionModelBuilder modelBuilder,
-        string? oldName,
-        string? newName)
-        : ConventionNode
+    private sealed class OnEntityTypeAddedNode : ConventionNode
     {
-        public IConventionModelBuilder ModelBuilder { get; } = modelBuilder;
-        public string? OldName { get; } = oldName;
-        public string? NewName { get; } = newName;
+        public OnEntityTypeAddedNode(IConventionEntityTypeBuilder entityTypeBuilder)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+        }
 
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnModelEmbeddedDiscriminatorNameChanged(ModelBuilder, OldName, NewName);
-    }
-
-    private sealed class OnTypeIgnoredNode(IConventionModelBuilder modelBuilder, string name, Type? type) : ConventionNode
-    {
-        public IConventionModelBuilder ModelBuilder { get; } = modelBuilder;
-        public string Name { get; } = name;
-        public Type? Type { get; } = type;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnTypeIgnored(ModelBuilder, Name, Type);
-    }
-
-    private sealed class OnEntityTypeAddedNode(IConventionEntityTypeBuilder entityTypeBuilder) : ConventionNode
-    {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnEntityTypeAdded(EntityTypeBuilder);
     }
 
-    private sealed class OnEntityTypeRemovedNode(IConventionModelBuilder modelBuilder, IConventionEntityType entityType)
-        : ConventionNode
+    private sealed class OnEntityTypeIgnoredNode : ConventionNode
     {
-        public IConventionModelBuilder ModelBuilder { get; } = modelBuilder;
-        public IConventionEntityType EntityType { get; } = entityType;
+        public OnEntityTypeIgnoredNode(IConventionModelBuilder modelBuilder, string name, Type? type)
+        {
+            ModelBuilder = modelBuilder;
+            Name = name;
+            Type = type;
+        }
+
+        public IConventionModelBuilder ModelBuilder { get; }
+        public string Name { get; }
+        public Type? Type { get; }
+
+        public override void Run(ConventionDispatcher dispatcher)
+            => dispatcher._immediateConventionScope.OnEntityTypeIgnored(ModelBuilder, Name, Type);
+    }
+
+    private sealed class OnEntityTypeRemovedNode : ConventionNode
+    {
+        public OnEntityTypeRemovedNode(IConventionModelBuilder modelBuilder, IConventionEntityType entityType)
+        {
+            ModelBuilder = modelBuilder;
+            EntityType = entityType;
+        }
+
+        public IConventionModelBuilder ModelBuilder { get; }
+        public IConventionEntityType EntityType { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnEntityTypeRemoved(ModelBuilder, EntityType);
     }
 
-    private sealed class OnEntityTypeMemberIgnoredNode(IConventionEntityTypeBuilder entityTypeBuilder, string name) : ConventionNode
+    private sealed class OnEntityTypeMemberIgnoredNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public string Name { get; } = name;
+        public OnEntityTypeMemberIgnoredNode(IConventionEntityTypeBuilder entityTypeBuilder, string name)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            Name = name;
+        }
+
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public string Name { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnEntityTypeMemberIgnored(EntityTypeBuilder, Name);
     }
 
-    private sealed class OnDiscriminatorPropertySetNode(IConventionEntityTypeBuilder entityTypeBuilder, string? name) : ConventionNode
+    private sealed class OnEntityTypeBaseTypeChangedNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public string? Name { get; } = name;
+        public OnEntityTypeBaseTypeChangedNode(
+            IConventionEntityTypeBuilder entityTypeBuilder,
+            IConventionEntityType? newBaseType,
+            IConventionEntityType? previousBaseType)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            NewBaseType = newBaseType;
+            PreviousBaseType = previousBaseType;
+        }
 
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnDiscriminatorPropertySet(EntityTypeBuilder, Name);
-    }
-
-    private sealed class OnEntityTypeBaseTypeChangedNode(
-        IConventionEntityTypeBuilder entityTypeBuilder,
-        IConventionEntityType? newBaseType,
-        IConventionEntityType? previousBaseType)
-        : ConventionNode
-    {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public IConventionEntityType? NewBaseType { get; } = newBaseType;
-        public IConventionEntityType? PreviousBaseType { get; } = previousBaseType;
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public IConventionEntityType? NewBaseType { get; }
+        public IConventionEntityType? PreviousBaseType { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnEntityTypeBaseTypeChanged(
                 EntityTypeBuilder, NewBaseType, PreviousBaseType);
     }
 
-    private sealed class OnEntityTypeAnnotationChangedNode(
-        IConventionEntityTypeBuilder entityTypeBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
+    private sealed class OnEntityTypeAnnotationChangedNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public OnEntityTypeAnnotationChangedNode(
+            IConventionEntityTypeBuilder entityTypeBuilder,
+            string name,
+            IConventionAnnotation? annotation,
+            IConventionAnnotation? oldAnnotation)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            Name = name;
+            Annotation = annotation;
+            OldAnnotation = oldAnnotation;
+        }
+
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public string Name { get; }
+        public IConventionAnnotation? Annotation { get; }
+        public IConventionAnnotation? OldAnnotation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnEntityTypeAnnotationChanged(
                 EntityTypeBuilder, Name, Annotation, OldAnnotation);
     }
 
-    private sealed class OnComplexTypeMemberIgnoredNode(IConventionComplexTypeBuilder complexTypeBuilder, string name) : ConventionNode
+    private sealed class OnForeignKeyAddedNode : ConventionNode
     {
-        public IConventionComplexTypeBuilder ComplexTypeBuilder { get; } = complexTypeBuilder;
-        public string Name { get; } = name;
+        public OnForeignKeyAddedNode(IConventionForeignKeyBuilder relationshipBuilder)
+        {
+            RelationshipBuilder = relationshipBuilder;
+        }
 
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnComplexTypeMemberIgnored(ComplexTypeBuilder, Name);
-    }
-
-    private sealed class OnComplexTypeAnnotationChangedNode(
-        IConventionComplexTypeBuilder propertyBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
-    {
-        public IConventionComplexTypeBuilder ComplexTypeBuilder { get; } = propertyBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnComplexTypeAnnotationChanged(
-                ComplexTypeBuilder, Name, Annotation, OldAnnotation);
-    }
-
-    private sealed class OnComplexPropertyAddedNode(IConventionComplexPropertyBuilder propertyBuilder) : ConventionNode
-    {
-        public IConventionComplexPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnComplexPropertyAdded(PropertyBuilder);
-    }
-
-    private sealed class OnComplexPropertyRemovedNode(IConventionTypeBaseBuilder modelBuilder, IConventionComplexProperty entityType)
-        : ConventionNode
-    {
-        public IConventionTypeBaseBuilder TypeBaseBuilder { get; } = modelBuilder;
-        public IConventionComplexProperty ComplexProperty { get; } = entityType;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnComplexPropertyRemoved(TypeBaseBuilder, ComplexProperty);
-    }
-
-    private sealed class OnComplexPropertyNullabilityChangedNode(IConventionComplexPropertyBuilder propertyBuilder) : ConventionNode
-    {
-        public IConventionComplexPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnComplexPropertyNullabilityChanged(PropertyBuilder);
-    }
-
-    private sealed class OnComplexPropertyFieldChangedNode(
-        IConventionComplexPropertyBuilder propertyBuilder,
-        FieldInfo? newFieldInfo,
-        FieldInfo? oldFieldInfo)
-        : ConventionNode
-    {
-        public IConventionComplexPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
-        public FieldInfo? NewFieldInfo { get; } = newFieldInfo;
-        public FieldInfo? OldFieldInfo { get; } = oldFieldInfo;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnComplexPropertyFieldChanged(PropertyBuilder, NewFieldInfo, OldFieldInfo);
-    }
-
-    private sealed class OnComplexPropertyAnnotationChangedNode(
-        IConventionComplexPropertyBuilder propertyBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
-    {
-        public IConventionComplexPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnComplexPropertyAnnotationChanged(
-                PropertyBuilder, Name, Annotation, OldAnnotation);
-    }
-
-    private sealed class OnForeignKeyAddedNode(IConventionForeignKeyBuilder relationshipBuilder) : ConventionNode
-    {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyAdded(RelationshipBuilder);
     }
 
-    private sealed class OnForeignKeyRemovedNode(IConventionEntityTypeBuilder entityTypeBuilder, IConventionForeignKey foreignKey)
-        : ConventionNode
+    private sealed class OnForeignKeyRemovedNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public IConventionForeignKey ForeignKey { get; } = foreignKey;
+        public OnForeignKeyRemovedNode(IConventionEntityTypeBuilder entityTypeBuilder, IConventionForeignKey foreignKey)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            ForeignKey = foreignKey;
+        }
+
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public IConventionForeignKey ForeignKey { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyRemoved(EntityTypeBuilder, ForeignKey);
     }
 
-    private sealed class OnForeignKeyAnnotationChangedNode(
-        IConventionForeignKeyBuilder relationshipBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
+    private sealed class OnForeignKeyAnnotationChangedNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public OnForeignKeyAnnotationChangedNode(
+            IConventionForeignKeyBuilder relationshipBuilder,
+            string name,
+            IConventionAnnotation? annotation,
+            IConventionAnnotation? oldAnnotation)
+        {
+            RelationshipBuilder = relationshipBuilder;
+            Name = name;
+            Annotation = annotation;
+            OldAnnotation = oldAnnotation;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
+        public string Name { get; }
+        public IConventionAnnotation? Annotation { get; }
+        public IConventionAnnotation? OldAnnotation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyAnnotationChanged(
                 RelationshipBuilder, Name, Annotation, OldAnnotation);
     }
 
-    private sealed class OnForeignKeyPropertiesChangedNode(
-        IConventionForeignKeyBuilder relationshipBuilder,
-        IReadOnlyList<IConventionProperty> oldDependentProperties,
-        IConventionKey oldPrincipalKey)
-        : ConventionNode
+    private sealed class OnForeignKeyPropertiesChangedNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
-        public IReadOnlyList<IConventionProperty> OldDependentProperties { get; } = oldDependentProperties;
-        public IConventionKey OldPrincipalKey { get; } = oldPrincipalKey;
+        public OnForeignKeyPropertiesChangedNode(
+            IConventionForeignKeyBuilder relationshipBuilder,
+            IReadOnlyList<IConventionProperty> oldDependentProperties,
+            IConventionKey oldPrincipalKey)
+        {
+            RelationshipBuilder = relationshipBuilder;
+            OldDependentProperties = oldDependentProperties;
+            OldPrincipalKey = oldPrincipalKey;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
+        public IReadOnlyList<IConventionProperty> OldDependentProperties { get; }
+        public IConventionKey OldPrincipalKey { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyPropertiesChanged(
                 RelationshipBuilder, OldDependentProperties, OldPrincipalKey);
     }
 
-    private sealed class OnForeignKeyUniquenessChangedNode(IConventionForeignKeyBuilder relationshipBuilder) : ConventionNode
+    private sealed class OnForeignKeyUniquenessChangedNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
+        public OnForeignKeyUniquenessChangedNode(IConventionForeignKeyBuilder relationshipBuilder)
+        {
+            RelationshipBuilder = relationshipBuilder;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyUniquenessChanged(RelationshipBuilder);
     }
 
-    private sealed class OnForeignKeyRequirednessChangedNode(IConventionForeignKeyBuilder relationshipBuilder) : ConventionNode
+    private sealed class OnForeignKeyRequirednessChangedNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
+        public OnForeignKeyRequirednessChangedNode(IConventionForeignKeyBuilder relationshipBuilder)
+        {
+            RelationshipBuilder = relationshipBuilder;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyRequirednessChanged(RelationshipBuilder);
     }
 
-    private sealed class OnForeignKeyDependentRequirednessChangedNode(IConventionForeignKeyBuilder relationshipBuilder) : ConventionNode
+    private sealed class OnForeignKeyDependentRequirednessChangedNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
+        public OnForeignKeyDependentRequirednessChangedNode(IConventionForeignKeyBuilder relationshipBuilder)
+        {
+            RelationshipBuilder = relationshipBuilder;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyDependentRequirednessChanged(RelationshipBuilder);
     }
 
-    private sealed class OnForeignKeyOwnershipChangedNode(IConventionForeignKeyBuilder relationshipBuilder) : ConventionNode
+    private sealed class OnForeignKeyOwnershipChangedNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
+        public OnForeignKeyOwnershipChangedNode(IConventionForeignKeyBuilder relationshipBuilder)
+        {
+            RelationshipBuilder = relationshipBuilder;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyOwnershipChanged(RelationshipBuilder);
     }
 
-    private sealed class OnForeignKeyNullNavigationSetNode(IConventionForeignKeyBuilder relationshipBuilder, bool pointsToPrincipal)
-        : ConventionNode
+    private sealed class OnForeignKeyNullNavigationSetNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
-        public bool PointsToPrincipal { get; } = pointsToPrincipal;
+        public OnForeignKeyNullNavigationSetNode(IConventionForeignKeyBuilder relationshipBuilder, bool pointsToPrincipal)
+        {
+            RelationshipBuilder = relationshipBuilder;
+            PointsToPrincipal = pointsToPrincipal;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
+        public bool PointsToPrincipal { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyNullNavigationSet(RelationshipBuilder, PointsToPrincipal);
     }
 
-    private sealed class OnForeignKeyPrincipalEndChangedNode(IConventionForeignKeyBuilder relationshipBuilder) : ConventionNode
+    private sealed class OnForeignKeyPrincipalEndChangedNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
+        public OnForeignKeyPrincipalEndChangedNode(IConventionForeignKeyBuilder relationshipBuilder)
+        {
+            RelationshipBuilder = relationshipBuilder;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnForeignKeyPrincipalEndChanged(RelationshipBuilder);
     }
 
-    private sealed class OnNavigationAddedNode(IConventionNavigationBuilder navigationBuilder) : ConventionNode
+    private sealed class OnNavigationAddedNode : ConventionNode
     {
-        public IConventionNavigationBuilder NavigationBuilder { get; } = navigationBuilder;
+        public OnNavigationAddedNode(IConventionNavigationBuilder navigationBuilder)
+        {
+            NavigationBuilder = navigationBuilder;
+        }
+
+        public IConventionNavigationBuilder NavigationBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnNavigationAdded(NavigationBuilder);
     }
 
-    private sealed class OnNavigationAnnotationChangedNode(
-        IConventionForeignKeyBuilder relationshipBuilder,
-        IConventionNavigation navigation,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
+    private sealed class OnNavigationAnnotationChangedNode : ConventionNode
     {
-        public IConventionForeignKeyBuilder RelationshipBuilder { get; } = relationshipBuilder;
-        public IConventionNavigation Navigation { get; } = navigation;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public OnNavigationAnnotationChangedNode(
+            IConventionForeignKeyBuilder relationshipBuilder,
+            IConventionNavigation navigation,
+            string name,
+            IConventionAnnotation? annotation,
+            IConventionAnnotation? oldAnnotation)
+        {
+            RelationshipBuilder = relationshipBuilder;
+            Navigation = navigation;
+            Name = name;
+            Annotation = annotation;
+            OldAnnotation = oldAnnotation;
+        }
+
+        public IConventionForeignKeyBuilder RelationshipBuilder { get; }
+        public IConventionNavigation Navigation { get; }
+        public string Name { get; }
+        public IConventionAnnotation? Annotation { get; }
+        public IConventionAnnotation? OldAnnotation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnNavigationAnnotationChanged(
                 RelationshipBuilder, Navigation, Name, Annotation, OldAnnotation);
     }
 
-    private sealed class OnNavigationRemovedNode(
-        IConventionEntityTypeBuilder sourceEntityTypeBuilder,
-        IConventionEntityTypeBuilder targetEntityTypeBuilder,
-        string navigationName,
-        MemberInfo? memberInfo)
-        : ConventionNode
+    private sealed class OnNavigationRemovedNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder SourceEntityTypeBuilder { get; } = sourceEntityTypeBuilder;
-        public IConventionEntityTypeBuilder TargetEntityTypeBuilder { get; } = targetEntityTypeBuilder;
-        public string NavigationName { get; } = navigationName;
-        public MemberInfo? MemberInfo { get; } = memberInfo;
+        public OnNavigationRemovedNode(
+            IConventionEntityTypeBuilder sourceEntityTypeBuilder,
+            IConventionEntityTypeBuilder targetEntityTypeBuilder,
+            string navigationName,
+            MemberInfo? memberInfo)
+        {
+            SourceEntityTypeBuilder = sourceEntityTypeBuilder;
+            TargetEntityTypeBuilder = targetEntityTypeBuilder;
+            NavigationName = navigationName;
+            MemberInfo = memberInfo;
+        }
+
+        public IConventionEntityTypeBuilder SourceEntityTypeBuilder { get; }
+        public IConventionEntityTypeBuilder TargetEntityTypeBuilder { get; }
+        public string NavigationName { get; }
+        public MemberInfo? MemberInfo { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnNavigationRemoved(
                 SourceEntityTypeBuilder, TargetEntityTypeBuilder, NavigationName, MemberInfo);
     }
 
-    private sealed class OnSkipNavigationAddedNode(IConventionSkipNavigationBuilder navigationBuilder) : ConventionNode
+    private sealed class OnSkipNavigationAddedNode : ConventionNode
     {
-        public IConventionSkipNavigationBuilder NavigationBuilder { get; } = navigationBuilder;
+        public OnSkipNavigationAddedNode(IConventionSkipNavigationBuilder navigationBuilder)
+        {
+            NavigationBuilder = navigationBuilder;
+        }
+
+        public IConventionSkipNavigationBuilder NavigationBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnSkipNavigationAdded(NavigationBuilder);
     }
 
-    private sealed class OnSkipNavigationAnnotationChangedNode(
-        IConventionSkipNavigationBuilder navigationBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
+    private sealed class OnSkipNavigationAnnotationChangedNode : ConventionNode
     {
-        public IConventionSkipNavigationBuilder NavigationBuilder { get; } = navigationBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public OnSkipNavigationAnnotationChangedNode(
+            IConventionSkipNavigationBuilder navigationBuilder,
+            string name,
+            IConventionAnnotation? annotation,
+            IConventionAnnotation? oldAnnotation)
+        {
+            NavigationBuilder = navigationBuilder;
+            Name = name;
+            Annotation = annotation;
+            OldAnnotation = oldAnnotation;
+        }
+
+        public IConventionSkipNavigationBuilder NavigationBuilder { get; }
+        public string Name { get; }
+        public IConventionAnnotation? Annotation { get; }
+        public IConventionAnnotation? OldAnnotation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnSkipNavigationAnnotationChanged(
                 NavigationBuilder, Name, Annotation, OldAnnotation);
     }
 
-    private sealed class OnSkipNavigationForeignKeyChangedNode(
-        IConventionSkipNavigationBuilder navigationBuilder,
-        IConventionForeignKey? foreignKey,
-        IConventionForeignKey? oldForeignKey)
-        : ConventionNode
+    private sealed class OnSkipNavigationForeignKeyChangedNode : ConventionNode
     {
-        public IConventionSkipNavigationBuilder NavigationBuilder { get; } = navigationBuilder;
-        public IConventionForeignKey? ForeignKey { get; } = foreignKey;
-        public IConventionForeignKey? OldForeignKey { get; } = oldForeignKey;
+        public OnSkipNavigationForeignKeyChangedNode(
+            IConventionSkipNavigationBuilder navigationBuilder,
+            IConventionForeignKey? foreignKey,
+            IConventionForeignKey? oldForeignKey)
+        {
+            NavigationBuilder = navigationBuilder;
+            ForeignKey = foreignKey;
+            OldForeignKey = oldForeignKey;
+        }
+
+        public IConventionSkipNavigationBuilder NavigationBuilder { get; }
+        public IConventionForeignKey? ForeignKey { get; }
+        public IConventionForeignKey? OldForeignKey { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnSkipNavigationForeignKeyChanged(NavigationBuilder, ForeignKey, OldForeignKey);
     }
 
-    private sealed class OnSkipNavigationInverseChangedNode(
-        IConventionSkipNavigationBuilder navigationBuilder,
-        IConventionSkipNavigation? inverse,
-        IConventionSkipNavigation? oldInverse)
-        : ConventionNode
+    private sealed class OnSkipNavigationInverseChangedNode : ConventionNode
     {
-        public IConventionSkipNavigationBuilder NavigationBuilder { get; } = navigationBuilder;
-        public IConventionSkipNavigation? Inverse { get; } = inverse;
-        public IConventionSkipNavigation? OldInverse { get; } = oldInverse;
+        public OnSkipNavigationInverseChangedNode(
+            IConventionSkipNavigationBuilder navigationBuilder,
+            IConventionSkipNavigation? inverse,
+            IConventionSkipNavigation? oldInverse)
+        {
+            NavigationBuilder = navigationBuilder;
+            Inverse = inverse;
+            OldInverse = oldInverse;
+        }
+
+        public IConventionSkipNavigationBuilder NavigationBuilder { get; }
+        public IConventionSkipNavigation? Inverse { get; }
+        public IConventionSkipNavigation? OldInverse { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnSkipNavigationInverseChanged(NavigationBuilder, Inverse, OldInverse);
     }
 
-    private sealed class OnSkipNavigationRemovedNode(
-        IConventionEntityTypeBuilder entityTypeBuilder,
-        IConventionSkipNavigation navigation)
-        : ConventionNode
+    private sealed class OnSkipNavigationRemovedNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public IConventionSkipNavigation Navigation { get; } = navigation;
+        public OnSkipNavigationRemovedNode(
+            IConventionEntityTypeBuilder entityTypeBuilder,
+            IConventionSkipNavigation navigation)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            Navigation = navigation;
+        }
+
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public IConventionSkipNavigation Navigation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnSkipNavigationRemoved(EntityTypeBuilder, Navigation);
     }
 
-    private sealed class OnTriggerAddedNode(IConventionTriggerBuilder triggerBuilder) : ConventionNode
+    private sealed class OnKeyAddedNode : ConventionNode
     {
-        public IConventionTriggerBuilder TriggerBuilder { get; } = triggerBuilder;
+        public OnKeyAddedNode(IConventionKeyBuilder keyBuilder)
+        {
+            KeyBuilder = keyBuilder;
+        }
 
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnTriggerAdded(TriggerBuilder);
-    }
-
-    private sealed class OnTriggerRemovedNode(
-        IConventionEntityTypeBuilder entityTypeBuilder,
-        IConventionTrigger trigger)
-        : ConventionNode
-    {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public IConventionTrigger Trigger { get; } = trigger;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnTriggerRemoved(EntityTypeBuilder, Trigger);
-    }
-
-    private sealed class OnKeyAddedNode(IConventionKeyBuilder keyBuilder) : ConventionNode
-    {
-        public IConventionKeyBuilder KeyBuilder { get; } = keyBuilder;
+        public IConventionKeyBuilder KeyBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnKeyAdded(KeyBuilder);
     }
 
-    private sealed class OnKeyRemovedNode(IConventionEntityTypeBuilder entityTypeBuilder, IConventionKey key) : ConventionNode
+    private sealed class OnKeyRemovedNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public IConventionKey Key { get; } = key;
+        public OnKeyRemovedNode(IConventionEntityTypeBuilder entityTypeBuilder, IConventionKey key)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            Key = key;
+        }
+
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public IConventionKey Key { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnKeyRemoved(EntityTypeBuilder, Key);
     }
 
-    private sealed class OnKeyAnnotationChangedNode(
-        IConventionKeyBuilder keyBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
+    private sealed class OnKeyAnnotationChangedNode : ConventionNode
     {
-        public IConventionKeyBuilder KeyBuilder { get; } = keyBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public OnKeyAnnotationChangedNode(
+            IConventionKeyBuilder keyBuilder,
+            string name,
+            IConventionAnnotation? annotation,
+            IConventionAnnotation? oldAnnotation)
+        {
+            KeyBuilder = keyBuilder;
+            Name = name;
+            Annotation = annotation;
+            OldAnnotation = oldAnnotation;
+        }
+
+        public IConventionKeyBuilder KeyBuilder { get; }
+        public string Name { get; }
+        public IConventionAnnotation? Annotation { get; }
+        public IConventionAnnotation? OldAnnotation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnKeyAnnotationChanged(
                 KeyBuilder, Name, Annotation, OldAnnotation);
     }
 
-    private sealed class OnEntityTypePrimaryKeyChangedNode(
-        IConventionEntityTypeBuilder entityTypeBuilder,
-        IConventionKey? newPrimaryKey,
-        IConventionKey? previousPrimaryKey)
-        : ConventionNode
+    private sealed class OnEntityTypePrimaryKeyChangedNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public IConventionKey? NewPrimaryKey { get; } = newPrimaryKey;
-        public IConventionKey? PreviousPrimaryKey { get; } = previousPrimaryKey;
+        public OnEntityTypePrimaryKeyChangedNode(
+            IConventionEntityTypeBuilder entityTypeBuilder,
+            IConventionKey? newPrimaryKey,
+            IConventionKey? previousPrimaryKey)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            NewPrimaryKey = newPrimaryKey;
+            PreviousPrimaryKey = previousPrimaryKey;
+        }
+
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public IConventionKey? NewPrimaryKey { get; }
+        public IConventionKey? PreviousPrimaryKey { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnEntityTypePrimaryKeyChanged(
                 EntityTypeBuilder, NewPrimaryKey, PreviousPrimaryKey);
     }
 
-    private sealed class OnIndexAddedNode(IConventionIndexBuilder indexBuilder) : ConventionNode
+    private sealed class OnIndexAddedNode : ConventionNode
     {
-        public IConventionIndexBuilder IndexBuilder { get; } = indexBuilder;
+        public OnIndexAddedNode(IConventionIndexBuilder indexBuilder)
+        {
+            IndexBuilder = indexBuilder;
+        }
+
+        public IConventionIndexBuilder IndexBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnIndexAdded(IndexBuilder);
     }
 
-    private sealed class OnIndexRemovedNode(IConventionEntityTypeBuilder entityTypeBuilder, IConventionIndex index)
-        : ConventionNode
+    private sealed class OnIndexRemovedNode : ConventionNode
     {
-        public IConventionEntityTypeBuilder EntityTypeBuilder { get; } = entityTypeBuilder;
-        public IConventionIndex Index { get; } = index;
+        public OnIndexRemovedNode(IConventionEntityTypeBuilder entityTypeBuilder, IConventionIndex index)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            Index = index;
+        }
+
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public IConventionIndex Index { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnIndexRemoved(EntityTypeBuilder, Index);
     }
 
-    private sealed class OnIndexUniquenessChangedNode(IConventionIndexBuilder indexBuilder) : ConventionNode
+    private sealed class OnIndexUniquenessChangedNode : ConventionNode
     {
-        public IConventionIndexBuilder IndexBuilder { get; } = indexBuilder;
+        public OnIndexUniquenessChangedNode(IConventionIndexBuilder indexBuilder)
+        {
+            IndexBuilder = indexBuilder;
+        }
+
+        public IConventionIndexBuilder IndexBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnIndexUniquenessChanged(IndexBuilder);
     }
 
-    private sealed class OnIndexSortOrderChangedNode(IConventionIndexBuilder indexBuilder) : ConventionNode
+    private sealed class OnIndexSortOrderChangedNode : ConventionNode
     {
-        public IConventionIndexBuilder IndexBuilder { get; } = indexBuilder;
+        public OnIndexSortOrderChangedNode(IConventionIndexBuilder indexBuilder)
+        {
+            IndexBuilder = indexBuilder;
+        }
+
+        public IConventionIndexBuilder IndexBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnIndexSortOrderChanged(IndexBuilder);
     }
 
-    private sealed class OnIndexAnnotationChangedNode(
-        IConventionIndexBuilder indexBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
+    private sealed class OnIndexAnnotationChangedNode : ConventionNode
     {
-        public IConventionIndexBuilder IndexBuilder { get; } = indexBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public OnIndexAnnotationChangedNode(
+            IConventionIndexBuilder indexBuilder,
+            string name,
+            IConventionAnnotation? annotation,
+            IConventionAnnotation? oldAnnotation)
+        {
+            IndexBuilder = indexBuilder;
+            Name = name;
+            Annotation = annotation;
+            OldAnnotation = oldAnnotation;
+        }
+
+        public IConventionIndexBuilder IndexBuilder { get; }
+        public string Name { get; }
+        public IConventionAnnotation? Annotation { get; }
+        public IConventionAnnotation? OldAnnotation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnIndexAnnotationChanged(
                 IndexBuilder, Name, Annotation, OldAnnotation);
     }
 
-    private sealed class OnPropertyAddedNode(IConventionPropertyBuilder propertyBuilder) : ConventionNode
+    private sealed class OnPropertyAddedNode : ConventionNode
     {
-        public IConventionPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
+        public OnPropertyAddedNode(IConventionPropertyBuilder propertyBuilder)
+        {
+            PropertyBuilder = propertyBuilder;
+        }
+
+        public IConventionPropertyBuilder PropertyBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnPropertyAdded(PropertyBuilder);
     }
 
-    private sealed class OnPropertyNullabilityChangedNode(IConventionPropertyBuilder propertyBuilder) : ConventionNode
+    private sealed class OnPropertyNullableChangedNode : ConventionNode
     {
-        public IConventionPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
+        public OnPropertyNullableChangedNode(IConventionPropertyBuilder propertyBuilder)
+        {
+            PropertyBuilder = propertyBuilder;
+        }
+
+        public IConventionPropertyBuilder PropertyBuilder { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnPropertyNullabilityChanged(PropertyBuilder);
     }
 
-    private sealed class OnElementTypeNullabilityChangedNode(IConventionElementTypeBuilder builder) : ConventionNode
+    private sealed class OnPropertyFieldChangedNode : ConventionNode
     {
-        public IConventionElementTypeBuilder ElementTypeBuilder { get; } = builder;
+        public OnPropertyFieldChangedNode(IConventionPropertyBuilder propertyBuilder, FieldInfo? newFieldInfo, FieldInfo? oldFieldInfo)
+        {
+            PropertyBuilder = propertyBuilder;
+            NewFieldInfo = newFieldInfo;
+            OldFieldInfo = oldFieldInfo;
+        }
 
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnElementTypeNullabilityChanged(ElementTypeBuilder);
-    }
-
-    private sealed class OnPropertyFieldChangedNode(
-        IConventionPropertyBuilder propertyBuilder,
-        FieldInfo? newFieldInfo,
-        FieldInfo? oldFieldInfo)
-        : ConventionNode
-    {
-        public IConventionPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
-        public FieldInfo? NewFieldInfo { get; } = newFieldInfo;
-        public FieldInfo? OldFieldInfo { get; } = oldFieldInfo;
+        public IConventionPropertyBuilder PropertyBuilder { get; }
+        public FieldInfo? NewFieldInfo { get; }
+        public FieldInfo? OldFieldInfo { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnPropertyFieldChanged(PropertyBuilder, NewFieldInfo, OldFieldInfo);
     }
 
-    private sealed class OnPropertyElementTypeChangedNode(
-        IConventionPropertyBuilder propertyBuilder,
-        IElementType? newElementType,
-        IElementType? oldElementType)
-        : ConventionNode
+    private sealed class OnPropertyAnnotationChangedNode : ConventionNode
     {
-        public IConventionPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
-        public IElementType? NewElementType { get; } = newElementType;
-        public IElementType? OldElementType { get; } = oldElementType;
+        public OnPropertyAnnotationChangedNode(
+            IConventionPropertyBuilder propertyBuilder,
+            string name,
+            IConventionAnnotation? annotation,
+            IConventionAnnotation? oldAnnotation)
+        {
+            PropertyBuilder = propertyBuilder;
+            Name = name;
+            Annotation = annotation;
+            OldAnnotation = oldAnnotation;
+        }
 
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnPropertyElementTypeChanged(PropertyBuilder, NewElementType, OldElementType);
-    }
-
-    private sealed class OnPropertyAnnotationChangedNode(
-        IConventionPropertyBuilder propertyBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
-    {
-        public IConventionPropertyBuilder PropertyBuilder { get; } = propertyBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public IConventionPropertyBuilder PropertyBuilder { get; }
+        public string Name { get; }
+        public IConventionAnnotation? Annotation { get; }
+        public IConventionAnnotation? OldAnnotation { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
             => dispatcher._immediateConventionScope.OnPropertyAnnotationChanged(
                 PropertyBuilder, Name, Annotation, OldAnnotation);
     }
 
-    private sealed class OnElementTypeAnnotationChangedNode(
-        IConventionElementTypeBuilder elementTypeBuilder,
-        string name,
-        IConventionAnnotation? annotation,
-        IConventionAnnotation? oldAnnotation)
-        : ConventionNode
+    private sealed class OnPropertyRemovedNode : ConventionNode
     {
-        public IConventionElementTypeBuilder ElementTypeBuilder { get; } = elementTypeBuilder;
-        public string Name { get; } = name;
-        public IConventionAnnotation? Annotation { get; } = annotation;
-        public IConventionAnnotation? OldAnnotation { get; } = oldAnnotation;
+        public OnPropertyRemovedNode(
+            IConventionEntityTypeBuilder entityTypeBuilder,
+            IConventionProperty property)
+        {
+            EntityTypeBuilder = entityTypeBuilder;
+            Property = property;
+        }
+
+        public IConventionEntityTypeBuilder EntityTypeBuilder { get; }
+        public IConventionProperty Property { get; }
 
         public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnElementTypeAnnotationChanged(
-                ElementTypeBuilder, Name, Annotation, OldAnnotation);
-    }
-
-    private sealed class OnPropertyRemovedNode(
-        IConventionTypeBaseBuilder typeBaseBuilder,
-        IConventionProperty property)
-        : ConventionNode
-    {
-        public IConventionTypeBaseBuilder TypeBaseBuilder { get; } = typeBaseBuilder;
-        public IConventionProperty Property { get; } = property;
-
-        public override void Run(ConventionDispatcher dispatcher)
-            => dispatcher._immediateConventionScope.OnPropertyRemoved(TypeBaseBuilder, Property);
+            => dispatcher._immediateConventionScope.OnPropertyRemoved(EntityTypeBuilder, Property);
     }
 }

@@ -17,7 +17,7 @@ public interface IRelationalParameterBasedSqlProcessorFactory
     /// <summary>
     ///     Creates a new <see cref="RelationalParameterBasedSqlProcessor" />.
     /// </summary>
-    /// <param name="parameters">Parameters for <see cref="RelationalParameterBasedSqlProcessor" />.</param>
+    /// <param name="useRelationalNulls">A bool value indicating if relational nulls should be used.</param>
     /// <returns>A relational parameter based sql processor.</returns>
-    RelationalParameterBasedSqlProcessor Create(RelationalParameterBasedSqlProcessorParameters parameters);
+    RelationalParameterBasedSqlProcessor Create(bool useRelationalNulls);
 }

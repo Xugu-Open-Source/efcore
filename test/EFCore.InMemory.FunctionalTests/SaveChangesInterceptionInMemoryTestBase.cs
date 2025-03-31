@@ -3,10 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public abstract class SaveChangesInterceptionInMemoryTestBase(
-    SaveChangesInterceptionInMemoryTestBase.InterceptionInMemoryFixtureBase fixture)
-    : SaveChangesInterceptionTestBase(fixture)
+public abstract class SaveChangesInterceptionInMemoryTestBase : SaveChangesInterceptionTestBase
 {
+    protected SaveChangesInterceptionInMemoryTestBase(InterceptionInMemoryFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     protected override bool SupportsOptimisticConcurrency
         => false;
 
@@ -27,9 +30,14 @@ public abstract class SaveChangesInterceptionInMemoryTestBase(
             => base.AddOptions(builder).ConfigureWarnings(c => c.Ignore(InMemoryEventId.TransactionIgnoredWarning));
     }
 
-    public class SaveChangesInterceptionInMemoryTest(SaveChangesInterceptionInMemoryTest.InterceptionInMemoryFixture fixture)
-        : SaveChangesInterceptionInMemoryTestBase(fixture), IClassFixture<SaveChangesInterceptionInMemoryTest.InterceptionInMemoryFixture>
+    public class SaveChangesInterceptionInMemoryTest
+        : SaveChangesInterceptionInMemoryTestBase, IClassFixture<SaveChangesInterceptionInMemoryTest.InterceptionInMemoryFixture>
     {
+        public SaveChangesInterceptionInMemoryTest(InterceptionInMemoryFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionInMemoryFixture : InterceptionInMemoryFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener
@@ -37,11 +45,15 @@ public abstract class SaveChangesInterceptionInMemoryTestBase(
         }
     }
 
-    public class SaveChangesInterceptionWithDiagnosticsInMemoryTest(
-        SaveChangesInterceptionWithDiagnosticsInMemoryTest.InterceptionInMemoryFixture fixture)
-        : SaveChangesInterceptionInMemoryTestBase(fixture),
+    public class SaveChangesInterceptionWithDiagnosticsInMemoryTest
+        : SaveChangesInterceptionInMemoryTestBase,
             IClassFixture<SaveChangesInterceptionWithDiagnosticsInMemoryTest.InterceptionInMemoryFixture>
     {
+        public SaveChangesInterceptionWithDiagnosticsInMemoryTest(InterceptionInMemoryFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionInMemoryFixture : InterceptionInMemoryFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener

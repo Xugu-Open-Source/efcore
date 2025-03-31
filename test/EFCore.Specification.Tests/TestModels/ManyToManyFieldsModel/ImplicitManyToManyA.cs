@@ -5,8 +5,6 @@ using System.Collections.ObjectModel;
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ManyToManyFieldsModel;
 
-#nullable disable
-
 public class ImplicitManyToManyA
 {
     public int Id;

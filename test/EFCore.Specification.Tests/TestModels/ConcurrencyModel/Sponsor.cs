@@ -5,8 +5,6 @@ using System.Collections.ObjectModel;
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ConcurrencyModel;
 
-#nullable disable
-
 public class Sponsor
 {
     public class SponsorDoubleProxy : SponsorProxy
@@ -30,7 +28,7 @@ public class Sponsor
 
     public static readonly string ClientTokenPropertyName = "ClientToken";
 
-    private readonly ObservableCollection<Team> _teams = [];
+    private readonly ObservableCollection<Team> _teams = new();
 
     public int Id { get; set; }
     public string Name { get; set; }

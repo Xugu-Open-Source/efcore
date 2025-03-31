@@ -1073,14 +1073,14 @@ public class QueryFixupTest
 
     private class OrderDetails
     {
-        public Order Order { get; }
+        public Order Order { get; set; }
         public Address BillingAddress { get; set; }
         public Address ShippingAddress { get; set; }
     }
 
     private class Address
     {
-        public OrderDetails OrderDetails { get; }
+        public OrderDetails OrderDetails { get; set; }
         public string Street { get; set; }
     }
 
@@ -1157,7 +1157,9 @@ public class QueryFixupTest
     private class QueryFixupContext : DbContext
     {
         public QueryFixupContext()
-            => ChangeTracker.AutoDetectChangesEnabled = false;
+        {
+            ChangeTracker.AutoDetectChangesEnabled = false;
+        }
 
         protected internal override void OnModelCreating(ModelBuilder modelBuilder)
         {

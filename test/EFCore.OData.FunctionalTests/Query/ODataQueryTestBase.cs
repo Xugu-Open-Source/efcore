@@ -3,9 +3,15 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public abstract class ODataQueryTestBase(IODataQueryTestFixture fixture)
+public abstract class ODataQueryTestBase
 {
-    public string BaseAddress { get; } = fixture.BaseAddress;
+    public ODataQueryTestBase(IODataQueryTestFixture fixture)
+    {
+        BaseAddress = fixture.BaseAddress;
+        Client = fixture.ClientFactory.CreateClient();
+    }
 
-    public HttpClient Client { get; } = fixture.ClientFactory.CreateClient();
+    public string BaseAddress { get; }
+
+    public HttpClient Client { get; }
 }

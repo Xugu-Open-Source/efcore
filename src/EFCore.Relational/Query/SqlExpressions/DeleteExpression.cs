@@ -11,11 +11,8 @@ namespace Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 ///         This type is typically used by database providers (and other extensions). It is generally not used in application code.
 ///     </para>
 /// </summary>
-[DebuggerDisplay("{Microsoft.EntityFrameworkCore.Query.ExpressionPrinter.Print(this), nq}")]
-public sealed class DeleteExpression : Expression, IRelationalQuotableExpression, IPrintableExpression
+public sealed class DeleteExpression : Expression, IPrintableExpression
 {
-    private static ConstructorInfo? _quotingConstructor;
-
     /// <summary>
     ///     Creates a new instance of the <see cref="DeleteExpression" /> class.
     /// </summary>
@@ -26,14 +23,7 @@ public sealed class DeleteExpression : Expression, IRelationalQuotableExpression
     {
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [EntityFrameworkInternal] // For precompiled queries
-    public DeleteExpression(TableExpression table, SelectExpression selectExpression, ISet<string> tags)
+    private DeleteExpression(TableExpression table, SelectExpression selectExpression, ISet<string> tags)
     {
         Table = table;
         SelectExpression = selectExpression;
@@ -64,7 +54,7 @@ public sealed class DeleteExpression : Expression, IRelationalQuotableExpression
 
     /// <inheritdoc />
     public override Type Type
-        => typeof(void);
+        => typeof(object);
 
     /// <inheritdoc />
     public override ExpressionType NodeType
@@ -74,48 +64,30 @@ public sealed class DeleteExpression : Expression, IRelationalQuotableExpression
     protected override Expression VisitChildren(ExpressionVisitor visitor)
     {
         var selectExpression = (SelectExpression)visitor.Visit(SelectExpression);
-        var table = (TableExpression)visitor.Visit(Table);
-        return Update(table, selectExpression);
+
+        return Update(selectExpression);
     }
 
     /// <summary>
     ///     Creates a new expression that is like this one, but using the supplied children. If all of the children are the same, it will
     ///     return this expression.
     /// </summary>
-    /// <param name="table">The <see cref="Table" /> property of the result.</param>
     /// <param name="selectExpression">The <see cref="SelectExpression" /> property of the result.</param>
     /// <returns>This expression if no children changed, or an expression with the updated children.</returns>
-    public DeleteExpression Update(TableExpression table, SelectExpression selectExpression)
-        => table == Table && selectExpression == SelectExpression
-            ? this
-            : new DeleteExpression(table, selectExpression, Tags);
-
-    /// <inheritdoc />
-    public Expression Quote()
-        => New(
-            _quotingConstructor ??= typeof(DeleteExpression).GetConstructor(
-            [
-                typeof(TableExpression),
-                typeof(SelectExpression),
-                typeof(ISet<string>)
-            ])!,
-            Table.Quote(),
-            SelectExpression.Quote(),
-            RelationalExpressionQuotingUtilities.QuoteTags(Tags));
+    public DeleteExpression Update(SelectExpression selectExpression)
+        => selectExpression != SelectExpression
+            ? new DeleteExpression(Table, selectExpression, Tags)
+            : this;
 
     /// <inheritdoc />
     public void Print(ExpressionPrinter expressionPrinter)
     {
-        if (Tags.Count > 0)
+        foreach (var tag in Tags)
         {
-            foreach (var tag in Tags)
-            {
-                expressionPrinter.Append($"-- {tag}");
-            }
-
-            expressionPrinter.AppendLine();
+            expressionPrinter.Append($"-- {tag}");
         }
 
+        expressionPrinter.AppendLine();
         expressionPrinter.AppendLine($"DELETE FROM {Table.Name} AS {Table.Alias}");
         expressionPrinter.Visit(SelectExpression);
     }

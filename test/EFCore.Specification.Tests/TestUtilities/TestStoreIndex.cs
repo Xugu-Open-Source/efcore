@@ -7,44 +7,62 @@ namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
 public class TestStoreIndex
 {
-    private readonly HashSet<string> _createdDatabases = [];
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _creationLocks = new();
+    private readonly HashSet<string> _createdDatabases = new();
+    private readonly ConcurrentDictionary<string, object> _creationLocks = new();
     private readonly object _hashSetLock = new();
 
-    public virtual async Task CreateSharedAsync(string name, Func<Task> initializeDatabase)
+    public virtual void CreateShared(string name, Action initializeDatabase)
     {
         // ReSharper disable once InconsistentlySynchronizedField
         if (!_createdDatabases.Contains(name))
         {
-            var creationLock = _creationLocks.GetOrAdd(name, new SemaphoreSlim(1, 1));
-            await creationLock.WaitAsync();
-            try
+            var creationLock = _creationLocks.GetOrAdd(name, new object());
+
+            lock (creationLock)
             {
                 if (!_createdDatabases.Contains(name))
                 {
-                    await initializeDatabase();
+                    initializeDatabase?.Invoke();
 
                     lock (_hashSetLock)
                     {
                         _createdDatabases.Add(name);
                     }
+
+                    _creationLocks.TryRemove(name, out _);
                 }
-            }
-            finally
-            {
-                creationLock.Release();
             }
         }
     }
 
     public virtual void RemoveShared(string name)
+        => _createdDatabases.Remove(name);
+
+    public virtual void CreateNonShared(string name, Action initializeDatabase)
     {
-        lock (_hashSetLock)
+        var creationLock = _creationLocks.GetOrAdd(name, new object());
+
+        if (Monitor.TryEnter(creationLock))
         {
-            _createdDatabases.Remove(name);
+            try
+            {
+                initializeDatabase?.Invoke();
+            }
+            finally
+            {
+                Monitor.Exit(creationLock);
+                if (!_creationLocks.TryRemove(name, out _))
+                {
+                    throw new InvalidOperationException(
+                        $"An attempt was made to initialize a non-shared store {name} from two different threads.");
+                }
+            }
+        }
+        else
+        {
+            _creationLocks.TryRemove(name, out _);
+            throw new InvalidOperationException(
+                $"An attempt was made to initialize a non-shared store {name} from two different threads.");
         }
     }
-
-    public virtual Task CreateNonSharedAsync(string name, Func<Task> initializeDatabase)
-        => initializeDatabase();
 }

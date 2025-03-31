@@ -20,10 +20,12 @@ public readonly struct MultiSnapshot : ISnapshot
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public MultiSnapshot(ISnapshot[] snapshots)
-        => _snapshots = snapshots;
+    {
+        _snapshots = snapshots;
+    }
 
     internal static readonly ConstructorInfo Constructor
-        = typeof(MultiSnapshot).GetDeclaredConstructor([typeof(ISnapshot[])])!;
+        = typeof(MultiSnapshot).GetDeclaredConstructor(new[] { typeof(ISnapshot[]) })!;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

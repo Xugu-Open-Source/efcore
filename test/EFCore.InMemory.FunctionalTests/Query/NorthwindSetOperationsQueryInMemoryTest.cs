@@ -5,9 +5,19 @@ using Microsoft.EntityFrameworkCore.InMemory.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class NorthwindSetOperationsQueryInMemoryTest(NorthwindQueryInMemoryFixture<NoopModelCustomizer> fixture)
-    : NorthwindSetOperationsQueryTestBase<NorthwindQueryInMemoryFixture<NoopModelCustomizer>>(fixture)
+public class NorthwindSetOperationsQueryInMemoryTest : NorthwindSetOperationsQueryTestBase<
+    NorthwindQueryInMemoryFixture<NoopModelCustomizer>>
 {
+    public NorthwindSetOperationsQueryInMemoryTest(
+        NorthwindQueryInMemoryFixture<NoopModelCustomizer> fixture,
+#pragma warning disable IDE0060 // Remove unused parameter
+        ITestOutputHelper testOutputHelper)
+#pragma warning restore IDE0060 // Remove unused parameter
+        : base(fixture)
+    {
+        //TestLoggerFactory.TestOutputHelper = testOutputHelper;
+    }
+
     public override async Task Collection_projection_before_set_operation_fails(bool async)
         // Client evaluation in projection. Issue #16243.
         => Assert.Equal(

@@ -23,8 +23,8 @@ public class StoreFunctionParameter : Annotatable, IStoreFunctionParameter
     {
         Function = function;
         Name = parameter.Name;
-        StoreType = parameter.StoreType;
-        DbFunctionParameters = [parameter];
+        Type = parameter.StoreType;
+        DbFunctionParameters = new List<IDbFunctionParameter> { parameter };
         parameter.StoreFunctionParameter = this;
     }
 
@@ -49,7 +49,7 @@ public class StoreFunctionParameter : Annotatable, IStoreFunctionParameter
     public virtual string Name { get; }
 
     /// <inheritdoc />
-    public virtual string StoreType { get; }
+    public virtual string Type { get; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

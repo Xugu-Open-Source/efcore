@@ -4,7 +4,6 @@
 using System.Data;
 using System.Globalization;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
@@ -19,7 +18,7 @@ public class SqlServerTimeSpanTypeMapping : TimeSpanTypeMapping
     // Note: this array will be accessed using the precision as an index
     // so the order of the entries in this array is important
     private readonly string[] _timeFormats =
-    [
+    {
         @"'{0:hh\:mm\:ss}'",
         @"'{0:hh\:mm\:ss\.F}'",
         @"'{0:hh\:mm\:ss\.FF}'",
@@ -28,15 +27,7 @@ public class SqlServerTimeSpanTypeMapping : TimeSpanTypeMapping
         @"'{0:hh\:mm\:ss\.FFFFF}'",
         @"'{0:hh\:mm\:ss\.FFFFFF}'",
         @"'{0:hh\:mm\:ss\.FFFFFFF}'"
-    ];
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public static new SqlServerTimeSpanTypeMapping Default { get; } = new("time");
+    };
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -50,7 +41,7 @@ public class SqlServerTimeSpanTypeMapping : TimeSpanTypeMapping
         StoreTypePostfix storeTypePostfix = StoreTypePostfix.Precision)
         : base(
             new RelationalTypeMappingParameters(
-                new CoreTypeMappingParameters(typeof(TimeSpan), jsonValueReaderWriter: JsonTimeSpanReaderWriter.Instance),
+                new CoreTypeMappingParameters(typeof(TimeSpan)),
                 storeType,
                 storeTypePostfix,
                 dbType))
@@ -86,7 +77,7 @@ public class SqlServerTimeSpanTypeMapping : TimeSpanTypeMapping
     {
         base.ConfigureParameter(parameter);
 
-        // Workaround for SqlClient issue: https://github.com/dotnet/runtime/issues/22386
+        // Workaround for a SQLClient bug
         if (DbType == System.Data.DbType.Time)
         {
             ((SqlParameter)parameter).SqlDbType = SqlDbType.Time;
@@ -94,7 +85,7 @@ public class SqlServerTimeSpanTypeMapping : TimeSpanTypeMapping
 
         if (Precision.HasValue)
         {
-            parameter.Scale = (byte)Precision.Value;
+            parameter.Scale = unchecked((byte)Precision.Value);
         }
     }
 
@@ -105,7 +96,22 @@ public class SqlServerTimeSpanTypeMapping : TimeSpanTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override string SqlLiteralFormatString
-        => _timeFormats[Precision is >= 0 and <= 7 ? Precision.Value : 7];
+    {
+        get
+        {
+            if (Precision.HasValue)
+            {
+                var precision = Precision.Value;
+                if (precision <= 7
+                    && precision >= 0)
+                {
+                    return _timeFormats[precision];
+                }
+            }
+
+            return _timeFormats[7];
+        }
+    }
 
     /// <summary>
     ///     Generates the SQL representation of a literal value without conversion.
@@ -115,7 +121,8 @@ public class SqlServerTimeSpanTypeMapping : TimeSpanTypeMapping
     ///     The generated string.
     /// </returns>
     protected override string GenerateNonNullSqlLiteral(object value)
-        => value is TimeSpan { Milliseconds: 0 } // Handle trailing decimal separator when no fractional seconds
-            ? string.Format(CultureInfo.InvariantCulture, _timeFormats[0], value)
+        => value is TimeSpan timeSpan && timeSpan.Milliseconds == 0
+            ? string.Format(
+                CultureInfo.InvariantCulture, _timeFormats[0], value) //handle trailing decimal separator when no fractional seconds
             : string.Format(CultureInfo.InvariantCulture, SqlLiteralFormatString, value);
 }

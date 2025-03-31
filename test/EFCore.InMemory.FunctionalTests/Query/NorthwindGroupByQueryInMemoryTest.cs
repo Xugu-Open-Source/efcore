@@ -5,9 +5,16 @@ using Microsoft.EntityFrameworkCore.InMemory.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class NorthwindGroupByQueryInMemoryTest(NorthwindQueryInMemoryFixture<NoopModelCustomizer> fixture)
-    : NorthwindGroupByQueryTestBase<NorthwindQueryInMemoryFixture<NoopModelCustomizer>>(fixture)
+public class NorthwindGroupByQueryInMemoryTest : NorthwindGroupByQueryTestBase<NorthwindQueryInMemoryFixture<NoopModelCustomizer>>
 {
+    public NorthwindGroupByQueryInMemoryTest(
+        NorthwindQueryInMemoryFixture<NoopModelCustomizer> fixture,
+        ITestOutputHelper testOutputHelper)
+        : base(fixture)
+    {
+        //TestLoggerFactory.TestOutputHelper = testOutputHelper;
+    }
+
     public override Task Final_GroupBy_property_entity(bool async)
         => AssertTranslationFailedWithDetails(
             () => base.Final_GroupBy_property_entity(async),
@@ -19,9 +26,9 @@ public class NorthwindGroupByQueryInMemoryTest(NorthwindQueryInMemoryFixture<Noo
             InMemoryStrings.NonComposedGroupByNotSupported);
 
     public override Task Final_GroupBy_property_entity_non_nullable(bool async)
-        => AssertTranslationFailedWithDetails(
-            () => base.Final_GroupBy_property_entity_non_nullable(async),
-            InMemoryStrings.NonComposedGroupByNotSupported);
+       => AssertTranslationFailedWithDetails(
+           () => base.Final_GroupBy_property_entity_non_nullable(async),
+           InMemoryStrings.NonComposedGroupByNotSupported);
 
     public override Task Final_GroupBy_property_anonymous_type(bool async)
         => AssertTranslationFailedWithDetails(
@@ -66,10 +73,5 @@ public class NorthwindGroupByQueryInMemoryTest(NorthwindQueryInMemoryFixture<Noo
     public override Task Final_GroupBy_property_entity_projecting_collection_and_single_result(bool async)
         => AssertTranslationFailedWithDetails(
             () => base.Final_GroupBy_property_entity_projecting_collection_and_single_result(async),
-            InMemoryStrings.NonComposedGroupByNotSupported);
-
-    public override Task Final_GroupBy_TagWith(bool async)
-        => AssertTranslationFailedWithDetails(
-            () => base.Final_GroupBy_TagWith(async),
             InMemoryStrings.NonComposedGroupByNotSupported);
 }

@@ -3,7 +3,6 @@
 
 using Microsoft.EntityFrameworkCore.SqlServer.Design.Internal;
 using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Microsoft.EntityFrameworkCore.Design.Internal;
 
@@ -55,51 +54,6 @@ public class SqlServerAnnotationCodeGeneratorTest
 
         Assert.Equal(1, result.Arguments.Count);
         Assert.Equal(false, result.Arguments[0]);
-    }
-
-    [ConditionalFact]
-    public void GenerateFluentApi_IKey_works_with_fillfactor()
-    {
-        var generator = CreateGenerator();
-        var modelBuilder = SqlServerConventionSetBuilder.CreateModelBuilder();
-        modelBuilder.Entity(
-            "Post",
-            x =>
-            {
-                x.Property<int>("Id");
-                x.HasKey("Id").HasFillFactor(80);
-            });
-
-        var key = (IKey)modelBuilder.Model.FindEntityType("Post")!.GetKeys().Single();
-        var result = generator.GenerateFluentApiCalls(key, key.GetAnnotations().ToDictionary(a => a.Name, a => a))
-            .Single();
-
-        Assert.Equal("HasFillFactor", result.Method);
-        Assert.Equal(1, result.Arguments.Count);
-        Assert.Equal(80, result.Arguments[0]);
-    }
-
-    [ConditionalFact]
-    public void GenerateFluentApi_IUniqueConstraint_works_with_fillfactor()
-    {
-        var generator = CreateGenerator();
-        var modelBuilder = SqlServerConventionSetBuilder.CreateModelBuilder();
-        modelBuilder.Entity(
-            "Post",
-            x =>
-            {
-                x.Property<int>("Something");
-                x.Property<int>("SomethingElse");
-                x.HasAlternateKey("Something", "SomethingElse").HasFillFactor(80);
-            });
-
-        var uniqueConstraint = (IKey)modelBuilder.Model.FindEntityType("Post")!.GetKeys().Single();
-        var result = generator.GenerateFluentApiCalls(uniqueConstraint, uniqueConstraint.GetAnnotations().ToDictionary(a => a.Name, a => a))
-            .Single();
-
-        Assert.Equal("HasFillFactor", result.Method);
-        Assert.Equal(1, result.Arguments.Count);
-        Assert.Equal(80, result.Arguments[0]);
     }
 
     [ConditionalFact]
@@ -435,8 +389,7 @@ public class SqlServerAnnotationCodeGeneratorTest
                     new TypeMappingSourceDependencies(
                         new ValueConverterSelector(
                             new ValueConverterSelectorDependencies()),
-                        new JsonValueReaderWriterSource(new JsonValueReaderWriterSourceDependencies()),
-                        []),
+                        Array.Empty<ITypeMappingSourcePlugin>()),
                     new RelationalTypeMappingSourceDependencies(
-                        []))));
+                        Array.Empty<IRelationalTypeMappingSourcePlugin>()))));
 }

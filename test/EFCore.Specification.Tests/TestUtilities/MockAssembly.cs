@@ -1,9 +1,9 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class MockAssembly(IEnumerable<TypeInfo> definedTypes, MethodInfo? entryPoint, ReflectionTypeLoadException? exception) : Assembly
+public class MockAssembly : Assembly
 {
     public static Assembly Create(params Type[] definedTypes)
         => Create(
@@ -12,17 +12,22 @@ public class MockAssembly(IEnumerable<TypeInfo> definedTypes, MethodInfo? entryP
                 ? null
                 : new MockMethodInfo(definedTypes.First()));
 
-    public static Assembly Create(Type[] definedTypes, MethodInfo? entryPoint, ReflectionTypeLoadException? exception = null)
+    public static Assembly Create(Type[] definedTypes, MethodInfo entryPoint)
     {
         var definedTypeInfos = definedTypes.Select(t => t.GetTypeInfo()).ToArray();
 
-        return new MockAssembly(definedTypeInfos, entryPoint, exception);
+        return new MockAssembly(definedTypeInfos, entryPoint);
     }
 
-    public override MethodInfo? EntryPoint { get; } = entryPoint;
+    public MockAssembly(IEnumerable<TypeInfo> definedTypes, MethodInfo entryPoint)
+    {
+        DefinedTypes = definedTypes;
+        EntryPoint = entryPoint;
+    }
 
-    public override IEnumerable<TypeInfo> DefinedTypes
-        => exception != null ? throw exception : definedTypes;
+    public override MethodInfo EntryPoint { get; }
+
+    public override IEnumerable<TypeInfo> DefinedTypes { get; }
 
     public override AssemblyName GetName()
         => new(nameof(MockAssembly));

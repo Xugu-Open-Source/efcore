@@ -3,12 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class MonsterFixupChangedOnlySqliteTest(MonsterFixupChangedOnlySqliteTest.MonsterFixupChangedOnlySqliteFixture fixture)
-    : MonsterFixupTestBase<
-        MonsterFixupChangedOnlySqliteTest.MonsterFixupChangedOnlySqliteFixture>(fixture)
+public class MonsterFixupChangedOnlySqliteTest : MonsterFixupTestBase<
+    MonsterFixupChangedOnlySqliteTest.MonsterFixupChangedOnlySqliteFixture>
 {
+    public MonsterFixupChangedOnlySqliteTest(MonsterFixupChangedOnlySqliteFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class MonsterFixupChangedOnlySqliteFixture : MonsterFixupChangedOnlyFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

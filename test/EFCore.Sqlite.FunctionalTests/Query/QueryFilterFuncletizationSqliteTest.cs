@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class QueryFilterFuncletizationSqliteTest : QueryFilterFuncletizationTestBase<
     QueryFilterFuncletizationSqliteTest.QueryFilterFuncletizationSqliteFixture>
 {
@@ -14,36 +12,27 @@ public class QueryFilterFuncletizationSqliteTest : QueryFilterFuncletizationTest
         : base(fixture)
     {
         Fixture.TestSqlLoggerFactory.Clear();
-        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
-    public override void Using_multiple_entities_with_filters_reuses_parameters()
+    public override void DbContext_list_is_parameterized()
     {
-        base.Using_multiple_entities_with_filters_reuses_parameters();
+        using var context = CreateContext();
+        // Default value of TenantIds is null InExpression over null values throws
+        Assert.Throws<NullReferenceException>(() => context.Set<ListFilter>().ToList());
 
-        AssertSql(
-            """
-@ef_filter__Tenant='1'
+        context.TenantIds = new List<int>();
+        var query = context.Set<ListFilter>().ToList();
+        Assert.Empty(query);
 
-SELECT "d"."Id", "d"."Tenant", "d2"."Id", "d2"."DeDupeFilter1Id", "d2"."TenantX", "d3"."Id", "d3"."DeDupeFilter1Id", "d3"."Tenant"
-FROM "DeDupeFilter1" AS "d"
-LEFT JOIN (
-    SELECT "d0"."Id", "d0"."DeDupeFilter1Id", "d0"."TenantX"
-    FROM "DeDupeFilter2" AS "d0"
-    WHERE "d0"."TenantX" = @ef_filter__Tenant
-) AS "d2" ON "d"."Id" = "d2"."DeDupeFilter1Id"
-LEFT JOIN (
-    SELECT "d1"."Id", "d1"."DeDupeFilter1Id", "d1"."Tenant"
-    FROM "DeDupeFilter3" AS "d1"
-    WHERE "d1"."Tenant" = @ef_filter__Tenant
-) AS "d3" ON "d"."Id" = "d3"."DeDupeFilter1Id"
-WHERE "d"."Tenant" = @ef_filter__Tenant
-ORDER BY "d"."Id", "d2"."Id"
-""");
+        context.TenantIds = new List<int> { 1 };
+        query = context.Set<ListFilter>().ToList();
+        Assert.Single(query);
+
+        context.TenantIds = new List<int> { 2, 3 };
+        query = context.Set<ListFilter>().ToList();
+        Assert.Equal(2, query.Count);
     }
-
-    private void AssertSql(params string[] expected)
-        => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
     public class QueryFilterFuncletizationSqliteFixture : QueryFilterFuncletizationRelationalFixture
     {

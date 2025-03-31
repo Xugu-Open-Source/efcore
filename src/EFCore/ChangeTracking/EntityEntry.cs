@@ -24,7 +24,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking;
 [DebuggerDisplay("{" + nameof(InternalEntry) + ",nq}")]
 public class EntityEntry : IInfrastructure<InternalEntityEntry>
 {
-    private static readonly int MaxEntityState = Enum.GetValuesAsUnderlyingType<EntityState>().Cast<int>().Max();
+    private static readonly int MaxEntityState = Enum.GetValues(typeof(EntityState)).Cast<int>().Max();
     private IEntityFinder? _finder;
 
     /// <summary>
@@ -44,7 +44,9 @@ public class EntityEntry : IInfrastructure<InternalEntityEntry>
     /// </summary>
     [EntityFrameworkInternal]
     public EntityEntry(InternalEntityEntry internalEntry)
-        => InternalEntry = internalEntry;
+    {
+        InternalEntry = internalEntry;
+    }
 
     /// <summary>
     ///     Gets the entity being tracked by this entry.
@@ -143,7 +145,6 @@ public class EntityEntry : IInfrastructure<InternalEntityEntry>
         return propertyBase switch
         {
             IProperty property => new PropertyEntry(InternalEntry, property),
-            IComplexProperty complexProperty => new ComplexPropertyEntry(InternalEntry, complexProperty),
             INavigationBase navigation => navigation.IsCollection
                 ? new CollectionEntry(InternalEntry, navigation)
                 : new ReferenceEntry(InternalEntry, (INavigation)navigation),
@@ -169,13 +170,7 @@ public class EntityEntry : IInfrastructure<InternalEntityEntry>
         var property = InternalEntry.EntityType.FindProperty(propertyName);
         if (property != null)
         {
-            return new PropertyEntry(InternalEntry, property);
-        }
-
-        var complexProperty = InternalEntry.EntityType.FindComplexProperty(propertyName);
-        if (complexProperty != null)
-        {
-            return new ComplexPropertyEntry(InternalEntry, complexProperty);
+            return new PropertyEntry(InternalEntry, propertyName);
         }
 
         var navigation = (INavigationBase?)InternalEntry.EntityType.FindNavigation(propertyName)
@@ -183,8 +178,8 @@ public class EntityEntry : IInfrastructure<InternalEntityEntry>
         if (navigation != null)
         {
             return navigation.IsCollection
-                ? new CollectionEntry(InternalEntry, navigation)
-                : new ReferenceEntry(InternalEntry, (INavigation)navigation);
+                ? new CollectionEntry(InternalEntry, propertyName)
+                : new ReferenceEntry(InternalEntry, propertyName);
         }
 
         throw new InvalidOperationException(
@@ -199,7 +194,7 @@ public class EntityEntry : IInfrastructure<InternalEntityEntry>
     ///     examples.
     /// </remarks>
     public virtual IEnumerable<MemberEntry> Members
-        => Properties.Cast<MemberEntry>().Concat(ComplexProperties).Concat(Navigations);
+        => Properties.Cast<MemberEntry>().Concat(Navigations);
 
     /// <summary>
     ///     Provides access to change tracking information and operations for a given navigation of this entity.
@@ -244,8 +239,7 @@ public class EntityEntry : IInfrastructure<InternalEntityEntry>
                 : new ReferenceEntry(InternalEntry, propertyName);
         }
 
-        if (InternalEntry.EntityType.FindProperty(propertyName) != null
-            || InternalEntry.EntityType.FindComplexProperty(propertyName) != null)
+        if (InternalEntry.EntityType.FindProperty(propertyName) != null)
         {
             throw new InvalidOperationException(
                 CoreStrings.NavigationIsProperty(
@@ -309,7 +303,7 @@ public class EntityEntry : IInfrastructure<InternalEntityEntry>
     {
         Check.NotEmpty(propertyName, nameof(propertyName));
 
-        return new PropertyEntry(InternalEntry, Metadata.GetProperty(propertyName));
+        return new PropertyEntry(InternalEntry, propertyName);
     }
 
     /// <summary>
@@ -322,48 +316,6 @@ public class EntityEntry : IInfrastructure<InternalEntityEntry>
     /// </remarks>
     public virtual IEnumerable<PropertyEntry> Properties
         => InternalEntry.EntityType.GetProperties().Select(property => new PropertyEntry(InternalEntry, property));
-
-    /// <summary>
-    ///     Provides access to change tracking information and operations for a given property of a complex type on this entity.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-entity-entries">Accessing tracked entities in EF Core</see> for more information and
-    ///     examples.
-    /// </remarks>
-    /// <param name="property">The property to access information and operations for.</param>
-    /// <returns>An object that exposes change tracking information and operations for the given property.</returns>
-    public virtual ComplexPropertyEntry ComplexProperty(IComplexProperty property)
-    {
-        Check.NotNull(property, nameof(property));
-
-        return new ComplexPropertyEntry(InternalEntry, property);
-    }
-
-    /// <summary>
-    ///     Provides access to change tracking information and operations for a given property of a complex type on this entity.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-entity-entries">Accessing tracked entities in EF Core</see> for more information and
-    ///     examples.
-    /// </remarks>
-    /// <param name="propertyName">The property to access information and operations for.</param>
-    /// <returns>An object that exposes change tracking information and operations for the given property.</returns>
-    public virtual ComplexPropertyEntry ComplexProperty(string propertyName)
-    {
-        Check.NotEmpty(propertyName, nameof(propertyName));
-
-        return new ComplexPropertyEntry(InternalEntry, Metadata.GetComplexProperty(propertyName));
-    }
-
-    /// <summary>
-    ///     Provides access to change tracking information and operations for all properties of complex type on this entity.
-    /// </summary>
-    /// <remarks>
-    ///     See <see href="https://aka.ms/efcore-docs-entity-entries">Accessing tracked entities in EF Core</see> for more information and
-    ///     examples.
-    /// </remarks>
-    public virtual IEnumerable<ComplexPropertyEntry> ComplexProperties
-        => Metadata.GetComplexProperties().Select(property => new ComplexPropertyEntry(InternalEntry, property));
 
     /// <summary>
     ///     Provides access to change tracking and loading information for a reference (i.e. non-collection)

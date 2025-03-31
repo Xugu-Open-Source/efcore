@@ -3,8 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class LoadInMemoryTest(LoadInMemoryTest.LoadInMemoryFixture fixture) : LoadTestBase<LoadInMemoryTest.LoadInMemoryFixture>(fixture)
+public class LoadInMemoryTest : LoadTestBase<LoadInMemoryTest.LoadInMemoryFixture>
 {
+    public LoadInMemoryTest(LoadInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class LoadInMemoryFixture : LoadFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

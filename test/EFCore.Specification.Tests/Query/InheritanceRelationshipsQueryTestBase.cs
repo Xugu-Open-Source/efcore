@@ -6,11 +6,14 @@ using Microsoft.EntityFrameworkCore.TestModels.InheritanceRelationshipsModel;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class InheritanceRelationshipsQueryTestBase<TFixture>(TFixture fixture) : QueryTestBase<TFixture>(fixture)
+public abstract class InheritanceRelationshipsQueryTestBase<TFixture> : QueryTestBase<TFixture>
     where TFixture : InheritanceRelationshipsQueryFixtureBase, new()
 {
+    protected InheritanceRelationshipsQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalFact]
     public virtual void Changes_in_derived_related_entities_are_detected()
     {

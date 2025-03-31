@@ -1,13 +1,16 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Microsoft.EntityFrameworkCore.TestUtilities.QueryTestGeneration;
 
-public class InjectJoinWithSelfExpressionMutator(DbContext context) : ExpressionMutator(context)
+public class InjectJoinWithSelfExpressionMutator : ExpressionMutator
 {
-    private ExpressionFinder _expressionFinder = null!;
+    public InjectJoinWithSelfExpressionMutator(DbContext context)
+        : base(context)
+    {
+    }
+
+    private ExpressionFinder _expressionFinder;
 
     public override bool IsValid(Expression expression)
     {
@@ -42,17 +45,24 @@ public class InjectJoinWithSelfExpressionMutator(DbContext context) : Expression
         return injector.Visit(expression);
     }
 
-    private class ExpressionFinder(InjectJoinWithSelfExpressionMutator mutator) : ExpressionVisitor
+    private class ExpressionFinder : ExpressionVisitor
     {
         private readonly bool _insideThenBy = false;
 
-        public List<Expression> FoundExpressions { get; } = [];
+        private readonly InjectJoinWithSelfExpressionMutator _mutator;
+
+        public ExpressionFinder(InjectJoinWithSelfExpressionMutator mutator)
+        {
+            _mutator = mutator;
+        }
+
+        public List<Expression> FoundExpressions { get; } = new();
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (node.Method.Name is nameof(Queryable.ThenBy)
-                or nameof(Queryable.ThenByDescending)
-                or nameof(EntityFrameworkQueryableExtensions.ThenInclude))
+            if (node?.Method.Name == nameof(Queryable.ThenBy)
+                || node?.Method.Name == nameof(Queryable.ThenByDescending)
+                || node?.Method.Name == nameof(EntityFrameworkQueryableExtensions.ThenInclude))
             {
                 return node;
             }
@@ -60,13 +70,12 @@ public class InjectJoinWithSelfExpressionMutator(DbContext context) : Expression
             return base.VisitMethodCall(node);
         }
 
-        [return: NotNullIfNotNull(nameof(node))]
-        public override Expression? Visit(Expression? node)
+        public override Expression Visit(Expression node)
         {
             if (node != null
                 && !_insideThenBy
                 && IsQueryableResult(node)
-                && mutator.IsEntityType(node.Type.GetGenericArguments()[0]))
+                && _mutator.IsEntityType(node.Type.GetGenericArguments()[0]))
             {
                 FoundExpressions.Add(node);
             }

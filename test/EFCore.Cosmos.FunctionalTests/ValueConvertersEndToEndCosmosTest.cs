@@ -1,18 +1,22 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-namespace Microsoft.EntityFrameworkCore;
+#nullable enable
 
-public class ValueConvertersEndToEndCosmosTest(ValueConvertersEndToEndCosmosTest.ValueConvertersEndToEndCosmosFixture fixture)
-    : ValueConvertersEndToEndTestBase<ValueConvertersEndToEndCosmosTest.ValueConvertersEndToEndCosmosFixture>(fixture)
+namespace Microsoft.EntityFrameworkCore.Cosmos;
+
+public class ValueConvertersEndToEndCosmosTest
+    : ValueConvertersEndToEndTestBase<ValueConvertersEndToEndCosmosTest.ValueConvertersEndToEndCosmosFixture>
 {
+    public ValueConvertersEndToEndCosmosTest(ValueConvertersEndToEndCosmosFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class ValueConvertersEndToEndCosmosFixture : ValueConvertersEndToEndFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory
             => CosmosTestStoreFactory.Instance;
-
-        public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
-            => base.AddOptions(builder).ConfigureWarnings(w => w.Ignore(CosmosEventId.NoPartitionKeyDefined));
 
         protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
         {
@@ -30,3 +34,5 @@ public class ValueConvertersEndToEndCosmosTest(ValueConvertersEndToEndCosmosTest
         }
     }
 }
+
+#nullable restore

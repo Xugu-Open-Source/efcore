@@ -11,7 +11,7 @@ public class SkipCollectionEntryTest
         using var context = new FreezerContext();
 
         Assert.Equal(
-            ["Id", "Cherries"],
+            new List<string> { "Id", "Cherries" },
             context.Attach(new Chunky()).Members.Select(e => e.Metadata.Name).ToList());
     }
 
@@ -21,7 +21,7 @@ public class SkipCollectionEntryTest
         using var context = new FreezerContext();
 
         Assert.Equal(
-            ["Cherries"],
+            new List<string> { "Cherries" },
             context.Attach(new Chunky()).Navigations.Select(e => e.Metadata.Name).ToList());
     }
 
@@ -31,7 +31,7 @@ public class SkipCollectionEntryTest
         using var context = new FreezerContext();
 
         Assert.Equal(
-            ["Cherries"],
+            new List<string> { "Cherries" },
             context.Attach(new Chunky()).Collections.Select(e => e.Metadata.Name).ToList());
     }
 

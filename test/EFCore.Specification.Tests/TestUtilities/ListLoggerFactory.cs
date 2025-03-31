@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class ListLoggerFactory(Func<string, bool> shouldLogCategory) : ILoggerFactory
+public class ListLoggerFactory : ILoggerFactory
 {
-    private readonly Func<string, bool> _shouldLogCategory = shouldLogCategory;
+    private readonly Func<string, bool> _shouldLogCategory;
     private bool _disposed;
 
     public ListLoggerFactory()
@@ -15,22 +15,22 @@ public class ListLoggerFactory(Func<string, bool> shouldLogCategory) : ILoggerFa
     {
     }
 
-    public List<(LogLevel Level, EventId Id, string? Message, object? State, Exception? Exception)> Log
+    public ListLoggerFactory(Func<string, bool> shouldLogCategory)
+    {
+        _shouldLogCategory = shouldLogCategory;
+        Logger = new ListLogger();
+    }
+
+    public List<(LogLevel Level, EventId Id, string Message, object State, Exception Exception)> Log
         => Logger.LoggedEvents;
 
-    protected ListLogger Logger { get; set; } = new();
+    protected ListLogger Logger { get; set; }
 
     public virtual void Clear()
         => Logger.Clear();
 
     public CancellationToken CancelQuery()
         => Logger.CancelOnNextLogEntry();
-
-    public virtual void SuspendTestOutput()
-        => Logger.SuspendTestOutput();
-
-    public virtual void WriteTestOutput()
-        => Logger.WriteTestOutput();
 
     public virtual IDisposable SuspendRecordingEvents()
         => Logger.SuspendRecordingEvents();
@@ -48,7 +48,12 @@ public class ListLoggerFactory(Func<string, bool> shouldLogCategory) : ILoggerFa
     }
 
     private void CheckDisposed()
-        => ObjectDisposedException.ThrowIf(_disposed, typeof(ListLoggerFactory));
+    {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(nameof(ListLoggerFactory));
+        }
+    }
 
     public void AddProvider(ILoggerProvider provider)
         => CheckDisposed();
@@ -62,15 +67,13 @@ public class ListLoggerFactory(Func<string, bool> shouldLogCategory) : ILoggerFa
     protected class ListLogger : ILogger
     {
         private readonly object _sync = new();
-        private CancellationTokenSource? _cancellationTokenSource;
+        private CancellationTokenSource _cancellationTokenSource;
         protected bool IsRecordingSuspended { get; private set; }
-        public bool WriteToTestOutputHelper { get; set; } = true;
-        private int _testOutputEventIndex;
 
-        public ITestOutputHelper? TestOutputHelper { get; set; }
+        public ITestOutputHelper TestOutputHelper { get; set; }
 
-        public List<(LogLevel LogLevel, EventId EventId, string? Message, object? State, Exception? Exception)> LoggedEvents { get; }
-            = [];
+        public List<(LogLevel, EventId, string, object, Exception)> LoggedEvents { get; }
+            = new();
 
         public CancellationToken CancelOnNextLogEntry()
         {
@@ -106,12 +109,12 @@ public class ListLoggerFactory(Func<string, bool> shouldLogCategory) : ILoggerFa
             LogLevel logLevel,
             EventId eventId,
             TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
+            Exception exception,
+            Func<TState, Exception, string> formatter)
         {
             lock (_sync) // Guard against tests with explicit concurrency
             {
-                var message = formatter(state, exception).Trim();
+                var message = formatter(state, exception)?.Trim();
                 UnsafeLog(logLevel, eventId, message, state, exception);
             }
         }
@@ -119,9 +122,9 @@ public class ListLoggerFactory(Func<string, bool> shouldLogCategory) : ILoggerFa
         protected virtual void UnsafeLog<TState>(
             LogLevel logLevel,
             EventId eventId,
-            string? message,
+            string message,
             TState state,
-            Exception? exception)
+            Exception exception)
         {
             if (message != null)
             {
@@ -131,10 +134,7 @@ public class ListLoggerFactory(Func<string, bool> shouldLogCategory) : ILoggerFa
                     _cancellationTokenSource = null;
                 }
 
-                if (WriteToTestOutputHelper)
-                {
-                    TestOutputHelper?.WriteLine(message + Environment.NewLine);
-                }
+                TestOutputHelper?.WriteLine(message + Environment.NewLine);
             }
 
             if (!IsRecordingSuspended)
@@ -146,38 +146,23 @@ public class ListLoggerFactory(Func<string, bool> shouldLogCategory) : ILoggerFa
         public bool IsEnabled(LogLevel logLevel)
             => true;
 
-        public IDisposable? BeginScope(object state)
+        public IDisposable BeginScope(object state)
             => null;
 
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull
+        public IDisposable BeginScope<TState>(TState state)
             => null;
 
-        public void SuspendTestOutput(bool writeAllPreviousMessages = true)
+        private class RecordingSuspensionHandle : IDisposable
         {
-            _testOutputEventIndex = LoggedEvents.Count;
-            WriteToTestOutputHelper = false;
-        }
+            private readonly ListLogger _logger;
 
-        public void WriteTestOutput(bool writeAllPreviousMessages = true)
-        {
-            WriteToTestOutputHelper = true;
-
-            if (TestOutputHelper is null)
+            public RecordingSuspensionHandle(ListLogger logger)
             {
-                return;
+                _logger = logger;
             }
 
-            for (; _testOutputEventIndex < LoggedEvents.Count; _testOutputEventIndex++)
-            {
-                TestOutputHelper.WriteLine(LoggedEvents[_testOutputEventIndex].Message + Environment.NewLine);
-            }
-        }
-
-        private class RecordingSuspensionHandle(ListLogger logger) : IDisposable
-        {
             public void Dispose()
-                => logger.IsRecordingSuspended = false;
+                => _logger.IsRecordingSuspended = false;
         }
     }
 }

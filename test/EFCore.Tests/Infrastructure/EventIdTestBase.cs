@@ -16,7 +16,7 @@ public abstract class EventIdTestBase
         => TestEventLogging(
             eventIdType,
             loggerExtensionType,
-            loggerMethodTypes: [],
+            loggerMethodTypes: Array.Empty<Type>(),
             loggerDefinitions,
             fakeFactories,
             serviceCollectionBuilder: services => new EntityFrameworkServicesBuilder(services).TryAddCoreServices(),
@@ -118,9 +118,10 @@ public abstract class EventIdTestBase
                         {
                             args[i] = Activator.CreateInstance(type);
                         }
-                        catch
+                        catch (Exception)
                         {
-                            Assert.Fail(
+                            Assert.True(
+                                false,
                                 "Need to add fake test factory for type "
                                 + type.DisplayName()
                                 + " in class "

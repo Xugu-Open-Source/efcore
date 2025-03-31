@@ -5,7 +5,6 @@ using System.Data;
 using System.Globalization;
 using System.Text;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
@@ -27,14 +26,6 @@ public class SqlServerByteArrayTypeMapping : ByteArrayTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public static new SqlServerByteArrayTypeMapping Default { get; } = new();
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     public SqlServerByteArrayTypeMapping(
         string? storeType = null,
         int? size = null,
@@ -44,7 +35,7 @@ public class SqlServerByteArrayTypeMapping : ByteArrayTypeMapping
         StoreTypePostfix? storeTypePostfix = null)
         : this(
             new RelationalTypeMappingParameters(
-                new CoreTypeMappingParameters(typeof(byte[]), null, comparer, jsonValueReaderWriter: JsonByteArrayReaderWriter.Instance),
+                new CoreTypeMappingParameters(typeof(byte[]), null, comparer),
                 storeType ?? (fixedLength ? "binary" : "varbinary"),
                 storeTypePostfix ?? StoreTypePostfix.Size,
                 System.Data.DbType.Binary,
@@ -62,10 +53,12 @@ public class SqlServerByteArrayTypeMapping : ByteArrayTypeMapping
     /// </summary>
     protected SqlServerByteArrayTypeMapping(RelationalTypeMappingParameters parameters, SqlDbType? sqlDbType)
         : base(parameters)
-        => _sqlDbType = sqlDbType;
+    {
+        _sqlDbType = sqlDbType;
+    }
 
     private static int CalculateSize(int? size)
-        => size is > 0 and < MaxSize ? size.Value : MaxSize;
+        => size.HasValue && size < MaxSize ? size.Value : MaxSize;
 
     /// <summary>
     ///     Creates a copy of this mapping.
@@ -106,7 +99,8 @@ public class SqlServerByteArrayTypeMapping : ByteArrayTypeMapping
                 // Fixed-sized parameters get exact length to avoid padding/truncation.
                 parameter.Size = IsFixedLength ? length.Value : maxSpecificSize;
             }
-            else if (length is <= MaxSize)
+            else if (length != null
+                     && length <= MaxSize)
             {
                 parameter.Size = IsFixedLength ? length.Value : MaxSize;
             }

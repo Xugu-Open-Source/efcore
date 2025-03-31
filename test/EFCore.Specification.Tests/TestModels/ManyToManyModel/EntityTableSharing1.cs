@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
-#nullable disable
-
 public class EntityTableSharing1
 {
     public virtual int Id { get; set; }

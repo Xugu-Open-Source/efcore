@@ -5,8 +5,6 @@ using System.Collections.ObjectModel;
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ManyToManyFieldsModel;
 
-#nullable disable
-
 public class ManyToManyData : ISetSource
 {
     private readonly bool _useGeneratedKeys;
@@ -90,8 +88,8 @@ public class ManyToManyData : ISetSource
     }
 
     private EntityOne[] CreateOnes(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityOne(context, _useGeneratedKeys ? 0 : 1, "EntityOne 1"),
             CreateEntityOne(context, _useGeneratedKeys ? 0 : 2, "EntityOne 2"),
             CreateEntityOne(context, _useGeneratedKeys ? 0 : 3, "EntityOne 3"),
@@ -111,8 +109,8 @@ public class ManyToManyData : ISetSource
             CreateEntityOne(context, _useGeneratedKeys ? 0 : 17, "EntityOne 17"),
             CreateEntityOne(context, _useGeneratedKeys ? 0 : 18, "EntityOne 18"),
             CreateEntityOne(context, _useGeneratedKeys ? 0 : 19, "EntityOne 19"),
-            CreateEntityOne(context, _useGeneratedKeys ? 0 : 20, "EntityOne 20")
-        ];
+            CreateEntityOne(context, _useGeneratedKeys ? 0 : 20, "EntityOne 20"),
+        };
 
     private static EntityOne CreateEntityOne(ManyToManyContext context, int id, string name)
         => CreateInstance(
@@ -135,8 +133,8 @@ public class ManyToManyData : ISetSource
             });
 
     private EntityTwo[] CreateTwos(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityTwo(context, _useGeneratedKeys ? 0 : 1, "EntityTwo 1", null, _ones[0]),
             CreateEntityTwo(context, _useGeneratedKeys ? 0 : 2, "EntityTwo 2", null, _ones[0]),
             CreateEntityTwo(context, _useGeneratedKeys ? 0 : 3, "EntityTwo 3", null, null),
@@ -156,8 +154,8 @@ public class ManyToManyData : ISetSource
             CreateEntityTwo(context, _useGeneratedKeys ? 0 : 17, "EntityTwo 17", _ones[6], _ones[14]),
             CreateEntityTwo(context, _useGeneratedKeys ? 0 : 18, "EntityTwo 18", _ones[4], _ones[15]),
             CreateEntityTwo(context, _useGeneratedKeys ? 0 : 19, "EntityTwo 19", _ones[2], _ones[15]),
-            CreateEntityTwo(context, _useGeneratedKeys ? 0 : 20, "EntityTwo 20", _ones[0], _ones[16])
-        ];
+            CreateEntityTwo(context, _useGeneratedKeys ? 0 : 20, "EntityTwo 20", _ones[0], _ones[16]),
+        };
 
     private static EntityTwo CreateEntityTwo(
         ManyToManyContext context,
@@ -183,8 +181,8 @@ public class ManyToManyData : ISetSource
             });
 
     private EntityThree[] CreateThrees(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityThree(context, _useGeneratedKeys ? 0 : 1, "EntityThree 1", null, null),
             CreateEntityThree(context, _useGeneratedKeys ? 0 : 2, "EntityThree 2", _twos[18], _twos[16]),
             CreateEntityThree(context, _useGeneratedKeys ? 0 : 3, "EntityThree 3", _twos[1], _twos[15]),
@@ -204,8 +202,8 @@ public class ManyToManyData : ISetSource
             CreateEntityThree(context, _useGeneratedKeys ? 0 : 17, "EntityThree 17", _twos[15], _twos[2]),
             CreateEntityThree(context, _useGeneratedKeys ? 0 : 18, "EntityThree 18", null, _twos[2]),
             CreateEntityThree(context, _useGeneratedKeys ? 0 : 19, "EntityThree 19", _twos[17], _twos[0]),
-            CreateEntityThree(context, _useGeneratedKeys ? 0 : 20, "EntityThree 20", null, _twos[0])
-        ];
+            CreateEntityThree(context, _useGeneratedKeys ? 0 : 20, "EntityThree 20", null, _twos[0]),
+        };
 
     private static EntityThree CreateEntityThree(
         ManyToManyContext context,
@@ -232,8 +230,8 @@ public class ManyToManyData : ISetSource
             });
 
     private EntityCompositeKey[] CreateCompositeKeys(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityCompositeKey(context, _useGeneratedKeys ? 0 : 1, "1_1", new DateTime(2001, 1, 1), "Composite 1"),
             CreateEntityCompositeKey(context, _useGeneratedKeys ? 0 : 1, "1_2", new DateTime(2001, 2, 1), "Composite 2"),
             CreateEntityCompositeKey(context, _useGeneratedKeys ? 0 : 3, "3_1", new DateTime(2003, 1, 1), "Composite 3"),
@@ -254,7 +252,7 @@ public class ManyToManyData : ISetSource
             CreateEntityCompositeKey(context, _useGeneratedKeys ? 0 : 9, "9_5", new DateTime(2009, 5, 1), "Composite 18"),
             CreateEntityCompositeKey(context, _useGeneratedKeys ? 0 : 9, "9_6", new DateTime(2009, 6, 1), "Composite 19"),
             CreateEntityCompositeKey(context, _useGeneratedKeys ? 0 : 9, "9_7", new DateTime(2009, 7, 1), "Composite 20")
-        ];
+        };
 
     private static EntityCompositeKey CreateEntityCompositeKey(
         ManyToManyContext context,
@@ -278,8 +276,8 @@ public class ManyToManyData : ISetSource
             });
 
     private EntityRoot[] CreateRoots(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityRoot(context, _useGeneratedKeys ? 0 : 1, "Root 1"),
             CreateEntityRoot(context, _useGeneratedKeys ? 0 : 2, "Root 2"),
             CreateEntityRoot(context, _useGeneratedKeys ? 0 : 3, "Root 3"),
@@ -300,7 +298,7 @@ public class ManyToManyData : ISetSource
             CreateEntityLeaf(context, _useGeneratedKeys ? 0 : 22, "Leaf 2", 421, true),
             CreateEntityLeaf(context, _useGeneratedKeys ? 0 : 23, "Leaf 3", 1337, false),
             CreateEntityLeaf(context, _useGeneratedKeys ? 0 : 24, "Leaf 4", 1729, false)
-        ];
+        };
 
     private static EntityRoot CreateEntityRoot(
         ManyToManyContext context,
@@ -352,8 +350,8 @@ public class ManyToManyData : ISetSource
             });
 
     private JoinCompositeKeyToLeaf[] CreateJoinCompositeKeyToLeaves(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateJoinCompositeKeyToLeaf(context, (EntityLeaf)_roots[16], _compositeKeys[0]),
             CreateJoinCompositeKeyToLeaf(context, (EntityLeaf)_roots[16], _compositeKeys[1]),
             CreateJoinCompositeKeyToLeaf(context, (EntityLeaf)_roots[18], _compositeKeys[1]),
@@ -385,7 +383,7 @@ public class ManyToManyData : ISetSource
             CreateJoinCompositeKeyToLeaf(context, (EntityLeaf)_roots[19], _compositeKeys[17]),
             CreateJoinCompositeKeyToLeaf(context, (EntityLeaf)_roots[16], _compositeKeys[18]),
             CreateJoinCompositeKeyToLeaf(context, (EntityLeaf)_roots[17], _compositeKeys[18])
-        ];
+        };
 
     private static JoinCompositeKeyToLeaf CreateJoinCompositeKeyToLeaf(
         ManyToManyContext context,
@@ -399,8 +397,8 @@ public class ManyToManyData : ISetSource
             });
 
     private JoinOneSelfPayload[] CreateJoinOneSelfPayloads(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateJoinOneSelfPayload(context, _ones[2], _ones[3], DateTime.Parse("2020-01-11 19:26:36")),
             CreateJoinOneSelfPayload(context, _ones[2], _ones[5], DateTime.Parse("2005-10-03 12:57:54")),
             CreateJoinOneSelfPayload(context, _ones[2], _ones[7], DateTime.Parse("2015-12-20 01:09:24")),
@@ -430,7 +428,7 @@ public class ManyToManyData : ISetSource
             CreateJoinOneSelfPayload(context, _ones[19], _ones[6], DateTime.Parse("2009-08-24 21:44:46")),
             CreateJoinOneSelfPayload(context, _ones[19], _ones[13], DateTime.Parse("2013-02-18 02:19:19")),
             CreateJoinOneSelfPayload(context, _ones[19], _ones[15], DateTime.Parse("2016-02-05 14:18:12"))
-        ];
+        };
 
     private static JoinOneSelfPayload CreateJoinOneSelfPayload(
         ManyToManyContext context,
@@ -446,8 +444,8 @@ public class ManyToManyData : ISetSource
             });
 
     private JoinOneToBranch[] CreateJoinOneToBranches(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateJoinOneToBranch(context, _ones[1], _roots[15]),
             CreateJoinOneToBranch(context, _ones[1], _roots[19]),
             CreateJoinOneToBranch(context, _ones[2], _roots[13]),
@@ -495,7 +493,7 @@ public class ManyToManyData : ISetSource
             CreateJoinOneToBranch(context, _ones[18], _roots[18]),
             CreateJoinOneToBranch(context, _ones[19], _roots[16]),
             CreateJoinOneToBranch(context, _ones[19], _roots[18])
-        ];
+        };
 
     private static JoinOneToBranch CreateJoinOneToBranch(
         ManyToManyContext context,
@@ -509,8 +507,8 @@ public class ManyToManyData : ISetSource
             });
 
     private JoinOneToThreePayloadFull[] CreateJoinOneToThreePayloadFulls(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateJoinOneToThreePayloadFull(context, _ones[0], _threes[1], "Ira Watts"),
             CreateJoinOneToThreePayloadFull(context, _ones[0], _threes[5], "Harold May"),
             CreateJoinOneToThreePayloadFull(context, _ones[0], _threes[8], "Freda Vaughn"),
@@ -626,7 +624,7 @@ public class ManyToManyData : ISetSource
             CreateJoinOneToThreePayloadFull(context, _ones[19], _threes[13], "Lawrence Matthews"),
             CreateJoinOneToThreePayloadFull(context, _ones[19], _threes[17], "Van Hubbard"),
             CreateJoinOneToThreePayloadFull(context, _ones[19], _threes[19], "Lindsay Pena")
-        ];
+        };
 
     private static JoinOneToThreePayloadFull CreateJoinOneToThreePayloadFull(
         ManyToManyContext context,
@@ -642,8 +640,8 @@ public class ManyToManyData : ISetSource
             });
 
     private JoinOneToTwo[] CreateJoinOneToTwos(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateJoinOneToTwo(context, _ones[0], _twos[0]),
             CreateJoinOneToTwo(context, _ones[0], _twos[1]),
             CreateJoinOneToTwo(context, _ones[0], _twos[2]),
@@ -756,7 +754,7 @@ public class ManyToManyData : ISetSource
             CreateJoinOneToTwo(context, _ones[17], _twos[1]),
             CreateJoinOneToTwo(context, _ones[18], _twos[19]),
             CreateJoinOneToTwo(context, _ones[18], _twos[9])
-        ];
+        };
 
     private static JoinOneToTwo CreateJoinOneToTwo(
         ManyToManyContext context,
@@ -770,8 +768,8 @@ public class ManyToManyData : ISetSource
             });
 
     private JoinThreeToCompositeKeyFull[] CreateJoinThreeToCompositeKeyFulls(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateJoinThreeToCompositeKeyFull(context, _threes[0], _compositeKeys[5]),
             CreateJoinThreeToCompositeKeyFull(context, _threes[1], _compositeKeys[0]),
             CreateJoinThreeToCompositeKeyFull(context, _threes[1], _compositeKeys[14]),
@@ -817,7 +815,7 @@ public class ManyToManyData : ISetSource
             CreateJoinThreeToCompositeKeyFull(context, _threes[18], _compositeKeys[19]),
             CreateJoinThreeToCompositeKeyFull(context, _threes[19], _compositeKeys[3]),
             CreateJoinThreeToCompositeKeyFull(context, _threes[19], _compositeKeys[6])
-        ];
+        };
 
     private static JoinThreeToCompositeKeyFull CreateJoinThreeToCompositeKeyFull(
         ManyToManyContext context,
@@ -831,8 +829,8 @@ public class ManyToManyData : ISetSource
             });
 
     private JoinTwoToThree[] CreateJoinTwoToThrees(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateJoinTwoToThree(context, _twos[0], _threes[1]),
             CreateJoinTwoToThree(context, _twos[0], _threes[2]),
             CreateJoinTwoToThree(context, _twos[0], _threes[12]),
@@ -885,7 +883,7 @@ public class ManyToManyData : ISetSource
             CreateJoinTwoToThree(context, _twos[19], _threes[15]),
             CreateJoinTwoToThree(context, _twos[19], _threes[16]),
             CreateJoinTwoToThree(context, _twos[19], _threes[17])
-        ];
+        };
 
     private static JoinTwoToThree CreateJoinTwoToThree(
         ManyToManyContext context,
@@ -899,8 +897,8 @@ public class ManyToManyData : ISetSource
             });
 
     private Dictionary<string, object>[] CreateEntityOneEntityTwos(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityOneEntityTwo(context, _ones[0], _twos[2]),
             CreateEntityOneEntityTwo(context, _ones[0], _twos[15]),
             CreateEntityOneEntityTwo(context, _ones[1], _twos[2]),
@@ -946,7 +944,7 @@ public class ManyToManyData : ISetSource
             CreateEntityOneEntityTwo(context, _ones[17], _twos[13]),
             CreateEntityOneEntityTwo(context, _ones[18], _twos[3]),
             CreateEntityOneEntityTwo(context, _ones[18], _twos[13])
-        ];
+        };
 
     private static Dictionary<string, object> CreateEntityOneEntityTwo(
         ManyToManyContext context,
@@ -960,8 +958,8 @@ public class ManyToManyData : ISetSource
             });
 
     private Dictionary<string, object>[] CreateJoinOneToThreePayloadFullShareds(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateJoinOneToThreePayloadFullShared(context, _ones[2], _threes[0], "Capbrough"),
             CreateJoinOneToThreePayloadFullShared(context, _ones[2], _threes[1], "East Eastdol"),
             CreateJoinOneToThreePayloadFullShared(context, _ones[2], _threes[3], "Southingville"),
@@ -1002,7 +1000,7 @@ public class ManyToManyData : ISetSource
             CreateJoinOneToThreePayloadFullShared(context, _ones[19], _threes[3], "Rockbrough"),
             CreateJoinOneToThreePayloadFullShared(context, _ones[19], _threes[4], "Sweetfield"),
             CreateJoinOneToThreePayloadFullShared(context, _ones[19], _threes[15], "Bayburgh Hills")
-        ];
+        };
 
     private static Dictionary<string, object> CreateJoinOneToThreePayloadFullShared(
         ManyToManyContext context,
@@ -1018,8 +1016,8 @@ public class ManyToManyData : ISetSource
             });
 
     private Dictionary<string, object>[] CreateEntityTwoEntityTwos(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityTwoEntityTwo(context, _twos[0], _twos[8]),
             CreateEntityTwoEntityTwo(context, _twos[0], _twos[9]),
             CreateEntityTwoEntityTwo(context, _twos[0], _twos[10]),
@@ -1054,7 +1052,7 @@ public class ManyToManyData : ISetSource
             CreateEntityTwoEntityTwo(context, _twos[17], _twos[16]),
             CreateEntityTwoEntityTwo(context, _twos[18], _twos[1]),
             CreateEntityTwoEntityTwo(context, _twos[19], _twos[3])
-        ];
+        };
 
     private static Dictionary<string, object> CreateEntityTwoEntityTwo(
         ManyToManyContext context,
@@ -1068,8 +1066,8 @@ public class ManyToManyData : ISetSource
             });
 
     private Dictionary<string, object>[] CreateEntityCompositeKeyEntityTwos(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityCompositeKeyEntityTwo(context, _twos[0], _compositeKeys[0]),
             CreateEntityCompositeKeyEntityTwo(context, _twos[0], _compositeKeys[3]),
             CreateEntityCompositeKeyEntityTwo(context, _twos[0], _compositeKeys[4]),
@@ -1106,7 +1104,7 @@ public class ManyToManyData : ISetSource
             CreateEntityCompositeKeyEntityTwo(context, _twos[19], _compositeKeys[4]),
             CreateEntityCompositeKeyEntityTwo(context, _twos[19], _compositeKeys[5]),
             CreateEntityCompositeKeyEntityTwo(context, _twos[19], _compositeKeys[13])
-        ];
+        };
 
     private static Dictionary<string, object> CreateEntityCompositeKeyEntityTwo(
         ManyToManyContext context,
@@ -1122,8 +1120,8 @@ public class ManyToManyData : ISetSource
             });
 
     private Dictionary<string, object>[] CreateEntityRootEntityThrees(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityRootEntityThree(context, _threes[0], _roots[6]),
             CreateEntityRootEntityThree(context, _threes[0], _roots[7]),
             CreateEntityRootEntityThree(context, _threes[0], _roots[14]),
@@ -1153,7 +1151,7 @@ public class ManyToManyData : ISetSource
             CreateEntityRootEntityThree(context, _threes[17], _roots[18]),
             CreateEntityRootEntityThree(context, _threes[18], _roots[10]),
             CreateEntityRootEntityThree(context, _threes[19], _roots[13])
-        ];
+        };
 
     private static Dictionary<string, object> CreateEntityRootEntityThree(
         ManyToManyContext context,
@@ -1169,8 +1167,8 @@ public class ManyToManyData : ISetSource
     private Dictionary<string, object>[] CreateEntityRootEntityBranches(ManyToManyContext context)
     {
         var branches = _roots.OfType<EntityBranch>().ToList();
-        return
-        [
+        return new[]
+        {
             CreateEntityRootEntityBranch(context, branches[0], _roots[6]),
             CreateEntityRootEntityBranch(context, branches[0], _roots[7]),
             CreateEntityRootEntityBranch(context, branches[0], _roots[14]),
@@ -1184,8 +1182,8 @@ public class ManyToManyData : ISetSource
             CreateEntityRootEntityBranch(context, branches[4], _roots[15]),
             CreateEntityRootEntityBranch(context, branches[5], _roots[16]),
             CreateEntityRootEntityBranch(context, branches[6], _roots[0]),
-            CreateEntityRootEntityBranch(context, branches[6], _roots[5])
-        ];
+            CreateEntityRootEntityBranch(context, branches[6], _roots[5]),
+        };
     }
 
     private static Dictionary<string, object> CreateEntityRootEntityBranch(
@@ -1200,8 +1198,8 @@ public class ManyToManyData : ISetSource
             });
 
     private Dictionary<string, object>[] CreateEntityCompositeKeyEntityRoots(ManyToManyContext context)
-        =>
-        [
+        => new[]
+        {
             CreateEntityCompositeKeyEntityRoot(context, _roots[5], _compositeKeys[0]),
             CreateEntityCompositeKeyEntityRoot(context, _roots[8], _compositeKeys[0]),
             CreateEntityCompositeKeyEntityRoot(context, _roots[19], _compositeKeys[0]),
@@ -1241,7 +1239,7 @@ public class ManyToManyData : ISetSource
             CreateEntityCompositeKeyEntityRoot(context, _roots[14], _compositeKeys[15]),
             CreateEntityCompositeKeyEntityRoot(context, _roots[0], _compositeKeys[18]),
             CreateEntityCompositeKeyEntityRoot(context, _roots[5], _compositeKeys[19])
-        ];
+        };
 
     private static ICollection<TEntity> CreateCollection<TEntity>(bool proxy)
         => proxy ? new ObservableCollection<TEntity>() : new List<TEntity>();

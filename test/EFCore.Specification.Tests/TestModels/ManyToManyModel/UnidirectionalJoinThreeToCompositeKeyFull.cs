@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
-#nullable disable
-
 public class UnidirectionalJoinThreeToCompositeKeyFull
 {
     public virtual Guid Id { get; set; }

@@ -9,9 +9,14 @@ using Microsoft.EntityFrameworkCore.TestModels.InheritanceModel;
 // ReSharper disable ConvertMethodToExpressionBody
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture) : FilteredQueryTestBase<TFixture>(fixture)
+public abstract class FiltersInheritanceQueryTestBase<TFixture> : FilteredQueryTestBase<TFixture>
     where TFixture : InheritanceQueryFixtureBase, new()
 {
+    protected FiltersInheritanceQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public virtual Task Can_use_of_type_animal(bool async)
@@ -19,7 +24,8 @@ public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture
         return AssertFilteredQuery(
             async,
             ss => ss.Set<Animal>().OfType<Animal>().OrderBy(a => a.Species),
-            assertOrder: true);
+            assertOrder: true,
+            entryCount: 1);
     }
 
     [ConditionalTheory]
@@ -28,7 +34,8 @@ public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture
     {
         return AssertFilteredQuery(
             async,
-            ss => ss.Set<Animal>().Where(a => a is Kiwi));
+            ss => ss.Set<Animal>().Where(a => a is Kiwi),
+            entryCount: 1);
     }
 
     [ConditionalTheory]
@@ -37,7 +44,8 @@ public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture
     {
         return AssertFilteredQuery(
             async,
-            ss => ss.Set<Animal>().Where(a => a is Kiwi && a.CountryId == 1));
+            ss => ss.Set<Animal>().Where(a => a is Kiwi && a.CountryId == 1),
+            entryCount: 1);
     }
 
     [ConditionalTheory]
@@ -56,7 +64,8 @@ public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture
         return AssertFilteredQuery(
             async,
             ss => ss.Set<Animal>().OfType<Bird>().OrderBy(a => a.Species),
-            assertOrder: true);
+            assertOrder: true,
+            entryCount: 1);
     }
 
     [ConditionalTheory]
@@ -69,7 +78,8 @@ public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture
                 .Where(a => a.CountryId == 1)
                 .OfType<Bird>()
                 .OrderBy(a => a.Species),
-            assertOrder: true);
+            assertOrder: true,
+            entryCount: 1);
     }
 
     [ConditionalTheory]
@@ -90,7 +100,8 @@ public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture
     {
         return AssertFirst(
             async,
-            ss => ss.Set<Animal>().OfType<Bird>().OrderBy(a => a.Species));
+            ss => ss.Set<Animal>().OfType<Bird>().OrderBy(a => a.Species),
+            entryCount: 1);
     }
 
     [ConditionalTheory]
@@ -99,7 +110,8 @@ public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture
     {
         return AssertFilteredQuery(
             async,
-            ss => ss.Set<Animal>().OfType<Kiwi>());
+            ss => ss.Set<Animal>().OfType<Kiwi>(),
+            entryCount: 1);
     }
 
     [ConditionalTheory]
@@ -108,8 +120,7 @@ public abstract class FiltersInheritanceQueryTestBase<TFixture>(TFixture fixture
     {
         return AssertFilteredQuery(
             async,
-            ss => ss.Set<Eagle>(),
-            assertEmpty: true);
+            ss => ss.Set<Eagle>());
     }
 
     [ConditionalTheory]

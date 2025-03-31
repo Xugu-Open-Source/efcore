@@ -7,8 +7,6 @@ using Microsoft.EntityFrameworkCore.Sqlite.Update.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Update;
 
-#nullable disable
-
 public class SqliteUpdateSqlGeneratorTest : UpdateSqlGeneratorTestBase
 {
     protected override IUpdateSqlGenerator CreateSqlGenerator()
@@ -45,7 +43,7 @@ public class SqliteUpdateSqlGeneratorTest : UpdateSqlGeneratorTestBase
 
     protected override void AppendInsertOperation_insert_if_store_generated_columns_exist_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO "Ducks" ("Name", "Quacks", "ConcurrencyToken")
 VALUES (@p0, @p1, @p2)
 RETURNING "Id", "Computed";
@@ -55,7 +53,7 @@ RETURNING "Id", "Computed";
     protected override void AppendInsertOperation_for_store_generated_columns_but_no_identity_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO "Ducks" ("Id", "Name", "Quacks", "ConcurrencyToken")
 VALUES (@p0, @p1, @p2, @p3)
 RETURNING "Computed";
@@ -64,7 +62,7 @@ RETURNING "Computed";
 
     protected override void AppendInsertOperation_for_only_identity_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO "Ducks" ("Name", "Quacks", "ConcurrencyToken")
 VALUES (@p0, @p1, @p2)
 RETURNING "Id";
@@ -73,7 +71,7 @@ RETURNING "Id";
 
     protected override void AppendInsertOperation_for_all_store_generated_columns_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO "Ducks"
 DEFAULT VALUES
 RETURNING "Id", "Computed";
@@ -83,7 +81,7 @@ RETURNING "Id", "Computed";
     protected override void AppendInsertOperation_for_only_single_identity_columns_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 INSERT INTO "Ducks"
 DEFAULT VALUES
 RETURNING "Id";
@@ -92,7 +90,7 @@ RETURNING "Id";
 
     protected override void AppendUpdateOperation_for_computed_property_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 UPDATE "Ducks" SET "Name" = @p0, "Quacks" = @p1, "ConcurrencyToken" = @p2
 WHERE "Id" = @p3
 RETURNING "Computed";
@@ -102,7 +100,7 @@ RETURNING "Computed";
     protected override void AppendUpdateOperation_if_store_generated_columns_exist_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 UPDATE "Ducks" SET "Name" = @p0, "Quacks" = @p1, "ConcurrencyToken" = @p2
 WHERE "Id" = @p3 AND "ConcurrencyToken" IS NULL
 RETURNING "Computed";
@@ -112,7 +110,7 @@ RETURNING "Computed";
     protected override void AppendUpdateOperation_if_store_generated_columns_dont_exist_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 UPDATE "Ducks" SET "Name" = @p0, "Quacks" = @p1, "ConcurrencyToken" = @p2
 WHERE "Id" = @p3
 RETURNING 1;
@@ -121,7 +119,7 @@ RETURNING 1;
 
     protected override void AppendUpdateOperation_appends_where_for_concurrency_token_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 UPDATE "Ducks" SET "Name" = @p0, "Quacks" = @p1, "ConcurrencyToken" = @p2
 WHERE "Id" = @p3 AND "ConcurrencyToken" IS NULL
 RETURNING 1;
@@ -130,7 +128,7 @@ RETURNING 1;
 
     protected override void AppendDeleteOperation_creates_full_delete_command_text_verification(StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 DELETE FROM "Ducks"
 WHERE "Id" = @p0
 RETURNING 1;
@@ -140,7 +138,7 @@ RETURNING 1;
     protected override void AppendDeleteOperation_creates_full_delete_command_text_with_concurrency_check_verification(
         StringBuilder stringBuilder)
         => AssertBaseline(
-            """
+"""
 DELETE FROM "Ducks"
 WHERE "Id" = @p0 AND "ConcurrencyToken" IS NULL
 RETURNING 1;

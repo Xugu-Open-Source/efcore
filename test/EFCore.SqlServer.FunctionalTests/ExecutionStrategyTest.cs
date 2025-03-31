@@ -9,8 +9,6 @@ using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.ExecutionStrategyFixture>
 {
     public ExecutionStrategyTest(ExecutionStrategyFixture fixture)
@@ -103,7 +101,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
             }
             else
             {
-                Assert.DoesNotContain(Fixture.TestSqlLoggerFactory.Log, l => l.Id == CoreEventId.ExecutionStrategyRetrying);
+                Assert.Empty(Fixture.TestSqlLoggerFactory.Log.Where(l => l.Id == CoreEventId.ExecutionStrategyRetrying));
             }
 
             Assert.Equal(realFailure ? 3 : 2, connection.OpenCount);
@@ -217,7 +215,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
             }
             else
             {
-                Assert.DoesNotContain(Fixture.TestSqlLoggerFactory.Log, l => l.Id == CoreEventId.ExecutionStrategyRetrying);
+                Assert.Empty(Fixture.TestSqlLoggerFactory.Log.Where(l => l.Id == CoreEventId.ExecutionStrategyRetrying));
             }
 
             Assert.Equal(realFailure ? 3 : 2, connection.OpenCount);
@@ -768,8 +766,13 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
         }
     }
 
-    protected class ExecutionStrategyContext(DbContextOptions options) : DbContext(options)
+    protected class ExecutionStrategyContext : DbContext
     {
+        public ExecutionStrategyContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public DbSet<Product> Products { get; set; }
         public DbSet<Audit> Audits { get; set; }
     }

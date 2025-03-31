@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore.TestModels.TransportationModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 [SqlServerCondition(SqlServerCondition.SupportsTemporalTablesCascadeDelete)]
 public class TemporalTableSqlServerTest : NonSharedModelTestBase
 {
@@ -37,7 +35,7 @@ public class TemporalTableSqlServerTest : NonSharedModelTestBase
         }
 
         AssertSql(
-            """
+"""
 SELECT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime], [o].[MainEntityDifferentTableId], [o].[Description], [o].[EndTime], [o].[StartTime]
 FROM [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
 LEFT JOIN [OwnedEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o] ON [m].[Id] = [o].[MainEntityDifferentTableId]
@@ -61,7 +59,7 @@ LEFT JOIN [OwnedEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00
         }
 
         AssertSql(
-            """
+"""
 SELECT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime], [o].[MainEntityDifferentTableId], [o].[Description], [o].[EndTime], [o].[StartTime], [m0].[Id], [m0].[Description], [m0].[EndTime], [m0].[StartTime], [o0].[MainEntityDifferentTableId], [o0].[Description], [o0].[EndTime], [o0].[StartTime]
 FROM [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
 INNER JOIN [MainEntityDifferentTable] AS [m0] ON [m].[Id] = [m0].[Id]
@@ -87,16 +85,16 @@ LEFT JOIN [OwnedEntityDifferentTable] AS [o0] ON [m0].[Id] = [o0].[MainEntityDif
         }
 
         AssertSql(
-            """
-SELECT [u].[Id], [u].[Description], [u].[EndTime], [u].[StartTime], [o].[MainEntityDifferentTableId], [o].[Description], [o].[EndTime], [o].[StartTime]
+"""
+SELECT [t].[Id], [t].[Description], [t].[EndTime], [t].[StartTime], [o].[MainEntityDifferentTableId], [o].[Description], [o].[EndTime], [o].[StartTime]
 FROM (
     SELECT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime]
     FROM [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
     UNION
     SELECT [m0].[Id], [m0].[Description], [m0].[EndTime], [m0].[StartTime]
     FROM [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m0]
-) AS [u]
-LEFT JOIN [OwnedEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o] ON [u].[Id] = [o].[MainEntityDifferentTableId]
+) AS [t]
+LEFT JOIN [OwnedEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o] ON [t].[Id] = [o].[MainEntityDifferentTableId]
 """);
     }
 
@@ -110,7 +108,7 @@ LEFT JOIN [OwnedEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00
             var date = new DateTime(2000, 1, 1);
 
             var query = context.MainEntitiesDifferentTable.FromSqlRaw(
-                """
+"""
 SELECT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime]
 FROM [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
 """);
@@ -121,7 +119,7 @@ FROM [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.00000
         // just making sure we don't do anything weird here - there is no way to extract temporal information
         // from the FromSql so owned entity will always be treated as a regular query
         AssertSql(
-            """
+"""
 SELECT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime], [o].[MainEntityDifferentTableId], [o].[Description], [o].[EndTime], [o].[StartTime]
 FROM (
     SELECT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime]
@@ -150,16 +148,16 @@ LEFT JOIN [OwnedEntityDifferentTable] AS [o] ON [m].[Id] = [o].[MainEntityDiffer
         }
 
         AssertSql(
-            """
-@p='3'
+"""
+@__p_0='3'
 
-SELECT TOP(@p) [m0].[Id], [m0].[Description], [m0].[EndTime], [m0].[StartTime], [m0].[MainEntityDifferentTableId], [m0].[Description0], [m0].[EndTime0], [m0].[StartTime0]
+SELECT TOP(@__p_0) [t].[Id], [t].[Description], [t].[EndTime], [t].[StartTime], [t].[MainEntityDifferentTableId], [t].[Description0], [t].[EndTime0], [t].[StartTime0]
 FROM (
     SELECT DISTINCT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime], [o].[MainEntityDifferentTableId], [o].[Description] AS [Description0], [o].[EndTime] AS [EndTime0], [o].[StartTime] AS [StartTime0]
     FROM [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
     LEFT JOIN [OwnedEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o] ON [m].[Id] = [o].[MainEntityDifferentTableId]
-) AS [m0]
-ORDER BY [m0].[Id] DESC
+) AS [t]
+ORDER BY [t].[Id] DESC
 """);
     }
 
@@ -181,24 +179,24 @@ ORDER BY [m0].[Id] DESC
         }
 
         AssertSql(
-            """
-@p='3'
+"""
+@__p_0='3'
 
-SELECT [s0].[Id], [s0].[Description], [s0].[EndTime], [s0].[StartTime], [s0].[MainEntityDifferentTableId], [s0].[Description1], [s0].[EndTime1], [s0].[StartTime1], [s0].[Id0], [s0].[Description0], [s0].[EndTime0], [s0].[StartTime0], [s0].[MainEntityDifferentTableId0], [s0].[Description2], [s0].[EndTime2], [s0].[StartTime2], [m1].[Id], [m1].[Description], [m1].[EndTime], [m1].[StartTime], [o1].[MainEntityDifferentTableId], [o1].[Description], [o1].[EndTime], [o1].[StartTime]
+SELECT [t0].[Id], [t0].[Description], [t0].[EndTime], [t0].[StartTime], [t0].[MainEntityDifferentTableId], [t0].[Description1], [t0].[EndTime1], [t0].[StartTime1], [t0].[Id0], [t0].[Description0], [t0].[EndTime0], [t0].[StartTime0], [t0].[MainEntityDifferentTableId0], [t0].[Description2], [t0].[EndTime2], [t0].[StartTime2], [m1].[Id], [m1].[Description], [m1].[EndTime], [m1].[StartTime], [o1].[MainEntityDifferentTableId], [o1].[Description], [o1].[EndTime], [o1].[StartTime]
 FROM (
-    SELECT TOP(@p) [s].[Id], [s].[Description], [s].[EndTime], [s].[StartTime], [s].[Id0], [s].[Description0], [s].[EndTime0], [s].[StartTime0], [s].[MainEntityDifferentTableId], [s].[Description1], [s].[EndTime1], [s].[StartTime1], [s].[MainEntityDifferentTableId0], [s].[Description2], [s].[EndTime2], [s].[StartTime2]
+    SELECT TOP(@__p_0) [t].[Id], [t].[Description], [t].[EndTime], [t].[StartTime], [t].[Id0], [t].[Description0], [t].[EndTime0], [t].[StartTime0], [t].[MainEntityDifferentTableId], [t].[Description1], [t].[EndTime1], [t].[StartTime1], [t].[MainEntityDifferentTableId0], [t].[Description2], [t].[EndTime2], [t].[StartTime2]
     FROM (
         SELECT DISTINCT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime], [m0].[Id] AS [Id0], [m0].[Description] AS [Description0], [m0].[EndTime] AS [EndTime0], [m0].[StartTime] AS [StartTime0], [o].[MainEntityDifferentTableId], [o].[Description] AS [Description1], [o].[EndTime] AS [EndTime1], [o].[StartTime] AS [StartTime1], [o0].[MainEntityDifferentTableId] AS [MainEntityDifferentTableId0], [o0].[Description] AS [Description2], [o0].[EndTime] AS [EndTime2], [o0].[StartTime] AS [StartTime2]
         FROM [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
         INNER JOIN [MainEntityDifferentTable] AS [m0] ON [m].[Id] = [m0].[Id]
         LEFT JOIN [OwnedEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o] ON [m].[Id] = [o].[MainEntityDifferentTableId]
         LEFT JOIN [OwnedEntityDifferentTable] AS [o0] ON [m0].[Id] = [o0].[MainEntityDifferentTableId]
-    ) AS [s]
-    ORDER BY [s].[Id] DESC
-) AS [s0]
-INNER JOIN [MainEntityDifferentTable] AS [m1] ON [s0].[Id] = [m1].[Id]
+    ) AS [t]
+    ORDER BY [t].[Id] DESC
+) AS [t0]
+INNER JOIN [MainEntityDifferentTable] AS [m1] ON [t0].[Id] = [m1].[Id]
 LEFT JOIN [OwnedEntityDifferentTable] AS [o1] ON [m1].[Id] = [o1].[MainEntityDifferentTableId]
-ORDER BY [s0].[Id] DESC
+ORDER BY [t0].[Id] DESC
 """);
     }
 
@@ -220,24 +218,24 @@ ORDER BY [s0].[Id] DESC
         }
 
         AssertSql(
-            """
-@p='3'
+"""
+@__p_0='3'
 
-SELECT [s0].[Id], [s0].[Description], [s0].[EndTime], [s0].[StartTime], [s0].[MainEntityDifferentTableId], [s0].[Description1], [s0].[EndTime1], [s0].[StartTime1], [s0].[Id0], [s0].[Description0], [s0].[EndTime0], [s0].[StartTime0], [s0].[MainEntityDifferentTableId0], [s0].[Description2], [s0].[EndTime2], [s0].[StartTime2], [m1].[Id], [m1].[Description], [m1].[EndTime], [m1].[StartTime], [o1].[MainEntityDifferentTableId], [o1].[Description], [o1].[EndTime], [o1].[StartTime]
+SELECT [t0].[Id], [t0].[Description], [t0].[EndTime], [t0].[StartTime], [t0].[MainEntityDifferentTableId], [t0].[Description1], [t0].[EndTime1], [t0].[StartTime1], [t0].[Id0], [t0].[Description0], [t0].[EndTime0], [t0].[StartTime0], [t0].[MainEntityDifferentTableId0], [t0].[Description2], [t0].[EndTime2], [t0].[StartTime2], [m1].[Id], [m1].[Description], [m1].[EndTime], [m1].[StartTime], [o1].[MainEntityDifferentTableId], [o1].[Description], [o1].[EndTime], [o1].[StartTime]
 FROM (
-    SELECT TOP(@p) [s].[Id], [s].[Description], [s].[EndTime], [s].[StartTime], [s].[Id0], [s].[Description0], [s].[EndTime0], [s].[StartTime0], [s].[MainEntityDifferentTableId], [s].[Description1], [s].[EndTime1], [s].[StartTime1], [s].[MainEntityDifferentTableId0], [s].[Description2], [s].[EndTime2], [s].[StartTime2]
+    SELECT TOP(@__p_0) [t].[Id], [t].[Description], [t].[EndTime], [t].[StartTime], [t].[Id0], [t].[Description0], [t].[EndTime0], [t].[StartTime0], [t].[MainEntityDifferentTableId], [t].[Description1], [t].[EndTime1], [t].[StartTime1], [t].[MainEntityDifferentTableId0], [t].[Description2], [t].[EndTime2], [t].[StartTime2]
     FROM (
         SELECT DISTINCT [m].[Id], [m].[Description], [m].[EndTime], [m].[StartTime], [m0].[Id] AS [Id0], [m0].[Description] AS [Description0], [m0].[EndTime] AS [EndTime0], [m0].[StartTime] AS [StartTime0], [o].[MainEntityDifferentTableId], [o].[Description] AS [Description1], [o].[EndTime] AS [EndTime1], [o].[StartTime] AS [StartTime1], [o0].[MainEntityDifferentTableId] AS [MainEntityDifferentTableId0], [o0].[Description] AS [Description2], [o0].[EndTime] AS [EndTime2], [o0].[StartTime] AS [StartTime2]
         FROM [MainEntityDifferentTable] AS [m]
         INNER JOIN [MainEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m0] ON [m].[Id] = [m0].[Id]
         LEFT JOIN [OwnedEntityDifferentTable] AS [o] ON [m].[Id] = [o].[MainEntityDifferentTableId]
         LEFT JOIN [OwnedEntityDifferentTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o0] ON [m0].[Id] = [o0].[MainEntityDifferentTableId]
-    ) AS [s]
-    ORDER BY [s].[Id] DESC
-) AS [s0]
-INNER JOIN [MainEntityDifferentTable] AS [m1] ON [s0].[Id] = [m1].[Id]
+    ) AS [t]
+    ORDER BY [t].[Id] DESC
+) AS [t0]
+INNER JOIN [MainEntityDifferentTable] AS [m1] ON [t0].[Id] = [m1].[Id]
 LEFT JOIN [OwnedEntityDifferentTable] AS [o1] ON [m1].[Id] = [o1].[MainEntityDifferentTableId]
-ORDER BY [s0].[Id] DESC
+ORDER BY [t0].[Id] DESC
 """);
     }
 
@@ -273,7 +271,7 @@ ORDER BY [s0].[Id] DESC
         }
 
         AssertSql(
-            """
+"""
 SELECT [m].[Id], [m].[EndTime], [m].[Name], [m].[StartTime], [m].[EndTime], [m].[OwnedEntity_Name], [m].[OwnedEntity_Number], [m].[StartTime], [m].[OwnedEntity_Nested_Name], [m].[OwnedEntity_Nested_Number]
 FROM [MainEntitiesSameTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
 """);
@@ -293,7 +291,7 @@ FROM [MainEntitiesSameTable] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000'
         }
 
         AssertSql(
-            """
+"""
 SELECT [m].[Id], [m].[Name], [m].[PeriodEnd], [m].[PeriodStart], [o].[MainEntityManyId], [o].[Id], [o].[Name], [o].[PeriodEnd], [o].[PeriodStart]
 FROM [MainEntitiesMany] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
 LEFT JOIN [OwnedEntityMany] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o] ON [m].[Id] = [o].[MainEntityManyId]
@@ -316,8 +314,8 @@ ORDER BY [m].[Id], [o].[MainEntityManyId]
         }
 
         AssertSql(
-            """
-SELECT [u].[Id], [u].[Name], [u].[PeriodEnd], [u].[PeriodStart], [o].[MainEntityManyId], [o].[Id], [o].[Name], [o].[PeriodEnd], [o].[PeriodStart]
+"""
+SELECT [t].[Id], [t].[Name], [t].[PeriodEnd], [t].[PeriodStart], [o].[MainEntityManyId], [o].[Id], [o].[Name], [o].[PeriodEnd], [o].[PeriodStart]
 FROM (
     SELECT [m].[Id], [m].[Name], [m].[PeriodEnd], [m].[PeriodStart]
     FROM [MainEntitiesMany] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m]
@@ -325,9 +323,9 @@ FROM (
     SELECT [m0].[Id], [m0].[Name], [m0].[PeriodEnd], [m0].[PeriodStart]
     FROM [MainEntitiesMany] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [m0]
     WHERE [m0].[Id] < 30
-) AS [u]
-LEFT JOIN [OwnedEntityMany] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o] ON [u].[Id] = [o].[MainEntityManyId]
-ORDER BY [u].[Id], [o].[MainEntityManyId]
+) AS [t]
+LEFT JOIN [OwnedEntityMany] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [o] ON [t].[Id] = [o].[MainEntityManyId]
+ORDER BY [t].[Id], [o].[MainEntityManyId]
 """);
     }
 
@@ -377,8 +375,13 @@ ORDER BY [u].[Id], [o].[MainEntityManyId]
         public string Name { get; set; }
     }
 
-    public class MyContext26451(DbContextOptions options) : DbContext(options)
+    public class MyContext26451 : DbContext
     {
+        public MyContext26451(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public DbSet<MainEntityDifferentTable> MainEntitiesDifferentTable { get; set; }
         public DbSet<MainEntitySameTable> MainEntitiesSameTable { get; set; }
         public DbSet<MainEntityMany> MainEntitiesMany { get; set; }
@@ -465,10 +468,10 @@ ORDER BY [u].[Id], [o].[MainEntityManyId]
         var _ = async ? await query.ToListAsync() : query.ToList();
 
         AssertSql(
-            """
+"""
 SELECT [v].[Name], [v].[Capacity], [v].[FuelTank_Discriminator], [v].[End], [v].[FuelType], [v].[Start], [v].[GrainGeometry]
 FROM [Vehicles] FOR SYSTEM_TIME AS OF '2000-01-01T00:00:00.0000000' AS [v]
-WHERE [v].[Capacity] IS NOT NULL AND [v].[FuelTank_Discriminator] IS NOT NULL
+WHERE ([v].[Capacity] IS NOT NULL) AND ([v].[FuelTank_Discriminator] IS NOT NULL)
 """);
     }
 
@@ -476,7 +479,7 @@ WHERE [v].[Capacity] IS NOT NULL AND [v].[FuelTank_Discriminator] IS NOT NULL
         Action<ModelBuilder> onModelCreating,
         bool seed = true)
         => InitializeAsync<TransportationContext>(
-            onModelCreating, shouldLogCategory: _ => true, seed: seed ? c => c.SeedAsync() : null);
+            onModelCreating, shouldLogCategory: _ => true, seed: seed ? c => c.Seed() : null);
 
     protected virtual void OnModelCreating(ModelBuilder modelBuilder)
     {

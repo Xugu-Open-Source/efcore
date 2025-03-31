@@ -3,10 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.SqlAzure.Model;
 
-#nullable disable
-
-public class AdventureWorksContext(DbContextOptions options) : PoolableDbContext(options)
+public class AdventureWorksContext : PoolableDbContext
 {
+    public AdventureWorksContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(

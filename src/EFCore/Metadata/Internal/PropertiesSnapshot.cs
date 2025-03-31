@@ -94,24 +94,21 @@ public class PropertiesSnapshot
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual void Attach(InternalTypeBaseBuilder typeBaseBuilder)
+    public virtual void Attach(InternalEntityTypeBuilder entityTypeBuilder)
     {
         if (Properties != null)
         {
             foreach (var propertyBuilder in Properties)
             {
-                propertyBuilder.Attach(typeBaseBuilder);
+                propertyBuilder.Attach(entityTypeBuilder);
             }
         }
-
-        var entityTypeBuilder = typeBaseBuilder as InternalEntityTypeBuilder
-            ?? ((InternalComplexTypeBuilder)typeBaseBuilder).Metadata.ContainingEntityType.Builder;
 
         if (Keys != null)
         {
             foreach (var (internalKeyBuilder, configurationSource) in Keys)
             {
-                internalKeyBuilder.Attach(entityTypeBuilder.Metadata.GetRootType().Builder, configurationSource);
+                internalKeyBuilder.Attach(entityTypeBuilder.Metadata.RootType().Builder, configurationSource);
             }
         }
 

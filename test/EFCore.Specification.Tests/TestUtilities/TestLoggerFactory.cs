@@ -3,9 +3,9 @@
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class TestLoggerFactory(LoggingDefinitions definitions) : ILoggerFactory
+public class TestLoggerFactory : ILoggerFactory
 {
-    public TestLogger Logger { get; } = new(definitions);
+    public TestLogger Logger { get; }
 
     public LogLevel? LoggedAt
         => Logger.LoggedAt;
@@ -15,6 +15,11 @@ public class TestLoggerFactory(LoggingDefinitions definitions) : ILoggerFactory
 
     public string Message
         => Logger.Message;
+
+    public TestLoggerFactory(LoggingDefinitions definitions)
+    {
+        Logger = new TestLogger(definitions);
+    }
 
     public ILogger CreateLogger(string categoryName)
         => Logger;

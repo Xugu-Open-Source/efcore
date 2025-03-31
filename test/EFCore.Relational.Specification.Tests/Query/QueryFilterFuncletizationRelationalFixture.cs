@@ -3,9 +3,7 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class QueryFilterFuncletizationRelationalFixture : QueryFilterFuncletizationFixtureBase, ITestSqlLoggerFactory
+public abstract class QueryFilterFuncletizationRelationalFixture : QueryFilterFuncletizationFixtureBase
 {
     public TestSqlLoggerFactory TestSqlLoggerFactory
         => (TestSqlLoggerFactory)ListLoggerFactory;

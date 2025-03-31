@@ -5,10 +5,15 @@ namespace Microsoft.EntityFrameworkCore.TestModels.ConcurrencyModel;
 
 public class SponsorDetails
 {
-    public class SponsorDetailsProxy(
-        int days,
-        decimal space) : SponsorDetails(days, space), IF1Proxy
+    public class SponsorDetailsProxy : SponsorDetails, IF1Proxy
     {
+        public SponsorDetailsProxy(
+            int days,
+            decimal space)
+            : base(days, space)
+        {
+        }
+
         public bool CreatedCalled { get; set; }
         public bool InitializingCalled { get; set; }
         public bool InitializedCalled { get; set; }

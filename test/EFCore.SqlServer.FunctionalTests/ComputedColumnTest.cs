@@ -3,9 +3,7 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class ComputedColumnTest : IAsyncLifetime
+public class ComputedColumnTest : IDisposable
 {
     [ConditionalFact]
     public void Can_use_computed_columns()
@@ -49,14 +47,23 @@ public class ComputedColumnTest : IAsyncLifetime
         Assert.Null(entity.P5);
     }
 
-    private class Context(IServiceProvider serviceProvider, string databaseName) : DbContext
+    private class Context : DbContext
     {
+        private readonly IServiceProvider _serviceProvider;
+        private readonly string _databaseName;
+
+        public Context(IServiceProvider serviceProvider, string databaseName)
+        {
+            _serviceProvider = serviceProvider;
+            _databaseName = databaseName;
+        }
+
         public DbSet<Entity> Entities { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder
-                .UseSqlServer(SqlServerTestStore.CreateConnectionString(databaseName), b => b.ApplyConfiguration())
-                .UseInternalServiceProvider(serviceProvider);
+                .UseSqlServer(SqlServerTestStore.CreateConnectionString(_databaseName), b => b.ApplyConfiguration())
+                .UseInternalServiceProvider(_serviceProvider);
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -96,15 +103,23 @@ public class ComputedColumnTest : IAsyncLifetime
         public FlagEnum? CalculatedFlagEnum { get; set; }
     }
 
-    private class NullableContext(IServiceProvider serviceProvider, string databaseName) : DbContext
+    private class NullableContext : DbContext
     {
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        private readonly IServiceProvider _serviceProvider;
+        private readonly string _databaseName;
+
+        public NullableContext(IServiceProvider serviceProvider, string databaseName)
+        {
+            _serviceProvider = serviceProvider;
+            _databaseName = databaseName;
+        }
+
         public DbSet<EnumItem> EnumItems { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder
-                .UseSqlServer(SqlServerTestStore.CreateConnectionString(databaseName), b => b.ApplyConfiguration())
-                .UseInternalServiceProvider(serviceProvider);
+                .UseSqlServer(SqlServerTestStore.CreateConnectionString(_databaseName), b => b.ApplyConfiguration())
+                .UseInternalServiceProvider(_serviceProvider);
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
             => modelBuilder.Entity<EnumItem>()
@@ -128,11 +143,13 @@ public class ComputedColumnTest : IAsyncLifetime
         Assert.Equal(FlagEnum.AValue | FlagEnum.BValue, entity.CalculatedFlagEnum);
     }
 
-    protected SqlServerTestStore TestStore { get; private set; }
+    public ComputedColumnTest()
+    {
+        TestStore = SqlServerTestStore.CreateInitialized("ComputedColumnTest");
+    }
 
-    public async Task InitializeAsync()
-        => TestStore = await SqlServerTestStore.CreateInitializedAsync("ComputedColumnTest");
+    protected SqlServerTestStore TestStore { get; }
 
-    public async Task DisposeAsync()
-        => await TestStore.DisposeAsync();
+    public virtual void Dispose()
+        => TestStore.Dispose();
 }

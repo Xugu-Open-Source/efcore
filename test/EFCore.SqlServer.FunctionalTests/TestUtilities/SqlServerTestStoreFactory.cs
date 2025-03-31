@@ -18,7 +18,5 @@ public class SqlServerTestStoreFactory : RelationalTestStoreFactory
         => SqlServerTestStore.GetOrCreate(storeName);
 
     public override IServiceCollection AddProviderServices(IServiceCollection serviceCollection)
-        => serviceCollection
-            .AddEntityFrameworkSqlServer()
-            .AddEntityFrameworkSqlServerNetTopologySuite();
+        => serviceCollection.AddEntityFrameworkSqlServer();
 }

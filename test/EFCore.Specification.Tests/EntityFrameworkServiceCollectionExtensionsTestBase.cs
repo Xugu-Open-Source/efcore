@@ -5,8 +5,15 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public abstract class EntityFrameworkServiceCollectionExtensionsTestBase(TestHelpers testHelpers)
+public abstract class EntityFrameworkServiceCollectionExtensionsTestBase
 {
+    private readonly TestHelpers _testHelpers;
+
+    protected EntityFrameworkServiceCollectionExtensionsTestBase(TestHelpers testHelpers)
+    {
+        _testHelpers = testHelpers;
+    }
+
     [ConditionalFact]
     public void Calling_AddEntityFramework_explicitly_does_not_change_services()
     {
@@ -70,5 +77,5 @@ public abstract class EntityFrameworkServiceCollectionExtensionsTestBase(TestHel
     }
 
     private IServiceCollection AddServices(IServiceCollection serviceCollection)
-        => testHelpers.AddProviderServices(serviceCollection);
+        => _testHelpers.AddProviderServices(serviceCollection);
 }

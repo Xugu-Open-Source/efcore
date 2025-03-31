@@ -22,7 +22,9 @@ public class DiscriminatorBuilder<TDiscriminator>
     /// </summary>
     [EntityFrameworkInternal]
     public DiscriminatorBuilder(DiscriminatorBuilder builder)
-        => Builder = builder;
+    {
+        Builder = builder;
+    }
 
     private DiscriminatorBuilder Builder { get; }
 

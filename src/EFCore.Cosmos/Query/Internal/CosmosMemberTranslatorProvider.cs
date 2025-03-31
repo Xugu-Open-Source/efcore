@@ -1,8 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.EntityFrameworkCore.Query.Internal;
-
 namespace Microsoft.EntityFrameworkCore.Cosmos.Query.Internal;
 
 /// <summary>
@@ -13,8 +11,8 @@ namespace Microsoft.EntityFrameworkCore.Cosmos.Query.Internal;
 /// </summary>
 public class CosmosMemberTranslatorProvider : IMemberTranslatorProvider
 {
-    private readonly List<IMemberTranslator> _plugins = [];
-    private readonly List<IMemberTranslator> _translators = [];
+    private readonly List<IMemberTranslator> _plugins = new();
+    private readonly List<IMemberTranslator> _translators = new();
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -27,12 +25,12 @@ public class CosmosMemberTranslatorProvider : IMemberTranslatorProvider
         IEnumerable<IMemberTranslatorPlugin> plugins)
     {
         _plugins.AddRange(plugins.SelectMany(p => p.Translators));
-        _translators.AddRange(
-        [
-            new CosmosDateTimeMemberTranslator(sqlExpressionFactory),
-            new CosmosNullableMemberTranslator(sqlExpressionFactory),
-            new CosmosStringMemberTranslator(sqlExpressionFactory)
-        ]);
+        _translators
+            .AddRange(
+                new IMemberTranslator[]
+                {
+                    new CosmosStringMemberTranslator(sqlExpressionFactory), new CosmosDateTimeMemberTranslator(sqlExpressionFactory)
+                });
     }
 
     /// <summary>

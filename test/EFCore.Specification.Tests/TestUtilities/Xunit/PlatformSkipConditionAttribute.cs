@@ -6,9 +6,14 @@ using System.Runtime.InteropServices;
 namespace Microsoft.EntityFrameworkCore.TestUtilities.Xunit;
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Assembly)]
-public sealed class PlatformSkipConditionAttribute(TestPlatform excludedPlatforms) : Attribute, ITestCondition
+public sealed class PlatformSkipConditionAttribute : Attribute, ITestCondition
 {
-    private readonly TestPlatform _excludedPlatforms = excludedPlatforms;
+    private readonly TestPlatform _excludedPlatforms;
+
+    public PlatformSkipConditionAttribute(TestPlatform excludedPlatforms)
+    {
+        _excludedPlatforms = excludedPlatforms;
+    }
 
     public ValueTask<bool> IsMetAsync()
         => new(CanRunOnThisPlatform(_excludedPlatforms));

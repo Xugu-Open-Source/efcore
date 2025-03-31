@@ -19,10 +19,14 @@ public class MaterializationInterceptorAggregator : InterceptorAggregator<IMater
     protected override IMaterializationInterceptor CreateChain(IEnumerable<IMaterializationInterceptor> interceptors)
         => new CompositeMaterializationInterceptor(interceptors);
 
-    private sealed class CompositeMaterializationInterceptor(IEnumerable<IMaterializationInterceptor> interceptors)
-        : IMaterializationInterceptor
+    private sealed class CompositeMaterializationInterceptor : IMaterializationInterceptor
     {
-        private readonly IMaterializationInterceptor[] _interceptors = interceptors.ToArray();
+        private readonly IMaterializationInterceptor[] _interceptors;
+
+        public CompositeMaterializationInterceptor(IEnumerable<IMaterializationInterceptor> interceptors)
+        {
+            _interceptors = interceptors.ToArray();
+        }
 
         public InterceptionResult<object> CreatingInstance(
             MaterializationInterceptionData materializationData,

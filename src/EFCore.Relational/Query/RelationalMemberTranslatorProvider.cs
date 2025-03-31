@@ -9,8 +9,8 @@ namespace Microsoft.EntityFrameworkCore.Query;
 /// <inheritdoc />
 public class RelationalMemberTranslatorProvider : IMemberTranslatorProvider
 {
-    private readonly List<IMemberTranslator> _plugins = [];
-    private readonly List<IMemberTranslator> _translators = [];
+    private readonly List<IMemberTranslator> _plugins = new();
+    private readonly List<IMemberTranslator> _translators = new();
 
     /// <summary>
     ///     Creates a new instance of the <see cref="RelationalMemberTranslatorProvider" /> class.
@@ -21,7 +21,9 @@ public class RelationalMemberTranslatorProvider : IMemberTranslatorProvider
         Dependencies = dependencies;
 
         _plugins.AddRange(dependencies.Plugins.SelectMany(p => p.Translators));
-        _translators.AddRange([new NullableMemberTranslator(dependencies.SqlExpressionFactory)]);
+        _translators
+            .AddRange(
+                new[] { new NullableMemberTranslator(dependencies.SqlExpressionFactory) });
     }
 
     /// <summary>

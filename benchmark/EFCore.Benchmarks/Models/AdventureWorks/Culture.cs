@@ -4,18 +4,19 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks;
-
-public class Culture
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.AdventureWorks
 {
-    public Culture()
+    public class Culture
     {
-        ProductModelProductDescriptionCulture = new HashSet<ProductModelProductDescriptionCulture>();
+        public Culture()
+        {
+            ProductModelProductDescriptionCulture = new HashSet<ProductModelProductDescriptionCulture>();
+        }
+
+        public string CultureID { get; set; }
+        public DateTime ModifiedDate { get; set; }
+        public string Name { get; set; }
+
+        public virtual ICollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCulture { get; set; }
     }
-
-    public string CultureID { get; set; }
-    public DateTime ModifiedDate { get; set; }
-    public string Name { get; set; }
-
-    public virtual ICollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCulture { get; set; }
 }

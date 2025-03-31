@@ -5,43 +5,48 @@ using Microsoft.EntityFrameworkCore.InMemory.Storage.Internal;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class InMemoryTestStore(string name = null, bool shared = true) : TestStore(name, shared)
+public class InMemoryTestStore : TestStore
 {
+    public InMemoryTestStore(string name = null, bool shared = true)
+        : base(name, shared)
+    {
+    }
+
     public static InMemoryTestStore GetOrCreate(string name)
         => new(name);
 
-    public static Task<InMemoryTestStore> GetOrCreateInitializedAsync(string name)
-        => new InMemoryTestStore(name).InitializeInMemoryAsync(null, (Func<DbContext>)null, null);
+    public static InMemoryTestStore GetOrCreateInitialized(string name)
+        => new InMemoryTestStore(name).InitializeInMemory(null, (Func<DbContext>)null, null);
 
     public static InMemoryTestStore Create(string name)
         => new(name, shared: false);
 
-    public static Task<InMemoryTestStore> CreateInitializedAsync(string name)
-        => new InMemoryTestStore(name, shared: false).InitializeInMemoryAsync(null, (Func<DbContext>)null, null);
+    public static InMemoryTestStore CreateInitialized(string name)
+        => new InMemoryTestStore(name, shared: false).InitializeInMemory(null, (Func<DbContext>)null, null);
 
-    public async Task<InMemoryTestStore> InitializeInMemoryAsync(
+    public InMemoryTestStore InitializeInMemory(
         IServiceProvider serviceProvider,
         Func<DbContext> createContext,
-        Func<DbContext, Task> seed)
-        => (InMemoryTestStore)await InitializeAsync(serviceProvider, createContext, seed);
+        Action<DbContext> seed)
+        => (InMemoryTestStore)Initialize(serviceProvider, createContext, seed);
 
-    public async Task<InMemoryTestStore> InitializeInMemoryAsync(
+    public InMemoryTestStore InitializeInMemory(
         IServiceProvider serviceProvider,
         Func<InMemoryTestStore, DbContext> createContext,
-        Func<DbContext, Task> seed)
-        => (InMemoryTestStore)await InitializeAsync(serviceProvider, () => createContext(this), seed);
+        Action<DbContext> seed)
+        => (InMemoryTestStore)Initialize(serviceProvider, () => createContext(this), seed);
 
     protected override TestStoreIndex GetTestStoreIndex(IServiceProvider serviceProvider)
         => serviceProvider == null
             ? base.GetTestStoreIndex(null)
-            : serviceProvider.GetService<TestStoreIndex>() ?? base.GetTestStoreIndex(serviceProvider);
+            : serviceProvider.GetRequiredService<TestStoreIndex>();
 
     public override DbContextOptionsBuilder AddProviderOptions(DbContextOptionsBuilder builder)
         => builder.UseInMemoryDatabase(Name);
 
-    public override Task CleanAsync(DbContext context)
+    public override void Clean(DbContext context)
     {
-        context.GetService<IInMemoryStoreProvider>().Store.Clear();
-        return context.Database.EnsureCreatedAsync();
+        context.GetService<IInMemoryStoreCache>().GetStore(Name).Clear();
+        context.Database.EnsureCreated();
     }
 }

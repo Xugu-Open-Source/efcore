@@ -3,9 +3,7 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class InheritanceRelationshipsQueryRelationalFixture : InheritanceRelationshipsQueryFixtureBase, ITestSqlLoggerFactory
+public abstract class InheritanceRelationshipsQueryRelationalFixture : InheritanceRelationshipsQueryFixtureBase
 {
     public TestSqlLoggerFactory TestSqlLoggerFactory
         => (TestSqlLoggerFactory)ListLoggerFactory;

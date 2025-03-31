@@ -64,7 +64,9 @@ public class QueryFilterRewritingConvention : IModelFinalizingConvention
         /// </summary>
         /// <param name="contextType">The clr type of derived DbContext.</param>
         public DbSetAccessRewritingExpressionVisitor(Type contextType)
-            => _contextType = contextType;
+        {
+            _contextType = contextType;
+        }
 
         /// <summary>
         ///     Rewrites DbSet accesses encountered in the expression to <see cref="EntityQueryRootExpression" />.

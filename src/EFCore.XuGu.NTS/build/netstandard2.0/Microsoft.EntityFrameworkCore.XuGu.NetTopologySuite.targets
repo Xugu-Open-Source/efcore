@@ -1,0 +1,46 @@
+<Project>
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <EFCoreXGNetTopologySuiteFile>$(IntermediateOutputPath)EFCoreXGNetTopologySuite$(DefaultLanguageSourceExtension)</EFCoreXGNetTopologySuiteFile>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(Language)' == 'F#'">
+      <Choose>
+        <When Condition="'$(OutputType)' == 'Exe' OR '$(OutputType)' == 'WinExe'">
+          <PropertyGroup>
+            <CodeFragmentItemGroup>CompileBefore</CodeFragmentItemGroup>
+          </PropertyGroup>
+        </When>
+        <Otherwise>
+          <PropertyGroup>
+            <CodeFragmentItemGroup>CompileAfter</CodeFragmentItemGroup>
+          </PropertyGroup>
+        </Otherwise>
+      </Choose>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <CodeFragmentItemGroup>Compile</CodeFragmentItemGroup>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  <Target Name="AddEFCoreXGNetTopologySuite"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="PrepareForBuild"
+          Condition="'$(DesignTimeBuild)' != 'True'"
+          Inputs="$(MSBuildAllProjects)"
+          Outputs="$(EFCoreXGNetTopologySuiteFile)">
+    <ItemGroup>
+      <EFCoreXGNetTopologySuiteServices Include="Microsoft.EntityFrameworkCore.Design.DesignTimeServicesReferenceAttribute">
+        <_Parameter1>Microsoft.EntityFrameworkCore.XuGu.Design.Internal.XGNetTopologySuiteDesignTimeServices, Microsoft.EntityFrameworkCore.XuGu.NetTopologySuite</_Parameter1>
+        <_Parameter2>Microsoft.EntityFrameworkCore.XuGu</_Parameter2>
+      </EFCoreXGNetTopologySuiteServices>
+    </ItemGroup>
+    <WriteCodeFragment AssemblyAttributes="@(EFCoreXGNetTopologySuiteServices)"
+                       Language="$(Language)"
+                       OutputFile="$(EFCoreXGNetTopologySuiteFile)">
+      <Output TaskParameter="OutputFile" ItemName="$(CodeFragmentItemGroup)" />
+      <Output TaskParameter="OutputFile" ItemName="FileWrites" />
+    </WriteCodeFragment>
+  </Target>
+</Project>

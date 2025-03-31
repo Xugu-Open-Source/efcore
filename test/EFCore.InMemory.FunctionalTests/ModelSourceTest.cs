@@ -22,8 +22,13 @@ public class ModelSourceTest
         Assert.Contains("Peak", model.GetEntityTypes().Select(e => e.DisplayName()));
     }
 
-    private class MyModelCustomizer(ModelCustomizerDependencies dependencies) : ModelCustomizer(dependencies)
+    private class MyModelCustomizer : ModelCustomizer
     {
+        public MyModelCustomizer(ModelCustomizerDependencies dependencies)
+            : base(dependencies)
+        {
+        }
+
         public override void Customize(ModelBuilder modelBuilder, DbContext dbContext)
         {
             base.Customize(modelBuilder, dbContext);
@@ -31,9 +36,14 @@ public class ModelSourceTest
         }
     }
 
-    private class JustSomeContext(IServiceProvider serviceProvider) : DbContext
+    private class JustSomeContext : DbContext
     {
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
+        private readonly IServiceProvider _serviceProvider;
+
+        public JustSomeContext(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
 
         public DbSet<Peak> Peaks { get; set; }
 

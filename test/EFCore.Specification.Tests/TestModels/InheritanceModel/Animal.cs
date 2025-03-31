@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.InheritanceModel;
 
-#nullable disable
-
 public abstract class Animal
 {
     public int Id { get; set; }

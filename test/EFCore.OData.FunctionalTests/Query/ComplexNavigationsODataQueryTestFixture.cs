@@ -16,8 +16,10 @@ public class ComplexNavigationsODataQueryTestFixture : ComplexNavigationsQuerySq
         => "ODataComplexNavigations";
 
     public ComplexNavigationsODataQueryTestFixture()
-        => (BaseAddress, ClientFactory, _selfHostServer)
+    {
+        (BaseAddress, ClientFactory, _selfHostServer)
             = ODataQueryTestFixtureInitializer.Initialize<ComplexNavigationsODataContext>(StoreName, GetEdmModel());
+    }
 
     private static IEdmModel GetEdmModel()
     {

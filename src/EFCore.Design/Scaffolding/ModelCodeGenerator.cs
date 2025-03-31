@@ -16,7 +16,9 @@ public abstract class ModelCodeGenerator : IModelCodeGenerator
     /// </summary>
     /// <param name="dependencies">The dependencies.</param>
     protected ModelCodeGenerator(ModelCodeGeneratorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Gets the programming language supported by this service.

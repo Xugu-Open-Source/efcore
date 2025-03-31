@@ -5,8 +5,6 @@ using System.Collections;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-#nullable disable
-
 public class CustomPartitionKeyIdGenerator<T> : ValueGenerator<T>
 {
     public override bool GeneratesTemporaryValues
@@ -29,11 +27,11 @@ public class CustomPartitionKeyIdGenerator<T> : ValueGenerator<T>
             builder.Append("-");
         }
 
-        var partitionKeyNames = entityType.GetPartitionKeyPropertyNames();
+        var partitionKey = entityType.GetPartitionKeyPropertyName();
         foreach (var property in primaryKey.Properties)
         {
-            if (partitionKeyNames.Contains(property.Name)
-                || property.GetJsonPropertyName() == CosmosJsonIdConvention.IdPropertyJsonName)
+            if (property.Name == partitionKey
+                || property.GetJsonPropertyName() == StoreKeyConvention.IdPropertyJsonName)
             {
                 continue;
             }
@@ -46,10 +44,13 @@ public class CustomPartitionKeyIdGenerator<T> : ValueGenerator<T>
                 value = converter.ConvertToProvider(value);
             }
 
-            // We don't allow the Id to be zero for our custom generator.
-            if (value is 0)
+            if (value is int x)
             {
-                return default;
+                // We don't allow the Id to be zero for our custom generator.
+                if (x == 0)
+                {
+                    return default;
+                }
             }
 
             AppendString(builder, value);

@@ -35,9 +35,7 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
         RelationalAnnotationNames.UpdateStoredProcedure,
         RelationalAnnotationNames.MappingFragments,
         RelationalAnnotationNames.RelationalOverrides,
-#pragma warning disable CS0618
         RelationalAnnotationNames.ContainerColumnTypeMapping
-#pragma warning restore CS0618
     };
 
     /// <summary>
@@ -45,7 +43,9 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this service.</param>
     public AnnotationCodeGenerator(AnnotationCodeGeneratorDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Relational provider-specific dependencies for this service.
@@ -87,12 +87,6 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
 
     /// <inheritdoc />
     public virtual void RemoveAnnotationsHandledByConventions(
-        IComplexType complexType,
-        IDictionary<string, IAnnotation> annotations)
-        => RemoveConventionalAnnotationsHelper(complexType, annotations, IsHandledByConvention);
-
-    /// <inheritdoc />
-    public virtual void RemoveAnnotationsHandledByConventions(
         IEntityTypeMappingFragment fragment,
         IDictionary<string, IAnnotation> annotations)
         => RemoveConventionalAnnotationsHelper(fragment, annotations, IsHandledByConvention);
@@ -110,12 +104,6 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
 
         RemoveConventionalAnnotationsHelper(property, annotations, IsHandledByConvention);
     }
-
-    /// <inheritdoc />
-    public virtual void RemoveAnnotationsHandledByConventions(
-        IComplexProperty complexProperty,
-        IDictionary<string, IAnnotation> annotations)
-        => RemoveConventionalAnnotationsHelper(complexProperty, annotations, IsHandledByConvention);
 
     /// <inheritdoc />
     public virtual void RemoveAnnotationsHandledByConventions(IKey key, IDictionary<string, IAnnotation> annotations)
@@ -227,7 +215,8 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
         }
 
         if (annotations.TryGetValue(RelationalAnnotationNames.ContainerColumnName, out var containerColumnNameAnnotation)
-            && containerColumnNameAnnotation is { Value: string containerColumnName }
+            && containerColumnNameAnnotation != null
+            && containerColumnNameAnnotation.Value is string containerColumnName
             && entityType.IsOwned())
         {
             methodCallCodeFragments.Add(
@@ -236,36 +225,10 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
                     containerColumnName));
 
             annotations.Remove(RelationalAnnotationNames.ContainerColumnName);
-#pragma warning disable CS0618
             annotations.Remove(RelationalAnnotationNames.ContainerColumnTypeMapping);
-#pragma warning restore CS0618
-        }
-
-        if (annotations.TryGetValue(RelationalAnnotationNames.ContainerColumnType, out var containerColumnTypeAnnotation)
-            && containerColumnTypeAnnotation is { Value: string containerColumnType }
-            && entityType.IsOwned())
-        {
-            methodCallCodeFragments.Add(
-                new MethodCallCodeFragment(
-                    nameof(RelationalOwnedNavigationBuilderExtensions.HasColumnType),
-                    containerColumnType));
-
-            annotations.Remove(RelationalAnnotationNames.ContainerColumnType);
         }
 
         methodCallCodeFragments.AddRange(GenerateFluentApiCallsHelper(entityType, annotations, GenerateFluentApi));
-
-        return methodCallCodeFragments;
-    }
-
-    /// <inheritdoc />
-    public virtual IReadOnlyList<MethodCallCodeFragment> GenerateFluentApiCalls(
-        IComplexType complexType,
-        IDictionary<string, IAnnotation> annotations)
-    {
-        var methodCallCodeFragments = new List<MethodCallCodeFragment>();
-
-        methodCallCodeFragments.AddRange(GenerateFluentApiCallsHelper(complexType, annotations, GenerateFluentApi));
 
         return methodCallCodeFragments;
     }
@@ -345,18 +308,6 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
             RelationalAnnotationNames.Collation, nameof(RelationalPropertyBuilderExtensions.UseCollation), methodCallCodeFragments);
 
         methodCallCodeFragments.AddRange(GenerateFluentApiCallsHelper(property, annotations, GenerateFluentApi));
-
-        return methodCallCodeFragments;
-    }
-
-    /// <inheritdoc />
-    public virtual IReadOnlyList<MethodCallCodeFragment> GenerateFluentApiCalls(
-        IComplexProperty complexProperty,
-        IDictionary<string, IAnnotation> annotations)
-    {
-        var methodCallCodeFragments = new List<MethodCallCodeFragment>();
-
-        methodCallCodeFragments.AddRange(GenerateFluentApiCallsHelper(complexProperty, annotations, GenerateFluentApi));
 
         return methodCallCodeFragments;
     }
@@ -560,19 +511,6 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
 
     /// <summary>
     ///     Checks if the given <paramref name="annotation" /> is handled by convention when
-    ///     applied to the given <paramref name="complexType" />.
-    /// </summary>
-    /// <remarks>
-    ///     The default implementation always returns <see langword="false" />.
-    /// </remarks>
-    /// <param name="complexType">The <see cref="IComplexType" />.</param>
-    /// <param name="annotation">The <see cref="IAnnotation" />.</param>
-    /// <returns><see langword="false" />.</returns>
-    protected virtual bool IsHandledByConvention(IComplexType complexType, IAnnotation annotation)
-        => false;
-
-    /// <summary>
-    ///     Checks if the given <paramref name="annotation" /> is handled by convention when
     ///     applied to the given <paramref name="fragment" />.
     /// </summary>
     /// <remarks>
@@ -608,19 +546,6 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
     /// <param name="annotation">The <see cref="IAnnotation" />.</param>
     /// <returns><see langword="false" />.</returns>
     protected virtual bool IsHandledByConvention(IProperty property, IAnnotation annotation)
-        => false;
-
-    /// <summary>
-    ///     Checks if the given <paramref name="annotation" /> is handled by convention when
-    ///     applied to the given <paramref name="complexProperty" />.
-    /// </summary>
-    /// <remarks>
-    ///     The default implementation always returns <see langword="false" />.
-    /// </remarks>
-    /// <param name="complexProperty">The <see cref="IComplexProperty" />.</param>
-    /// <param name="annotation">The <see cref="IAnnotation" />.</param>
-    /// <returns><see langword="false" />.</returns>
-    protected virtual bool IsHandledByConvention(IComplexProperty complexProperty, IAnnotation annotation)
         => false;
 
     /// <summary>
@@ -760,19 +685,6 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
     /// <remarks>
     ///     The default implementation always returns <see langword="null" />.
     /// </remarks>
-    /// <param name="complexType">The <see cref="IComplexType" />.</param>
-    /// <param name="annotation">The <see cref="IAnnotation" />.</param>
-    /// <returns><see langword="null" />.</returns>
-    protected virtual MethodCallCodeFragment? GenerateFluentApi(IComplexType complexType, IAnnotation annotation)
-        => null;
-
-    /// <summary>
-    ///     Returns a fluent API call for the given <paramref name="annotation" />, or <see langword="null" />
-    ///     if no fluent API call exists for it.
-    /// </summary>
-    /// <remarks>
-    ///     The default implementation always returns <see langword="null" />.
-    /// </remarks>
     /// <param name="fragment">The <see cref="IEntityTypeMappingFragment" />.</param>
     /// <param name="annotation">The <see cref="IAnnotation" />.</param>
     /// <returns><see langword="null" />.</returns>
@@ -803,19 +715,6 @@ public class AnnotationCodeGenerator : IAnnotationCodeGenerator
     /// <param name="annotation">The <see cref="IAnnotation" />.</param>
     /// <returns><see langword="null" />.</returns>
     protected virtual MethodCallCodeFragment? GenerateFluentApi(IProperty property, IAnnotation annotation)
-        => null;
-
-    /// <summary>
-    ///     Returns a fluent API call for the given <paramref name="annotation" />, or <see langword="null" />
-    ///     if no fluent API call exists for it.
-    /// </summary>
-    /// <remarks>
-    ///     The default implementation always returns <see langword="null" />.
-    /// </remarks>
-    /// <param name="complexProperty">The <see cref="IProperty" />.</param>
-    /// <param name="annotation">The <see cref="IAnnotation" />.</param>
-    /// <returns><see langword="null" />.</returns>
-    protected virtual MethodCallCodeFragment? GenerateFluentApi(IComplexProperty complexProperty, IAnnotation annotation)
         => null;
 
     /// <summary>

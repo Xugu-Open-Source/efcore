@@ -3,9 +3,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class CompositeKeyEndToEndInMemoryTest(CompositeKeyEndToEndInMemoryTest.CompositeKeyEndToEndInMemoryFixture fixture)
-    : CompositeKeyEndToEndTestBase<CompositeKeyEndToEndInMemoryTest.CompositeKeyEndToEndInMemoryFixture>(fixture)
+public class CompositeKeyEndToEndInMemoryTest
+    : CompositeKeyEndToEndTestBase<CompositeKeyEndToEndInMemoryTest.CompositeKeyEndToEndInMemoryFixture>
 {
+    public CompositeKeyEndToEndInMemoryTest(CompositeKeyEndToEndInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class CompositeKeyEndToEndInMemoryFixture : CompositeKeyEndToEndFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

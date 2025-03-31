@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
 public class GearsOfWarQuerySqlServerFixture : GearsOfWarQueryRelationalFixture
 {
     protected override ITestStoreFactory TestStoreFactory
@@ -25,11 +23,19 @@ public class GearsOfWarQuerySqlServerFixture : GearsOfWarQueryRelationalFixture
                 b.Property<byte[]>("BriefingDocument");
                 b.Property<string>("BriefingDocumentFileExtension").HasColumnType("nvarchar(16)");
             });
+
+        // No support yet for DateOnly/TimeOnly (#24507)
+        modelBuilder.Entity<Mission>(
+            b =>
+            {
+                b.Ignore(m => m.Date);
+                b.Ignore(m => m.Time);
+            });
     }
 
-    protected override async Task SeedAsync(GearsOfWarContext context)
+    protected override void Seed(GearsOfWarContext context)
     {
-        await base.SeedAsync(context);
+        base.Seed(context);
 
         // Set up full-text search and add some full-text binary data
         context.Database.ExecuteSqlRaw(

@@ -6,9 +6,14 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public abstract class NorthwindKeylessEntitiesQueryTestBase<TFixture>(TFixture fixture) : QueryTestBase<TFixture>(fixture)
+public abstract class NorthwindKeylessEntitiesQueryTestBase<TFixture> : QueryTestBase<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
+    protected NorthwindKeylessEntitiesQueryTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected NorthwindContext CreateContext()
         => Fixture.CreateContext();
 
@@ -67,7 +72,8 @@ public abstract class NorthwindKeylessEntitiesQueryTestBase<TFixture>(TFixture f
                 .OrderBy(c => c.CustomerID)
                 .Select(cv => cv.Orders.Where(cc => true).ToList()),
             assertOrder: true,
-            elementAsserter: (e, a) => AssertCollection(e, a));
+            elementAsserter: (e, a) => AssertCollection(e, a),
+            entryCount: 6);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -77,7 +83,8 @@ public abstract class NorthwindKeylessEntitiesQueryTestBase<TFixture>(TFixture f
             ss => from c in ss.Set<Customer>()
                   from o in ss.Set<OrderQuery>().Where(ov => ov.CustomerID == c.CustomerID)
                   select new { c, o },
-            e => e.c.CustomerID);
+            e => e.c.CustomerID,
+            entryCount: 89);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -87,7 +94,8 @@ public abstract class NorthwindKeylessEntitiesQueryTestBase<TFixture>(TFixture f
             ss => from ov in ss.Set<OrderQuery>().Include(ov => ov.Customer)
                   where ov.CustomerID == "ALFKI"
                   select ov,
-            elementAsserter: (e, a) => AssertInclude(e, a, new ExpectedInclude<OrderQuery>(ov => ov.Customer)));
+            elementAsserter: (e, a) => AssertInclude(e, a, new ExpectedInclude<OrderQuery>(ov => ov.Customer)),
+            entryCount: 1);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -100,7 +108,8 @@ public abstract class NorthwindKeylessEntitiesQueryTestBase<TFixture>(TFixture f
             elementAsserter: (e, a) => AssertInclude(
                 e, a,
                 new ExpectedInclude<OrderQuery>(ov => ov.Customer),
-                new ExpectedInclude<Customer>(c => c.Orders, "Customer")));
+                new ExpectedInclude<Customer>(c => c.Orders, "Customer")),
+            entryCount: 1);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -145,7 +154,8 @@ public abstract class NorthwindKeylessEntitiesQueryTestBase<TFixture>(TFixture f
                   join pv in ss.Set<ProductView>() on o.CustomerID equals pv.CategoryName into grouping
                   from pv in grouping.DefaultIfEmpty()
                   select new { Order = o, ProductView = pv },
-            elementSorter: e => (e.Order.OrderID, e.ProductView?.ProductID));
+            elementSorter: e => (e.Order.OrderID, e.ProductView?.ProductID),
+            entryCount: 830);
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -157,25 +167,4 @@ public abstract class NorthwindKeylessEntitiesQueryTestBase<TFixture>(TFixture f
                 .Select(pv => new { pv.City, pv.ContactName })
                 .OrderBy(x => x.ContactName)
                 .Take(2));
-
-    [ConditionalTheory]
-    [MemberData(nameof(IsAsyncData))]
-    public virtual Task Count_over_keyless_entity(bool async)
-        => AssertCount(
-            async,
-            ss => ss.Set<CustomerQuery>());
-
-    [ConditionalTheory]
-    [MemberData(nameof(IsAsyncData))]
-    public virtual Task Count_over_keyless_entity_with_pushdown(bool async)
-        => AssertCount(
-            async,
-            ss => ss.Set<CustomerQuery>().OrderBy(x => x.ContactTitle).Take(10));
-
-    [ConditionalTheory]
-    [MemberData(nameof(IsAsyncData))]
-    public virtual Task Count_over_keyless_entity_with_pushdown_empty_projection(bool async)
-        => AssertCount(
-            async,
-            ss => ss.Set<CustomerQuery>().Take(10));
 }

@@ -18,9 +18,6 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
 ///         is configured using the foreign key properties with an extra property that matches the naming convention above.
 ///     </para>
 ///     <para>
-///         If the entity type is a many-to-many join entity type then the many-to-many foreign key properties are used.
-///     </para>
-///     <para>
 ///         See <see href="https://aka.ms/efcore-docs-conventions">Model building conventions</see> for more information and examples.
 ///     </para>
 /// </remarks>
@@ -44,7 +41,9 @@ public class KeyDiscoveryConvention :
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this convention.</param>
     public KeyDiscoveryConvention(ProviderConventionSetBuilderDependencies dependencies)
-        => Dependencies = dependencies;
+    {
+        Dependencies = dependencies;
+    }
 
     /// <summary>
     ///     Dependencies for this service.
@@ -58,43 +57,17 @@ public class KeyDiscoveryConvention :
     protected virtual void TryConfigurePrimaryKey(IConventionEntityTypeBuilder entityTypeBuilder)
     {
         var entityType = entityTypeBuilder.Metadata;
-        if (!ShouldDiscoverKeyProperties(entityType))
+        if (entityType.BaseType != null
+            || (entityType.IsKeyless && entityType.GetIsKeylessConfigurationSource() != ConfigurationSource.Convention)
+            || !entityTypeBuilder.CanSetPrimaryKey((IReadOnlyList<IConventionProperty>?)null))
         {
             return;
         }
 
-        var keyProperties = DiscoverKeyProperties(entityType);
-        if (keyProperties != null)
-        {
-            ProcessKeyProperties(keyProperties, entityType);
-
-            if (keyProperties.Count > 0)
-            {
-                entityTypeBuilder.PrimaryKey(keyProperties);
-            }
-        }
-    }
-
-    /// <summary>
-    ///     Determines whether key properties should be discovered for the entity type.
-    /// </summary>
-    /// <param name="entityType">The entity type.</param>
-    /// <returns><see langword="true" /> if key properties should be discovered, otherwise <see langword="false" />.</returns>
-    protected virtual bool ShouldDiscoverKeyProperties(IConventionEntityType entityType)
-        => entityType.BaseType == null
-            && (!entityType.IsKeyless || entityType.GetIsKeylessConfigurationSource() == ConfigurationSource.Convention)
-            && entityType.Builder.CanSetPrimaryKey((IReadOnlyList<IConventionProperty>?)null);
-
-    /// <summary>
-    ///     Returns the properties that should be used for the primary key.
-    /// </summary>
-    /// <param name="entityType">The entity type.</param>
-    /// <returns>The properties that should be used for the primary key.</returns>
-    protected virtual List<IConventionProperty>? DiscoverKeyProperties(IConventionEntityType entityType)
-    {
         List<IConventionProperty>? keyProperties = null;
         var ownership = entityType.FindOwnership();
-        if (ownership?.DeclaringEntityType != entityType)
+        if (ownership != null
+            && ownership.DeclaringEntityType != entityType)
         {
             ownership = null;
         }
@@ -113,7 +86,7 @@ public class KeyDiscoveryConvention :
             if (keyProperties.Count > 1)
             {
                 Dependencies.Logger.MultiplePrimaryKeyCandidates(keyProperties[0], keyProperties[1]);
-                return null;
+                return;
             }
         }
 
@@ -128,7 +101,7 @@ public class KeyDiscoveryConvention :
                     || primaryKey!.Properties.Count == 1
                     || ownership.Properties.Contains(shadowProperty))
                 {
-                    shadowProperty = entityType.Builder.CreateUniqueProperty(typeof(int), "Id", required: true)!.Metadata;
+                    shadowProperty = entityTypeBuilder.CreateUniqueProperty(typeof(int), "Id", required: true)!.Metadata;
                 }
 
                 keyProperties.Clear();
@@ -152,19 +125,6 @@ public class KeyDiscoveryConvention :
             }
         }
 
-        return keyProperties;
-    }
-
-    /// <summary>
-    ///     Adds or removes properties to be used for the primary key.
-    /// </summary>
-    /// <param name="keyProperties">The properties that will be used to configure the key.</param>
-    /// <param name="entityType">The entity type being configured.</param>
-    protected virtual void ProcessKeyProperties(
-        IList<IConventionProperty> keyProperties,
-        IConventionEntityType entityType)
-    {
-        // Remove duplicates
         for (var i = keyProperties.Count - 1; i >= 0; i--)
         {
             var property = keyProperties[i];
@@ -177,6 +137,24 @@ public class KeyDiscoveryConvention :
                 }
             }
         }
+
+        ProcessKeyProperties(keyProperties, entityType);
+
+        if (keyProperties.Count > 0)
+        {
+            entityTypeBuilder.PrimaryKey(keyProperties);
+        }
+    }
+
+    /// <summary>
+    ///     Adds or removes properties to be used for the primary key.
+    /// </summary>
+    /// <param name="keyProperties">The properties that will be used to configure the key.</param>
+    /// <param name="entityType">The entity type being configured.</param>
+    protected virtual void ProcessKeyProperties(
+        IList<IConventionProperty> keyProperties,
+        IConventionEntityType entityType)
+    {
     }
 
     /// <summary>
@@ -201,9 +179,9 @@ public class KeyDiscoveryConvention :
                     && p.Name.StartsWith(entityTypeName, StringComparison.OrdinalIgnoreCase)
                     && p.Name.EndsWith(KeySuffix, StringComparison.OrdinalIgnoreCase));
         }
-        // ReSharper restore PossibleMultipleEnumeration
 
         return keyProperties;
+        // ReSharper restore PossibleMultipleEnumeration
     }
 
     /// <summary>
@@ -253,12 +231,7 @@ public class KeyDiscoveryConvention :
         IConventionPropertyBuilder propertyBuilder,
         IConventionContext<IConventionPropertyBuilder> context)
     {
-        if (propertyBuilder.Metadata.DeclaringType is not IConventionEntityType entityType)
-        {
-            return;
-        }
-
-        TryConfigurePrimaryKey(entityType.Builder);
+        TryConfigurePrimaryKey(propertyBuilder.Metadata.DeclaringEntityType.Builder);
         if (!propertyBuilder.Metadata.IsInModel)
         {
             context.StopProcessing();
@@ -301,8 +274,7 @@ public class KeyDiscoveryConvention :
         IConventionContext<IReadOnlyList<IConventionProperty>> context)
     {
         var foreignKey = relationshipBuilder.Metadata;
-        if ((foreignKey.IsOwnership
-                || foreignKey.GetReferencingSkipNavigations().Any(n => n.IsCollection))
+        if (foreignKey.IsOwnership
             && !foreignKey.Properties.SequenceEqual(oldDependentProperties)
             && relationshipBuilder.Metadata.IsInModel)
         {

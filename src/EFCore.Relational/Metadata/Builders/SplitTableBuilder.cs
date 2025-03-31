@@ -57,12 +57,6 @@ public class SplitTableBuilder : IInfrastructure<EntityTypeBuilder>
     public virtual IMutableEntityTypeMappingFragment MappingFragment
         => InternalMappingFragment;
 
-    /// <summary>
-    ///     The entity type being configured.
-    /// </summary>
-    public virtual IMutableEntityType Metadata
-        => EntityTypeBuilder.Metadata;
-
     private EntityTypeBuilder EntityTypeBuilder { get; }
 
     /// <summary>

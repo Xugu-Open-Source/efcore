@@ -16,8 +16,7 @@ public class StateDataTest
                 InternalEntityEntry.PropertyFlag.Null,
                 InternalEntityEntry.PropertyFlag.Unknown,
                 InternalEntityEntry.PropertyFlag.IsLoaded,
-                InternalEntityEntry.PropertyFlag.IsTemporary,
-                InternalEntityEntry.PropertyFlag.IsStoreGenerated);
+                InternalEntityEntry.PropertyFlag.IsTemporary);
         }
     }
 
@@ -32,8 +31,7 @@ public class StateDataTest
                 InternalEntityEntry.PropertyFlag.Modified,
                 InternalEntityEntry.PropertyFlag.Unknown,
                 InternalEntityEntry.PropertyFlag.IsLoaded,
-                InternalEntityEntry.PropertyFlag.IsTemporary,
-                InternalEntityEntry.PropertyFlag.IsStoreGenerated);
+                InternalEntityEntry.PropertyFlag.IsTemporary);
         }
     }
 
@@ -48,8 +46,7 @@ public class StateDataTest
                 InternalEntityEntry.PropertyFlag.Modified,
                 InternalEntityEntry.PropertyFlag.Null,
                 InternalEntityEntry.PropertyFlag.IsLoaded,
-                InternalEntityEntry.PropertyFlag.IsTemporary,
-                InternalEntityEntry.PropertyFlag.IsStoreGenerated);
+                InternalEntityEntry.PropertyFlag.IsTemporary);
         }
     }
 
@@ -64,8 +61,7 @@ public class StateDataTest
                 InternalEntityEntry.PropertyFlag.Modified,
                 InternalEntityEntry.PropertyFlag.Null,
                 InternalEntityEntry.PropertyFlag.Unknown,
-                InternalEntityEntry.PropertyFlag.IsTemporary,
-                InternalEntityEntry.PropertyFlag.IsStoreGenerated);
+                InternalEntityEntry.PropertyFlag.IsTemporary);
         }
     }
 
@@ -80,24 +76,7 @@ public class StateDataTest
                 InternalEntityEntry.PropertyFlag.IsLoaded,
                 InternalEntityEntry.PropertyFlag.Modified,
                 InternalEntityEntry.PropertyFlag.Null,
-                InternalEntityEntry.PropertyFlag.Unknown,
-                InternalEntityEntry.PropertyFlag.IsStoreGenerated);
-        }
-    }
-
-    [ConditionalFact]
-    public void Can_read_and_manipulate_store_generated_flags()
-    {
-        for (var i = 0; i < 70; i++)
-        {
-            PropertyManipulation(
-                i,
-                InternalEntityEntry.PropertyFlag.IsStoreGenerated,
-                InternalEntityEntry.PropertyFlag.IsLoaded,
-                InternalEntityEntry.PropertyFlag.Modified,
-                InternalEntityEntry.PropertyFlag.Null,
-                InternalEntityEntry.PropertyFlag.Unknown,
-                InternalEntityEntry.PropertyFlag.IsTemporary);
+                InternalEntityEntry.PropertyFlag.Unknown);
         }
     }
 
@@ -107,8 +86,7 @@ public class StateDataTest
         InternalEntityEntry.PropertyFlag unusedFlag1,
         InternalEntityEntry.PropertyFlag unusedFlag2,
         InternalEntityEntry.PropertyFlag unusedFlag3,
-        InternalEntityEntry.PropertyFlag unusedFlag4,
-        InternalEntityEntry.PropertyFlag unusedFlag5)
+        InternalEntityEntry.PropertyFlag unusedFlag4)
     {
         var data = new InternalEntityEntry.StateData(propertyCount, propertyCount);
 
@@ -117,7 +95,6 @@ public class StateDataTest
         Assert.False(data.AnyPropertiesFlagged(unusedFlag2));
         Assert.False(data.AnyPropertiesFlagged(unusedFlag3));
         Assert.False(data.AnyPropertiesFlagged(unusedFlag4));
-        Assert.False(data.AnyPropertiesFlagged(unusedFlag5));
 
         for (var i = 0; i < propertyCount; i++)
         {
@@ -130,7 +107,6 @@ public class StateDataTest
                 Assert.False(data.IsPropertyFlagged(j, unusedFlag2));
                 Assert.False(data.IsPropertyFlagged(j, unusedFlag3));
                 Assert.False(data.IsPropertyFlagged(j, unusedFlag4));
-                Assert.False(data.IsPropertyFlagged(j, unusedFlag5));
             }
 
             Assert.True(data.AnyPropertiesFlagged(propertyFlag));
@@ -138,7 +114,6 @@ public class StateDataTest
             Assert.False(data.AnyPropertiesFlagged(unusedFlag2));
             Assert.False(data.AnyPropertiesFlagged(unusedFlag3));
             Assert.False(data.AnyPropertiesFlagged(unusedFlag4));
-            Assert.False(data.AnyPropertiesFlagged(unusedFlag5));
         }
 
         for (var i = 0; i < propertyCount; i++)
@@ -152,7 +127,6 @@ public class StateDataTest
                 Assert.False(data.IsPropertyFlagged(j, unusedFlag2));
                 Assert.False(data.IsPropertyFlagged(j, unusedFlag3));
                 Assert.False(data.IsPropertyFlagged(j, unusedFlag4));
-                Assert.False(data.IsPropertyFlagged(j, unusedFlag5));
             }
 
             Assert.Equal(i < propertyCount - 1, data.AnyPropertiesFlagged(propertyFlag));
@@ -160,7 +134,6 @@ public class StateDataTest
             Assert.False(data.AnyPropertiesFlagged(unusedFlag2));
             Assert.False(data.AnyPropertiesFlagged(unusedFlag3));
             Assert.False(data.AnyPropertiesFlagged(unusedFlag4));
-            Assert.False(data.AnyPropertiesFlagged(unusedFlag5));
         }
 
         for (var i = 0; i < propertyCount; i++)
@@ -170,7 +143,6 @@ public class StateDataTest
             Assert.False(data.IsPropertyFlagged(i, unusedFlag2));
             Assert.False(data.IsPropertyFlagged(i, unusedFlag3));
             Assert.False(data.IsPropertyFlagged(i, unusedFlag4));
-            Assert.False(data.IsPropertyFlagged(i, unusedFlag5));
         }
 
         data.FlagAllProperties(propertyCount, propertyFlag, flagged: true);
@@ -180,7 +152,6 @@ public class StateDataTest
         Assert.False(data.AnyPropertiesFlagged(unusedFlag2));
         Assert.False(data.AnyPropertiesFlagged(unusedFlag3));
         Assert.False(data.AnyPropertiesFlagged(unusedFlag4));
-        Assert.False(data.AnyPropertiesFlagged(unusedFlag5));
 
         for (var i = 0; i < propertyCount; i++)
         {
@@ -189,7 +160,6 @@ public class StateDataTest
             Assert.False(data.IsPropertyFlagged(i, unusedFlag2));
             Assert.False(data.IsPropertyFlagged(i, unusedFlag3));
             Assert.False(data.IsPropertyFlagged(i, unusedFlag4));
-            Assert.False(data.IsPropertyFlagged(i, unusedFlag5));
         }
 
         data.FlagAllProperties(propertyCount, propertyFlag, flagged: false);
@@ -199,7 +169,6 @@ public class StateDataTest
         Assert.False(data.AnyPropertiesFlagged(unusedFlag2));
         Assert.False(data.AnyPropertiesFlagged(unusedFlag3));
         Assert.False(data.AnyPropertiesFlagged(unusedFlag4));
-        Assert.False(data.AnyPropertiesFlagged(unusedFlag5));
 
         for (var i = 0; i < propertyCount; i++)
         {
@@ -208,7 +177,6 @@ public class StateDataTest
             Assert.False(data.IsPropertyFlagged(i, unusedFlag2));
             Assert.False(data.IsPropertyFlagged(i, unusedFlag3));
             Assert.False(data.IsPropertyFlagged(i, unusedFlag4));
-            Assert.False(data.IsPropertyFlagged(i, unusedFlag5));
         }
     }
 

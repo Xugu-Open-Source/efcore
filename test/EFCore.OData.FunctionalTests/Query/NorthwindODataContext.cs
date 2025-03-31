@@ -5,8 +5,13 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class NorthwindODataContext(DbContextOptions options) : PoolableDbContext(options)
+public class NorthwindODataContext : PoolableDbContext
 {
+    public NorthwindODataContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public virtual DbSet<Customer> Customers { get; set; }
     public virtual DbSet<Employee> Employees { get; set; }
     public virtual DbSet<Order> Orders { get; set; }

@@ -5,11 +5,16 @@ using Microsoft.EntityFrameworkCore.Sqlite.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public class NorthwindSplitIncludeQuerySqliteTest(NorthwindQuerySqliteFixture<NoopModelCustomizer> fixture)
-    : NorthwindSplitIncludeQueryTestBase<NorthwindQuerySqliteFixture<NoopModelCustomizer>>(fixture)
+public class NorthwindSplitIncludeQuerySqliteTest : NorthwindSplitIncludeQueryTestBase<NorthwindQuerySqliteFixture<NoopModelCustomizer>>
 {
+    public NorthwindSplitIncludeQuerySqliteTest(
+        NorthwindQuerySqliteFixture<NoopModelCustomizer> fixture,
+        ITestOutputHelper testOutputHelper)
+        : base(fixture)
+    {
+        //TestSqlLoggerFactory.CaptureOutput(testOutputHelper);
+    }
+
     public override async Task Include_collection_with_cross_apply_with_filter(bool async)
         => Assert.Equal(
             SqliteStrings.ApplyNotSupported,

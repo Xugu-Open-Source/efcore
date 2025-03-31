@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+#nullable enable
+
 using Microsoft.EntityFrameworkCore.SqlServer.Metadata.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
@@ -10,7 +12,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
 /// </summary>
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-conventions">Model building conventions</see>, and
-///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and Azure SQL databases with EF Core</see>
+///     <see href="https://aka.ms/efcore-docs-sqlserver">Accessing SQL Server and SQL Azure databases with EF Core</see>
 ///     for more information and examples.
 /// </remarks>
 public class SqlServerRuntimeModelConvention : RelationalRuntimeModelConvention
@@ -99,8 +101,6 @@ public class SqlServerRuntimeModelConvention : RelationalRuntimeModelConvention
             annotations.Remove(SqlServerAnnotationNames.CreatedOnline);
             annotations.Remove(SqlServerAnnotationNames.Include);
             annotations.Remove(SqlServerAnnotationNames.FillFactor);
-            annotations.Remove(SqlServerAnnotationNames.SortInTempDb);
-            annotations.Remove(SqlServerAnnotationNames.DataCompression);
         }
     }
 
@@ -116,7 +116,6 @@ public class SqlServerRuntimeModelConvention : RelationalRuntimeModelConvention
         if (!runtime)
         {
             annotations.Remove(SqlServerAnnotationNames.Clustered);
-            annotations.Remove(SqlServerAnnotationNames.FillFactor);
         }
     }
 

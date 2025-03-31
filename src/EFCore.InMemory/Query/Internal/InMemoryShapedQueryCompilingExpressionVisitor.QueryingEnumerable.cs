@@ -14,22 +14,32 @@ namespace Microsoft.EntityFrameworkCore.InMemory.Query.Internal;
 /// </summary>
 public partial class InMemoryShapedQueryCompilingExpressionVisitor
 {
-    private sealed class QueryingEnumerable<T>(
-        QueryContext queryContext,
-        IEnumerable<ValueBuffer> innerEnumerable,
-        Func<QueryContext, ValueBuffer, T> shaper,
-        Type contextType,
-        bool standAloneStateManager,
-        bool threadSafetyChecksEnabled)
-        : IAsyncEnumerable<T>, IEnumerable<T>, IQueryingEnumerable
+    private sealed class QueryingEnumerable<T> : IAsyncEnumerable<T>, IEnumerable<T>, IQueryingEnumerable
     {
-        private readonly QueryContext _queryContext = queryContext;
-        private readonly IEnumerable<ValueBuffer> _innerEnumerable = innerEnumerable;
-        private readonly Func<QueryContext, ValueBuffer, T> _shaper = shaper;
-        private readonly Type _contextType = contextType;
-        private readonly IDiagnosticsLogger<DbLoggerCategory.Query> _queryLogger = queryContext.QueryLogger;
-        private readonly bool _standAloneStateManager = standAloneStateManager;
-        private readonly bool _threadSafetyChecksEnabled = threadSafetyChecksEnabled;
+        private readonly QueryContext _queryContext;
+        private readonly IEnumerable<ValueBuffer> _innerEnumerable;
+        private readonly Func<QueryContext, ValueBuffer, T> _shaper;
+        private readonly Type _contextType;
+        private readonly IDiagnosticsLogger<DbLoggerCategory.Query> _queryLogger;
+        private readonly bool _standAloneStateManager;
+        private readonly bool _threadSafetyChecksEnabled;
+
+        public QueryingEnumerable(
+            QueryContext queryContext,
+            IEnumerable<ValueBuffer> innerEnumerable,
+            Func<QueryContext, ValueBuffer, T> shaper,
+            Type contextType,
+            bool standAloneStateManager,
+            bool threadSafetyChecksEnabled)
+        {
+            _queryContext = queryContext;
+            _innerEnumerable = innerEnumerable;
+            _shaper = shaper;
+            _contextType = contextType;
+            _queryLogger = queryContext.QueryLogger;
+            _standAloneStateManager = standAloneStateManager;
+            _threadSafetyChecksEnabled = threadSafetyChecksEnabled;
+        }
 
         public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
             => new Enumerator(this, cancellationToken);
@@ -83,9 +93,16 @@ public partial class InMemoryShapedQueryCompilingExpressionVisitor
             {
                 try
                 {
-                    using var _ = _concurrencyDetector?.EnterCriticalSection();
+                    _concurrencyDetector?.EnterCriticalSection();
 
-                    return MoveNextHelper();
+                    try
+                    {
+                        return MoveNextHelper();
+                    }
+                    finally
+                    {
+                        _concurrencyDetector?.ExitCriticalSection();
+                    }
                 }
                 catch (Exception exception)
                 {
@@ -106,11 +123,18 @@ public partial class InMemoryShapedQueryCompilingExpressionVisitor
             {
                 try
                 {
-                    using var _ = _concurrencyDetector?.EnterCriticalSection();
+                    _concurrencyDetector?.EnterCriticalSection();
 
-                    _cancellationToken.ThrowIfCancellationRequested();
+                    try
+                    {
+                        _cancellationToken.ThrowIfCancellationRequested();
 
-                    return ValueTask.FromResult(MoveNextHelper());
+                        return new ValueTask<bool>(MoveNextHelper());
+                    }
+                    finally
+                    {
+                        _concurrencyDetector?.ExitCriticalSection();
+                    }
                 }
                 catch (Exception exception)
                 {
@@ -131,7 +155,7 @@ public partial class InMemoryShapedQueryCompilingExpressionVisitor
             {
                 if (_enumerator == null)
                 {
-                    EntityFrameworkMetricsData.ReportQueryExecuting();
+                    EntityFrameworkEventSource.Log.QueryExecuting();
 
                     _enumerator = _innerEnumerable.GetEnumerator();
                     _queryContext.InitializeStateManager(_standAloneStateManager);

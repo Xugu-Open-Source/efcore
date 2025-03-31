@@ -5,9 +5,7 @@ using System.Data;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
-public class TestRelationalTypeMappingSource(
-    TypeMappingSourceDependencies dependencies,
-    RelationalTypeMappingSourceDependencies relationalDependencies) : RelationalTypeMappingSource(dependencies, relationalDependencies)
+public class TestRelationalTypeMappingSource : RelationalTypeMappingSource
 {
     private static readonly RelationalTypeMapping _string
         = new StringTypeMapping("just_string(2000)", DbType.String);
@@ -118,21 +116,33 @@ public class TestRelationalTypeMappingSource(
             { "dec", _defaultDecimalMapping }
         };
 
-    private class TestStringTypeMapping(
-        string storeType,
-        DbType? dbType,
-        bool unicode = false,
-        int? size = null,
-        bool fixedLength = false) : StringTypeMapping(
-        new RelationalTypeMappingParameters(
-            new CoreTypeMappingParameters(typeof(string)),
-            storeType,
-            StoreTypePostfix.None,
-            dbType,
-            unicode,
-            size,
-            fixedLength))
+    public TestRelationalTypeMappingSource(
+        TypeMappingSourceDependencies dependencies,
+        RelationalTypeMappingSourceDependencies relationalDependencies)
+        : base(dependencies, relationalDependencies)
     {
+    }
+
+    private class TestStringTypeMapping : StringTypeMapping
+    {
+        public TestStringTypeMapping(
+            string storeType,
+            DbType? dbType,
+            bool unicode = false,
+            int? size = null,
+            bool fixedLength = false)
+            : base(
+                new RelationalTypeMappingParameters(
+                    new CoreTypeMappingParameters(typeof(string)),
+                    storeType,
+                    StoreTypePostfix.None,
+                    dbType,
+                    unicode,
+                    size,
+                    fixedLength))
+        {
+        }
+
         protected override string ProcessStoreType(
             RelationalTypeMappingParameters parameters,
             string storeType,
@@ -193,7 +203,7 @@ public class TestRelationalTypeMappingSource(
                     return _defaultDecimalMapping;
                 }
 
-                if (scale is null or 0)
+                if (scale == null || scale == 0)
                 {
                     return new DecimalTypeMapping(
                         "decimal_mapping(" + precision + ")",
@@ -210,7 +220,7 @@ public class TestRelationalTypeMappingSource(
             {
                 return storeTypeName != null
                     && !mapping.StoreType.Equals(storeTypeName, StringComparison.Ordinal)
-                        ? mapping.WithStoreTypeAndSize(storeTypeName, mapping.Size)
+                        ? mapping.Clone(storeTypeName, mapping.Size)
                         : mapping;
             }
         }
@@ -224,12 +234,12 @@ public class TestRelationalTypeMappingSource(
 
     protected override string ParseStoreTypeName(
         string storeTypeName,
-        ref bool? unicode,
-        ref int? size,
-        ref int? precision,
-        ref int? scale)
+        out bool? unicode,
+        out int? size,
+        out int? precision,
+        out int? scale)
     {
-        var parsedName = base.ParseStoreTypeName(storeTypeName, ref unicode, ref size, ref precision, ref scale);
+        var parsedName = base.ParseStoreTypeName(storeTypeName, out unicode, out size, out precision, out scale);
 
         if (size.HasValue
             && storeTypeName?.StartsWith("default_decimal_mapping", StringComparison.OrdinalIgnoreCase) == true)

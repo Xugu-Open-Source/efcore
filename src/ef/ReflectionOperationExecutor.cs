@@ -1,10 +1,11 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
-using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Tools.Properties;
 
@@ -21,27 +22,24 @@ internal class ReflectionOperationExecutor : OperationExecutorBase
     public ReflectionOperationExecutor(
         string assembly,
         string? startupAssembly,
-        string? project,
         string? projectDir,
         string? dataDirectory,
         string? rootNamespace,
         string? language,
         bool nullable,
-        string[] remainingArguments,
-        IOperationReportHandler reportHandler)
-        : base(assembly, startupAssembly, project, projectDir, rootNamespace, language, nullable, remainingArguments, reportHandler)
+        string[] remainingArguments)
+        : base(assembly, startupAssembly, projectDir, rootNamespace, language, nullable, remainingArguments)
     {
-        var reporter = new OperationReporter(reportHandler);
         var configurationFile = (startupAssembly ?? assembly) + ".config";
         if (File.Exists(configurationFile))
         {
-            reporter.WriteVerbose(Resources.UsingConfigurationFile(configurationFile));
+            Reporter.WriteVerbose(Resources.UsingConfigurationFile(configurationFile));
             AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", configurationFile);
         }
 
         if (dataDirectory != null)
         {
-            reporter.WriteVerbose(Resources.UsingDataDir(dataDirectory));
+            Reporter.WriteVerbose(Resources.UsingDataDir(dataDirectory));
             AppDomain.CurrentDomain.SetData("DataDirectory", dataDirectory);
         }
 
@@ -50,21 +48,20 @@ internal class ReflectionOperationExecutor : OperationExecutorBase
         _commandsAssembly = Assembly.Load(new AssemblyName { Name = DesignAssemblyName });
         var reportHandlerType = _commandsAssembly.GetType(ReportHandlerTypeName, throwOnError: true, ignoreCase: false)!;
 
-        var designReportHandler = Activator.CreateInstance(
+        var reportHandler = Activator.CreateInstance(
             reportHandlerType,
-            (Action<string>)reportHandler.OnError,
-            (Action<string>)reportHandler.OnWarning,
-            (Action<string>)reportHandler.OnInformation,
-            (Action<string>)reportHandler.OnVerbose)!;
+            (Action<string>)Reporter.WriteError,
+            (Action<string>)Reporter.WriteWarning,
+            (Action<string>)Reporter.WriteInformation,
+            (Action<string>)Reporter.WriteVerbose)!;
 
         _executor = Activator.CreateInstance(
             _commandsAssembly.GetType(ExecutorTypeName, throwOnError: true, ignoreCase: false)!,
-            designReportHandler,
+            reportHandler,
             new Dictionary<string, object?>
             {
                 { "targetName", AssemblyFileName },
                 { "startupTargetName", StartupAssemblyFileName },
-                { "project", Project },
                 { "projectDir", ProjectDirectory },
                 { "rootNamespace", RootNamespace },
                 { "language", Language },

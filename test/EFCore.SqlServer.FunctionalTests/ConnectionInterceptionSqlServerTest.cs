@@ -1,15 +1,20 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+#nullable enable
+
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.EntityFrameworkCore;
 
-public abstract class ConnectionInterceptionSqlServerTestBase(
-    ConnectionInterceptionSqlServerTestBase.InterceptionSqlServerFixtureBase fixture)
-    : ConnectionInterceptionTestBase(fixture)
+public abstract class ConnectionInterceptionSqlServerTestBase : ConnectionInterceptionTestBase
 {
+    protected ConnectionInterceptionSqlServerTestBase(InterceptionSqlServerFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     public abstract class InterceptionSqlServerFixtureBase : InterceptionFixtureBase
     {
         protected override string StoreName
@@ -63,9 +68,14 @@ public abstract class ConnectionInterceptionSqlServerTestBase(
             => throw new NotImplementedException();
     }
 
-    public class ConnectionInterceptionSqlServerTest(ConnectionInterceptionSqlServerTest.InterceptionSqlServerFixture fixture)
-        : ConnectionInterceptionSqlServerTestBase(fixture), IClassFixture<ConnectionInterceptionSqlServerTest.InterceptionSqlServerFixture>
+    public class ConnectionInterceptionSqlServerTest
+        : ConnectionInterceptionSqlServerTestBase, IClassFixture<ConnectionInterceptionSqlServerTest.InterceptionSqlServerFixture>
     {
+        public ConnectionInterceptionSqlServerTest(InterceptionSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqlServerFixture : InterceptionSqlServerFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener
@@ -73,11 +83,15 @@ public abstract class ConnectionInterceptionSqlServerTestBase(
         }
     }
 
-    public class ConnectionInterceptionWithConnectionStringSqlServerTest(
-        ConnectionInterceptionWithConnectionStringSqlServerTest.InterceptionSqlServerFixture fixture)
-        : ConnectionInterceptionSqlServerTestBase(fixture),
+    public class ConnectionInterceptionWithConnectionStringSqlServerTest
+        : ConnectionInterceptionSqlServerTestBase,
             IClassFixture<ConnectionInterceptionWithConnectionStringSqlServerTest.InterceptionSqlServerFixture>
     {
+        public ConnectionInterceptionWithConnectionStringSqlServerTest(InterceptionSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqlServerFixture : InterceptionSqlServerFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener
@@ -88,11 +102,15 @@ public abstract class ConnectionInterceptionSqlServerTestBase(
             => optionsBuilder.UseSqlServer("Database=Dummy");
     }
 
-    public class ConnectionInterceptionWithDiagnosticsSqlServerTest(
-        ConnectionInterceptionWithDiagnosticsSqlServerTest.InterceptionSqlServerFixture fixture)
-        : ConnectionInterceptionSqlServerTestBase(fixture),
+    public class ConnectionInterceptionWithDiagnosticsSqlServerTest
+        : ConnectionInterceptionSqlServerTestBase,
             IClassFixture<ConnectionInterceptionWithDiagnosticsSqlServerTest.InterceptionSqlServerFixture>
     {
+        public ConnectionInterceptionWithDiagnosticsSqlServerTest(InterceptionSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         public class InterceptionSqlServerFixture : InterceptionSqlServerFixtureBase
         {
             protected override bool ShouldSubscribeToDiagnosticListener

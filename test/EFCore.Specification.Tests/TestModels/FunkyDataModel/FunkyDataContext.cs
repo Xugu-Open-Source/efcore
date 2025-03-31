@@ -3,18 +3,21 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.FunkyDataModel;
 
-#nullable disable
-
-public class FunkyDataContext(DbContextOptions options) : PoolableDbContext(options)
+public class FunkyDataContext : PoolableDbContext
 {
+    public FunkyDataContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public DbSet<FunkyCustomer> FunkyCustomers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         => modelBuilder.Entity<FunkyCustomer>().Property(e => e.Id).ValueGeneratedNever();
 
-    public static Task SeedAsync(FunkyDataContext context)
+    public static void Seed(FunkyDataContext context)
     {
         context.FunkyCustomers.AddRange(FunkyDataData.CreateFunkyCustomers());
-        return context.SaveChangesAsync();
+        context.SaveChanges();
     }
 }

@@ -7,10 +7,15 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable AccessToDisposedClosure
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public abstract class NorthwindQueryTaggingQueryTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class NorthwindQueryTaggingQueryTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : NorthwindQueryFixtureBase<NoopModelCustomizer>, new()
 {
-    protected TFixture Fixture { get; } = fixture;
+    protected NorthwindQueryTaggingQueryTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected TFixture Fixture { get; }
 
     [ConditionalFact]
     public virtual void Single_query_tag()
@@ -147,8 +152,6 @@ Laurel")
 
         Assert.NotNull(customer);
     }
-
-    // See also NorthwindGroupByQueryTestBase.Final_GroupBy_TagWith
 
     protected NorthwindContext CreateContext()
         => Fixture.CreateContext();

@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public class ManyToManyTrackingProxySqlServerTest(ManyToManyTrackingProxySqlServerTest.ManyToManyTrackingProxySqlServerFixture fixture)
-    : ManyToManyTrackingSqlServerTestBase<ManyToManyTrackingProxySqlServerTest.ManyToManyTrackingProxySqlServerFixture>(fixture)
+public class ManyToManyTrackingProxySqlServerTest
+    : ManyToManyTrackingSqlServerTestBase<ManyToManyTrackingProxySqlServerTest.ManyToManyTrackingProxySqlServerFixture>
 {
+    public ManyToManyTrackingProxySqlServerTest(ManyToManyTrackingProxySqlServerFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected override Dictionary<string, DeleteBehavior> CustomDeleteBehaviors { get; } = new()
     {
         { "EntityBranch.RootSkipShared", DeleteBehavior.ClientCascade },
@@ -28,21 +31,24 @@ public class ManyToManyTrackingProxySqlServerTest(ManyToManyTrackingProxySqlServ
         // Mutable properties aren't proxyable on Dictionary
         => Task.CompletedTask;
 
-    public override Task Can_update_many_to_many_shared_with_payload()
+    public override void Can_update_many_to_many_shared_with_payload()
+    {
         // Mutable properties aren't proxyable on Dictionary
-        => Task.CompletedTask;
+    }
 
-    public override Task Can_insert_update_delete_shared_type_entity_type()
+    public override void Can_insert_update_delete_shared_type_entity_type()
+    {
         // Mutable properties aren't proxyable on Dictionary
-        => Task.CompletedTask;
+    }
 
     public override Task Can_insert_many_to_many_shared_with_payload_unidirectional(bool async)
         // Mutable properties aren't proxyable on Dictionary
         => Task.CompletedTask;
 
-    public override Task Can_update_many_to_many_shared_with_payload_unidirectional()
+    public override void Can_update_many_to_many_shared_with_payload_unidirectional()
+    {
         // Mutable properties aren't proxyable on Dictionary
-        => Task.CompletedTask;
+    }
 
     protected override bool RequiresDetectChanges
         => false;

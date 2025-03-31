@@ -12,7 +12,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 public class CompositeDependentKeyValueFactory : CompositeValueFactory
 {
     private readonly IForeignKey _foreignKey;
-    private readonly IPrincipalKeyValueFactory<IReadOnlyList<object?>> _principalKeyValueFactory;
+    private readonly IPrincipalKeyValueFactory<object[]> _principalKeyValueFactory;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -22,7 +22,7 @@ public class CompositeDependentKeyValueFactory : CompositeValueFactory
     /// </summary>
     public CompositeDependentKeyValueFactory(
         IForeignKey foreignKey,
-        IPrincipalKeyValueFactory<IReadOnlyList<object?>> principalKeyValueFactory)
+        IPrincipalKeyValueFactory<object[]> principalKeyValueFactory)
         : base(foreignKey.Properties)
     {
         _foreignKey = foreignKey;
@@ -36,7 +36,7 @@ public class CompositeDependentKeyValueFactory : CompositeValueFactory
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public override object CreatePrincipalEquatableKey(IUpdateEntry entry, bool fromOriginalValues)
-        => new EquatableKeyValue<IReadOnlyList<object?>>(
+        => new EquatableKeyValue<object[]>(
             _foreignKey,
             fromOriginalValues
                 ? _principalKeyValueFactory.CreateFromOriginalValues(entry)!
@@ -52,9 +52,9 @@ public class CompositeDependentKeyValueFactory : CompositeValueFactory
     public override object? CreateDependentEquatableKey(IUpdateEntry entry, bool fromOriginalValues)
         => fromOriginalValues
             ? TryCreateFromOriginalValues(entry, out var originalKeyValue)
-                ? new EquatableKeyValue<IReadOnlyList<object?>>(_foreignKey, originalKeyValue, EqualityComparer)
+                ? new EquatableKeyValue<object[]>(_foreignKey, originalKeyValue, EqualityComparer)
                 : null
             : TryCreateFromCurrentValues(entry, out var keyValue)
-                ? new EquatableKeyValue<IReadOnlyList<object?>>(_foreignKey, keyValue, EqualityComparer)
+                ? new EquatableKeyValue<object[]>(_foreignKey, keyValue, EqualityComparer)
                 : null;
 }

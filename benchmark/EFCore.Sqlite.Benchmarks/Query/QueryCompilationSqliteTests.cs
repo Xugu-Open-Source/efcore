@@ -4,13 +4,18 @@
 using Microsoft.EntityFrameworkCore.Benchmarks.Models.Orders;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Query;
-
-public class QueryCompilationSqliteTests : QueryCompilationTests
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Query
 {
-    public override IServiceCollection AddProviderServices(IServiceCollection services)
-        => services.AddEntityFrameworkSqlite();
+    public class QueryCompilationSqliteTests : QueryCompilationTests
+    {
+        public override IServiceCollection AddProviderServices(IServiceCollection services)
+        {
+            return services.AddEntityFrameworkSqlite();
+        }
 
-    public override OrdersFixtureBase CreateFixture()
-        => new OrdersSqliteFixture("Perf_Query_Compilation");
+        public override OrdersFixtureBase CreateFixture()
+        {
+            return new OrdersSqliteFixture("Perf_Query_Compilation");
+        }
+    }
 }

@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.ConferencePlanner;
 
-#nullable disable
-
 public class Attendee : ConferenceDTO.Attendee
 {
     public virtual ICollection<SessionAttendee> SessionsAttendees { get; set; }

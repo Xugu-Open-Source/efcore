@@ -1,10 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <AssemblyName>Microsoft.EntityFrameworkCore.CrossStore.FunctionalTests</AssemblyName>
     <RootNamespace>Microsoft.EntityFrameworkCore</RootNamespace>
-    <Nullable>disable</Nullable>
     <ImplicitUsings>true</ImplicitUsings>
   </PropertyGroup>
 
@@ -42,7 +41,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EFCore.InMemory.FunctionalTests\EFCore.InMemory.FunctionalTests.csproj" />
-    <ProjectReference Include="..\EFCore.Cosmos.FunctionalTests\EFCore.Cosmos.FunctionalTests.csproj" />
     <ProjectReference Include="..\EFCore.Sqlite.FunctionalTests\EFCore.Sqlite.FunctionalTests.csproj" />
     <ProjectReference Include="..\EFCore.SqlServer.FunctionalTests\EFCore.SqlServer.FunctionalTests.csproj" />
   </ItemGroup>

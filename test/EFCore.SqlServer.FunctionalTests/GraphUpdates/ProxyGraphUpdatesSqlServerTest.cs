@@ -3,13 +3,16 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public abstract class ProxyGraphUpdatesSqlServerTest
 {
-    public abstract class ProxyGraphUpdatesSqlServerTestBase<TFixture>(TFixture fixture) : ProxyGraphUpdatesTestBase<TFixture>(fixture)
+    public abstract class ProxyGraphUpdatesSqlServerTestBase<TFixture> : ProxyGraphUpdatesTestBase<TFixture>
         where TFixture : ProxyGraphUpdatesSqlServerTestBase<TFixture>.ProxyGraphUpdatesSqlServerFixtureBase, new()
     {
+        protected ProxyGraphUpdatesSqlServerTestBase(TFixture fixture)
+            : base(fixture)
+        {
+        }
+
         protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
             => facade.UseTransaction(transaction.GetDbTransaction());
 
@@ -23,9 +26,13 @@ public abstract class ProxyGraphUpdatesSqlServerTest
         }
     }
 
-    public class LazyLoading(LazyLoading.ProxyGraphUpdatesWithLazyLoadingSqlServerFixture fixture)
-        : ProxyGraphUpdatesSqlServerTestBase<LazyLoading.ProxyGraphUpdatesWithLazyLoadingSqlServerFixture>(fixture)
+    public class LazyLoading : ProxyGraphUpdatesSqlServerTestBase<LazyLoading.ProxyGraphUpdatesWithLazyLoadingSqlServerFixture>
     {
+        public LazyLoading(ProxyGraphUpdatesWithLazyLoadingSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         protected override bool DoesLazyLoading
             => true;
 
@@ -52,12 +59,17 @@ public abstract class ProxyGraphUpdatesSqlServerTest
         }
     }
 
-    public class ChangeTracking(ChangeTracking.ProxyGraphUpdatesWithChangeTrackingSqlServerFixture fixture)
-        : ProxyGraphUpdatesSqlServerTestBase<ChangeTracking.ProxyGraphUpdatesWithChangeTrackingSqlServerFixture>(fixture)
+    public class ChangeTracking : ProxyGraphUpdatesSqlServerTestBase<ChangeTracking.ProxyGraphUpdatesWithChangeTrackingSqlServerFixture>
     {
+        public ChangeTracking(ProxyGraphUpdatesWithChangeTrackingSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         // Needs lazy loading
-        public override Task Save_two_entity_cycle_with_lazy_loading()
-            => Task.CompletedTask;
+        public override void Save_two_entity_cycle_with_lazy_loading()
+        {
+        }
 
         protected override bool DoesLazyLoading
             => false;
@@ -85,11 +97,14 @@ public abstract class ProxyGraphUpdatesSqlServerTest
         }
     }
 
-    public class ChangeTrackingAndLazyLoading(
-        ChangeTrackingAndLazyLoading.ProxyGraphUpdatesWithChangeTrackingAndLazyLoadingSqlServerFixture fixture)
-        : ProxyGraphUpdatesSqlServerTestBase<
-            ChangeTrackingAndLazyLoading.ProxyGraphUpdatesWithChangeTrackingAndLazyLoadingSqlServerFixture>(fixture)
+    public class ChangeTrackingAndLazyLoading : ProxyGraphUpdatesSqlServerTestBase<
+        ChangeTrackingAndLazyLoading.ProxyGraphUpdatesWithChangeTrackingAndLazyLoadingSqlServerFixture>
     {
+        public ChangeTrackingAndLazyLoading(ProxyGraphUpdatesWithChangeTrackingAndLazyLoadingSqlServerFixture fixture)
+            : base(fixture)
+        {
+        }
+
         protected override bool DoesLazyLoading
             => true;
 

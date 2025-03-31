@@ -5,12 +5,14 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class ConcurrencyDetectorDisabledRelationalTestBase<TFixture>(TFixture fixture)
-    : ConcurrencyDetectorDisabledTestBase<TFixture>(fixture)
+public abstract class ConcurrencyDetectorDisabledRelationalTestBase<TFixture> : ConcurrencyDetectorDisabledTestBase<TFixture>
     where TFixture : ConcurrencyDetectorTestBase<TFixture>.ConcurrencyDetectorFixtureBase, new()
 {
+    protected ConcurrencyDetectorDisabledRelationalTestBase(TFixture fixture)
+        : base(fixture)
+    {
+    }
+
     protected string NormalizeDelimitersInRawString(string sql)
         => (Fixture.TestStore as RelationalTestStore)?.NormalizeDelimitersInRawString(sql) ?? sql;
 

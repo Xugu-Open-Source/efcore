@@ -22,7 +22,9 @@ public class SelectExpressionProjectionApplyingExpressionVisitor : ExpressionVis
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public SelectExpressionProjectionApplyingExpressionVisitor(QuerySplittingBehavior? querySplittingBehavior)
-        => _querySplittingBehavior = querySplittingBehavior ?? QuerySplittingBehavior.SingleQuery;
+    {
+        _querySplittingBehavior = querySplittingBehavior ?? QuerySplittingBehavior.SingleQuery;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -33,14 +35,12 @@ public class SelectExpressionProjectionApplyingExpressionVisitor : ExpressionVis
     protected override Expression VisitExtension(Expression extensionExpression)
         => extensionExpression switch
         {
-            ShapedQueryExpression { QueryExpression: SelectExpression selectExpression } shapedQueryExpression
+            ShapedQueryExpression shapedQueryExpression
+                when shapedQueryExpression.QueryExpression is SelectExpression selectExpression
                 => shapedQueryExpression.UpdateShaperExpression(
                     selectExpression.ApplyProjection(
                         shapedQueryExpression.ShaperExpression, shapedQueryExpression.ResultCardinality, _querySplittingBehavior)),
-
-            UpdateExpression update => update,
-            DeleteExpression delete => delete,
-
+            NonQueryExpression nonQueryExpression => nonQueryExpression,
             _ => base.VisitExtension(extensionExpression),
         };
 }

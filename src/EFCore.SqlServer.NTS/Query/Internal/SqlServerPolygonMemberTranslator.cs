@@ -70,7 +70,7 @@ public class SqlServerPolygonMemberTranslator : IMemberTranslator
                         new[] { _sqlExpressionFactory.Constant(1) },
                         nullable: true,
                         instancePropagatesNullability: true,
-                        argumentsPropagateNullability: Statics.FalseArrays[1],
+                        argumentsPropagateNullability: new[] { false },
                         returnType,
                         _typeMappingSource.FindMapping(returnType, storeType));
                 }

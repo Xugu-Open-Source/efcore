@@ -6,13 +6,15 @@ using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 // ReSharper disable InconsistentNaming
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class MappingQueryTestBase<TFixture>(MappingQueryTestBase<TFixture>.MappingQueryFixtureBase fixture)
-    : IClassFixture<TFixture>
+public abstract class MappingQueryTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : MappingQueryTestBase<TFixture>.MappingQueryFixtureBase, new()
 {
-    protected MappingQueryFixtureBase Fixture { get; } = fixture;
+    protected MappingQueryTestBase(MappingQueryFixtureBase fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected MappingQueryFixtureBase Fixture { get; }
 
     [ConditionalFact]
     public virtual void All_customers()
@@ -84,7 +86,7 @@ public abstract class MappingQueryTestBase<TFixture>(MappingQueryTestBase<TFixtu
         Three
     }
 
-    public abstract class MappingQueryFixtureBase : SharedStoreFixtureBase<PoolableDbContext>, ITestSqlLoggerFactory
+    public abstract class MappingQueryFixtureBase : SharedStoreFixtureBase<PoolableDbContext>
     {
         protected abstract string DatabaseSchema { get; }
 

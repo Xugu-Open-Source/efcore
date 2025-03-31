@@ -7,8 +7,6 @@ using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 public abstract class LoggingRelationalTestBase<TBuilder, TExtension> : LoggingTestBase
     where TBuilder : RelationalDbContextOptionsBuilder<TBuilder, TExtension>
     where TExtension : RelationalOptionsExtension, new()
@@ -64,9 +62,13 @@ public abstract class LoggingRelationalTestBase<TBuilder, TExtension> : LoggingT
                 () => context.Model).Message);
     }
 
-    protected class IndexPropertiesBothMappedAndNotMappedToTableContext(DbContextOptionsBuilder optionsBuilder)
-        : DbContext(optionsBuilder.Options)
+    protected class IndexPropertiesBothMappedAndNotMappedToTableContext : DbContext
     {
+        public IndexPropertiesBothMappedAndNotMappedToTableContext(DbContextOptionsBuilder optionsBuilder)
+            : base(optionsBuilder.Options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Animal>();
@@ -90,9 +92,13 @@ public abstract class LoggingRelationalTestBase<TBuilder, TExtension> : LoggingT
                 () => context.Model).Message);
     }
 
-    protected class UnnamedIndexPropertiesMappedToNonOverlappingTablesContext(DbContextOptionsBuilder optionsBuilder)
-        : DbContext(optionsBuilder.Options)
+    protected class UnnamedIndexPropertiesMappedToNonOverlappingTablesContext : DbContext
     {
+        public UnnamedIndexPropertiesMappedToNonOverlappingTablesContext(DbContextOptionsBuilder optionsBuilder)
+            : base(optionsBuilder.Options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Animal>().ToTable("Animals");
@@ -123,9 +129,13 @@ public abstract class LoggingRelationalTestBase<TBuilder, TExtension> : LoggingT
                 () => context.Model).Message);
     }
 
-    protected class ForeignKeyPropertiesMappedToUnrelatedTablesContext(DbContextOptionsBuilder optionsBuilder)
-        : DbContext(optionsBuilder.Options)
+    protected class ForeignKeyPropertiesMappedToUnrelatedTablesContext : DbContext
     {
+        public ForeignKeyPropertiesMappedToUnrelatedTablesContext(DbContextOptionsBuilder optionsBuilder)
+            : base(optionsBuilder.Options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Animal>()

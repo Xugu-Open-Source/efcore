@@ -15,7 +15,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Query.Internal;
 public class SqliteLineStringMethodTranslator : IMethodCallTranslator
 {
     private static readonly MethodInfo GetPointN
-        = typeof(LineString).GetRuntimeMethod(nameof(LineString.GetPointN), [typeof(int)])!;
+        = typeof(LineString).GetRuntimeMethod(nameof(LineString.GetPointN), new[] { typeof(int) })!;
 
     private readonly ISqlExpressionFactory _sqlExpressionFactory;
 
@@ -26,7 +26,9 @@ public class SqliteLineStringMethodTranslator : IMethodCallTranslator
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public SqliteLineStringMethodTranslator(ISqlExpressionFactory sqlExpressionFactory)
-        => _sqlExpressionFactory = sqlExpressionFactory;
+    {
+        _sqlExpressionFactory = sqlExpressionFactory;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -52,7 +54,7 @@ public class SqliteLineStringMethodTranslator : IMethodCallTranslator
                         _sqlExpressionFactory.Constant(1))
                 },
                 nullable: true,
-                argumentsPropagateNullability: Statics.TrueArrays[2],
+                argumentsPropagateNullability: new[] { true, true },
                 method.ReturnType);
         }
 

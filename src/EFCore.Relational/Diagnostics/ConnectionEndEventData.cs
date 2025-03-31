@@ -33,7 +33,9 @@ public class ConnectionEndEventData : ConnectionEventData
         DateTimeOffset startTime,
         TimeSpan duration)
         : base(eventDefinition, messageGenerator, connection, context, connectionId, async, startTime)
-        => Duration = duration;
+    {
+        Duration = duration;
+    }
 
     /// <summary>
     ///     The duration this event.

@@ -49,10 +49,7 @@ public static class UpdateEntryExtensions
     /// <returns>The value for the property.</returns>
     public static object? GetOriginalProviderValue(this IUpdateEntry updateEntry, IProperty property)
     {
-        var value = updateEntry.CanHaveOriginalValue(property)
-            ? updateEntry.GetOriginalValue(property)
-            : updateEntry.GetCurrentValue(property);
-
+        var value = updateEntry.GetOriginalValue(property);
         var typeMapping = property.GetTypeMapping();
         value = value?.GetType().IsInteger() == true && typeMapping.ClrType.UnwrapNullableType().IsEnum
             ? Enum.ToObject(typeMapping.ClrType.UnwrapNullableType(), value)
@@ -107,76 +104,56 @@ public static class UpdateEntryExtensions
 
             if ((options & ChangeTrackerDebugStringOptions.IncludeProperties) != 0)
             {
-                DumpProperties(entry.EntityType, indent + 2);
-
-                void DumpProperties(ITypeBase structuralType, int tempIndent)
+                foreach (var property in entry.EntityType.GetProperties())
                 {
-                    var tempIndentString = new string(' ', tempIndent);
-                    foreach (var property in structuralType.GetProperties())
+                    builder.AppendLine().Append(indentString);
+
+                    var currentValue = entry.GetCurrentValue(property);
+                    builder
+                        .Append("  ")
+                        .Append(property.Name)
+                        .Append(": ");
+
+                    AppendValue(currentValue);
+
+                    if (property.IsPrimaryKey())
                     {
-                        builder.AppendLine().Append(tempIndentString);
-
-                        var currentValue = entry.GetCurrentValue(property);
-                        builder
-                            .Append("  ")
-                            .Append(property.Name)
-                            .Append(": ");
-
-                        AppendValue(currentValue);
-
-                        if (property.IsPrimaryKey())
-                        {
-                            builder.Append(" PK");
-                        }
-                        else if (property.IsKey())
-                        {
-                            builder.Append(" AK");
-                        }
-
-                        if (property.IsForeignKey())
-                        {
-                            builder.Append(" FK");
-                        }
-
-                        if (entry.IsModified(property))
-                        {
-                            builder.Append(" Modified");
-                        }
-
-                        if (entry.HasTemporaryValue(property))
-                        {
-                            builder.Append(" Temporary");
-                        }
-
-                        if (entry.IsUnknown(property))
-                        {
-                            builder.Append(" Unknown");
-                        }
-
-                        if (entry.HasOriginalValuesSnapshot
-                            && property.GetOriginalValueIndex() != -1)
-                        {
-                            var originalValue = entry.GetOriginalValue(property);
-                            if (!Equals(originalValue, currentValue))
-                            {
-                                builder.Append(" Originally ");
-                                AppendValue(originalValue);
-                            }
-                        }
+                        builder.Append(" PK");
+                    }
+                    else if (property.IsKey())
+                    {
+                        builder.Append(" AK");
                     }
 
-                    foreach (var complexProperty in structuralType.GetComplexProperties())
+                    if (property.IsForeignKey())
                     {
-                        builder.AppendLine().Append(tempIndentString);
+                        builder.Append(" FK");
+                    }
 
-                        builder
-                            .Append("  ")
-                            .Append(complexProperty.Name)
-                            .Append(" (Complex: ")
-                            .Append(complexProperty.ClrType.ShortDisplayName())
-                            .Append(")");
+                    if (entry.IsModified(property))
+                    {
+                        builder.Append(" Modified");
+                    }
 
-                        DumpProperties(complexProperty.ComplexType, tempIndent + 2);
+                    if (entry.HasTemporaryValue(property))
+                    {
+                        builder.Append(" Temporary");
+                    }
+
+                    if (entry.IsUnknown(property))
+                    {
+                        builder.Append(" Unknown");
+                    }
+
+                    if (entry.HasOriginalValuesSnapshot
+                        && property.GetOriginalValueIndex() != -1)
+                    {
+                        var originalValue = entry.GetOriginalValue(property);
+                        if (!Equals(originalValue, currentValue))
+                        {
+                            builder.Append(" Originally ");
+                            AppendValue(originalValue);
+                        }
                     }
                 }
             }

@@ -93,10 +93,7 @@ namespace Microsoft.Data.Sqlite
                 }
             }
 
-            var vfs = !string.IsNullOrWhiteSpace(connectionOptions.Vfs)
-                ? connectionOptions.Vfs
-                : null;
-            var rc = sqlite3_open_v2(filename, out _db, flags, vfs: vfs);
+            var rc = sqlite3_open_v2(filename, out _db, flags, vfs: null);
             SqliteException.ThrowExceptionForRC(rc, _db);
 
             if (connectionOptions.Password.Length != 0)
@@ -236,6 +233,8 @@ namespace Microsoft.Data.Sqlite
         }
 
         private static bool IsBusy(int rc)
-            => rc is SQLITE_LOCKED or SQLITE_BUSY or SQLITE_LOCKED_SHAREDCACHE;
+            => rc == SQLITE_LOCKED
+                || rc == SQLITE_BUSY
+                || rc == SQLITE_LOCKED_SHAREDCACHE;
     }
 }

@@ -8,8 +8,6 @@ using Microsoft.EntityFrameworkCore.TestUtilities.Xunit;
 
 namespace Microsoft.EntityFrameworkCore.Design.Internal;
 
-#nullable enable
-
 public class CSharpHelperTest
 {
     private static readonly string EOL = Environment.NewLine;
@@ -186,26 +184,6 @@ public class CSharpHelperTest
             "\"multi-line\\r\\nstring\\nwith\\r\\\"\"");
 
     [ConditionalFact]
-    public void Literal_works_when_value_tuple()
-        => Literal_works((1, "hello"), "(1, \"hello\")");
-
-    [ConditionalFact]
-    public void Literal_works_when_value_tuple_with_null_value_type()
-        => Literal_works((1, (int?)null, "hello"), "(1, (int?)null, \"hello\")");
-
-    [ConditionalFact]
-    public void Literal_works_when_value_tuple_with_null_reference_type()
-        => Literal_works((1, (string?)null, "hello"), "(1, (string)null, \"hello\")");
-
-    [ConditionalFact]
-    public void Literal_works_when_value_tuple_of_length_1()
-        => Literal_works(ValueTuple.Create(1), "ValueTuple.Create(1)");
-
-    [ConditionalFact]
-    public void Literal_works_when_value_tuple_of_length_9()
-        => Literal_works((1, 2, 3, 4, 5, 6, 7, 8, 9), "(1, 2, 3, 4, 5, 6, 7, 8, 9)");
-
-    [ConditionalFact]
     [UseCulture("de-DE")]
     public void Literal_works_when_DateTime()
         => Literal_works(
@@ -320,10 +298,14 @@ public class CSharpHelperTest
 
     private static class Nested
     {
-        public class DoubleNested;
+        public class DoubleNested
+        {
+        }
     }
 
-    internal class NestedGeneric<T>;
+    internal class NestedGeneric<T>
+    {
+    }
 
     private enum SomeEnum
     {
@@ -349,7 +331,7 @@ public class CSharpHelperTest
     [InlineData(new[] { "#", "$" }, "_._")]
     [InlineData(new[] { "" }, "_")]
     [InlineData(new string[] { }, "_")]
-    [InlineData(new string?[] { null }, "_")]
+    [InlineData(new string[] { null }, "_")]
     public void Namespace_works(string[] input, string excepted)
         => Assert.Equal(excepted, new CSharpHelper(TypeMappingSource).Namespace(input));
 
@@ -605,7 +587,7 @@ public class CSharpHelperTest
     {
         var typeMapping = CreateTypeMappingSource<SimpleTestType>(
             v => Expression.New(
-                typeof(SimpleTestType).GetConstructor([typeof(string)])!,
+                typeof(SimpleTestType).GetConstructor(new[] { typeof(string) }),
                 Expression.Constant(v.Arg1, typeof(string))));
 
         Assert.Equal(
@@ -618,7 +600,7 @@ public class CSharpHelperTest
     {
         var typeMapping = CreateTypeMappingSource<SimpleTestType>(
             v => Expression.New(
-                typeof(SimpleTestType).GetConstructor([typeof(string), typeof(int?)])!,
+                typeof(SimpleTestType).GetConstructor(new[] { typeof(string), typeof(int?) }),
                 Expression.Constant(v.Arg1, typeof(string)),
                 Expression.Constant(v.Arg2, typeof(int?))));
 
@@ -634,7 +616,7 @@ public class CSharpHelperTest
             v => Expression.Call(
                 typeof(SimpleTestTypeFactory).GetMethod(
                     nameof(SimpleTestTypeFactory.StaticCreate),
-                    Type.EmptyTypes)!));
+                    new Type[0])));
 
         Assert.Equal(
             "Microsoft.EntityFrameworkCore.Design.Internal.SimpleTestTypeFactory.StaticCreate()",
@@ -648,7 +630,7 @@ public class CSharpHelperTest
             v => Expression.Call(
                 typeof(SimpleTestTypeFactory).GetMethod(
                     nameof(SimpleTestTypeFactory.StaticCreate),
-                    [typeof(string)])!,
+                    new[] { typeof(string) }),
                 Expression.Constant(v.Arg1, typeof(string))));
 
         Assert.Equal(
@@ -663,7 +645,7 @@ public class CSharpHelperTest
             v => Expression.Call(
                 typeof(SimpleTestTypeFactory).GetMethod(
                     nameof(SimpleTestTypeFactory.StaticCreate),
-                    [typeof(string), typeof(int?)])!,
+                    new[] { typeof(string), typeof(int?) }),
                 Expression.Constant(v.Arg1, typeof(string)),
                 Expression.Constant(v.Arg2, typeof(int?))));
 
@@ -680,7 +662,7 @@ public class CSharpHelperTest
                 Expression.New(typeof(SimpleTestTypeFactory)),
                 typeof(SimpleTestTypeFactory).GetMethod(
                     nameof(SimpleTestTypeFactory.Create),
-                    new Type[0])!));
+                    new Type[0])));
 
         Assert.Equal(
             "new Microsoft.EntityFrameworkCore.Design.Internal.SimpleTestTypeFactory().Create()",
@@ -696,7 +678,7 @@ public class CSharpHelperTest
                     Expression.New(typeof(SimpleTestTypeFactory)),
                     typeof(SimpleTestTypeFactory).GetMethod(
                         nameof(SimpleTestTypeFactory.Create),
-                        [typeof(string)])!,
+                        new[] { typeof(string) }),
                     Expression.Constant(v.Arg1, typeof(string))),
                 typeof(SimpleTestType)));
 
@@ -712,11 +694,11 @@ public class CSharpHelperTest
             v => Expression.Convert(
                 Expression.Call(
                     Expression.New(
-                        typeof(SimpleTestTypeFactory).GetConstructor([typeof(string)])!,
+                        typeof(SimpleTestTypeFactory).GetConstructor(new[] { typeof(string) }),
                         Expression.Constant("4096", typeof(string))),
                     typeof(SimpleTestTypeFactory).GetMethod(
                         nameof(SimpleTestTypeFactory.Create),
-                        [typeof(string), typeof(int?)])!,
+                        new[] { typeof(string), typeof(int?) }),
                     Expression.Constant(v.Arg1, typeof(string)),
                     Expression.Constant(v.Arg2, typeof(int?))),
                 typeof(SimpleTestType)));
@@ -733,11 +715,11 @@ public class CSharpHelperTest
             v => Expression.Convert(
                 Expression.Call(
                     Expression.New(
-                        typeof(SimpleTestTypeFactory).GetConstructor([typeof(string)])!,
+                        typeof(SimpleTestTypeFactory).GetConstructor(new[] { typeof(string) }),
                         Expression.Constant("4096", typeof(string))),
                     typeof(SimpleTestTypeFactory).GetMethod(
                         nameof(SimpleTestTypeFactory.Create),
-                        [typeof(string), typeof(int?)])!,
+                        new[] { typeof(string), typeof(int?) }),
                     Expression.Constant(v.Arg1, typeof(string)),
                     Expression.Convert(
                         Expression.Constant(v.Arg2, typeof(int)),
@@ -753,7 +735,7 @@ public class CSharpHelperTest
     public void Literal_with_static_field()
     {
         var typeMapping = CreateTypeMappingSource<SimpleTestType>(
-            v => Expression.Field(null, typeof(SimpleTestType).GetField(nameof(SimpleTestType.SomeStaticField))!));
+            v => Expression.Field(null, typeof(SimpleTestType).GetField(nameof(SimpleTestType.SomeStaticField))));
 
         Assert.Equal(
             "Microsoft.EntityFrameworkCore.Design.Internal.SimpleTestType.SomeStaticField",
@@ -764,7 +746,7 @@ public class CSharpHelperTest
     public void Literal_with_static_property()
     {
         var typeMapping = CreateTypeMappingSource<SimpleTestType>(
-            v => Expression.Property(null, typeof(SimpleTestType).GetProperty(nameof(SimpleTestType.SomeStaticProperty))!));
+            v => Expression.Property(null, typeof(SimpleTestType).GetProperty(nameof(SimpleTestType.SomeStaticProperty))));
 
         Assert.Equal(
             "Microsoft.EntityFrameworkCore.Design.Internal.SimpleTestType.SomeStaticProperty",
@@ -777,7 +759,7 @@ public class CSharpHelperTest
         var typeMapping = CreateTypeMappingSource<SimpleTestType>(
             v => Expression.Property(
                 Expression.New(typeof(SimpleTestType)),
-                typeof(SimpleTestType).GetProperty(nameof(SimpleTestType.SomeInstanceProperty))!));
+                typeof(SimpleTestType).GetProperty(nameof(SimpleTestType.SomeInstanceProperty))));
 
         Assert.Equal(
             "new Microsoft.EntityFrameworkCore.Design.Internal.SimpleTestType().SomeInstanceProperty",
@@ -815,18 +797,25 @@ public class CSharpHelperTest
 
     private IRelationalTypeMappingSource TypeMappingSource { get; } = CreateTypeMappingSource();
 
-    private static SqlServerTypeMappingSource CreateTypeMappingSource<T>(Func<T, Expression>? literalExpressionFunc)
+    private static SqlServerTypeMappingSource CreateTypeMappingSource<T>(
+        Func<T, Expression> literalExpressionFunc)
         => CreateTypeMappingSource(new TestTypeMappingPlugin<T>(literalExpressionFunc));
 
     private static SqlServerTypeMappingSource CreateTypeMappingSource(
         params IRelationalTypeMappingSourcePlugin[] plugins)
         => new(
             TestServiceFactory.Instance.Create<TypeMappingSourceDependencies>(),
-            new RelationalTypeMappingSourceDependencies(plugins));
+            new RelationalTypeMappingSourceDependencies(
+                plugins));
 
-    private class TestTypeMappingPlugin<T>(Func<T, Expression>? literalExpressionFunc) : IRelationalTypeMappingSourcePlugin
+    private class TestTypeMappingPlugin<T> : IRelationalTypeMappingSourcePlugin
     {
-        private readonly Func<T, Expression>? _literalExpressionFunc = literalExpressionFunc;
+        private readonly Func<T, Expression> _literalExpressionFunc;
+
+        public TestTypeMappingPlugin(Func<T, Expression> literalExpressionFunc)
+        {
+            _literalExpressionFunc = literalExpressionFunc;
+        }
 
         public RelationalTypeMapping FindMapping(in RelationalTypeMappingInfo mappingInfo)
             => _literalExpressionFunc == null
@@ -834,10 +823,16 @@ public class CSharpHelperTest
                 : new SimpleTestTypeMapping<T>(_literalExpressionFunc);
     }
 
-    private class SimpleTestTypeMapping<T>(
-        Func<T, Expression> literalExpressionFunc) : RelationalTypeMapping("storeType", typeof(SimpleTestType))
+    private class SimpleTestTypeMapping<T> : RelationalTypeMapping
     {
-        private readonly Func<T, Expression> _literalExpressionFunc = literalExpressionFunc;
+        private readonly Func<T, Expression> _literalExpressionFunc;
+
+        public SimpleTestTypeMapping(
+            Func<T, Expression> literalExpressionFunc)
+            : base("storeType", typeof(SimpleTestType))
+        {
+            _literalExpressionFunc = literalExpressionFunc;
+        }
 
         public override Expression GenerateCodeLiteral(object value)
             => _literalExpressionFunc((T)value);
@@ -846,8 +841,13 @@ public class CSharpHelperTest
             => throw new NotSupportedException();
     }
 
-    private class SimpleTestNonImplementedTypeMapping() : RelationalTypeMapping("storeType", typeof(SimpleTestType))
+    private class SimpleTestNonImplementedTypeMapping : RelationalTypeMapping
     {
+        public SimpleTestNonImplementedTypeMapping()
+            : base("storeType", typeof(SimpleTestType))
+        {
+        }
+
         protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
             => throw new NotSupportedException();
     }
@@ -855,7 +855,7 @@ public class CSharpHelperTest
     private static readonly MethodInfo _testFuncMethodInfo
         = typeof(CSharpHelperTest).GetRuntimeMethod(
             nameof(TestFunc),
-            [typeof(object), typeof(object), typeof(object), typeof(object)])!;
+            new[] { typeof(object), typeof(object), typeof(object), typeof(object) });
 
     public static void TestFunc(object builder, object o1, object o2, object o3)
         => throw new NotSupportedException();
@@ -883,7 +883,7 @@ internal class SimpleTestType
         Arg2 = arg2;
     }
 
-    public string Arg1 { get; } = null!;
+    public string Arg1 { get; }
     public int? Arg2 { get; }
 }
 
@@ -894,9 +894,11 @@ internal class SimpleTestTypeFactory
     }
 
     public SimpleTestTypeFactory(string factoryArg)
-        => FactoryArg = factoryArg;
+    {
+        FactoryArg = factoryArg;
+    }
 
-    public string FactoryArg { get; } = null!;
+    public string FactoryArg { get; }
 
     public SimpleTestType Create()
         => new();
@@ -917,6 +919,10 @@ internal class SimpleTestTypeFactory
         => new SimpleTestType(arg1, arg2);
 }
 
-internal class Generic<T>;
+internal class Generic<T>
+{
+}
 
-internal class MultiGeneric<T1, T2>;
+internal class MultiGeneric<T1, T2>
+{
+}

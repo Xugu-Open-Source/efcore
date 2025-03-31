@@ -10,16 +10,19 @@ namespace Microsoft.EntityFrameworkCore.Storage;
 
 public class SqliteTypeMappingTest : RelationalTypeMappingTest
 {
-    private class YouNoTinyContext(SqliteConnection connection) : DbContext
+    private class YouNoTinyContext : DbContext
     {
-        private readonly SqliteConnection _connection = connection;
+        private readonly SqliteConnection _connection;
+
+        public YouNoTinyContext(SqliteConnection connection)
+        {
+            _connection = connection;
+        }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseSqlite(_connection);
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
-        public DbSet<NoTiny> NoTinnies { get; set; } = null!;
+        public DbSet<NoTiny> NoTinnies { get; set; }
     }
 
     private enum TinyState : byte
@@ -98,7 +101,8 @@ public class SqliteTypeMappingTest : RelationalTypeMappingTest
     private static IRelationalTypeMappingSource CreateTypeMapper()
         => TestServiceFactory.Instance.Create<SqliteTypeMappingSource>();
 
-    public static RelationalTypeMapping? GetMapping(Type type)
+    public static RelationalTypeMapping GetMapping(
+        Type type)
         => CreateTypeMapper().FindMapping(type);
 
     public override void DateTimeOffset_literal_generated_correctly()
@@ -122,13 +126,17 @@ public class SqliteTypeMappingTest : RelationalTypeMappingTest
 
     [ConditionalFact]
     public override void TimeOnly_literal_generated_correctly()
-    {
-        var typeMapping = GetMapping(typeof(TimeOnly));
+        => Test_GenerateSqlLiteral_helper(
+            GetMapping(typeof(TimeOnly)),
+            new TimeOnly(13, 10, 15),
+            "'13:10:15'");
 
-        Test_GenerateSqlLiteral_helper(typeMapping, new TimeOnly(13, 10, 15), "'13:10:15'");
-        Test_GenerateSqlLiteral_helper(typeMapping, new TimeOnly(13, 10, 15, 120), "'13:10:15.1200000'");
-        Test_GenerateSqlLiteral_helper(typeMapping, new TimeOnly(13, 10, 15, 120, 20), "'13:10:15.1200200'");
-    }
+    [ConditionalFact]
+    public override void TimeOnly_literal_generated_correctly_with_milliseconds()
+        => Test_GenerateSqlLiteral_helper(
+            GetMapping(typeof(TimeOnly)),
+            new TimeOnly(13, 10, 15, 500),
+            "'13:10:15.5000000'");
 
     public override void Decimal_literal_generated_correctly()
     {

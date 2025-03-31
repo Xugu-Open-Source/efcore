@@ -17,7 +17,9 @@ public class DropColumnOperation : MigrationOperation, ITableMigrationOperation
     /// </summary>
     // ReSharper disable once VirtualMemberCallInConstructor
     public DropColumnOperation()
-        => IsDestructiveChange = true;
+    {
+        IsDestructiveChange = true;
+    }
 
     /// <summary>
     ///     The name of the column.

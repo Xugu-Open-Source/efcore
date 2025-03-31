@@ -21,39 +21,39 @@ public readonly struct StoreObjectIdentifier : IComparable<StoreObjectIdentifier
     /// <summary>
     ///     Creates an id for the store object that the given entity type is mapped to.
     /// </summary>
-    /// <param name="typeBase">The entity type.</param>
+    /// <param name="entityType">The entity type.</param>
     /// <param name="type">The store object type.</param>
     /// <returns>The store object id.</returns>
-    public static StoreObjectIdentifier? Create(IReadOnlyTypeBase typeBase, StoreObjectType type)
+    public static StoreObjectIdentifier? Create(IReadOnlyEntityType entityType, StoreObjectType type)
     {
-        Check.NotNull(typeBase, nameof(typeBase));
+        Check.NotNull(entityType, nameof(entityType));
 
         switch (type)
         {
             case StoreObjectType.Table:
-                var tableName = typeBase.GetTableName();
-                return tableName == null ? null : Table(tableName, typeBase.GetSchema());
+                var tableName = entityType.GetTableName();
+                return tableName == null ? null : Table(tableName, entityType.GetSchema());
             case StoreObjectType.View:
-                var viewName = typeBase.GetViewName();
-                return viewName == null ? null : View(viewName, typeBase.GetViewSchema());
+                var viewName = entityType.GetViewName();
+                return viewName == null ? null : View(viewName, entityType.GetViewSchema());
             case StoreObjectType.SqlQuery:
-                var query = typeBase.GetSqlQuery();
-                return query == null ? null : SqlQuery(typeBase.ContainingEntityType);
+                var query = entityType.GetSqlQuery();
+                return query == null ? null : SqlQuery(entityType);
             case StoreObjectType.Function:
-                var functionName = typeBase.GetFunctionName();
+                var functionName = entityType.GetFunctionName();
                 return functionName == null ? null : DbFunction(functionName);
             case StoreObjectType.InsertStoredProcedure:
-                var insertStoredProcedure = typeBase.GetInsertStoredProcedure();
+                var insertStoredProcedure = entityType.GetInsertStoredProcedure();
                 return insertStoredProcedure == null || insertStoredProcedure.Name == null
                     ? null
                     : InsertStoredProcedure(insertStoredProcedure.Name, insertStoredProcedure.Schema);
             case StoreObjectType.DeleteStoredProcedure:
-                var deleteStoredProcedure = typeBase.GetDeleteStoredProcedure();
+                var deleteStoredProcedure = entityType.GetDeleteStoredProcedure();
                 return deleteStoredProcedure == null || deleteStoredProcedure.Name == null
                     ? null
                     : DeleteStoredProcedure(deleteStoredProcedure.Name, deleteStoredProcedure.Schema);
             case StoreObjectType.UpdateStoredProcedure:
-                var updateStoredProcedure = typeBase.GetUpdateStoredProcedure();
+                var updateStoredProcedure = entityType.GetUpdateStoredProcedure();
                 return updateStoredProcedure == null || updateStoredProcedure.Name == null
                     ? null
                     : UpdateStoredProcedure(updateStoredProcedure.Name, updateStoredProcedure.Schema);

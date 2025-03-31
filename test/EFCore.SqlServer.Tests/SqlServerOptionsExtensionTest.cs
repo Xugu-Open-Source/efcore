@@ -37,12 +37,11 @@ public class SqlServerOptionsExtensionTest
     }
 
     [DbContext(typeof(EmptyContext))]
-    private class EmptyContextModel(bool skipDetectChanges, Guid modelId, int entityTypeCount, int typeConfigurationCount) : RuntimeModel(
-        skipDetectChanges, modelId, entityTypeCount, typeConfigurationCount)
+    private class EmptyContextModel : RuntimeModel
     {
         static EmptyContextModel()
         {
-            var model = new EmptyContextModel(false, Guid.NewGuid(), 0, 0);
+            var model = new EmptyContextModel();
             _instance = model;
         }
 
@@ -53,26 +52,28 @@ public class SqlServerOptionsExtensionTest
     }
 
     [ConditionalFact]
-    public void ApplyServices_adds_correct_services()
+    public void ApplyServices_adds_SQL_server_services()
     {
         var services = new ServiceCollection();
 
-        new SqlServerOptionsExtension()
-            .WithEngineType(SqlServerEngineType.SqlServer)
-            .ApplyServices(services);
+        new SqlServerOptionsExtension().ApplyServices(services);
 
         Assert.Contains(services, sd => sd.ServiceType == typeof(ISqlServerConnection));
-        Assert.Contains(services, sd => sd.ServiceType == typeof(ISqlServerSingletonOptions));
     }
 
-    private class ChangedRowNumberContext(bool setInternalServiceProvider) : DbContext
+    private class ChangedRowNumberContext : DbContext
     {
         private static readonly IServiceProvider _serviceProvider
             = new ServiceCollection()
                 .AddEntityFrameworkSqlServer()
                 .BuildServiceProvider(validateScopes: true);
 
-        private readonly bool _setInternalServiceProvider = setInternalServiceProvider;
+        private readonly bool _setInternalServiceProvider;
+
+        public ChangedRowNumberContext(bool setInternalServiceProvider)
+        {
+            _setInternalServiceProvider = setInternalServiceProvider;
+        }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

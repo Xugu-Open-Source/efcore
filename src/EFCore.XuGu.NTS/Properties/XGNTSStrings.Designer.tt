@@ -1,0 +1,7 @@
+<#
+    Session["ResourceFile"] = "XGNTSStrings.resx";
+    Session["ResourceNamespace"] = "Microsoft.EntityFrameworkCore.XuGu.Properties";
+    Session["LoggingDefinitionsClass"] = "XGNtsLoggingDefinitions";
+    Session["NoDiagnostics"] = true;
+#>
+<#@ include file="..\..\..\tools\Resources.tt" #>

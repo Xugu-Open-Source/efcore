@@ -25,24 +25,8 @@ public class InMemoryValueGeneratorSelector : ValueGeneratorSelector
         ValueGeneratorSelectorDependencies dependencies,
         IInMemoryDatabase inMemoryDatabase)
         : base(dependencies)
-        => _inMemoryStore = inMemoryDatabase.Store;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    [Obsolete("Use TrySelect and throw if needed when the generator is not found.")]
-    public override ValueGenerator? Select(IProperty property, ITypeBase typeBase)
     {
-        if (TrySelect(property, typeBase, out var valueGenerator))
-        {
-            return valueGenerator;
-        }
-
-        throw new NotSupportedException(
-            CoreStrings.NoValueGenerator(property.Name, property.DeclaringType.DisplayName(), property.ClrType.ShortDisplayName()));
+        _inMemoryStore = inMemoryDatabase.Store;
     }
 
     /// <summary>
@@ -51,70 +35,65 @@ public class InMemoryValueGeneratorSelector : ValueGeneratorSelector
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override bool TrySelect(IProperty property, ITypeBase typeBase, out ValueGenerator? valueGenerator)
+    public override ValueGenerator Select(IProperty property, IEntityType entityType)
         => property.GetValueGeneratorFactory() == null
             && property.ClrType.IsInteger()
             && property.ClrType.UnwrapNullableType() != typeof(char)
-                ? FindGenerator(property, property.ClrType.UnwrapNullableType().UnwrapEnumType(), out valueGenerator)
-                : base.TrySelect(property, typeBase, out valueGenerator);
+                ? GetOrCreate(property)
+                : base.Select(property, entityType);
 
-    private bool FindGenerator(IProperty property, Type type, out ValueGenerator? valueGenerator)
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    private ValueGenerator GetOrCreate(IProperty property)
     {
+        var type = property.ClrType.UnwrapNullableType().UnwrapEnumType();
+
         if (type == typeof(long))
         {
-            valueGenerator = _inMemoryStore.GetIntegerValueGenerator<long>(property);
-            return true;
+            return _inMemoryStore.GetIntegerValueGenerator<long>(property);
         }
 
         if (type == typeof(int))
         {
-            valueGenerator = _inMemoryStore.GetIntegerValueGenerator<int>(property);
-            return true;
+            return _inMemoryStore.GetIntegerValueGenerator<int>(property);
         }
 
         if (type == typeof(short))
         {
-            valueGenerator = _inMemoryStore.GetIntegerValueGenerator<short>(property);
-            return true;
+            return _inMemoryStore.GetIntegerValueGenerator<short>(property);
         }
 
         if (type == typeof(byte))
         {
-            valueGenerator = _inMemoryStore.GetIntegerValueGenerator<byte>(property);
-            return true;
+            return _inMemoryStore.GetIntegerValueGenerator<byte>(property);
         }
 
         if (type == typeof(ulong))
         {
-            valueGenerator = _inMemoryStore.GetIntegerValueGenerator<ulong>(property);
-            return true;
+            return _inMemoryStore.GetIntegerValueGenerator<ulong>(property);
         }
 
         if (type == typeof(uint))
         {
-            valueGenerator = _inMemoryStore.GetIntegerValueGenerator<uint>(property);
-            return true;
+            return _inMemoryStore.GetIntegerValueGenerator<uint>(property);
         }
 
         if (type == typeof(ushort))
         {
-            valueGenerator = _inMemoryStore.GetIntegerValueGenerator<ushort>(property);
-            return true;
+            return _inMemoryStore.GetIntegerValueGenerator<ushort>(property);
         }
 
         if (type == typeof(sbyte))
         {
-            valueGenerator = _inMemoryStore.GetIntegerValueGenerator<sbyte>(property);
-            return true;
+            return _inMemoryStore.GetIntegerValueGenerator<sbyte>(property);
         }
 
-        valueGenerator = null;
-        return false;
+        throw new ArgumentException(
+            CoreStrings.InvalidValueGeneratorFactoryProperty(
+                "InMemoryIntegerValueGeneratorFactory", property.Name, property.DeclaringEntityType.DisplayName()));
     }
-
-    /// <inheritdoc />
-    protected override ValueGenerator? FindForType(IProperty property, ITypeBase typeBase, Type clrType)
-        => property.ValueGenerated != ValueGenerated.Never && FindGenerator(property, clrType, out var valueGenerator)
-            ? valueGenerator!
-            : base.FindForType(property, typeBase, clrType);
 }

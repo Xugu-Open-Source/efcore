@@ -56,7 +56,9 @@ public class Index : ConventionAnnotatable, IMutableIndex, IConventionIndex, IIn
         EntityType declaringEntityType,
         ConfigurationSource configurationSource)
         : this(properties, declaringEntityType, configurationSource)
-        => Name = name;
+    {
+        Name = name;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -91,10 +93,7 @@ public class Index : ConventionAnnotatable, IMutableIndex, IConventionIndex, IIn
     public virtual InternalIndexBuilder Builder
     {
         [DebuggerStepThrough]
-        get => _builder
-            ?? throw new InvalidOperationException(
-                CoreStrings.ObjectRemovedFromModel(
-                    Property.Format(Properties.Select(p => p.Name))));
+        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
     /// <summary>
@@ -227,7 +226,7 @@ public class Index : ConventionAnnotatable, IMutableIndex, IConventionIndex, IIn
                 // Normalize all-ascending/descending to null/empty respectively.
                 if (descending.All(desc => desc))
                 {
-                    descending = [];
+                    descending = Array.Empty<bool>();
                 }
                 else if (descending.All(desc => !desc))
                 {

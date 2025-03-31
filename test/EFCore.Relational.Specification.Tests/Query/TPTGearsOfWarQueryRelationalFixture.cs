@@ -5,9 +5,7 @@ using Microsoft.EntityFrameworkCore.TestModels.GearsOfWarModel;
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class TPTGearsOfWarQueryRelationalFixture : GearsOfWarQueryFixtureBase, ITestSqlLoggerFactory
+public abstract class TPTGearsOfWarQueryRelationalFixture : GearsOfWarQueryFixtureBase
 {
     protected override string StoreName
         => "TPTGearsOfWarQueryTest";

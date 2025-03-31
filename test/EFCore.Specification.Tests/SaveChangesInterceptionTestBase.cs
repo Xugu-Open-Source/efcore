@@ -1,12 +1,15 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 namespace Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
-public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.InterceptionFixtureBase fixture) : InterceptionTestBase(fixture)
+public abstract class SaveChangesInterceptionTestBase : InterceptionTestBase
 {
+    protected SaveChangesInterceptionTestBase(InterceptionFixtureBase fixture)
+        : base(fixture)
+    {
+    }
+
     [ConditionalTheory]
     [InlineData(false, false, false)]
     [InlineData(true, false, false)]
@@ -18,7 +21,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true, true, true)]
     public virtual async Task Intercept_SaveChanges_passively(bool async, bool inject, bool noAcceptChanges)
     {
-        var (context, interceptor) = await CreateContextAsync<PassiveSaveChangesInterceptor>(inject);
+        var (context, interceptor) = CreateContext<PassiveSaveChangesInterceptor>(inject);
 
         using var _ = context;
 
@@ -73,7 +76,9 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
         Assert.Equal(1, context.Set<Singularity>().AsNoTracking().Count(e => e.Id == 35));
     }
 
-    protected class PassiveSaveChangesInterceptor : SaveChangesInterceptorBase;
+    protected class PassiveSaveChangesInterceptor : SaveChangesInterceptorBase
+    {
+    }
 
     [ConditionalTheory]
     [InlineData(false, false, false)]
@@ -86,7 +91,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true, true, true)]
     public virtual async Task Intercept_SaveChanges_to_suppress_save(bool async, bool inject, bool noAcceptChanges)
     {
-        var (context, interceptor) = await CreateContextAsync<SuppressingSaveChangesInterceptor>(inject);
+        var (context, interceptor) = CreateContext<SuppressingSaveChangesInterceptor>(inject);
 
         using var _ = context;
 
@@ -172,7 +177,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
     [InlineData(true, true, true)]
     public virtual async Task Intercept_SaveChanges_to_change_result(bool async, bool inject, bool noAcceptChanges)
     {
-        var (context, interceptor) = await CreateContextAsync<ResultMutatingSaveChangesInterceptor>(inject);
+        var (context, interceptor) = CreateContext<ResultMutatingSaveChangesInterceptor>(inject);
 
         using var _ = context;
 
@@ -272,7 +277,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
             return;
         }
 
-        var (context, interceptor) = await CreateContextAsync<PassiveSaveChangesInterceptor>(inject);
+        var (context, interceptor) = CreateContext<PassiveSaveChangesInterceptor>(inject);
 
         using var _ = context;
 
@@ -332,7 +337,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
         Assert.Equal(async, interceptor.AsyncCalled);
         Assert.NotEqual(async, interceptor.SyncCalled);
         Assert.NotEqual(interceptor.AsyncCalled, interceptor.SyncCalled);
-        Assert.Equal(concurrencyError, !interceptor.FailedCalled);
+        Assert.True(interceptor.FailedCalled);
         Assert.Same(context, interceptor.Context);
         Assert.Same(thrown, interceptor.Exception);
 
@@ -374,7 +379,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
             return;
         }
 
-        var (context, interceptor) = await CreateContextAsync<ConcurrencySuppressingSaveChangesInterceptor>(inject);
+        var (context, interceptor) = CreateContext<ConcurrencySuppressingSaveChangesInterceptor>(inject);
 
         using var _ = context;
 
@@ -481,7 +486,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
         var interceptor3 = new ResultMutatingSaveChangesInterceptor();
         var interceptor4 = new PassiveSaveChangesInterceptor();
 
-        using var context = await CreateContextAsync(
+        using var context = CreateContext(
             new IInterceptor[] { new PassiveSaveChangesInterceptor(), interceptor1, interceptor2 },
             new IInterceptor[] { interceptor3, interceptor4, new PassiveSaveChangesInterceptor() });
 
@@ -579,7 +584,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
             SavingChangesCalled = true;
             AsyncCalled = true;
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult<int>>(result);
         }
 
         public virtual ValueTask<int> SavedChangesAsync(
@@ -593,7 +598,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
             SavedChangesCalled = true;
             AsyncCalled = true;
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<int>(result);
         }
 
         public virtual Task SaveChangesFailedAsync(
@@ -652,7 +657,7 @@ public abstract class SaveChangesInterceptionTestBase(InterceptionTestBase.Inter
             ConcurrencyExceptionCalled = true;
             AsyncCalled = true;
 
-            return ValueTask.FromResult(result);
+            return new ValueTask<InterceptionResult>(result);
         }
     }
 

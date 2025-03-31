@@ -42,7 +42,7 @@ public class Trigger : ConventionAnnotatable, IMutableTrigger, IConventionTrigge
     public virtual InternalTriggerBuilder Builder
     {
         [DebuggerStepThrough]
-        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel(ModelName));
+        get => _builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
     /// <summary>

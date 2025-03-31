@@ -47,7 +47,9 @@ public class InMemoryQueryContext : QueryContext
         QueryContextDependencies dependencies,
         IInMemoryStore store)
         : base(dependencies)
-        => Store = store;
+    {
+        Store = store;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

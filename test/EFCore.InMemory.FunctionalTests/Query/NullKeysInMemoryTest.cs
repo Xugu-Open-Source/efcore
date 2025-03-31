@@ -3,9 +3,13 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-public class NullKeysInMemoryTest(NullKeysInMemoryTest.NullKeysInMemoryFixture fixture)
-    : NullKeysTestBase<NullKeysInMemoryTest.NullKeysInMemoryFixture>(fixture)
+public class NullKeysInMemoryTest : NullKeysTestBase<NullKeysInMemoryTest.NullKeysInMemoryFixture>
 {
+    public NullKeysInMemoryTest(NullKeysInMemoryFixture fixture)
+        : base(fixture)
+    {
+    }
+
     public class NullKeysInMemoryFixture : NullKeysFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

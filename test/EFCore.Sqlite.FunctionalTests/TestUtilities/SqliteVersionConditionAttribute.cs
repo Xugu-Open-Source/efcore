@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.TestUtilities.Xunit;
 
 namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
+#nullable enable
+
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public sealed class SqliteVersionConditionAttribute : Attribute, ITestCondition
 {
@@ -44,21 +46,21 @@ public sealed class SqliteVersionConditionAttribute : Attribute, ITestCondition
     {
         if (Current == _skip)
         {
-            return ValueTask.FromResult(false);
+            return new ValueTask<bool>(false);
         }
 
         if (_min == null
             && _max == null)
         {
-            return ValueTask.FromResult(true);
+            return new ValueTask<bool>(true);
         }
 
         if (_min == null)
         {
-            return ValueTask.FromResult(Current <= _max);
+            return new ValueTask<bool>(Current <= _max);
         }
 
-        return ValueTask.FromResult(_max == null ? Current >= _min : Current <= _max && Current >= _min);
+        return new ValueTask<bool>(_max == null ? Current >= _min : Current <= _max && Current >= _min);
     }
 
     private string? _skipReason;

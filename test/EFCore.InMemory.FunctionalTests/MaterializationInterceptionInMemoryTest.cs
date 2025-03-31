@@ -5,22 +5,28 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class MaterializationInterceptionInMemoryTest :
-    MaterializationInterceptionTestBase<MaterializationInterceptionInMemoryTest.InMemoryLibraryContext>
+public class MaterializationInterceptionInMemoryTest : MaterializationInterceptionTestBase,
+    IClassFixture<MaterializationInterceptionInMemoryTest.MaterializationInterceptionInMemoryFixture>
 {
-    public class InMemoryLibraryContext(DbContextOptions options) : LibraryContext(options)
+    public MaterializationInterceptionInMemoryTest(MaterializationInterceptionInMemoryFixture fixture)
+        : base(fixture)
     {
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<TestEntity30244>().OwnsMany(e => e.Settings);
-        }
     }
 
-    protected override ITestStoreFactory TestStoreFactory
-        => InMemoryTestStoreFactory.Instance;
+    public class MaterializationInterceptionInMemoryFixture : SingletonInterceptorsFixtureBase
+    {
+        protected override string StoreName
+            => "MaterializationInterception";
 
-    protected override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
-        => base.AddOptions(builder).ConfigureWarnings(c => c.Ignore(InMemoryEventId.TransactionIgnoredWarning));
+        protected override ITestStoreFactory TestStoreFactory
+            => InMemoryTestStoreFactory.Instance;
+
+        protected override IServiceCollection InjectInterceptors(
+            IServiceCollection serviceCollection,
+            IEnumerable<ISingletonInterceptor> injectedInterceptors)
+            => base.InjectInterceptors(serviceCollection.AddEntityFrameworkInMemoryDatabase(), injectedInterceptors);
+
+        public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
+            => base.AddOptions(builder).ConfigureWarnings(c => c.Ignore(InMemoryEventId.TransactionIgnoredWarning));
+    }
 }

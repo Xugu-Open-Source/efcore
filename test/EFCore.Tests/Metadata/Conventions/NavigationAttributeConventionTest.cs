@@ -4,7 +4,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -208,9 +207,7 @@ public class NavigationAttributeConventionTest
         var navigationBuilder = postEntityTypeBuilder.HasSkipNavigation(
             new MemberIdentity(nameof(Post.Blogs)),
             blogEntityTypeBuilder.Metadata,
-            null,
             new MemberIdentity(nameof(Blog.Posts)),
-            null,
             ConfigurationSource.Convention,
             collections: true,
             onDependent: false);

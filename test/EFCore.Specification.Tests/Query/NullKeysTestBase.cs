@@ -5,12 +5,15 @@
 
 namespace Microsoft.EntityFrameworkCore.Query;
 
-#nullable disable
-
-public abstract class NullKeysTestBase<TFixture>(TFixture fixture) : IClassFixture<TFixture>
+public abstract class NullKeysTestBase<TFixture> : IClassFixture<TFixture>
     where TFixture : NullKeysTestBase<TFixture>.NullKeysFixtureBase, new()
 {
-    protected virtual TFixture Fixture { get; } = fixture;
+    protected NullKeysTestBase(TFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected virtual TFixture Fixture { get; }
 
     protected DbContext CreateContext()
         => Fixture.CreateContext();
@@ -59,7 +62,7 @@ public abstract class NullKeysTestBase<TFixture>(TFixture fixture) : IClassFixtu
             results.Select(e => e.Fk).ToArray());
 
         Assert.Equal(
-            [1, 1, 3],
+            new int?[] { 1, 1, 3 },
             results.Select(e => e.Principal.Id).ToArray());
     }
 
@@ -254,7 +257,7 @@ public abstract class NullKeysTestBase<TFixture>(TFixture fixture) : IClassFixtu
                 .Property(e => e.Id).ValueGeneratedNever();
         }
 
-        protected override Task SeedAsync(PoolableDbContext context)
+        protected override void Seed(PoolableDbContext context)
         {
             context.Add(
                 new WithStringKey { Id = "Stereo" });
@@ -335,7 +338,7 @@ public abstract class NullKeysTestBase<TFixture>(TFixture fixture) : IClassFixtu
             context.Add(
                 new WithAllNullableIntFk { Id = 6 });
 
-            return context.SaveChangesAsync();
+            context.SaveChanges();
         }
     }
 }

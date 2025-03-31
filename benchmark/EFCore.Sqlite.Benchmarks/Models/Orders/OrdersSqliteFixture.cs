@@ -4,15 +4,23 @@
 using System;
 using System.IO;
 
-namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.Orders;
-
-public class OrdersSqliteFixture(string databaseName) : OrdersFixtureBase
+namespace Microsoft.EntityFrameworkCore.Benchmarks.Models.Orders
 {
-    private static readonly string _baseDirectory
-        = Path.GetDirectoryName(typeof(OrdersSqliteFixture).Assembly.Location);
+    public class OrdersSqliteFixture : OrdersFixtureBase
+    {
+        private static readonly string _baseDirectory
+            = Path.GetDirectoryName(typeof(OrdersSqliteFixture).Assembly.Location);
 
-    private readonly string _connectionString = $"Data Source={Path.Combine(_baseDirectory, databaseName + ".db")}";
+        private readonly string _connectionString;
 
-    public override OrdersContextBase CreateContext(IServiceProvider serviceProvider = null, bool disableBatching = false)
-        => new OrdersSqliteContext(_connectionString, serviceProvider, disableBatching);
+        public OrdersSqliteFixture(string databaseName)
+        {
+            _connectionString = $"Data Source={Path.Combine(_baseDirectory, databaseName + ".db")}";
+        }
+
+        public override OrdersContextBase CreateContext(IServiceProvider serviceProvider = null, bool disableBatching = false)
+        {
+            return new OrdersSqliteContext(_connectionString, serviceProvider, disableBatching);
+        }
+    }
 }

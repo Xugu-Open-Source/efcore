@@ -13,7 +13,7 @@ public class SharedTypeQueryInMemoryTest : SharedTypeQueryTestBase
     public virtual async Task Can_use_shared_type_entity_type_in_ToInMemoryQuery(bool async)
     {
         var contextFactory = await InitializeAsync<MyContextInMemory24601>(
-            seed: c => c.SeedAsync());
+            seed: c => c.Seed());
 
         using var context = contextFactory.CreateContext();
 
@@ -22,8 +22,13 @@ public class SharedTypeQueryInMemoryTest : SharedTypeQueryTestBase
         Assert.Equal("Maumar", Assert.Single(data).Value);
     }
 
-    private class MyContextInMemory24601(DbContextOptions options) : MyContext24601(options)
+    private class MyContextInMemory24601 : MyContext24601
     {
+        public MyContextInMemory24601(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.SharedTypeEntity<Dictionary<string, object>>(

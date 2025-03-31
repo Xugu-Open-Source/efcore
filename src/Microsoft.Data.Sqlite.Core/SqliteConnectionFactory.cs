@@ -14,8 +14,8 @@ namespace Microsoft.Data.Sqlite
 #pragma warning disable IDE0052 // Remove unread private members
         private readonly Timer _pruneTimer;
 #pragma warning restore IDE0052 // Remove unread private members
-        private readonly List<SqliteConnectionPoolGroup> _idlePoolGroups = [];
-        private readonly List<SqliteConnectionPool> _poolsToRelease = [];
+        private readonly List<SqliteConnectionPoolGroup> _idlePoolGroups = new();
+        private readonly List<SqliteConnectionPool> _poolsToRelease = new();
         private readonly ReaderWriterLockSlim _lock = new();
 
         private Dictionary<string, SqliteConnectionPoolGroup> _poolGroups = new();
@@ -31,7 +31,8 @@ namespace Microsoft.Data.Sqlite
         public SqliteConnectionInternal GetConnection(SqliteConnection outerConnection)
         {
             var poolGroup = outerConnection.PoolGroup;
-            if (poolGroup is { IsDisabled: true, IsNonPooled: false })
+            if (poolGroup.IsDisabled
+                && !poolGroup.IsNonPooled)
             {
                 poolGroup = GetPoolGroup(poolGroup.ConnectionString);
                 outerConnection.PoolGroup = poolGroup;
@@ -137,21 +138,20 @@ namespace Microsoft.Data.Sqlite
                 }
             }
 
+            for (var i = _idlePoolGroups.Count - 1; i >= 0; i--)
+            {
+                var poolGroup = _idlePoolGroups[i];
+
+                if (!poolGroup.Clear())
+                {
+                    _idlePoolGroups.Remove(poolGroup);
+                }
+            }
+
             _lock.EnterWriteLock();
 
             try
             {
-
-                for (var i = _idlePoolGroups.Count - 1; i >= 0; i--)
-                {
-                    var poolGroup = _idlePoolGroups[i];
-
-                    if (!poolGroup.Clear())
-                    {
-                        _idlePoolGroups.Remove(poolGroup);
-                    }
-                }
-
                 var activePoolGroups = new Dictionary<string, SqliteConnectionPoolGroup>();
                 foreach (var entry in _poolGroups)
                 {

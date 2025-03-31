@@ -5,24 +5,27 @@
 
 namespace Microsoft.EntityFrameworkCore;
 
-public class EndToEndInMemoryTest(InMemoryFixture fixture) : IClassFixture<InMemoryFixture>
+public class EndToEndInMemoryTest : IClassFixture<InMemoryFixture>
 {
-    protected InMemoryFixture Fixture { get; } = fixture;
+    public EndToEndInMemoryTest(InMemoryFixture fixture)
+    {
+        Fixture = fixture;
+    }
+
+    protected InMemoryFixture Fixture { get; }
 
     [ConditionalFact]
     public void Can_use_different_entity_types_end_to_end()
     {
         Can_add_update_delete_end_to_end<Private>();
         Can_add_update_delete_end_to_end<object>();
-        Can_add_update_delete_end_to_end<MyList<Private>>();
-    }
-
-    private class MyList<T> : List<T>
-    {
+        Can_add_update_delete_end_to_end<List<Private>>();
     }
 
     // ReSharper disable once ClassNeverInstantiated.Local
-    private class Private;
+    private class Private
+    {
+    }
 
     private void Can_add_update_delete_end_to_end<T>()
         where T : class, new()

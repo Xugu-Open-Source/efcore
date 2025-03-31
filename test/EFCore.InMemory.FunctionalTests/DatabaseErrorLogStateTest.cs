@@ -117,9 +117,14 @@ public class DatabaseErrorLogStateTest
             ex.ToString(), loggerFactory.Logger.LastDatabaseErrorFormatter(loggerFactory.Logger.LastDatabaseErrorState, ex));
     }
 
-    public class BloggingContext(IServiceProvider serviceProvider) : DbContext
+    public class BloggingContext : DbContext
     {
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
+        private readonly IServiceProvider _serviceProvider;
+
+        public BloggingContext(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
 
         public DbSet<Blog> Blogs { get; set; }
 

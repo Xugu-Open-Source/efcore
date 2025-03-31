@@ -3,8 +3,6 @@
 
 namespace Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
-#nullable disable
-
 public class MostExpensiveProduct
 {
     public string TenMostExpensiveProducts { get; set; }

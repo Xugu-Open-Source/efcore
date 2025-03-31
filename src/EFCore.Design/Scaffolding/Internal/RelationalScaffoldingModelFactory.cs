@@ -28,7 +28,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
     private readonly DatabaseTable _nullTable = new();
     private CSharpUniqueNamer<DatabaseTable> _tableNamer = null!;
     private CSharpUniqueNamer<DatabaseTable> _dbSetNamer = null!;
-    private readonly HashSet<DatabaseColumn> _unmappedColumns = [];
+    private readonly HashSet<DatabaseColumn> _unmappedColumns = new();
     private readonly IPluralizer _pluralizer;
     private readonly ICSharpUtilities _cSharpUtilities;
     private readonly IScaffoldingTypeMapper _scaffoldingTypeMapper;
@@ -73,8 +73,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
             _cSharpUtilities,
             options.NoPluralize
                 ? null
-                : _pluralizer.Singularize,
-            caseSensitive: false);
+                : _pluralizer.Singularize);
         _dbSetNamer = new CSharpUniqueNamer<DatabaseTable>(
             options.UseDatabaseNames
                 ? (t => t.Name)
@@ -82,8 +81,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
             _cSharpUtilities,
             options.NoPluralize
                 ? null
-                : _pluralizer.Pluralize,
-            caseSensitive: true);
+                : _pluralizer.Pluralize);
         _columnNamers = new Dictionary<DatabaseTable, CSharpUniqueNamer<DatabaseColumn>>();
         _options = options;
 
@@ -135,8 +133,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
                         c => c.Name,
                         usedNames,
                         _cSharpUtilities,
-                        singularizePluralizer: null,
-                        caseSensitive: true));
+                        singularizePluralizer: null));
             }
             else
             {
@@ -146,8 +143,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
                         c => _candidateNamingService.GenerateCandidateIdentifier(c),
                         usedNames,
                         _cSharpUtilities,
-                        singularizePluralizer: null,
-                        caseSensitive: true));
+                        singularizePluralizer: null));
             }
         }
 
@@ -184,9 +180,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
         VisitTables(modelBuilder, databaseModel.Tables);
         VisitForeignKeys(modelBuilder, databaseModel.Tables.SelectMany(table => table.ForeignKeys).ToList());
 
-        modelBuilder.Model.AddAnnotations(
-            databaseModel.GetAnnotations().Where(
-                a => a.Name != ScaffoldingAnnotationNames.ConnectionString));
+        modelBuilder.Model.AddAnnotations(databaseModel.GetAnnotations());
 
         return modelBuilder;
     }
@@ -395,8 +389,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
         }
 
         if (clrType == typeof(bool)
-            && column.DefaultValueSql != null
-            && column.DefaultValue == null)
+            && column.DefaultValueSql != null)
         {
             _reporter.WriteWarning(
                 DesignStrings.NonNullableBoooleanColumnHasDefaultConstraint(column.DisplayName()));
@@ -458,11 +451,6 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
             property.ValueGeneratedOnAddOrUpdate();
         }
 
-        if (column.DefaultValue != null)
-        {
-            property.HasDefaultValue(column.DefaultValue);
-        }
-
         if (column.DefaultValueSql != null)
         {
             property.HasDefaultValueSql(column.DefaultValueSql);
@@ -470,14 +458,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
 
         if (column.ComputedColumnSql != null)
         {
-            if (column.ComputedColumnSql.Length == 0)
-            {
-                property.HasComputedColumnSql();
-            }
-            else
-            {
-                property.HasComputedColumnSql(column.ComputedColumnSql, column.IsStored);
-            }
+            property.HasComputedColumnSql(column.ComputedColumnSql, column.IsStored);
         }
 
         if (column.Comment != null)
@@ -504,8 +485,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
 
         property.Metadata.AddAnnotations(
             column.GetAnnotations().Where(
-                a => a.Name != ScaffoldingAnnotationNames.ConcurrencyToken
-                    && a.Name != ScaffoldingAnnotationNames.ClrType));
+                a => a.Name != ScaffoldingAnnotationNames.ConcurrencyToken));
 
         return property;
     }
@@ -535,7 +515,9 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
 
         var keyBuilder = builder.HasKey(primaryKey.Columns.Select(GetPropertyName).ToArray());
 
-        if (primaryKey.Columns is [{ ValueGenerated: null, DefaultValueSql: null }])
+        if (primaryKey.Columns.Count == 1
+            && primaryKey.Columns[0].ValueGenerated == null
+            && primaryKey.Columns[0].DefaultValueSql == null)
         {
             var property = builder.Metadata.FindProperty(GetPropertyName(primaryKey.Columns[0]));
             if (property != null)
@@ -726,10 +708,10 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
                         uniquifier: NavigationUniquifier);
 
                 var leftSkipNavigation = leftEntityType.AddSkipNavigation(
-                    leftNavigationPropertyName, memberInfo: null, targetEntityType: rightEntityType, collection: true, onDependent: false);
+                    leftNavigationPropertyName, null, rightEntityType, collection: true, onDependent: false);
                 leftSkipNavigation.SetForeignKey(fks[0]);
                 var rightSkipNavigation = rightEntityType.AddSkipNavigation(
-                    rightNavigationPropertyName, memberInfo: null, targetEntityType: leftEntityType, collection: true, onDependent: false);
+                    rightNavigationPropertyName, null, leftEntityType, collection: true, onDependent: false);
                 rightSkipNavigation.SetForeignKey(fks[1]);
                 leftSkipNavigation.SetInverse(rightSkipNavigation);
                 rightSkipNavigation.SetInverse(leftSkipNavigation);
@@ -957,7 +939,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
     {
         if (!_entityTypeAndPropertyIdentifiers.TryGetValue(entityType, out var existingIdentifiers))
         {
-            existingIdentifiers = [entityType.Name];
+            existingIdentifiers = new List<string> { entityType.Name };
             existingIdentifiers.AddRange(entityType.GetProperties().Select(p => p.Name));
             _entityTypeAndPropertyIdentifiers[entityType] = existingIdentifiers;
         }
@@ -983,8 +965,7 @@ public class RelationalScaffoldingModelFactory : IScaffoldingModelFactory
         return _scaffoldingTypeMapper.FindMapping(
             column.StoreType,
             column.IsKeyOrIndex(),
-            column.IsRowVersion(),
-            (Type?)column[ScaffoldingAnnotationNames.ClrType]);
+            column.IsRowVersion());
     }
 
     private static void AssignOnDeleteAction(

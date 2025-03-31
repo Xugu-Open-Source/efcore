@@ -1,8 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions;
@@ -21,24 +19,15 @@ public class ServicePropertyDiscoveryConvention :
     ///     Creates a new instance of <see cref="ServicePropertyDiscoveryConvention" />.
     /// </summary>
     /// <param name="dependencies">Parameter object containing dependencies for this convention.</param>
-    /// <param name="useAttributes">Whether the convention will use attributes found on the members.</param>
-    public ServicePropertyDiscoveryConvention(
-        ProviderConventionSetBuilderDependencies dependencies,
-        bool useAttributes = true)
+    public ServicePropertyDiscoveryConvention(ProviderConventionSetBuilderDependencies dependencies)
     {
         Dependencies = dependencies;
-        UseAttributes = useAttributes;
     }
 
     /// <summary>
     ///     Dependencies for this service.
     /// </summary>
     protected virtual ProviderConventionSetBuilderDependencies Dependencies { get; }
-
-    /// <summary>
-    ///     A value indicating whether the convention will use attributes found on the members.
-    /// </summary>
-    protected virtual bool UseAttributes { get; }
 
     /// <summary>
     ///     Called after an entity type is added to the model.
@@ -48,7 +37,7 @@ public class ServicePropertyDiscoveryConvention :
     public virtual void ProcessEntityTypeAdded(
         IConventionEntityTypeBuilder entityTypeBuilder,
         IConventionContext<IConventionEntityTypeBuilder> context)
-        => DiscoverServiceProperties(entityTypeBuilder, context);
+        => Process(entityTypeBuilder);
 
     /// <summary>
     ///     Called after the base type of an entity type changes.
@@ -65,74 +54,29 @@ public class ServicePropertyDiscoveryConvention :
     {
         if (entityTypeBuilder.Metadata.BaseType == newBaseType)
         {
-            DiscoverServiceProperties(entityTypeBuilder, context);
+            Process(entityTypeBuilder);
         }
     }
 
-    /// <summary>
-    ///     Discovers properties on the given structural type.
-    /// </summary>
-    /// <param name="structuralTypeBuilder">The type for which the properties will be discovered.</param>
-    /// <param name="context">Additional information associated with convention execution.</param>
-    protected virtual void DiscoverServiceProperties(
-        IConventionTypeBaseBuilder structuralTypeBuilder,
-        IConventionContext context)
+    private void Process(IConventionEntityTypeBuilder entityTypeBuilder)
     {
-        if (structuralTypeBuilder is not IConventionEntityTypeBuilder entityTypeBuilder)
-        {
-            return;
-        }
-
         var entityType = entityTypeBuilder.Metadata;
-        foreach (var memberInfo in GetMembers(entityType))
+        var model = entityType.Model;
+        foreach (var propertyInfo in entityType.GetRuntimeProperties().Values)
         {
-            if (!IsCandidateServiceProperty(memberInfo, entityType, out var factory))
+            if (!entityTypeBuilder.CanHaveServiceProperty(propertyInfo))
             {
                 continue;
             }
 
-            entityTypeBuilder.ServiceProperty(memberInfo)?.HasParameterBinding(
-                (ServiceParameterBinding)factory.Bind(entityType, memberInfo.GetMemberType(), memberInfo.GetSimpleMemberName()));
+            var factory = Dependencies.MemberClassifier.FindServicePropertyCandidateBindingFactory(propertyInfo, model);
+            if (factory == null)
+            {
+                continue;
+            }
+
+            entityTypeBuilder.ServiceProperty(propertyInfo)?.HasParameterBinding(
+                (ServiceParameterBinding)factory.Bind(entityType, propertyInfo.PropertyType, propertyInfo.GetSimpleMemberName()));
         }
-    }
-
-    /// <summary>
-    ///     Returns the CLR members from the given type that should be considered when discovering properties.
-    /// </summary>
-    /// <param name="structuralType">The type for which the properties will be discovered.</param>
-    /// <returns>The CLR members to be considered.</returns>
-    protected virtual IEnumerable<MemberInfo> GetMembers(IConventionTypeBase structuralType)
-        => structuralType.GetRuntimeProperties().Values.Cast<MemberInfo>()
-            .Concat(structuralType.GetRuntimeFields().Values);
-
-    /// <summary>
-    ///     Returns a value indicating whether the given member is a service property candidate.
-    /// </summary>
-    /// <param name="memberInfo">The member.</param>
-    /// <param name="structuralType">The type for which the properties will be discovered.</param>
-    /// <param name="factory">The parameter binding factory for the property.</param>
-    protected virtual bool IsCandidateServiceProperty(
-        MemberInfo memberInfo,
-        IConventionTypeBase structuralType,
-        [NotNullWhen(true)] out IParameterBindingFactory? factory)
-    {
-        factory = null;
-        var model = (Model)structuralType.Model;
-        if (structuralType is not IConventionEntityType entityType
-            || !entityType.Builder.CanHaveServiceProperty(memberInfo)
-            || model.FindIsComplexConfigurationSource(memberInfo.GetMemberType().UnwrapNullableType()) != null)
-        {
-            return false;
-        }
-
-        factory = Dependencies.MemberClassifier.FindServicePropertyCandidateBindingFactory(memberInfo, model, UseAttributes);
-        if (factory == null)
-        {
-            return false;
-        }
-
-        var memberType = memberInfo.GetMemberType();
-        return !entityType.HasServiceProperties()
-            || !entityType.GetServiceProperties().Any(p => p.ClrType == memberType);
     }
 }

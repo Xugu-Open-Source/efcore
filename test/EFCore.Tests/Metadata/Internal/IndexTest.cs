@@ -85,7 +85,7 @@ public class IndexTest
         index.IsDescending = new[] { true, true };
 
         Assert.True(new[] { property1, property2 }.SequenceEqual(index.Properties));
-        Assert.Equal([], index.IsDescending);
+        Assert.Equal(Array.Empty<bool>(), index.IsDescending);
     }
 
     [ConditionalFact]

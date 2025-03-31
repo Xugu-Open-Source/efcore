@@ -103,8 +103,10 @@ public class CosmosExecutionStrategy : ExecutionStrategy
         };
 
         static bool IsTransient(HttpStatusCode statusCode)
-            => statusCode is HttpStatusCode.ServiceUnavailable or HttpStatusCode.TooManyRequests or HttpStatusCode.RequestTimeout
-                or HttpStatusCode.Gone;
+            => statusCode == HttpStatusCode.ServiceUnavailable
+                || statusCode == HttpStatusCode.TooManyRequests
+                || statusCode == HttpStatusCode.RequestTimeout
+                || statusCode == HttpStatusCode.Gone;
     }
 
     /// <summary>
