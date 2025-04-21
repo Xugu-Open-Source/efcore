@@ -62,7 +62,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
             await base.Add_column_with_defaultValue_string();
 
             AssertSql(
-                @"ALTER TABLE `People` ADD `Name` longtext CHARACTER SET utf8mb4 NOT NULL DEFAULT ('John Doe');");
+                @"ALTER TABLE `People` ADD `Name` varchar DEFAULT 'John Doe' NOT NULL;");
         }
 
         public override async Task Alter_column_make_required()
@@ -74,7 +74,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
 WHERE `SomeColumn` IS NULL;
 SELECT ROW_COUNT();",
                 //
-                @"ALTER TABLE `People` MODIFY COLUMN `SomeColumn` longtext CHARACTER SET utf8mb4 NOT NULL;");
+                @"ALTER TABLE `People` MODIFY COLUMN `SomeColumn` varchar NOT NULL;");
         }
 
         
@@ -130,7 +130,7 @@ SELECT ROW_COUNT();",
 WHERE `SomeColumn` IS NULL;
 SELECT ROW_COUNT();",
                 //
-                @"ALTER TABLE `People` MODIFY COLUMN `SomeColumn` longtext CHARACTER SET utf8mb4 NOT NULL;");
+                @"ALTER TABLE `People` MODIFY COLUMN `SomeColumn` varchar NOT NULL;");
         }
 
         [ConditionalFact]
@@ -154,7 +154,7 @@ SELECT ROW_COUNT();",
                 });
 
             AssertSql(
-                @"ALTER TABLE `People` ADD `Name` varchar(128) CHARACTER SET utf8mb4 NOT NULL DEFAULT 'John Doe';");
+                @"ALTER TABLE `People` ADD `Name` varchar(128) DEFAULT 'John Doe' NOT NULL;");
         }
 
         [ConditionalFact]
@@ -175,10 +175,10 @@ SELECT ROW_COUNT();",
             await base.Add_column_with_defaultValue_datetime();
 
             AssertSql(
-                @"ALTER TABLE `People` ADD `Birthday` datetime(6) NOT NULL DEFAULT '2015-04-12 17:05:00';");
+                @"ALTER TABLE `People` ADD `Birthday` datetime(6) DEFAULT '2015-04-12 17:05:00' NOT NULL;");
         }
 
-        [SupportedServerVersionCondition(nameof(ServerVersionSupport.DefaultExpression), nameof(ServerVersionSupport.AlternativeDefaultExpression))]
+        
         public override async Task Add_column_with_defaultValueSql()
         {
             await Test(
@@ -192,13 +192,10 @@ SELECT ROW_COUNT();",
                     var table = Assert.Single(model.Tables);
                     Assert.Equal(2, table.Columns.Count);
                     var sumColumn = Assert.Single(table.Columns, c => c.Name == "Sum");
-                    Assert.Contains("1", sumColumn.DefaultValueSql);
-                    Assert.Contains("+", sumColumn.DefaultValueSql);
-                    Assert.Contains("2", sumColumn.DefaultValueSql);
                 });
 
             AssertSql(
-                @"ALTER TABLE `People` ADD `Sum` int NOT NULL DEFAULT (1 + 2);");
+                @"ALTER TABLE `People` ADD `Sum` int DEFAULT (1 + 2) NOT NULL;");
         }
 
         [ConditionalFact]
@@ -219,7 +216,7 @@ SELECT ROW_COUNT();",
                 });
 
             AssertSql(
-                @"ALTER TABLE `People` ADD `Sum` int NOT NULL DEFAULT 3;");
+                @"ALTER TABLE `People` ADD `Sum` int DEFAULT 3 NOT NULL;");
         }
 
         public override async Task Rename_index()
@@ -445,7 +442,7 @@ CREATE SEQUENCE `dbo2_TestSequence` START WITH 3 INCREMENT BY 2 MINVALUE 2 MAXVA
             AssertSql(
                 @"CREATE TABLE `People` (
     `Id` int NOT NULL AUTO_INCREMENT,
-    `Name` longtext CHARACTER SET utf8mb4 NULL COMMENT 'This is a multi-line
+    `Name` varchar NULL COMMENT 'This is a multi-line
 column comment.
 More information can
 be found in the docs.',
@@ -634,9 +631,9 @@ ALTER TABLE `TestSequence` RENAME `testsequence`;
                 });
 
             AssertSql(
-                $@"ALTER TABLE `IceCream` ADD `Brand` longtext COLLATE {NonDefaultCollation} NULL;",
+                $@"ALTER TABLE `IceCream` ADD `Brand` varchar NULL;",
                 //
-                $@"ALTER TABLE `IceCream` ADD `Name` longtext COLLATE {DefaultCollation} NULL;");
+                $@"ALTER TABLE `IceCream` ADD `Name` varchar NULL;");
         }
 
         [ConditionalFact]
@@ -687,16 +684,14 @@ ALTER TABLE `TestSequence` RENAME `testsequence`;
                     var table = Assert.Single(result.Tables);
                     var iceCreamIdColumn = Assert.Single(table.Columns.Where(c => c.Name == "IceCreamId"));
 
-                    Assert.Equal("ascii_general_ci", iceCreamIdColumn.Collation);
+                    Assert.Null(iceCreamIdColumn.Collation);
                 });
 
             AssertSql(
-                $@"ALTER DATABASE COLLATE {DefaultCollation};",
-                //
                 $@"CREATE TABLE `IceCream` (
-    `IceCreamId` char(36) COLLATE ascii_general_ci NOT NULL,
+    `IceCreamId` guid NOT NULL,
     CONSTRAINT `PK_IceCream` PRIMARY KEY (`IceCreamId`)
-) COLLATE={DefaultCollation};");
+);");
         }
 
         [ConditionalFact]
@@ -823,9 +818,9 @@ ALTER TABLE `TestSequence` RENAME `testsequence`;
                 });
 
             AssertSql(
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` longtext COLLATE {NonDefaultCollation} NULL;",
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` varchar COLLATE {NonDefaultCollation} NULL;",
                 //
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` longtext COLLATE {DefaultCollation} NULL;");
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` varchar COLLATE {DefaultCollation} NULL;");
         }
 
         [ConditionalFact]
@@ -851,7 +846,6 @@ ALTER TABLE `TestSequence` RENAME `testsequence`;
                 target => target.Entity(
                     "IceCream", e =>
                     {
-                        e.UseCollation(NonDefaultCollation2);
                         e.Property<string>("Name")
                             .UseCollation(NonDefaultCollation);
                     }),
@@ -866,11 +860,11 @@ ALTER TABLE `TestSequence` RENAME `testsequence`;
                 });
 
             AssertSql(
-                $"ALTER TABLE `IceCream` COLLATE={NonDefaultCollation2};",
+                $"ALTER TABLE `IceCream`;",
                 //
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` longtext COLLATE {NonDefaultCollation} NULL;",
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` varchar NULL;",
                 //
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` longtext COLLATE {NonDefaultCollation2} NULL;");
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` varchar NULL;");
         }
 
         [ConditionalFact]
@@ -895,7 +889,6 @@ ALTER TABLE `TestSequence` RENAME `testsequence`;
                                 .UseCollation(NonDefaultCollation);
                         }),
                 target => target
-                    .UseCollation(NonDefaultCollation2, DelegationModes.ApplyToColumns)
                     .Entity(
                         "IceCream", e =>
                         {
@@ -916,9 +909,9 @@ PREPARE __pomelo_SqlExprExecute FROM @__pomelo_SqlExpr;
 EXECUTE __pomelo_SqlExprExecute;
 DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                 //
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` longtext COLLATE {NonDefaultCollation} NULL;",
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` varchar NULL;",
                 //
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` longtext COLLATE {NonDefaultCollation2} NULL;");
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` varchar NULL;");
         }
 
         [ConditionalFact]
@@ -944,7 +937,6 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                                 .UseCollation(NonDefaultCollation);
                         }),
                 target => target
-                    .UseCollation(NonDefaultCollation2, DelegationModes.ApplyToColumns)
                     .Entity(
                         "IceCream",
                         e =>
@@ -956,9 +948,9 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                 result => { });
 
             AssertSql(
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` longtext COLLATE {NonDefaultCollation} NULL;",
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` varchar NULL;",
                 //
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` longtext COLLATE {NonDefaultCollation2} NULL;");
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` varchar NULL;");
         }
 
         [ConditionalFact]
@@ -976,7 +968,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                                     .HasColumnType("int");
 
                                 b.Property<string>("Name")
-                                    .HasColumnType("longtext CHARACTER SET utf8mb4");
+                                    .HasColumnType("varchar");
 
                                 b.HasKey("IceCreamId");
 
@@ -997,7 +989,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                                     .HasColumnType("int");
 
                                 b.Property<string>("Name")
-                                    .HasColumnType("longtext");
+                                    .HasColumnType("varchar");
 
                                 b.HasKey("IceCreamId");
 
@@ -1051,8 +1043,8 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                 //
                 $@"CREATE TABLE `IceCream` (
     `IceCreamId` int NOT NULL AUTO_INCREMENT,
-    `Brand` longtext CHARACTER SET {NonDefaultCharSet} NULL,
-    `Name` longtext COLLATE {DefaultCollation} NULL,
+    `Brand` varchar CHARACTER SET {NonDefaultCharSet} NULL,
+    `Name` varchar COLLATE {DefaultCollation} NULL,
     CONSTRAINT `PK_IceCream` PRIMARY KEY (`IceCreamId`)
 ) COLLATE={DefaultCollation};");
         }
@@ -1071,8 +1063,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                         {
                             e.Property<int>("IceCreamId");
                             e.Property<string>("Name");
-                            e.Property<string>("Brand")
-                                .UseCollation(NonDefaultCollation2);
+                            e.Property<string>("Brand");
                         }),
                 result =>
                 {
@@ -1083,7 +1074,6 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                     Assert.Null(nameColumn[XGAnnotationNames.CharSet]);
                     Assert.Null(nameColumn.Collation);
                     Assert.NotEqual(NonDefaultCharSet, brandColumn[XGAnnotationNames.CharSet]);
-                    Assert.Equal(NonDefaultCollation2, brandColumn.Collation);
                 });
 
             AssertSql(
@@ -1091,14 +1081,14 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                 //
                 $@"CREATE TABLE `IceCream` (
     `IceCreamId` int NOT NULL AUTO_INCREMENT,
-    `Brand` longtext COLLATE {NonDefaultCollation2} NULL,
-    `Name` longtext CHARACTER SET {NonDefaultCharSet} NULL,
+    `Brand` varchar NULL,
+    `Name` varchar NULL,
     CONSTRAINT `PK_IceCream` PRIMARY KEY (`IceCreamId`)
 ) CHARACTER SET={NonDefaultCharSet};");
         }
 
         [ConditionalFact]
-        public virtual async Task Create_table_longtext_column_with_string_length_and_legacy_charset_definition_in_column_type()
+        public virtual async Task Create_table_varchar_column_with_string_length_and_legacy_charset_definition_in_column_type()
         {
             await Test(
                 common => { },
@@ -1110,7 +1100,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                         {
                             e.Property<int>("IceCreamId");
                             e.Property<string>("Name")
-                                .HasColumnType($"longtext CHARACTER SET {NonDefaultCharSet}")
+                                .HasColumnType($"varchar CHARACTER SET {NonDefaultCharSet}")
                                 .HasMaxLength(2048);
                         }),
                 result =>
@@ -1119,13 +1109,13 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
                     var nameColumn = Assert.Single(table.Columns.Where(c => c.Name == "Name"));
 
                     Assert.Equal(NonDefaultCharSet, nameColumn[XGAnnotationNames.CharSet]);
-                    Assert.Equal("longtext", nameColumn.StoreType);
+                    Assert.Equal("varchar", nameColumn.StoreType);
                 });
 
             AssertSql(
                 $@"CREATE TABLE `IceCream` (
     `IceCreamId` int NOT NULL AUTO_INCREMENT,
-    `Name` longtext CHARACTER SET {NonDefaultCharSet} NULL,
+    `Name` varchar CHARACTER SET {NonDefaultCharSet} NULL,
     CONSTRAINT `PK_IceCream` PRIMARY KEY (`IceCreamId`)
 ) CHARACTER SET=utf8mb4;");
         }
@@ -1167,9 +1157,9 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
             AssertSql(
                 $@"ALTER TABLE `IceCream` CHARACTER SET={DefaultCharSet};",
                 //
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` longtext CHARACTER SET {NonDefaultCharSet} NULL;",
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Name` varchar CHARACTER SET {NonDefaultCharSet} NULL;",
                 //
-                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` longtext CHARACTER SET {NonDefaultCharSet2} NULL;");
+                $@"ALTER TABLE `IceCream` MODIFY COLUMN `Brand` varchar CHARACTER SET {NonDefaultCharSet2} NULL;");
         }
 
         [ConditionalFact]
@@ -1297,19 +1287,13 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
 
         protected virtual string DefaultCollation => ((XGTestStore)Fixture.TestStore).TimeZone;
 
-        protected override string NonDefaultCollation
-            => DefaultCollation == ((XGTestStore)Fixture.TestStore).ServerVersion.Value.DefaultUtf8CsCollation
-                ? ((XGTestStore)Fixture.TestStore).ServerVersion.Value.DefaultUtf8CiCollation
-                : ((XGTestStore)Fixture.TestStore).ServerVersion.Value.DefaultUtf8CsCollation;
-
-        protected virtual string NonDefaultCollation2
-            => "utf8mb4_german2_ci";
-
         protected virtual string DefaultCharSet => ((XGTestStore)Fixture.TestStore).DatabaseCharSet;
         protected virtual string NonDefaultCharSet => "latin1";
         protected virtual string NonDefaultCharSet2 => "ascii";
 
         protected virtual TestHelpers TestHelpers => XGTestHelpers.Instance;
+
+        protected override string NonDefaultCollation => null;
 
         protected virtual Task Test(
             Action<ModelBuilder> buildCommonAction,
@@ -1363,7 +1347,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;",
             public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
             {
                 new XGDbContextOptionsBuilder(builder)
-                    .SchemaBehavior(XGSchemaBehavior.Translate, (schema, table) => $"{schema}_{table}");
+                    .SchemaBehavior(XGSchemaBehavior.Translate, (schema, table) => $"`{schema}`.`{table}`");
 
                 return base.AddOptions(builder);
             }

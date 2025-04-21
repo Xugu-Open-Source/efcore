@@ -64,6 +64,10 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
         private XGStringTypeMapping _varcharMax;
 
         // DateTime
+        private readonly XGDateTypeMapping _dateDateOnly = new XGDateTypeMapping("date", typeof(DateOnly));
+        private readonly XGTimeTypeMapping _timeTimeOnly = new XGTimeTypeMapping("time", typeof(TimeOnly));
+        private readonly XGDateTypeMapping _dateDateTime = new XGDateTypeMapping("date", typeof(DateTime));
+        private readonly XGTimeTypeMapping _timeTimeTime = new XGTimeTypeMapping("time", typeof(TimeSpan));
         private readonly XGYearTypeMapping _year = new XGYearTypeMapping("year");
         private readonly XGDateTypeMapping _date = new XGDateTypeMapping("date",typeof(DateTime));
         private readonly XGTimeSpanTypeMapping _time = new XGTimeSpanTypeMapping("time");
@@ -202,8 +206,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
 
                     // DateTime
                     { "year",                      new[] { _year } },
-                    { "date",                      new[] { _date } },
-                    { "time",                      new[] { _time } },
+                    { "date",                      new RelationalTypeMapping[] { _dateDateOnly, _dateDateTime } },
+                    { "time",                      new RelationalTypeMapping[] { _timeTimeOnly, _timeTimeTime } },
                     { "datetime",                  new RelationalTypeMapping[] { _dateTime, _dateTimeOffset } },
                     { "timestamp",                 new RelationalTypeMapping[] { _timeStamp, _timeStampOffset } },
                 };
@@ -231,6 +235,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
                     { typeof(bool),    _boolean },
 
                     // datetimes
+                    { typeof(DateOnly), _dateDateOnly },
+                    { typeof(TimeOnly), _timeTimeOnly.Clone(_options.DefaultDataTypeMappings.ClrTimeOnlyPrecision, null) },
                     { typeof(TimeSpan), _options.DefaultDataTypeMappings.ClrTimeSpan == XGTimeSpanType.Time
                         ? _time.Clone("time",null)
                         : _time },

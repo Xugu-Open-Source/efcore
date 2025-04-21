@@ -50,7 +50,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu
             var xgOptions = new XGOptions();
             xgOptions.Initialize(builder.Options);
 
-            Assert.Equal(XGBooleanType.TinyInt1, xgOptions.DefaultDataTypeMappings.ClrBoolean);
+            Assert.Equal(XGBooleanType.Default, xgOptions.DefaultDataTypeMappings.ClrBoolean);
         }
 
         [Fact]
@@ -63,7 +63,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu
             var xgOptions = new XGOptions();
             xgOptions.Initialize(builder.Options);
 
-            Assert.Equal(XGBooleanType.Bit1, xgOptions.DefaultDataTypeMappings.ClrBoolean);
+            Assert.Equal(XGBooleanType.Default, xgOptions.DefaultDataTypeMappings.ClrBoolean);
         }
 
         [Fact]
@@ -125,7 +125,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu
 
             Assert.Equal(new Version(8, 0, 21), xgOptions.ServerVersion.Version);
             Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
-            Assert.Equal("mysql", xgOptions.ServerVersion.TypeIdentifier);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
         }
 
         [Fact]
@@ -142,7 +142,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu
 
             Assert.Equal(new Version(8, 0, 21), xgOptions.ServerVersion.Version);
             Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
-            Assert.Equal("mysql", xgOptions.ServerVersion.TypeIdentifier);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
         }
 
         [Fact]
@@ -152,14 +152,14 @@ namespace Microsoft.EntityFrameworkCore.XuGu
 
             builder.UseXG(
                 "Server=foo",
-                new XGServerVersion("8.0.21-mysql"));
+                new XGServerVersion("8.0.21-xg"));
 
             var xgOptions = new XGOptions();
             xgOptions.Initialize(builder.Options);
 
             Assert.Equal(new Version(8, 0, 21), xgOptions.ServerVersion.Version);
             Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
-            Assert.Equal("mysql", xgOptions.ServerVersion.TypeIdentifier);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
         }
 
         [Fact]
@@ -176,22 +176,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu
 
             Assert.Equal(new Version(8, 0, 21), xgOptions.ServerVersion.Version);
             Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
-            Assert.Equal("mysql", xgOptions.ServerVersion.TypeIdentifier);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
         }
 
-        [Fact]
-        public void UseXG_with_XGServerVersion_incorrect_ServerVersion_throws()
-        {
-            Assert.Throws<ArgumentException>(
-                () =>
-                {
-                    var builder = new DbContextOptionsBuilder();
-
-                    builder.UseXG(
-                        "Server=foo",
-                        new XGServerVersion(new MariaDbServerVersion("10.5.5-mariadb")));
-                });
-        }
 
         [Fact]
         public void UseXG_with_XGServerVersion_LatestSupportedServerVersion()
@@ -207,113 +194,15 @@ namespace Microsoft.EntityFrameworkCore.XuGu
 
             Assert.Equal(XGServerVersion.LatestSupportedServerVersion.Version, xgOptions.ServerVersion.Version);
             Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
-            Assert.Equal("mysql", xgOptions.ServerVersion.TypeIdentifier);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
         }
 
-        [Fact]
-        public void UseXG_with_MariaDbServerVersion_Version()
-        {
-            var builder = new DbContextOptionsBuilder();
-
-            builder.UseXG(
-                "Server=foo",
-                new MariaDbServerVersion(new Version(10, 5, 5)));
-
-            var xgOptions = new XGOptions();
-            xgOptions.Initialize(builder.Options);
-
-            Assert.Equal(new Version(10, 5, 5), xgOptions.ServerVersion.Version);
-            Assert.Equal(ServerType.MariaDb, xgOptions.ServerVersion.Type);
-            Assert.Equal("mariadb", xgOptions.ServerVersion.TypeIdentifier);
-        }
-
-        [Fact]
-        public void UseXG_with_MariaDbServerVersion_string_version_only()
-        {
-            var builder = new DbContextOptionsBuilder();
-
-            builder.UseXG(
-                "Server=foo",
-                new MariaDbServerVersion("10.5.5"));
-
-            var xgOptions = new XGOptions();
-            xgOptions.Initialize(builder.Options);
-
-            Assert.Equal(new Version(10, 5, 5), xgOptions.ServerVersion.Version);
-            Assert.Equal(ServerType.MariaDb, xgOptions.ServerVersion.Type);
-            Assert.Equal("mariadb", xgOptions.ServerVersion.TypeIdentifier);
-        }
-
-        [Fact]
-        public void UseXG_with_MariaDbServerVersion_string_version_full()
-        {
-            var builder = new DbContextOptionsBuilder();
-
-            builder.UseXG(
-                "Server=foo",
-                new MariaDbServerVersion("10.5.5-mariadb"));
-
-            var xgOptions = new XGOptions();
-            xgOptions.Initialize(builder.Options);
-
-            Assert.Equal(new Version(10, 5, 5), xgOptions.ServerVersion.Version);
-            Assert.Equal(ServerType.MariaDb, xgOptions.ServerVersion.Type);
-            Assert.Equal("mariadb", xgOptions.ServerVersion.TypeIdentifier);
-        }
-
-        [Fact]
-        public void UseXG_with_MariaDbServerVersion_ServerVersion()
-        {
-            var builder = new DbContextOptionsBuilder();
-
-            builder.UseXG(
-                "Server=foo",
-                new MariaDbServerVersion(new MariaDbServerVersion(new Version(10, 5, 5))));
-
-            var xgOptions = new XGOptions();
-            xgOptions.Initialize(builder.Options);
-
-            Assert.Equal(new Version(10, 5, 5), xgOptions.ServerVersion.Version);
-            Assert.Equal(ServerType.MariaDb, xgOptions.ServerVersion.Type);
-            Assert.Equal("mariadb", xgOptions.ServerVersion.TypeIdentifier);
-        }
-
-        [Fact]
-        public void UseXG_with_MariaDbServerVersion_incorrect_ServerVersion_throws()
-        {
-            Assert.Throws<ArgumentException>(
-                () =>
-                {
-                    var builder = new DbContextOptionsBuilder();
-
-                    builder.UseXG(
-                        "Server=foo",
-                        new MariaDbServerVersion(new XGServerVersion("8.0.21-mysql")));
-                });
-        }
-
-        [Fact]
-        public void UseXG_with_MariaDbServerVersion_LatestSupportedServerVersion()
-        {
-            var builder = new DbContextOptionsBuilder();
-
-            builder.UseXG(
-                "Server=foo",
-                MariaDbServerVersion.LatestSupportedServerVersion);
-
-            var xgOptions = new XGOptions();
-            xgOptions.Initialize(builder.Options);
-
-            Assert.Equal(MariaDbServerVersion.LatestSupportedServerVersion.Version, xgOptions.ServerVersion.Version);
-            Assert.Equal(ServerType.MariaDb, xgOptions.ServerVersion.Type);
-            Assert.Equal("mariadb", xgOptions.ServerVersion.TypeIdentifier);
-        }
 
         [Fact]
         public void UseXG_with_ServerVersion_FromString()
         {
             var builder = new DbContextOptionsBuilder();
-            var serverVersion = ServerVersion.Parse("8.0.21-mysql");
+            var serverVersion = ServerVersion.Parse("8.0.21-xg");
 
             builder.UseXG(
                 "Server=foo",
@@ -324,7 +213,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu
 
             Assert.Equal(new Version(8, 0, 21), xgOptions.ServerVersion.Version);
             Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
-            Assert.Equal("mysql", xgOptions.ServerVersion.TypeIdentifier);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
         }
 
         [Fact]
@@ -408,7 +297,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu
 
                 if (nullConnectionString)
                 {
-                    Assert.Equal(null, xgOptions.ConnectionString);
+                    Assert.Null(xgOptions.ConnectionString);
                 }
                 else
                 {

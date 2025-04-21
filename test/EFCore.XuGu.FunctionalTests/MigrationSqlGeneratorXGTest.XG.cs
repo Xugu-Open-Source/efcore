@@ -22,7 +22,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
                     Name = "AK_Cars_LicensePlateNumber",
                 });
 
-            AssertSql(@"ALTER TABLE `Cars` DROP KEY `AK_Cars_LicensePlateNumber`;");
+            AssertSql(@"ALTER TABLE `Cars` DROP CONSTRAINT `AK_Cars_LicensePlateNumber`;");
         }
 
         [ConditionalFact]
@@ -42,9 +42,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
                 });
 
             AssertSql(
-                @"ALTER TABLE `Cars` DROP FOREIGN KEY `FK_Cars_LicensePlates_LicensePlateNumber`;
+                @"ALTER TABLE `Cars` DROP CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber`;
 
-ALTER TABLE `Cars` DROP KEY `AK_Cars_LicensePlateNumber`;
+ALTER TABLE `Cars` DROP CONSTRAINT `AK_Cars_LicensePlateNumber`;
 
 ALTER TABLE `Cars` ADD CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber` FOREIGN KEY (`LicensePlateNumber`) REFERENCES `LicensePlates` (`LicensePlateNumber`) ON DELETE CASCADE;");
         }
@@ -61,7 +61,7 @@ ALTER TABLE `Cars` ADD CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber` FOR
                 });
 
             AssertSql(
-                @"CALL POMELO_BEFORE_DROP_PRIMARY_KEY(NULL, 'Cars');
+                @"CALL XuGu_BEFORE_DROP_PRIMARY_KEY(NULL, 'Cars');
 ALTER TABLE `Cars` DROP PRIMARY KEY;");
         }
 
@@ -82,9 +82,9 @@ ALTER TABLE `Cars` DROP PRIMARY KEY;");
                 });
 
             AssertSql(
-                @"ALTER TABLE `Cars` DROP FOREIGN KEY `FK_Cars_LicensePlates_LicensePlateNumber`;
+                @"ALTER TABLE `Cars` DROP CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber`;
 
-CALL POMELO_BEFORE_DROP_PRIMARY_KEY(NULL, 'Cars');
+CALL XuGu_BEFORE_DROP_PRIMARY_KEY(NULL, 'Cars');
 ALTER TABLE `Cars` DROP PRIMARY KEY;
 
 ALTER TABLE `Cars` ADD CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber` FOREIGN KEY (`LicensePlateNumber`) REFERENCES `LicensePlates` (`LicensePlateNumber`) ON DELETE CASCADE;");
@@ -110,8 +110,8 @@ ALTER TABLE `Cars` ADD CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber` FOR
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `IceCreamShops` (
-    `Location` GEOMETRY NOT NULL /*!80003 SRID 0 */
+                @"CREATE TABLE `SYSDBA`.`IceCreamShops` (
+    `Location` GEOMETRY /*!80003 SRID 0 */ NOT NULL
 );
 ",
                 Sql,
@@ -138,8 +138,8 @@ ALTER TABLE `Cars` ADD CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber` FOR
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `IceCreamShops` (
-    `Location` POINT NOT NULL /*!80003 SRID 4326 */
+                @"CREATE TABLE `SYSDBA`.`IceCreamShops` (
+    `Location` POINT /*!80003 SRID 4326 */ NOT NULL
 );
 ",
                 Sql,
@@ -174,7 +174,7 @@ ALTER TABLE `Cars` ADD CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber` FOR
                 MigrationsSqlGenerationOptions.Default);
 
             Assert.Equal(
-                @"CREATE TABLE `IceCreamParlor_IceCreams` (
+                @"CREATE TABLE `IceCreamParlor`.`IceCreams` (
     `Name` varchar(255) NOT NULL
 );
 ",
@@ -202,8 +202,8 @@ ALTER TABLE `Cars` ADD CONSTRAINT `FK_Cars_LicensePlates_LicensePlateNumber` FOR
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `IceCreamShops` (
-    `IceCreamShopId` int NOT NULL AUTO_INCREMENT
+                @"CREATE TABLE `SYSDBA`.`IceCreamShops` (
+    `IceCreamShopId` int IDENTITY NOT NULL
 );
 ",
                 Sql,

@@ -22,7 +22,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
         /// Needs explicit ordering of views to work consistently with XuGu and MariaDB.
         /// But since CustomerViewModel is private, we can't even override the test case properly.
         /// </summary>
-        [ConditionalFact(Skip = "Needs explicit ordering of views to work consistently with XuGu and MariaDB.")]
+        [ConditionalTheory(Skip = "Needs explicit ordering of views to work consistently with XuGu.")]
+        [MemberData(nameof(IsAsyncData))]
         public override async Task SelectMany_with_client_eval_with_constructor(bool async)
         {
             // await AssertQuery(

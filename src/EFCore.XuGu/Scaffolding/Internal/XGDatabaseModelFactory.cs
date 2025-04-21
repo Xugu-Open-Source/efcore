@@ -336,7 +336,7 @@ AND
             return sequences;
         }
 
-            private const string GetColumnsQuery = @"SELECT COL_NAME AS `COLUMN_NAME`,COL_NO AS `ORDINAL_POSITION`,DEF_VAL AS `COLUMN_DEFAULT`,IF(`NOT_NULL`=TRUE,FALSE,TRUE) AS `IS_NULLABLE`,TYPE_NAME AS `DATA_TYPE`,`VARYING`,COMMENTS AS `COLUMN_COMMENT`,IF(`IS_SERIAL` = TRUE, 'auto_increment', '') AS `EXTRA`,(SCALE/65536)::INT AS `PRECISION`,CAST(MOD(SCALE,65536) AS INT) AS `SCALE` FROM ALL_COLUMNS WHERE TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{0}');";
+            private const string GetColumnsQuery = @"SELECT COL_NAME AS `COLUMN_NAME`,COL_NO AS `ORDINAL_POSITION`,DEF_VAL AS `COLUMN_DEFAULT`,IF(`NOT_NULL`=TRUE,FALSE,TRUE) AS `IS_NULLABLE`,TYPE_NAME AS `DATA_TYPE`,`VARYING`,COMMENTS AS `COLUMN_COMMENT`,IF(`TYPE_NAME` = 'GUID' AND `DEF_VAL`='""UUID""()', 'IDENTITY', IF(`IS_SERIAL` = TRUE, 'IDENTITY', '')) AS `EXTRA`,(SCALE/65536)::INT AS `PRECISION`,CAST(MOD(SCALE,65536) AS INT) AS `SCALE` FROM ALL_COLUMNS WHERE TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{0}');";
 
         protected virtual void GetColumns(
             DbConnection connection,
@@ -416,10 +416,6 @@ AND
                                 isDefaultValueExpression = extra.Contains("DEFAULT_GENERATED", StringComparison.OrdinalIgnoreCase) &&
                                                            !IsSimpleNumericDefaultValue(defaultValue);
 
-                                // MariaDB uses a slightly different syntax.
-                                defaultValue = _options.ServerVersion.Supports.AlternativeDefaultExpression
-                                    ? ConvertDefaultValueFromMariaDbToXG(defaultValue, out isDefaultValueExpression)
-                                    : defaultValue;
 
                                 defaultValue = generation == null
                                     ? FilterClrDefaults(
@@ -430,7 +426,7 @@ AND
                             }
 
                             ValueGenerated? valueGenerated;
-                            if (extra.IndexOf("auto_increment", StringComparison.Ordinal) >= 0)
+                            if (extra.IndexOf("IDENTITY", StringComparison.Ordinal) >= 0)
                             {
                                 valueGenerated = ValueGenerated.OnAdd;
                             }
@@ -518,36 +514,6 @@ AND
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// MariaDB 10.2.7+ implements default values differently from XuGu, to support their own default expression
-        /// syntax. We convert their column values to XuGu compatible syntax here.
-        /// See https://github.com/PomeloFoundation/Microsoft.EntityFrameworkCore.XuGu/issues/994#issuecomment-568271740
-        /// for tables with differences.
-        /// </summary>
-        protected virtual string ConvertDefaultValueFromMariaDbToXG([NotNull] string defaultValue, out bool isDefaultValueExpression)
-        {
-            isDefaultValueExpression = false;
-
-            if (string.Equals(defaultValue, "NULL", StringComparison.OrdinalIgnoreCase))
-            {
-                return null;
-            }
-
-            if (defaultValue.StartsWith("'", StringComparison.Ordinal) &&
-                defaultValue.EndsWith("'", StringComparison.Ordinal) &&
-                defaultValue.Length >= 2)
-            {
-                // MariaDb escapes all single quotes with two single quotes in default value strings, even if they are
-                // escaped with backslashes in the original `CREATE TABLE` statement.
-                return defaultValue.Substring(1, defaultValue.Length - 2)
-                    .Replace("''", "'");
-            }
-
-            isDefaultValueExpression = !IsSimpleNumericDefaultValue(defaultValue);
-
-            return defaultValue;
         }
 
         private static bool IsSimpleNumericDefaultValue(string defaultValue)
@@ -695,7 +661,7 @@ AND
             {
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = string.Format(GetIndexesQuery, connection.Database, table.Name);
+                    command.CommandText = string.Format(GetIndexesQuery, table.Name);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -720,7 +686,8 @@ AND
 
                                 index.IsUnique |= !reader.GetValueOrDefault<bool>("NON_UNIQUE");
 
-                                var prefixLengths = reader.GetValueOrDefault<string>("SUB_PARTS")
+                                string subParts = reader.GetValueOrDefault<string>("SUB_PARTS");
+                                var prefixLengths = string.IsNullOrEmpty(subParts)?new int[0] : reader.GetValueOrDefault<string>("SUB_PARTS")
                                     .Split(',')
                                     .Select(int.Parse)
                                     .ToArray();

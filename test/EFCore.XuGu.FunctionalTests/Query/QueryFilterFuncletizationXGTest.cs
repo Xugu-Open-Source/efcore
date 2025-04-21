@@ -41,7 +41,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
             AssertSql(
                 @"SELECT `l`.`Id`, `l`.`Tenant`
 FROM `ListFilter` AS `l`
-WHERE FALSE",
+WHERE 0 = 1",
                 //
                 @"SELECT `l`.`Id`, `l`.`Tenant`
 FROM `ListFilter` AS `l`

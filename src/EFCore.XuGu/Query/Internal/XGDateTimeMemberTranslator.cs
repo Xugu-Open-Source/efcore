@@ -84,10 +84,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
 
                     case nameof(DateTime.Date):
                         return _sqlExpressionFactory.NullableFunction(
-                            "CONVERT",
+                            "CAST",
                             new[]{
-                                instance,
-                                _sqlExpressionFactory.Fragment("date")
+                                _sqlExpressionFactory.Fragment($"{instance.Print()} AS date")
                             },
                             returnType,
                             false);

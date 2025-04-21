@@ -165,12 +165,12 @@ GROUP BY `a`.`FirstName`
 
         AssertSql(
 """
-@__p_0='False'
+:__p_0='False'
 
 SELECT CASE
     WHEN `a`.`FirstName` IS NULL THEN 'is null'
     ELSE 'not null'
-END AS `keyIsNull`, @__p_0 AS `logicExpression`
+END AS `keyIsNull`, :__p_0 AS `logicExpression`
 FROM `ArubaOwner` AS `a`
 GROUP BY `a`.`FirstName`
 """);
@@ -499,7 +499,8 @@ ORDER BY `c`.`Id`, `t`.`Id`
 """);
     }
 
-    [ConditionalFact(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the mysql:latest docker container.")]
+    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu), but does locally in the xugu:latest docker container.")]
+    [MemberData(nameof(IsAsyncData))]
     public override async Task Whats_new_2021_sample_3(bool async)
     {
         // GroupBy debug assert. Issue #26104.
@@ -511,7 +512,8 @@ ORDER BY `c`.`Id`, `t`.`Id`
         AssertSql();
     }
 
-    [ConditionalFact(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the mysql:latest docker container.")]
+    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu), but does locally in the xg:latest docker container.")]
+    [MemberData(nameof(IsAsyncData))]
     public override async Task Whats_new_2021_sample_5(bool async)
     {
         await base.Whats_new_2021_sample_5(async);
@@ -533,7 +535,8 @@ ORDER BY (
 """);
     }
 
-    [ConditionalFact(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the mysql:latest docker container.")]
+    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu), but does locally in the xg:latest docker container.")]
+    [MemberData(nameof(IsAsyncData))]
     public override async Task Whats_new_2021_sample_6(bool async)
     {
         // GroupBy debug assert. Issue #26104.
@@ -757,7 +760,7 @@ ORDER BY `t`.`FirstName`, `t0`.`Id`
 
         AssertSql(
 """
-@__size_0='11'
+:__size_0='11'
 
 SELECT `p0`.`LastName`, `f`.`Size`, (
     SELECT MIN(`f1`.`Size`)
@@ -765,11 +768,11 @@ SELECT `p0`.`LastName`, `f`.`Size`, (
     LEFT JOIN `Feet` AS `f0` ON `p1`.`Id` = `f0`.`Id`
     LEFT JOIN `Person` AS `p2` ON `f0`.`Id` = `p2`.`Id`
     LEFT JOIN `Feet` AS `f1` ON `p1`.`Id` = `f1`.`Id`
-    WHERE (((`f0`.`Size` = @__size_0) AND `p1`.`MiddleInitial` IS NOT NULL) AND ((`f0`.`Id` <> 1) OR `f0`.`Id` IS NULL)) AND (((`f`.`Size` = `f0`.`Size`) OR (`f`.`Size` IS NULL AND (`f0`.`Size` IS NULL))) AND ((`p0`.`LastName` = `p2`.`LastName`) OR (`p0`.`LastName` IS NULL AND (`p2`.`LastName` IS NULL))))) AS `Min`
+    WHERE (((`f0`.`Size` = :__size_0) AND `p1`.`MiddleInitial` IS NOT NULL) AND ((`f0`.`Id` <> 1) OR `f0`.`Id` IS NULL)) AND (((`f`.`Size` = `f0`.`Size`) OR (`f`.`Size` IS NULL AND (`f0`.`Size` IS NULL))) AND ((`p0`.`LastName` = `p2`.`LastName`) OR (`p0`.`LastName` IS NULL AND (`p2`.`LastName` IS NULL))))) AS `Min`
 FROM `Person` AS `p`
 LEFT JOIN `Feet` AS `f` ON `p`.`Id` = `f`.`Id`
 LEFT JOIN `Person` AS `p0` ON `f`.`Id` = `p0`.`Id`
-WHERE ((`f`.`Size` = @__size_0) AND `p`.`MiddleInitial` IS NOT NULL) AND ((`f`.`Id` <> 1) OR `f`.`Id` IS NULL)
+WHERE ((`f`.`Size` = :__size_0) AND `p`.`MiddleInitial` IS NOT NULL) AND ((`f`.`Id` <> 1) OR `f`.`Id` IS NULL)
 GROUP BY `f`.`Size`, `p0`.`LastName`
 """);
     }

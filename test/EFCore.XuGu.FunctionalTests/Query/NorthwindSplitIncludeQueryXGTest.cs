@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
 {
-    [SupportedServerVersionCondition("8.0.0-mysql", Skip = "The way some of the test queries have been implemented upstream relies on a specific way of implicit ordering and can be non-deterministic on MariaDB and XuGu < 8.0. We therefore skip them for now in these cases, so our CI tests don't non-deterministically fail (false positive).")]
+    [SupportedServerVersionCondition("12.0.0-xugu", Skip = "The way some of the test queries have been implemented upstream relies on a specific way of implicit ordering and can be non-deterministic on MariaDB and XuGu < 8.0. We therefore skip them for now in these cases, so our CI tests don't non-deterministically fail (false positive).")]
     public class NorthwindSplitIncludeQueryXGTest : NorthwindSplitIncludeQueryTestBase<NorthwindQueryXGFixture<NoopModelCustomizer>>
     {
         public NorthwindSplitIncludeQueryXGTest(NorthwindQueryXGFixture<NoopModelCustomizer> fixture, ITestOutputHelper testOutputHelper)
@@ -130,19 +130,22 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
                 entryCount: 8);
         }
 
-        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [ConditionalTheory(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Include_collection_skip_no_order_by(bool async)
         {
             return base.Include_collection_skip_no_order_by(async);
         }
 
-        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [ConditionalTheory(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Include_collection_skip_take_no_order_by(bool async)
         {
             return base.Include_collection_skip_take_no_order_by(async);
         }
 
-        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [ConditionalTheory(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Include_collection_take_no_order_by(bool async)
         {
             return base.Include_collection_take_no_order_by(async);

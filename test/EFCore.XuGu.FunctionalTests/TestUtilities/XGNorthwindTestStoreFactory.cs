@@ -8,8 +8,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
         public const string DefaultName = "Northwind";
 
         public static new XGNorthwindTestStoreFactory Instance => InstanceCi;
-        public static XGNorthwindTestStoreFactory InstanceCi { get; } = new XGNorthwindTestStoreFactory(databaseCollation: AppConfig.ServerVersion.DefaultUtf8CiCollation);
-        public static XGNorthwindTestStoreFactory InstanceCs { get; } = new XGNorthwindTestStoreFactory(databaseCollation: AppConfig.ServerVersion.DefaultUtf8CsCollation);
+        public static XGNorthwindTestStoreFactory InstanceCi { get; } = new XGNorthwindTestStoreFactory();
+        public static XGNorthwindTestStoreFactory InstanceCs { get; } = new XGNorthwindTestStoreFactory();
         public static new XGNorthwindTestStoreFactory NoBackslashEscapesInstance { get; } = new XGNorthwindTestStoreFactory(true);
 
         protected XGNorthwindTestStoreFactory(bool noBackslashEscapes = false, string databaseCollation = null)

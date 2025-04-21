@@ -187,7 +187,8 @@ LEFT JOIN `Customers` AS `c0` ON `o0`.`CustomerID` = `c0`.`CustomerID`
 WHERE `o0`.`CustomerID` = 'ALFKI'");
         }
 
-        [ConditionalFact(Skip = "TODO: XuGu does not seem to allow an ORDER BY or LIMIT clause directly in a SELECT statement that is part of a UNION.")]
+        [ConditionalTheory(Skip = "TODO: XuGu does not seem to allow an ORDER BY or LIMIT clause directly in a SELECT statement that is part of a UNION.")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Union_Take_Union_Take(bool async)
         {
             // TODO: XuGu does not seem to allow an ORDER BY or LIMIT clause directly in a SELECT statement that is part of a UNION.

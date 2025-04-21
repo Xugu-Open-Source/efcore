@@ -35,6 +35,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
     {
         private static readonly Regex _typeRegex = new Regex(@"([a-z0-9]+)\s*?(?:\(\s*(\d+)?\s*\))?",
             RegexOptions.IgnoreCase);
+        private static readonly Dictionary<string, string> _guidIdentityMap = new Dictionary<string, string>();
 
         private static readonly HashSet<string> _spatialStoreTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -143,6 +144,18 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                 EndStatement(builder);
             }
             GenerateComment(operation.Comment, builder);
+
+            if (_guidIdentityMap.ContainsKey(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema+"."+operation.Name))
+            {
+                builder.AppendLine(string.Format("DROP TABLE IF EXISTS `{0}`.`tmpIdentity_{1}`;", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name));
+                builder.AppendLine(string.Format("CREATE TABLE `{0}`.`tmpIdentity_{1}` (`guid` guid);", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name));
+                builder.AppendLine(string.Format("DROP TRIGGER IF EXISTS `{0}`.`{1}_IdentityTgr`;", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name));
+                builder.AppendLine(string.Format("CREATE TRIGGER `{0}`.`{1}_IdentityTgr` BEFORE INSERT ON `{0}`", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name));
+                builder.AppendLine("FOR EACH ROW BEGIN");
+                builder.AppendLine(string.Format("NEW.{0} := sys_guid();", _guidIdentityMap.GetValueOrDefault(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema+"."+operation.Name)));
+                builder.AppendLine(string.Format("INSERT INTO `{0}`.`tmpIdentity_{1}` VALUES(New.{2});", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name,_guidIdentityMap.GetValueOrDefault(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema+"."+operation.Name)));
+                builder.AppendLine("END;");
+            }
         }
         protected override void Generate(
             DropTableOperation operation,
@@ -287,7 +300,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                     if (index == null)
                     {
                         throw new InvalidOperationException(
-                            $"Could not find the model index: {Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}.{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName)}. Upgrade to Mysql 5.7+ or split the 'RenameIndex' call into 'DropIndex' and 'CreateIndex'");
+                            $"Could not find the model index: {Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}.{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName)}. Upgrade to XuGu or split the 'RenameIndex' call into 'DropIndex' and 'CreateIndex'");
                     }
 
                     Generate(new DropIndexOperation
@@ -475,12 +488,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                     $"Cannot create sequence '{operation.Name}' because sequences are not supported in server version {_options.ServerVersion}.");
             }
 
-            // "CREATE SEQUENCE"  supported only in MariaDb from 10.3.
-            // However, "CREATE SEQUENCE name AS type" expression is currently not supported.
-            // The base MigrationsSqlGenerator.Generate method generates that expression.
-            // Also, when creating a sequence current version of MariaDb doesn't tolerate "NO MINVALUE"
-            // when specifying "STARTS WITH" so, StartValue mus be set accordingly.
-            // https://github.com/aspnet/EntityFrameworkCore/blob/master/src/EFCore.Relational/Migrations/MigrationsSqlGenerator.cs#L535-L543
             var oldValue = operation.ClrType;
             operation.ClrType = typeof(long);
             if (operation.StartValue <= 0)
@@ -972,6 +979,10 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                     case "bigint":
                         autoIncrement = true;
                         break;
+                    case "guid":
+                        autoIncrement= true;
+                        _guidIdentityMap.Add(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema + "." + operation.Name, name);
+                        break;
                     case "datetime":
                         if (!_options.ServerVersion.Supports.DateTimeCurrentTimestamp)
                         {
@@ -1289,11 +1300,14 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
 
             void DropPrimaryKey()
             {
-                builder.Append($"CALL XuGu_BEFORE_DROP_PRIMARY_KEY({_stringTypeMapping.GenerateSqlLiteral(operation.Schema)}, {_stringTypeMapping.GenerateSqlLiteral(operation.Table)});")
-                    .AppendLine()
-                    .Append("ALTER TABLE ")
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                    .Append(" DROP PRIMARY KEY");
+                builder.AppendLine($"DECLARE")
+                    .AppendLine("pktotal int;")
+                    .AppendLine("BEGIN")
+                    .AppendLine($"pktotal:=(SELECT COUNT(CONS_NAME) FROM ALL_CONSTRAINTS WHERE CONS_TYPE='P' AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{operation.Table}' AND SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='{operation.Schema}' LIMIT 1) LIMIT 1) LIMIT 1);")
+                    .AppendLine("IF pktotal>0 THEN")
+                    .AppendLine($"EXECUTE IMMEDIATE 'ALTER TABLE TESTDELETEP DROP CONSTRAINT '||(SELECT CONS_NAME FROM ALL_CONSTRAINTS WHERE CONS_TYPE='P' AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{operation.Table}' AND SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='{operation.Schema}' LIMIT 1) LIMIT 1) LIMIT 1);")
+                    .AppendLine("END IF;")
+                    .AppendLine("END;");
 
                 if (terminate)
                 {

@@ -63,25 +63,29 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
                 entryCount: 14);
         }
 
-        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [ConditionalTheory(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Include_collection_skip_no_order_by(bool async)
         {
             return base.Include_collection_skip_no_order_by(async);
         }
 
-        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [ConditionalTheory(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Include_collection_skip_take_no_order_by(bool async)
         {
             return base.Include_collection_skip_take_no_order_by(async);
         }
 
-        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [ConditionalTheory(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Include_collection_take_no_order_by(bool async)
         {
             return base.Include_collection_take_no_order_by(async);
         }
 
-        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [ConditionalTheory(Skip = "https://github.com/dotnet/efcore/issues/21202")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Include_duplicate_collection_result_operator(bool async)
         {
             return base.Include_duplicate_collection_result_operator(async);

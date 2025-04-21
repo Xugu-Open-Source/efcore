@@ -12,9 +12,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>SA0001</NoWarn>
+    <NoWarn>SA0001;EF1001</NoWarn>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\EFCore.XuGu\EFCore.XuGu.csproj" />
   </ItemGroup>
@@ -24,5 +24,10 @@
       <HintPath>..\..\..\csharp-driver7.0\XGCSClient\bin\Debug\netstandard2.1\XuguClient.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+    <DelaySign>false</DelaySign>
+  </PropertyGroup>
 
 </Project>

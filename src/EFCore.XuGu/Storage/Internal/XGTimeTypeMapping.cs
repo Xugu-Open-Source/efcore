@@ -78,8 +78,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
             // TimeOnly only outputs a decimal point, if actual decimal places will be output as well.
             var literal = string.Format(CultureInfo.InvariantCulture, $"{{0:{GetTimeFormatString(value, Precision)}}}", value);
             return literal.EndsWith(".", StringComparison.OrdinalIgnoreCase)
-                ? $"{(_isDefaultValueCompatible ? null : "TIME ")}'{literal[..^1]}'"
-                : $"{(_isDefaultValueCompatible ? null : "TIME ")}'{literal}'";
+                ? $"'{literal[..^1]}'"
+                : $"'{literal}'";
         }
 
         // TODO: Just implicitly rely on TIME_TRUNCATE_FRACTIONAL SQL mode and use a default-like implementation instead (check for

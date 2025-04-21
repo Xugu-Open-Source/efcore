@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 using Microsoft.EntityFrameworkCore.TestUtilities;
 using Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities;
 using Microsoft.EntityFrameworkCore.XuGu.Tests;
@@ -24,7 +25,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
         protected override bool CanExecuteQueryString
             => true;
 
-        [ConditionalFact]
         public override async Task String_StartsWith_Literal(bool async)
         {
             await base.String_StartsWith_Literal(async);
@@ -35,7 +35,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`ContactName` IS NOT NULL AND (`c`.`ContactName` LIKE 'M%')");
         }
 
-        [ConditionalFact]
         public override async Task String_StartsWith_Identity(bool async)
         {
             await base.String_StartsWith_Identity(async);
@@ -46,7 +45,6 @@ FROM `Customers` AS `c`
 WHERE (`c`.`ContactName` = '') OR (`c`.`ContactName` IS NOT NULL AND (LEFT(`c`.`ContactName`, CHAR_LENGTH(`c`.`ContactName`)) = `c`.`ContactName`))");
         }
 
-        [ConditionalFact]
         public override async Task String_StartsWith_Column(bool async)
         {
             await base.String_StartsWith_Column(async);
@@ -57,7 +55,6 @@ FROM `Customers` AS `c`
 WHERE (`c`.`ContactName` = '') OR (`c`.`ContactName` IS NOT NULL AND (LEFT(`c`.`ContactName`, CHAR_LENGTH(`c`.`ContactName`)) = `c`.`ContactName`))");
         }
 
-        [ConditionalFact]
         public override async Task String_StartsWith_MethodCall(bool async)
         {
             await base.String_StartsWith_MethodCall(async);
@@ -68,7 +65,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`ContactName` IS NOT NULL AND (`c`.`ContactName` LIKE 'M%')");
         }
 
-        [ConditionalFact]
         public override async Task String_EndsWith_Literal(bool async)
         {
             await base.String_EndsWith_Literal(async);
@@ -79,7 +75,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`ContactName` IS NOT NULL AND (`c`.`ContactName` LIKE '%b')");
         }
 
-        [ConditionalFact]
         public override async Task String_EndsWith_Identity(bool async)
         {
             await base.String_EndsWith_Identity(async);
@@ -90,7 +85,6 @@ FROM `Customers` AS `c`
 WHERE (`c`.`ContactName` = '') OR (`c`.`ContactName` IS NOT NULL AND (RIGHT(`c`.`ContactName`, CHAR_LENGTH(`c`.`ContactName`)) = `c`.`ContactName`))");
         }
 
-        [ConditionalFact]
         public override async Task String_EndsWith_Column(bool async)
         {
             await base.String_EndsWith_Column(async);
@@ -101,7 +95,6 @@ FROM `Customers` AS `c`
 WHERE (`c`.`ContactName` = '') OR (`c`.`ContactName` IS NOT NULL AND (RIGHT(`c`.`ContactName`, CHAR_LENGTH(`c`.`ContactName`)) = `c`.`ContactName`))");
         }
 
-        [ConditionalFact]
         public override async Task String_EndsWith_MethodCall(bool async)
         {
             await base.String_EndsWith_MethodCall(async);
@@ -112,7 +105,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`ContactName` IS NOT NULL AND (`c`.`ContactName` LIKE '%m')");
         }
 
-        [ConditionalFact]
         public override async Task String_Contains_Literal(bool async)
         {
             await base.String_Contains_Literal(async);
@@ -123,7 +115,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`ContactName` LIKE '%M%'");
         }
 
-        [ConditionalFact]
         public override async Task String_Contains_Identity(bool async)
         {
             await base.String_Contains_Identity(async);
@@ -134,7 +125,6 @@ FROM `Customers` AS `c`
 WHERE (`c`.`ContactName` LIKE '') OR (LOCATE(`c`.`ContactName`, `c`.`ContactName`) > 0)");
         }
 
-        [ConditionalFact]
         public override async Task String_Contains_Column(bool async)
         {
             await base.String_Contains_Column(async);
@@ -145,7 +135,6 @@ FROM `Customers` AS `c`
 WHERE (`c`.`ContactName` LIKE '') OR (LOCATE(`c`.`ContactName`, `c`.`ContactName`) > 0)");
         }
 
-        [ConditionalFact]
         public override async Task String_Contains_MethodCall(bool async)
         {
             await base.String_Contains_MethodCall(async);
@@ -156,7 +145,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`ContactName` LIKE '%M%'");
         }
 
-        [ConditionalFact]
         public override async Task IsNullOrWhiteSpace_in_predicate(bool async)
         {
             await base.IsNullOrWhiteSpace_in_predicate(async);
@@ -167,7 +155,7 @@ FROM `Customers` AS `c`
 WHERE `c`.`Region` IS NULL OR (TRIM(`c`.`Region`) = '')");
         }
 
-        [ConditionalFact]
+
         public override async Task Indexof_with_emptystring(bool async)
         {
             await base.Indexof_with_emptystring(async);
@@ -178,7 +166,6 @@ FROM `Customers` AS `c`
 WHERE (LOCATE('', `c`.`ContactName`) - 1) = 0");
         }
 
-        [ConditionalFact]
         public override async Task Replace_with_emptystring(bool async)
         {
             await base.Replace_with_emptystring(async);
@@ -189,7 +176,6 @@ FROM `Customers` AS `c`
 WHERE REPLACE(`c`.`ContactName`, 'ia', '') = 'Mar Anders'");
         }
 
-        [ConditionalFact]
         public override async Task Substring_with_one_arg_with_zero_startindex(bool async)
         {
             await base.Substring_with_one_arg_with_zero_startindex(async);
@@ -200,7 +186,6 @@ FROM `Customers` AS `c`
 WHERE SUBSTRING(`c`.`CustomerID`, 0 + 1, CHAR_LENGTH(`c`.`CustomerID`)) = 'ALFKI'");
         }
 
-        [ConditionalFact]
         public override async Task Substring_with_one_arg_with_constant(bool async)
         {
             await base.Substring_with_one_arg_with_constant(async);
@@ -211,20 +196,18 @@ FROM `Customers` AS `c`
 WHERE SUBSTRING(`c`.`CustomerID`, 1 + 1, CHAR_LENGTH(`c`.`CustomerID`)) = 'LFKI'");
         }
 
-        [ConditionalFact]
         public override async Task Substring_with_one_arg_with_closure(bool async)
         {
             await base.Substring_with_one_arg_with_closure(async);
 
             AssertSql(
-                @"@__start_0='2'
+                @":__start_0='2'
 
 SELECT `c`.`ContactName`
 FROM `Customers` AS `c`
-WHERE SUBSTRING(`c`.`CustomerID`, @__start_0 + 1, CHAR_LENGTH(`c`.`CustomerID`)) = 'FKI'");
+WHERE SUBSTRING(`c`.`CustomerID`, :__start_0 + 1, CHAR_LENGTH(`c`.`CustomerID`)) = 'FKI'");
         }
 
-        [ConditionalFact]
         public override async Task Substring_with_two_args_with_zero_startindex(bool async)
         {
             await base.Substring_with_two_args_with_zero_startindex(async);
@@ -235,7 +218,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`CustomerID` = 'ALFKI'");
         }
 
-        [ConditionalFact]
         public override async Task Substring_with_two_args_with_zero_length(bool async)
         {
             await base.Substring_with_two_args_with_zero_length(async);
@@ -246,7 +228,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`CustomerID` = 'ALFKI'");
         }
 
-        [ConditionalFact]
         public override async Task Substring_with_two_args_with_constant(bool async)
         {
             await base.Substring_with_two_args_with_constant(async);
@@ -257,20 +238,18 @@ FROM `Customers` AS `c`
 WHERE `c`.`CustomerID` = 'ALFKI'");
         }
 
-        [ConditionalFact]
         public override async Task Substring_with_two_args_with_closure(bool async)
         {
             await base.Substring_with_two_args_with_closure(async);
 
             AssertSql(
-                $@"@__start_0='2'
+                $@":__start_0='2'
 
-SELECT SUBSTRING(`c`.`ContactName`, @__start_0 + 1, 3)
+SELECT SUBSTRING(`c`.`ContactName`, :__start_0 + 1, 3)
 FROM `Customers` AS `c`
 WHERE `c`.`CustomerID` = 'ALFKI'");
         }
 
-        [ConditionalFact]
         public override async Task Substring_with_two_args_with_Index_of(bool async)
         {
             await base.Substring_with_two_args_with_Index_of(async);
@@ -281,7 +260,7 @@ FROM `Customers` AS `c`
 WHERE `c`.`CustomerID` = 'ALFKI'");
         }
 
-        [ConditionalFact]
+
         public override async Task Regex_IsMatch_MethodCall(bool async)
         {
             await base.Regex_IsMatch_MethodCall(async);
@@ -292,7 +271,6 @@ FROM `Customers` AS `c`
 WHERE `c`.`CustomerID` REGEXP '^T'");
         }
 
-        [ConditionalFact]
         public override async Task Regex_IsMatch_MethodCall_constant_input(bool async)
         {
             await base.Regex_IsMatch_MethodCall_constant_input(async);
@@ -303,7 +281,7 @@ FROM `Customers` AS `c`
 WHERE 'ALFKI' REGEXP `c`.`CustomerID`");
         }
 
-        [ConditionalFact]
+
         public override async Task Where_math_abs1(bool async)
         {
             await base.Where_math_abs1(async);
@@ -314,7 +292,7 @@ FROM `Products` AS `p`
 WHERE ABS(`p`.`ProductID`) > 10");
         }
 
-        [ConditionalFact]
+
         public override async Task Where_math_abs2(bool async)
         {
             await base.Where_math_abs2(async);
@@ -325,7 +303,6 @@ FROM `Order Details` AS `o`
 WHERE (`o`.`UnitPrice` < 7.0) AND (ABS(`o`.`Quantity`) > 10)");
         }
 
-        [ConditionalFact]
         public override async Task Where_math_abs_uncorrelated(bool async)
         {
             await base.Where_math_abs_uncorrelated(async);
@@ -336,7 +313,6 @@ FROM `Order Details` AS `o`
 WHERE (`o`.`UnitPrice` < 7.0) AND (10 < `o`.`ProductID`)");
         }
 
-        [ConditionalFact]
         public override async Task Select_math_round_int(bool async)
         {
             await base.Select_math_round_int(async);
@@ -347,7 +323,7 @@ FROM `Orders` AS `o`
 WHERE `o`.`OrderID` < 10250");
         }
 
-        [ConditionalFact]
+
         public override async Task Where_math_min(bool async)
         {
             await base.Where_math_min(async);
@@ -358,7 +334,7 @@ FROM `Order Details` AS `o`
 WHERE (`o`.`OrderID` = 11077) AND (LEAST(`o`.`OrderID`, `o`.`ProductID`) = `o`.`ProductID`)");
         }
 
-        [ConditionalFact]
+
         public override async Task Where_math_max(bool async)
         {
             await base.Where_math_max(async);
@@ -369,7 +345,7 @@ FROM `Order Details` AS `o`
 WHERE (`o`.`OrderID` = 11077) AND (GREATEST(`o`.`OrderID`, `o`.`ProductID`) = `o`.`OrderID`)");
         }
 
-        [ConditionalFact]
+
         public override async Task Where_string_to_lower(bool async)
         {
             await base.Where_string_to_lower(async);
@@ -380,7 +356,7 @@ FROM `Customers` AS `c`
 WHERE LOWER(`c`.`CustomerID`) = 'alfki'");
         }
 
-        [ConditionalFact]
+
         public override async Task Where_string_to_upper(bool async)
         {
             await base.Where_string_to_upper(async);
@@ -391,7 +367,6 @@ FROM `Customers` AS `c`
 WHERE UPPER(`c`.`CustomerID`) = 'ALFKI'");
         }
 
-        [ConditionalFact]
         public override async Task TrimStart_without_arguments_in_predicate(bool async)
         {
             await base.TrimStart_without_arguments_in_predicate(async);
@@ -402,7 +377,7 @@ FROM `Customers` AS `c`
 WHERE TRIM(LEADING FROM `c`.`ContactTitle`) = 'Owner'");
         }
 
-        [ConditionalFact]
+
         public override async Task TrimStart_with_char_argument_in_predicate(bool async)
         {
             await base.TrimStart_with_char_argument_in_predicate(async);
@@ -413,7 +388,7 @@ FROM `Customers` AS `c`
 WHERE TRIM(LEADING 'O' FROM `c`.`ContactTitle`) = 'wner'");
         }
 
-        [ConditionalFact]
+
         public override Task TrimStart_with_char_array_argument_in_predicate(bool async)
         {
             // XuGu only supports a string (characters in fixed order) as the parameter specifying what should be trimmed.
@@ -422,7 +397,7 @@ WHERE TRIM(LEADING 'O' FROM `c`.`ContactTitle`) = 'wner'");
             return Assert.ThrowsAsync<InvalidOperationException>(() => base.TrimStart_with_char_array_argument_in_predicate(async));
         }
 
-        [ConditionalFact]
+
         public override async Task TrimEnd_without_arguments_in_predicate(bool async)
         {
             await base.TrimEnd_without_arguments_in_predicate(async);
@@ -433,7 +408,7 @@ FROM `Customers` AS `c`
 WHERE TRIM(TRAILING FROM `c`.`ContactTitle`) = 'Owner'");
         }
 
-        [ConditionalFact]
+
         public override async Task TrimEnd_with_char_argument_in_predicate(bool async)
         {
             await base.TrimEnd_with_char_argument_in_predicate(async);
@@ -444,7 +419,6 @@ FROM `Customers` AS `c`
 WHERE TRIM(TRAILING 'r' FROM `c`.`ContactTitle`) = 'Owne'");
         }
 
-        [ConditionalFact]
         public override Task TrimEnd_with_char_array_argument_in_predicate(bool async)
         {
             // XuGu only supports a string (characters in fixed order) as the parameter specifying what should be trimmed.
@@ -453,7 +427,7 @@ WHERE TRIM(TRAILING 'r' FROM `c`.`ContactTitle`) = 'Owne'");
             return Assert.ThrowsAsync<InvalidOperationException>(() => base.TrimEnd_with_char_array_argument_in_predicate(async));
         }
 
-        [ConditionalFact]
+
         public override async Task Trim_without_argument_in_predicate(bool async)
         {
             await base.Trim_without_argument_in_predicate(async);
@@ -464,7 +438,7 @@ FROM `Customers` AS `c`
 WHERE TRIM(`c`.`ContactTitle`) = 'Owner'");
         }
 
-        [ConditionalFact]
+
         public override async Task Trim_with_char_argument_in_predicate(bool async)
         {
             await base.Trim_with_char_argument_in_predicate(async);
@@ -475,7 +449,7 @@ FROM `Customers` AS `c`
 WHERE TRIM('O' FROM `c`.`ContactTitle`) = 'wner'");
         }
 
-        [ConditionalFact]
+
         public override Task Trim_with_char_array_argument_in_predicate(bool async)
         {
             // XuGu only supports a string (characters in fixed order) as the parameter specifying what should be trimmed.
@@ -509,11 +483,11 @@ WHERE `c`.`ContactName` LIKE '%     %'");
             await base.String_Contains_parameter_with_whitespace(async);
 
             AssertSql(
-                $@"@__pattern_0='     ' (Size = 4000)
+                $@":__pattern_0='     ' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (@__pattern_0 LIKE '') OR (LOCATE(@__pattern_0, `c`.`ContactName`) > 0)");
+WHERE (:__pattern_0 LIKE '') OR (LOCATE(:__pattern_0, `c`.`ContactName`) > 0)");
         }
 
         public override async Task String_LastOrDefault_MethodCall(bool async)
@@ -528,7 +502,12 @@ WHERE SUBSTRING(`c`.`ContactName`, CHAR_LENGTH(`c`.`ContactName`), 1) = 's'");
 
         public override async Task Where_math_abs3(bool async)
         {
-            await base.Where_math_abs3(async);
+            await AssertQuery(
+            async,
+            ss => ss.Set<OrderDetail>()
+                .Where(od => od.Quantity < 5)
+                .Where(od => Math.Abs(od.UnitPrice) > 10),
+            entryCount: 137);
 
             AssertSql(
                 @"SELECT `o`.`OrderID`, `o`.`ProductID`, `o`.`Discount`, `o`.`Quantity`, `o`.`UnitPrice`
@@ -832,11 +811,11 @@ WHERE `c`.`CustomerID` = 'ANATR'");
             await base.Static_equals_nullable_datetime_compared_to_non_nullable(async);
 
             AssertSql(
-                $@"@__arg_0='1996-07-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__arg_0='1996-07-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` = @__arg_0");
+WHERE `o`.`OrderDate` = :__arg_0");
         }
 
         public override async Task Static_equals_int_compared_to_long(bool async)
@@ -846,7 +825,7 @@ WHERE `o`.`OrderDate` = @__arg_0");
             AssertSql(
                 $@"SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE FALSE");
+WHERE 0 = 1");
         }
 
         public override async Task Projecting_Math_Truncate_and_ordering_by_it_twice(bool async)
@@ -947,41 +926,41 @@ WHERE `c`.`CustomerID` >= 'ALFKI'");
             await base.String_compare_with_parameter(async);
 
             AssertSql(
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` > @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` > :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` < @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` < :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` <= @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` <= :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` <= @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` <= :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` >= @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` >= :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` >= @__customer_CustomerID_0");
+WHERE `c`.`CustomerID` >= :__customer_CustomerID_0");
         }
 
         public override async Task String_Compare_simple_more_than_one(bool async)
@@ -1123,41 +1102,41 @@ WHERE `c`.`CustomerID` >= 'ALFKI'");
             await base.String_compare_to_with_parameter(async);
 
             AssertSql(
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` > @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` > :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` < @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` < :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` <= @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` <= :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` <= @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` <= :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` >= @__customer_CustomerID_0",
+WHERE `c`.`CustomerID` >= :__customer_CustomerID_0",
                 //
-                $@"@__customer_CustomerID_0='ALFKI' (Size = {XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})
+                $@":__customer_CustomerID_0='ALFKI' (Size = 4000)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` >= @__customer_CustomerID_0");
+WHERE `c`.`CustomerID` >= :__customer_CustomerID_0");
         }
 
         public override async Task String_Compare_to_simple_more_than_one(bool async)
@@ -1239,41 +1218,41 @@ WHERE (`c`.`ContactTitle` = 'Owner') AND ((`c`.`Country` <> 'USA') OR `c`.`Count
             await base.DateTime_Compare_to_simple_zero(async, compareTo);
 
             AssertSql(
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` = @__myDatetime_0",
+WHERE `o`.`OrderDate` = :__myDatetime_0",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE (`o`.`OrderDate` <> @__myDatetime_0) OR `o`.`OrderDate` IS NULL",
+WHERE (`o`.`OrderDate` <> :__myDatetime_0) OR `o`.`OrderDate` IS NULL",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` > @__myDatetime_0",
+WHERE `o`.`OrderDate` > :__myDatetime_0",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` <= @__myDatetime_0",
+WHERE `o`.`OrderDate` <= :__myDatetime_0",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` > @__myDatetime_0",
+WHERE `o`.`OrderDate` > :__myDatetime_0",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` <= @__myDatetime_0");
+WHERE `o`.`OrderDate` <= :__myDatetime_0");
         }
 
         public override async Task TimeSpan_Compare_to_simple_zero(bool async, bool compareTo)
@@ -1281,41 +1260,41 @@ WHERE `o`.`OrderDate` <= @__myDatetime_0");
             await base.TimeSpan_Compare_to_simple_zero(async, compareTo);
 
             AssertSql(
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` = @__myDatetime_0",
+WHERE `o`.`OrderDate` = :__myDatetime_0",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE (`o`.`OrderDate` <> @__myDatetime_0) OR `o`.`OrderDate` IS NULL",
+WHERE (`o`.`OrderDate` <> :__myDatetime_0) OR `o`.`OrderDate` IS NULL",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` > @__myDatetime_0",
+WHERE `o`.`OrderDate` > :__myDatetime_0",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` <= @__myDatetime_0",
+WHERE `o`.`OrderDate` <= :__myDatetime_0",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` > @__myDatetime_0",
+WHERE `o`.`OrderDate` > :__myDatetime_0",
                 //
-                $@"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                $@":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderDate` <= @__myDatetime_0");
+WHERE `o`.`OrderDate` <= :__myDatetime_0");
         }
 
         public override async Task Int_Compare_to_simple_zero(bool async)
@@ -1323,41 +1302,41 @@ WHERE `o`.`OrderDate` <= @__myDatetime_0");
             await base.Int_Compare_to_simple_zero(async);
 
             AssertSql(
-                $@"@__orderId_0='10250'
+                $@":__orderId_0='10250'
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderID` = @__orderId_0",
+WHERE `o`.`OrderID` = :__orderId_0",
                 //
-                $@"@__orderId_0='10250'
+                $@":__orderId_0='10250'
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderID` <> @__orderId_0",
+WHERE `o`.`OrderID` <> :__orderId_0",
                 //
-                $@"@__orderId_0='10250'
+                $@":__orderId_0='10250'
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderID` > @__orderId_0",
+WHERE `o`.`OrderID` > :__orderId_0",
                 //
-                $@"@__orderId_0='10250'
+                $@":__orderId_0='10250'
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderID` <= @__orderId_0",
+WHERE `o`.`OrderID` <= :__orderId_0",
                 //
-                $@"@__orderId_0='10250'
+                $@":__orderId_0='10250'
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderID` > @__orderId_0",
+WHERE `o`.`OrderID` > :__orderId_0",
                 //
-                $@"@__orderId_0='10250'
+                $@":__orderId_0='10250'
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE `o`.`OrderID` <= @__orderId_0");
+WHERE `o`.`OrderID` <= :__orderId_0");
         }
 
         public override async Task Convert_ToBoolean(bool async)

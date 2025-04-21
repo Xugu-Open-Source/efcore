@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Storage;
 using XuguClient;
 using Microsoft.EntityFrameworkCore.XuGu.Internal;
+using System.Text.RegularExpressions;
 
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
@@ -22,6 +23,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
     {
         private readonly IXGRelationalConnection _relationalConnection;
         private readonly IRawSqlCommandBuilder _rawSqlCommandBuilder;
+        private readonly string _databaseName = "SYSTEM";
 
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -35,7 +37,14 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
             [NotNull] IRawSqlCommandBuilder rawSqlCommandBuilder)
             : base(dependencies)
         {
+            Match match = Regex.Match(relationalConnection.DbConnection.ConnectionString, @".*DB=([^;]+)");
+
+            if (match.Success)
+            {
+                _databaseName = match.Groups[1].Value;
+            }
             _relationalConnection = relationalConnection;
+            ((XGConnection)_relationalConnection.DbConnection).ChangeDatabase(_databaseName, false);
             _rawSqlCommandBuilder = rawSqlCommandBuilder;
         }
 
@@ -96,7 +105,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
             => Dependencies.ExecutionStrategy
                 .Execute(
                     _relationalConnection,
-                    connection => Convert.ToInt64(CreateHasTablesCommand() // XuGu returns a Int64, MariaDb returns a Int32
+                    connection => Convert.ToInt64(CreateHasTablesCommand() // XuGu returns a Int64
                                       .ExecuteScalar(
                                           new RelationalCommandParameterObject(
                                               connection,
@@ -116,7 +125,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
                 .ExecuteAsync(
                     _relationalConnection,
                     async (connection, ct) => Convert.ToInt64(
-                        await CreateHasTablesCommand() // XuGu returns a Int64, MariaDb returns a Int32
+                        await CreateHasTablesCommand() // XuGu returns a Int64
                             .ExecuteScalarAsync(
                                 new RelationalCommandParameterObject(
                                     connection,
@@ -173,8 +182,18 @@ FROM all_tables;");
                                     masterConnection.Open();
                                     using (var cmd = masterConnection.DbConnection.CreateCommand())
                                     {
-                                        cmd.CommandText = $"USE `{_relationalConnection.DbConnection.Database}`";
-                                        cmd.ExecuteNonQuery();
+                                        cmd.CommandText = $"SELECT COUNT(*) FROM ALL_DATABASES WHERE DB_NAME = '{_relationalConnection.DbConnection.Database}';";
+                                        long i=(long)cmd.ExecuteScalar();
+                                        if (i > 0)
+                                        {
+                                            cmd.CommandText = $"USE `{_relationalConnection.DbConnection.Database}`";
+                                            cmd.ExecuteNonQuery();
+                                            return true;
+                                        }
+                                        else
+                                        {
+                                            return false;
+                                        }
                                     }
                                 }
                             }
@@ -234,8 +253,18 @@ FROM all_tables;");
                                     await masterConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
                                     using (var cmd = masterConnection.DbConnection.CreateCommand())
                                     {
-                                        cmd.CommandText = $"USE `{_relationalConnection.DbConnection.Database}`";
-                                        await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                                        cmd.CommandText = $"SELECT COUNT(*) FROM ALL_DATABASES WHERE DB_NAME = '{_relationalConnection.DbConnection.Database}';";
+                                        long i = (long)cmd.ExecuteScalar();
+                                        if (i > 0)
+                                        {
+                                            cmd.CommandText = $"USE `{_relationalConnection.DbConnection.Database}`";
+                                            await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                                            return true;
+                                        }
+                                        else
+                                        {
+                                            return false;
+                                        }
                                     }
                                 }
                             }
@@ -272,7 +301,7 @@ FROM all_tables;");
                     }
                 }, cancellationToken);
 
-        private static bool IsDoesNotExist(Exception exception) => exception.Message.Contains("1049");
+        private static bool IsDoesNotExist(Exception exception) => exception.Message.Contains("E2016");
 
         private bool RetryOnExistsFailure(Exception exception)
         {
@@ -294,6 +323,13 @@ FROM all_tables;");
 
             using (var masterConnection = _relationalConnection.CreateMasterConnection())
             {
+                masterConnection.Open();
+                using (var cmd = masterConnection.DbConnection.CreateCommand())
+                {
+                    cmd.CommandText = $"USE `SYSTEM`;";
+                    cmd.ExecuteNonQuery();
+                }
+                masterConnection.DbConnection.ChangeDatabase("SYSTEM");
                 Dependencies.MigrationCommandExecutor
                     .ExecuteNonQuery(CreateDropCommands(), masterConnection);
             }
@@ -309,6 +345,13 @@ FROM all_tables;");
 
             using (var masterConnection = _relationalConnection.CreateMasterConnection())
             {
+                await masterConnection.OpenAsync(cancellationToken);
+                using (var cmd = masterConnection.DbConnection.CreateCommand())
+                {
+                    cmd.CommandText = $"USE `SYSTEM`;";
+                    await cmd.ExecuteNonQueryAsync();
+                }
+                masterConnection.DbConnection.ChangeDatabase("SYSTEM");
                 await Dependencies.MigrationCommandExecutor
                     .ExecuteNonQueryAsync(CreateDropCommands(), masterConnection, cancellationToken).ConfigureAwait(false);
             }

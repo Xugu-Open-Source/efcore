@@ -16,31 +16,31 @@ public class NonSharedModelUpdatesXGTest : NonSharedModelUpdatesTestBase
         {
             AssertSql(
                 """
-@p0='AC South' (Size = 4000)
+:p0='AC South' (Size = 4000)
 
 SET AUTOCOMMIT = 1;
 INSERT INTO `AuthorsClub` (`Name`)
-VALUES (@p0)
+VALUES (:p0)
 RETURNING `Id`;
 """,
                 //
                 """
-@p1='1'
-@p2='Alice' (Size = 4000)
+:p1='1'
+:p2='Alice' (Size = 4000)
 
 SET AUTOCOMMIT = 1;
 INSERT INTO `Author` (`AuthorsClubId`, `Name`)
-VALUES (@p1, @p2)
+VALUES (:p1, :p2)
 RETURNING `Id`;
 """,
                 //
                 """
-@p3='1'
-@p4=NULL (Size = 4000)
+:p3='1'
+:p4=NULL (Size = 4000)
 
 SET AUTOCOMMIT = 1;
 INSERT INTO `Book` (`AuthorId`, `Title`)
-VALUES (@p3, @p4)
+VALUES (:p3, :p4)
 RETURNING `Id`;
 """,
                 //
@@ -52,35 +52,35 @@ LIMIT 2
 """,
                 //
                 """
-@p0='AC North' (Size = 4000)
+:p0='AC North' (Size = 4000)
 
 SET AUTOCOMMIT = 1;
 INSERT INTO `AuthorsClub` (`Name`)
-VALUES (@p0)
+VALUES (:p0)
 RETURNING `Id`;
 """,
                 //
                 """
-@p1='2'
-@p2='Author of the year 2023' (Size = 4000)
+:p1='2'
+:p2='Author of the year 2023' (Size = 4000)
 
 SET AUTOCOMMIT = 1;
 INSERT INTO `Author` (`AuthorsClubId`, `Name`)
-VALUES (@p1, @p2)
+VALUES (:p1, :p2)
 RETURNING `Id`;
 """,
                 //
                 """
-@p4='1'
-@p3='2'
-@p5='1'
+:p4='1'
+:p3='2'
+:p5='1'
 
-UPDATE `Book` SET `AuthorId` = @p3
-WHERE `Id` = @p4;
+UPDATE `Book` SET `AuthorId` = :p3
+WHERE `Id` = :p4;
 SELECT ROW_COUNT();
 
 DELETE FROM `Author`
-WHERE `Id` = @p5
+WHERE `Id` = :p5
 RETURNING 1;
 """);
         }
@@ -88,32 +88,32 @@ RETURNING 1;
         {
             AssertSql(
                 """
-@p0='AC South' (Size = 4000)
+:p0='AC South' (Size = 4000)
 
 INSERT INTO `AuthorsClub` (`Name`)
-VALUES (@p0);
+VALUES (:p0);
 SELECT `Id`
 FROM `AuthorsClub`
 WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
 """,
                 //
                 """
-@p1='1'
-@p2='Alice' (Size = 4000)
+:p1='1'
+:p2='Alice' (Size = 4000)
 
 INSERT INTO `Author` (`AuthorsClubId`, `Name`)
-VALUES (@p1, @p2);
+VALUES (:p1, :p2);
 SELECT `Id`
 FROM `Author`
 WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
 """,
                 //
                 """
-@p3='1'
-@p4=NULL (Size = 4000)
+:p3='1'
+:p4=NULL (Size = 4000)
 
 INSERT INTO `Book` (`AuthorId`, `Title`)
-VALUES (@p3, @p4);
+VALUES (:p3, :p4);
 SELECT `Id`
 FROM `Book`
 WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
@@ -127,37 +127,37 @@ LIMIT 2
 """,
                 //
                 """
-@p0='AC North' (Size = 4000)
+:p0='AC North' (Size = 4000)
 
 INSERT INTO `AuthorsClub` (`Name`)
-VALUES (@p0);
+VALUES (:p0);
 SELECT `Id`
 FROM `AuthorsClub`
 WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
 """,
                 //
                 """
-@p1='2'
-@p2='Author of the year 2023' (Size = 4000)
+:p1='2'
+:p2='Author of the year 2023' (Size = 4000)
 
 INSERT INTO `Author` (`AuthorsClubId`, `Name`)
-VALUES (@p1, @p2);
+VALUES (:p1, :p2);
 SELECT `Id`
 FROM `Author`
 WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
 """,
                 //
                 """
-@p4='1'
-@p3='2'
-@p5='1'
+:p4='1'
+:p3='2'
+:p5='1'
 
-UPDATE `Book` SET `AuthorId` = @p3
-WHERE `Id` = @p4;
+UPDATE `Book` SET `AuthorId` = :p3
+WHERE `Id` = :p4;
 SELECT ROW_COUNT();
 
 DELETE FROM `Author`
-WHERE `Id` = @p5;
+WHERE `Id` = :p5;
 SELECT ROW_COUNT();
 """);
         }

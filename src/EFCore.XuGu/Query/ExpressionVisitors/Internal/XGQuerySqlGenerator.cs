@@ -41,6 +41,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
             { "json", new []{ "json" } },
             { "char", new []{ "char", "varchar", "text", "tinytext", "mediumtext", "longtext" } },
             { "nchar", new []{ "nchar", "nvarchar" } },
+            { "boolean", new []{ "boolean" } },
         };
 
         private const ulong LimitUpperBound = 999999999;
@@ -59,6 +60,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
             : base(dependencies)
         {
             _options = options;
+        }
+
+        protected override Expression VisitCollate(CollateExpression collateExpression)
+        {
+            Visit(collateExpression.Operand);
+
+            return collateExpression;
         }
 
         protected override Expression VisitExtension(Expression extensionExpression)
@@ -282,6 +290,19 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
 
                 return sqlBinaryExpression;
             }
+            if (sqlBinaryExpression.OperatorType == ExpressionType.Modulo &&
+                sqlBinaryExpression.Type == typeof(int) &&
+                sqlBinaryExpression.Left.TypeMapping?.ClrType == typeof(int) &&
+                sqlBinaryExpression.Right.TypeMapping?.ClrType == typeof(int))
+            {
+                Sql.Append("MOD(");
+                Visit(sqlBinaryExpression.Left);
+                Sql.Append(", ");
+                Visit(sqlBinaryExpression.Right);
+                Sql.Append(")");
+
+                return sqlBinaryExpression;
+            }
 
             var requiresBrackets = RequiresBrackets(sqlBinaryExpression.Left);
 
@@ -458,28 +479,45 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         public virtual Expression VisitXGMatch(XGMatchExpression xgMatchExpression)
         {
             Check.NotNull(xgMatchExpression, nameof(xgMatchExpression));
+            string against = xgMatchExpression.Against.Print().Replace(" == 'True'", "").Replace("'True' == ", "");
 
-            Sql.Append("MATCH ");
-            Sql.Append("(");
-            Visit(xgMatchExpression.Match);
-            Sql.Append(")");
-            Sql.Append(" AGAINST ");
-            Sql.Append("(");
-            Visit(xgMatchExpression.Against);
-
-            switch (xgMatchExpression.SearchMode)
+            Sql.Append("CONTAINS (");
+            if (xgMatchExpression.Match.Type == typeof(String[]) && xgMatchExpression.Match is XGComplexFunctionArgumentExpression complexFunctionArgumentExpression)
             {
-                case XGMatchSearchMode.NaturalLanguage:
-                    break;
-                case XGMatchSearchMode.NaturalLanguageWithQueryExpansion:
-                    Sql.Append(" WITH QUERY EXPANSION");
-                    break;
-                case XGMatchSearchMode.Boolean:
-                    Sql.Append(" IN BOOLEAN MODE");
-                    break;
+                for (int i = 0;i< complexFunctionArgumentExpression.ArgumentParts.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        Sql.Append($", {complexFunctionArgumentExpression.ArgumentParts[i].Print().Replace(" == 'True'", "").Replace("'True' == ", "")}");
+                    }
+                    else
+                    {
+                        Sql.Append($"{complexFunctionArgumentExpression.ArgumentParts[i].Print().Replace(" == 'True'", "").Replace("'True' == ", "")}");
+                    }
+                }
             }
+            else
+            {
+                Sql.Append($"{xgMatchExpression.Match.Print().Replace(" == 'True'", "").Replace("'True' == ", "")}");
+            }
+            
+            Sql.Append(",");
+            Sql.Append($"{against})");
 
-            Sql.Append(")");
+            //switch (xgMatchExpression.SearchMode)
+            //{
+            //    case XGMatchSearchMode.NaturalLanguage:
+            //        break;
+            //    case XGMatchSearchMode.NaturalLanguageWithQueryExpansion:
+            //        Sql.Append(" WITH QUERY EXPANSION");
+            //        break;
+            //    case XGMatchSearchMode.Boolean:
+            //        Sql.Append(", 1)");
+            //        return xgMatchExpression;
+            //}
+
+            //Sql.Append(")");
+
 
             return xgMatchExpression;
         }
@@ -491,6 +529,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
 
         private SqlUnaryExpression VisitConvert(SqlUnaryExpression sqlUnaryExpression)
         {
+            List<string> numberTypes= new List<string> { "tinyint", "smallint", "mediumint", "int", "bigint", "decimal", "float", "double" };
             var castMapping = GetCastStoreType(sqlUnaryExpression.TypeMapping);
 
             if (castMapping == "binary")
@@ -543,14 +582,21 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
                 Sql.Append(castMapping);
                 Sql.Append(")");
 
-                // FLOAT and DOUBLE are supported by CAST() as of XuGu 8.0.17.
-                // For server versions before that, a workaround is applied, that casts to a DECIMAL,
-                // that is then added to 0e0, which results in a DOUBLE.
-                // REF: https://dev.mysql.com/doc/refman/8.0/en/number-literals.html
                 if (useDecimalToDoubleWorkaround)
                 {
                     Sql.Append(" + 0e0)");
                 }
+            }
+            else if (castMapping=="boolean" && sqlUnaryExpression.Operand is SqlUnaryExpression sqlExpression && numberTypes.Contains(sqlExpression.Operand.TypeMapping.StoreType))
+            {
+                Sql.Append("CAST(");
+                Sql.Append("(CASE WHEN ");
+                Visit(sqlExpression.Operand);
+                Sql.Append(" != 0 THEN 1 ELSE 0 END");
+                Sql.Append(")");
+                Sql.Append(" AS ");
+                Sql.Append(castMapping);
+                Sql.Append(")");
             }
             else
             {
@@ -625,11 +671,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         {
             Check.NotNull(xgCollateExpression, nameof(xgCollateExpression));
 
-            Sql.Append("CONVERT(");
-
             Visit(xgCollateExpression.ValueExpression);
-
-            Sql.Append($" USING {xgCollateExpression.Charset}) COLLATE {xgCollateExpression.Collation}");
 
             return xgCollateExpression;
         }

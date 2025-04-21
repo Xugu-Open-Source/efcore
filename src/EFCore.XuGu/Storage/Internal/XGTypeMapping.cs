@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using XuguClient;
 
-namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
+namespace Microsoft.EntityFrameworkCore.XuGu.Storage
 {
     // TODO: Use as base class for all type mappings.
     /// <summary>

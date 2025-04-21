@@ -53,16 +53,16 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
             .AddEntityFrameworkXG()
             .BuildServiceProvider();
 
-        protected ConnectionMysqlContext CreateContext(string connectionString)
-            => new ConnectionMysqlContext(_serviceProvider, connectionString);
+        protected ConnectionXGContext CreateContext(string connectionString)
+            => new ConnectionXGContext(_serviceProvider, connectionString);
     }
 
-    public class ConnectionMysqlContext : DbContext
+    public class ConnectionXGContext : DbContext
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly string _connectionString;
 
-        public ConnectionMysqlContext(IServiceProvider serviceProvider, string connectionString)
+        public ConnectionXGContext(IServiceProvider serviceProvider, string connectionString)
         {
             _serviceProvider = serviceProvider;
             _connectionString = connectionString;

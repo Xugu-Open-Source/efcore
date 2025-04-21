@@ -41,7 +41,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.ValueGeneration.Internal
 
         public virtual Guid Next(DateTimeOffset timeNow)
         {
-            var guid = new Guid();
+            var guid = Guid.NewGuid();
 
             return guid;
         }

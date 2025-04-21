@@ -33,9 +33,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Json.Microsoft.Storage.Internal
 
         protected XGJsonMicrosoftTypeMapping(
             RelationalTypeMappingParameters parameters,
-            XGDbType mySqlDbType,
+            XGDbType xgDbType,
             IXGOptions options)
-            : base(parameters, mySqlDbType, options)
+            : base(parameters, xgDbType, options)
         {
         }
 

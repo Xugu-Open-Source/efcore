@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
 {
     public partial class NorthwindFunctionsQueryXGTest
     {
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task PadLeft_without_second_arg(bool async)
         {
@@ -23,7 +23,7 @@ FROM `Customers` AS `c`
 WHERE LPAD(`c`.`CustomerID`, 8, ' ') = '   ALFKI'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task PadLeft_with_second_arg(bool async)
         {
@@ -38,7 +38,7 @@ FROM `Customers` AS `c`
 WHERE LPAD(`c`.`CustomerID`, 8, 'x') = 'xxxALFKI'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task PadRight_without_second_arg(bool async)
         {
@@ -52,7 +52,7 @@ FROM `Customers` AS `c`
 WHERE RPAD(`c`.`CustomerID`, 8, ' ') = 'ALFKI   '");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task PadRight_with_second_arg(bool async)
         {
@@ -66,7 +66,7 @@ FROM `Customers` AS `c`
 WHERE RPAD(`c`.`CustomerID`, 8, 'c') = 'ALFKIccc'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, false)]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, true)]
         [InlineData(StringComparison.CurrentCultureIgnoreCase, 1, false)]
@@ -89,17 +89,23 @@ WHERE RPAD(`c`.`CustomerID`, 8, 'c') = 'ALFKIccc'");
             // When the comparison parameter is not a constant, we have to use a case
             // statement
             AssertSql(
-                $@"@__comparison_0='{comparison:D}'
+                $@":__comparison_0='{comparison:D}'
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
 WHERE CASE
-    WHEN @__comparison_0 IN (4, 0, 2) THEN `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin
-    ELSE (LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin) AND CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin IS NOT NULL
-END");
+    WHEN :__comparison_0 IN (4, 0, 2) THEN CASE
+        WHEN `c`.`CustomerID` = 'anton' THEN 1
+        ELSE 0
+    END
+    ELSE CASE
+        WHEN (LCASE(`c`.`CustomerID`) = LCASE('anton')) AND LCASE('anton') IS NOT NULL THEN 1
+        ELSE 0
+    END
+END = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEquals_ordinal(bool async)
         {
@@ -110,10 +116,10 @@ END");
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` = 'anton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEquals_invariant(bool async)
         {
@@ -124,10 +130,10 @@ WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` = 'anton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEquals_current(bool async)
         {
@@ -138,10 +144,10 @@ WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` = 'anton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEquals_ordinal_ignore_case(bool async)
         {
@@ -153,10 +159,10 @@ WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) = LCASE('anton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEquals_current_ignore_case(bool async)
         {
@@ -168,10 +174,10 @@ WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE ut
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) = LCASE('anton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEquals_invariant_ignore_case(bool async)
         {
@@ -183,10 +189,10 @@ WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE ut
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) = LCASE('anton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, false)]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, true)]
         [InlineData(StringComparison.CurrentCultureIgnoreCase, 1, false)]
@@ -209,17 +215,23 @@ WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE ut
             // When the comparison parameter is not a constant, we have to use a case
             // statement
             AssertSql(
-                $@"@__comparison_0='{comparison:D}'
+                $@":__comparison_0='{comparison:D}'
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
 WHERE CASE
-    WHEN @__comparison_0 IN (4, 0, 2) THEN `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin
-    ELSE (LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin) AND CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin IS NOT NULL
-END");
+    WHEN :__comparison_0 IN (4, 0, 2) THEN CASE
+        WHEN `c`.`CustomerID` = 'anton' THEN 1
+        ELSE 0
+    END
+    ELSE CASE
+        WHEN (LCASE(`c`.`CustomerID`) = LCASE('anton')) AND LCASE('anton') IS NOT NULL THEN 1
+        ELSE 0
+    END
+END = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StaticStringEquals_ordinal(bool async)
         {
@@ -230,10 +242,10 @@ END");
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` = 'anton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StaticStringEquals_invariant(bool async)
         {
@@ -244,10 +256,10 @@ WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` = 'anton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StaticStringEquals_current(bool async)
         {
@@ -258,10 +270,10 @@ WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` = 'anton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StaticStringEquals_ordinal_ignore_case(bool async)
         {
@@ -273,10 +285,10 @@ WHERE `c`.`CustomerID` = CONVERT('anton' USING utf8mb4) COLLATE utf8mb4_bin");
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) = LCASE('anton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StaticStringEquals_current_ignore_case(bool async)
         {
@@ -288,10 +300,10 @@ WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE ut
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) = LCASE('anton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StaticStringEquals_invariant_ignore_case(bool async)
         {
@@ -303,10 +315,10 @@ WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE ut
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) = LCASE('anton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, false)]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, true)]
         [InlineData(StringComparison.CurrentCultureIgnoreCase, 1, false)]
@@ -329,17 +341,23 @@ WHERE LCASE(`c`.`CustomerID`) = CONVERT(LCASE('anton') USING utf8mb4) COLLATE ut
             // When the comparison parameter is not a constant, we have to use a case
             // statement
             AssertSql(
-                $@"@__comparison_0='{comparison:D}'
+                $@":__comparison_0='{comparison:D}'
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
 WHERE CASE
-    WHEN @__comparison_0 IN (4, 0, 2) THEN `c`.`CustomerID` LIKE CONVERT('%nto%' USING utf8mb4) COLLATE utf8mb4_bin
-    ELSE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nto%') USING utf8mb4) COLLATE utf8mb4_bin
-END");
+    WHEN :__comparison_0 IN (4, 0, 2) THEN CASE
+        WHEN `c`.`CustomerID` LIKE '%nto%' THEN 1
+        ELSE 0
+    END
+    ELSE CASE
+        WHEN LCASE(`c`.`CustomerID`) LIKE LCASE('%nto%') THEN 1
+        ELSE 0
+    END
+END = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringContains_ordinal(bool async)
         {
@@ -351,10 +369,10 @@ END");
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('%nto%' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE '%nto%'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringContains_invariant(bool async)
         {
@@ -366,10 +384,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('%nto%' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('%nto%' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE '%nto%'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringContains_current(bool async)
         {
@@ -381,10 +399,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('%nto%' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('%nto%' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE '%nto%'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringContains_ordinal_ignore_case(bool async)
         {
@@ -396,10 +414,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('%nto%' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nto%') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) LIKE LCASE('%nto%')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringContains_current_ignore_case(bool async)
         {
@@ -411,10 +429,10 @@ WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nto%') USING utf8mb4) COLLATE
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nto%') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) LIKE LCASE('%nto%')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringContains_invariant_ignore_case(bool async)
         {
@@ -426,10 +444,10 @@ WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nto%') USING utf8mb4) COLLATE
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nto%') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) LIKE LCASE('%nto%')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, false)]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, true)]
         [InlineData(StringComparison.CurrentCultureIgnoreCase, 1, false)]
@@ -452,17 +470,23 @@ WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nto%') USING utf8mb4) COLLATE
             // When the comparison parameter is not a constant, we have to use a case
             // statement
             AssertSql(
-                $@"@__comparison_0='{comparison:D}'
+                $@":__comparison_0='{comparison:D}'
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
 WHERE CASE
-    WHEN @__comparison_0 IN (4, 0, 2) THEN `c`.`CustomerID` LIKE CONVERT('anto' USING utf8mb4) COLLATE utf8mb4_bin
-    ELSE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('anto%') USING utf8mb4) COLLATE utf8mb4_bin
-END");
+    WHEN :__comparison_0 IN (4, 0, 2) THEN CASE
+        WHEN `c`.`CustomerID` LIKE 'anto' THEN 1
+        ELSE 0
+    END
+    ELSE CASE
+        WHEN LCASE(`c`.`CustomerID`) LIKE LCASE('anto%') THEN 1
+        ELSE 0
+    END
+END = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringStartsWith_ordinal(bool async)
         {
@@ -474,10 +498,10 @@ END");
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('anto%' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE 'anto%'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringStartsWith_invariant(bool async)
         {
@@ -489,10 +513,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('anto%' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('anto%' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE 'anto%'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringStartsWith_current(bool async)
         {
@@ -504,10 +528,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('anto%' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('anto%' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE 'anto%'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringStartsWith_ordinal_ignore_case(bool async)
         {
@@ -519,10 +543,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('anto%' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE CONVERT(LCASE('anto%') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE LCASE('anto%')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringStartsWith_current_ignore_case(bool async)
         {
@@ -534,10 +558,10 @@ WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE CONVERT(LCASE('anto%') USING utf8mb4) 
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE CONVERT(LCASE('anto%') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE LCASE('anto%')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringStartsWith_invariant_ignore_case(bool async)
         {
@@ -549,10 +573,10 @@ WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE CONVERT(LCASE('anto%') USING utf8mb4) 
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE CONVERT(LCASE('anto%') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE LCASE('anto%')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, false)]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, true)]
         [InlineData(StringComparison.CurrentCultureIgnoreCase, 1, false)]
@@ -573,17 +597,23 @@ WHERE LCASE(LCASE(`c`.`CustomerID`)) LIKE CONVERT(LCASE('anto%') USING utf8mb4) 
                 entryCount: expected);
 
             AssertSql(
-                $@"@__comparison_0='{comparison:D}'
+                $@":__comparison_0='{comparison:D}'
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
 WHERE CASE
-    WHEN @__comparison_0 IN (4, 0, 2) THEN `c`.`CustomerID` LIKE CONVERT('%nton' USING utf8mb4) COLLATE utf8mb4_bin
-    ELSE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nton') USING utf8mb4) COLLATE utf8mb4_bin
-END");
+    WHEN :__comparison_0 IN (4, 0, 2) THEN CASE
+        WHEN `c`.`CustomerID` LIKE '%nton' THEN 1
+        ELSE 0
+    END
+    ELSE CASE
+        WHEN LCASE(`c`.`CustomerID`) LIKE LCASE('%nton') THEN 1
+        ELSE 0
+    END
+END = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEndsWith_ordinal(bool async)
         {
@@ -595,10 +625,10 @@ END");
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('%nton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE '%nton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEndsWith_invariant(bool async)
         {
@@ -610,10 +640,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('%nton' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('%nton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE '%nton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEndsWith_current(bool async)
         {
@@ -625,10 +655,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('%nton' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` LIKE CONVERT('%nton' USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE `c`.`CustomerID` LIKE '%nton'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEndsWith_ordinal_ignore_case(bool async)
         {
@@ -640,10 +670,10 @@ WHERE `c`.`CustomerID` LIKE CONVERT('%nton' USING utf8mb4) COLLATE utf8mb4_bin")
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) LIKE LCASE('%nton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEndsWith_current_ignore_case(bool async)
         {
@@ -655,10 +685,10 @@ WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nton') USING utf8mb4) COLLATE
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) LIKE LCASE('%nton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringEndsWith_invariant_ignore_case(bool async)
         {
@@ -670,10 +700,10 @@ WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nton') USING utf8mb4) COLLATE
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nton') USING utf8mb4) COLLATE utf8mb4_bin");
+WHERE LCASE(`c`.`CustomerID`) LIKE LCASE('%nton')");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, false)]
         [InlineData(StringComparison.OrdinalIgnoreCase, 1, true)]
         [InlineData(StringComparison.CurrentCultureIgnoreCase, 1, false)]
@@ -695,17 +725,17 @@ WHERE LCASE(`c`.`CustomerID`) LIKE CONVERT(LCASE('%nton') USING utf8mb4) COLLATE
 
             // When the comparison parameter is not a constant, we have to use a case
             // statement
-            AssertSql($"@__comparison_0='{comparison:D}'" + @"
+            AssertSql($":__comparison_0='{comparison:D}'" + @"
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
 WHERE CASE
-    WHEN @__comparison_0 IN (4, 0, 2) THEN LOCATE(CONVERT('nt' USING utf8mb4) COLLATE utf8mb4_bin, `c`.`CustomerID`) - 1
-    ELSE LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.`CustomerID`)) - 1
+    WHEN :__comparison_0 IN (4, 0, 2) THEN LOCATE('nt', `c`.`CustomerID`) - 1
+    ELSE LOCATE(LCASE('nt'), LCASE(`c`.`CustomerID`)) - 1
 END = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringIndexOf_with_constant_start_index(bool async)
         {
@@ -717,10 +747,10 @@ END = 1");
             AssertSql(
                 @"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.`CustomerID`), 1) - 1) = 1");
+WHERE (LOCATE(LCASE('nt'), LCASE(`c`.`CustomerID`), 1) - 1) = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [InlineData(0, 1, false)]
         [InlineData(2, 0, false)]
         [InlineData(0, 1, true)]
@@ -733,14 +763,14 @@ WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.
                 entryCount: expected);
 
             AssertSql(
-     @$"@__startIndex_0='{startIndex}'
+     @$":__startIndex_0='{startIndex}'
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.`CustomerID`), @__startIndex_0 + 1) - 1) = 1");
+WHERE (LOCATE(LCASE('nt'), LCASE(`c`.`CustomerID`), :__startIndex_0 + 1) - 1) = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringIndexOf_ordinal(bool async)
         {
@@ -751,10 +781,10 @@ WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (LOCATE(CONVERT('nt' USING utf8mb4) COLLATE utf8mb4_bin, `c`.`CustomerID`) - 1) = 1");
+WHERE (LOCATE('nt', `c`.`CustomerID`) - 1) = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringIndexOf_invariant(bool async)
         {
@@ -765,10 +795,10 @@ WHERE (LOCATE(CONVERT('nt' USING utf8mb4) COLLATE utf8mb4_bin, `c`.`CustomerID`)
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (LOCATE(CONVERT('nt' USING utf8mb4) COLLATE utf8mb4_bin, `c`.`CustomerID`) - 1) = 1");
+WHERE (LOCATE('nt', `c`.`CustomerID`) - 1) = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringIndexOf_current(bool async)
         {
@@ -779,10 +809,10 @@ WHERE (LOCATE(CONVERT('nt' USING utf8mb4) COLLATE utf8mb4_bin, `c`.`CustomerID`)
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (LOCATE(CONVERT('nt' USING utf8mb4) COLLATE utf8mb4_bin, `c`.`CustomerID`) - 1) = 1");
+WHERE (LOCATE('nt', `c`.`CustomerID`) - 1) = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringIndexOf_ordinal_ignore_case(bool async)
         {
@@ -793,10 +823,10 @@ WHERE (LOCATE(CONVERT('nt' USING utf8mb4) COLLATE utf8mb4_bin, `c`.`CustomerID`)
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.`CustomerID`)) - 1) = 1");
+WHERE (LOCATE(LCASE('nt'), LCASE(`c`.`CustomerID`)) - 1) = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringIndexOf_current_ignore_case(bool async)
         {
@@ -807,10 +837,10 @@ WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.`CustomerID`)) - 1) = 1");
+WHERE (LOCATE(LCASE('nt'), LCASE(`c`.`CustomerID`)) - 1) = 1");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public async Task StringIndexOf_invariant_ignore_case(bool async)
         {
@@ -821,7 +851,7 @@ WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.
 
             AssertSql(@"SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE (LOCATE(CONVERT(LCASE('nt') USING utf8mb4) COLLATE utf8mb4_bin, LCASE(`c`.`CustomerID`)) - 1) = 1");
+WHERE (LOCATE(LCASE('nt'), LCASE(`c`.`CustomerID`)) - 1) = 1");
         }
     }
 }

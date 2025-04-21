@@ -36,51 +36,58 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
             var creator = facade.GetService<IRelationalDatabaseCreator>();
             var connection = facade.GetService<IRelationalConnection>();
 
+            //creator.EnsureDeleted();
+
+            //            if (creator.Exists())
+            //            {
+            //                OpenConnection(connection);
+
+            //                try
+            //                {
+            //                    var commands = new StringBuilder();
+
+            //                    var getRoutinesSql = $@"SELECT 
+            //	SCHEMA_NAME AS `ROUTINE_SCHEMA`,PROC_NAME AS `ROUTINE_NAME`,CASE WHEN DEFINE LIKE '%CREATE PROCEDURE%' THEN 'PROCEDURE' ELSE 'FUNCTION' END  AS `ROUTINE_TYPE`
+            //FROM ALL_PROCEDURES AS p
+            //JOIN ALL_SCHEMAS AS s 
+            //ON p.SCHEMA_ID=s.SCHEMA_ID;";
+
+            //                    using var command = connection.DbConnection.CreateCommand();
+            //                    command.CommandText = getRoutinesSql;
+
+            //                    using (var reader = command.ExecuteReader())
+            //                    {
+            //                        while (reader.Read())
+            //                        {
+            //                            if (string.Equals(reader["ROUTINE_TYPE"] as string, "PROCEDURE", StringComparison.OrdinalIgnoreCase))
+            //                            {
+            //                                commands.AppendLine($"DROP PROCEDURE IF EXISTS `{reader["ROUTINE_SCHEMA"]}`.`{reader["ROUTINE_NAME"]}`;");
+            //                            }
+            //                            else if (string.Equals(reader["ROUTINE_TYPE"] as string, "FUNCTION", StringComparison.OrdinalIgnoreCase))
+            //                            {
+            //                                commands.AppendLine($"DROP FUNCTION IF EXISTS `{reader["ROUTINE_SCHEMA"]}`.`{reader["ROUTINE_NAME"]}`;");
+            //                            }
+            //                        }
+            //                    }
+
+            //                    if (commands.Length > 0)
+            //                    {
+            //                        command.CommandText = commands.ToString();
+            //                        command.ExecuteNonQuery();
+            //                    }
+            //                }
+            //                finally
+            //                {
+            //                    connection.Close();
+            //                }
+            //            }
+
+            //base.Clean(facade);
+
             if (creator.Exists())
             {
-                OpenConnection(connection);
-
-                try
-                {
-                    var commands = new StringBuilder();
-
-                    var getRoutinesSql = $@"SELECT 
-	SCHEMA_NAME AS `ROUTINE_SCHEMA`,PROC_NAME AS `ROUTINE_NAME`,CASE WHEN DEFINE LIKE '%CREATE PROCEDURE%' THEN 'PROCEDURE' ELSE 'FUNCTION' END  AS `ROUTINE_TYPE`
-FROM ALL_PROCEDURES AS p
-JOIN ALL_SCHEMAS AS s 
-ON p.SCHEMA_ID=s.SCHEMA_ID;";
-
-                    using var command = connection.DbConnection.CreateCommand();
-                    command.CommandText = getRoutinesSql;
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            if (string.Equals(reader["ROUTINE_TYPE"] as string, "PROCEDURE", StringComparison.OrdinalIgnoreCase))
-                            {
-                                commands.AppendLine($"DROP PROCEDURE IF EXISTS `{reader["ROUTINE_SCHEMA"]}`.`{reader["ROUTINE_NAME"]}`;");
-                            }
-                            else if (string.Equals(reader["ROUTINE_TYPE"] as string, "FUNCTION", StringComparison.OrdinalIgnoreCase))
-                            {
-                                commands.AppendLine($"DROP FUNCTION IF EXISTS `{reader["ROUTINE_SCHEMA"]}`.`{reader["ROUTINE_NAME"]}`;");
-                            }
-                        }
-                    }
-
-                    if (commands.Length > 0)
-                    {
-                        command.CommandText = commands.ToString();
-                        command.ExecuteNonQuery();
-                    }
-                }
-                finally
-                {
-                    connection.Close();
-                }
+                creator.EnsureDeleted();
             }
-
-            base.Clean(facade);
         }
 
         protected override IDatabaseModelFactory CreateDatabaseModelFactory(ILoggerFactory loggerFactory)

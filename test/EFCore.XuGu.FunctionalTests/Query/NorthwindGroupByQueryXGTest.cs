@@ -136,17 +136,15 @@ GROUP BY `o`.`CustomerID`");
             return base.GroupBy_Count_in_projection(async);
         }
 
-        [SupportedServerVersionCondition("8.0.22-mysql", "0.0.0-mariadb")]
+        [SupportedServerVersionCondition("12.0.0-xugu")]
         public override Task GroupBy_group_Where_Select_Distinct_aggregate(bool async)
         {
-            // See https://github.com/mysql-net/XGConnector/issues/898.
             return base.GroupBy_group_Where_Select_Distinct_aggregate(async);
         }
 
-        [SupportedServerVersionCondition("8.0.0-mysql", "0.0.0-mariadb")] // Is an issue issue in XuGu 5.7.34, but not in 8.0.25.
+        [SupportedServerVersionCondition("12.0.0-xugu")]
         public override Task GroupBy_constant_with_where_on_grouping_with_aggregate_operators(bool async)
         {
-            // See https://github.com/mysql-net/XGConnector/issues/980.
             return base.GroupBy_constant_with_where_on_grouping_with_aggregate_operators(async);
         }
 

@@ -86,4 +86,9 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+    <DelaySign>false</DelaySign>
+  </PropertyGroup>
+
 </Project>

@@ -69,13 +69,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                             _sqlExpressionFactory.ComplexFunctionArgument(
                                 new SqlExpression[]
                                 {
-                                    _sqlExpressionFactory.Fragment("INTERVAL"),
+                                    _sqlExpressionFactory.Fragment("INTERVAL "),
                                     datePart.Equals("microsecond", StringComparison.Ordinal)
                                         ? _sqlExpressionFactory.Multiply(
                                             _sqlExpressionFactory.Constant(1000),
-                                            _sqlExpressionFactory.Convert(arguments[0], typeof(int)))
-                                        : _sqlExpressionFactory.Convert(arguments[0], typeof(int)),
-                                    _sqlExpressionFactory.Fragment(datePart)
+                                            _sqlExpressionFactory.Fragment($"{Convert.ToInt32(((SqlConstantExpression)arguments[0]).Value)} "))
+                                        : _sqlExpressionFactory.Fragment($"{Convert.ToInt32(((SqlConstantExpression)arguments[0]).Value)} "),
+                                    _sqlExpressionFactory.Fragment($" {datePart}")
                                 },
                                 " ",
                                 typeof(string))

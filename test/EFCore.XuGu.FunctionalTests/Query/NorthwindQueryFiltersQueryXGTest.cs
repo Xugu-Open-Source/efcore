@@ -21,11 +21,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
             await base.Count_query(async);
 
             AssertSql(
-                @"@__ef_filter__TenantPrefix_0='B' (Size = 4000)
+                @":__ef_filter__TenantPrefix_0='B' (Size = 4000)
 
 SELECT COUNT(*)
 FROM `Customers` AS `c`
-WHERE (@__ef_filter__TenantPrefix_0 = '') OR (`c`.`CompanyName` IS NOT NULL AND (LEFT(`c`.`CompanyName`, CHAR_LENGTH(@__ef_filter__TenantPrefix_0)) = @__ef_filter__TenantPrefix_0))");
+WHERE (:__ef_filter__TenantPrefix_0 = '') OR (`c`.`CompanyName` IS NOT NULL AND (LEFT(`c`.`CompanyName`, CHAR_LENGTH(:__ef_filter__TenantPrefix_0)) = :__ef_filter__TenantPrefix_0))");
         }
 
         private void AssertSql(params string[] expected)

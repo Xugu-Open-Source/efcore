@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 using Microsoft.EntityFrameworkCore.TestUtilities;
 using Xunit.Abstractions;
 
@@ -16,6 +17,36 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
             Fixture.TestSqlLoggerFactory.Clear();
             //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
         }
+
+        [ConditionalTheory]
+        [MemberData(nameof(IsAsyncData))]
+        public override Task Collate_case_insensitive(bool async)
+            => AssertCount(
+                async,
+                ss => ss.Set<Customer>(),
+                ss => ss.Set<Customer>(),
+                c => c.ContactName.ToLower() == "maria anders",
+                c => c.ContactName.Equals("maria anders", StringComparison.OrdinalIgnoreCase));
+
+        [ConditionalTheory]
+        [MemberData(nameof(IsAsyncData))]
+        public override Task Collate_case_sensitive(bool async)
+            => AssertCount(
+                async,
+                ss => ss.Set<Customer>(),
+                ss => ss.Set<Customer>(),
+                c => c.ContactName == "maria anders",
+                c => c.ContactName.Equals("maria anders", StringComparison.Ordinal));
+
+        [ConditionalTheory]
+        [MemberData(nameof(IsAsyncData))]
+        public override Task Collate_case_sensitive_constant(bool async)
+            => AssertCount(
+                async,
+                ss => ss.Set<Customer>(),
+                ss => ss.Set<Customer>(),
+                c => c.ContactName == "maria anders",
+                c => c.ContactName.Equals("maria anders", StringComparison.Ordinal));
 
         public override async Task Like_literal(bool async)
         {

@@ -163,7 +163,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
                 //databaseSetupSql = GetAlterDatabaseStatement(Name, DatabaseCharSet, DatabaseCollation);
 
                 // databaseSetupSql = GetCreateDatabaseStatement(Name, DatabaseCharSet, DatabaseCollation);
-                // DeleteDatabase();
+                //DeleteDatabase();
             }
             else
             {
@@ -175,6 +175,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
 
             return true;
         }
+
+        //public override void Dispose()
+        //{
+        //    base.Dispose();
+
+        //    DeleteDatabase();
+        //}
 
         private void DeleteDatabase()
         {

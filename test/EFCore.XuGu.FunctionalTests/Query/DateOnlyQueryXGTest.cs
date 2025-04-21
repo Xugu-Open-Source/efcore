@@ -22,7 +22,7 @@ public class DateOnlyQueryXGTest : DateOnlyQueryXGTestBase<DateOnlyQueryXGTest.D
         //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
-    [ConditionalFact]
+    [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public async Task DayNumber(bool isAsync)
     {
@@ -42,7 +42,7 @@ WHERE ((TO_DAYS(`i`.`BestServedBefore`) - 366) - @__todayDateTime_DayNumber_0) <
 LIMIT 2");
     }
 
-    [ConditionalFact]
+    [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public async Task DayNumber_offset_same_as_CLR(bool isAsync)
     {
@@ -62,7 +62,7 @@ WHERE (TO_DAYS(`i`.`BestServedBefore`) - 366) = @__matchaExpireDayNumber_0
 LIMIT 2");
     }
 
-    [ConditionalFact]
+    [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public async Task ToDateTime_with_nondefault_TimeOnly(bool isAsync)
     {
@@ -82,7 +82,7 @@ WHERE ADDTIME(CAST(`i`.`BestServedBefore` AS datetime(6)), TIME '12:21:42') = @_
 LIMIT 2");
     }
 
-    [ConditionalFact]
+    [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public async Task ToDateTime_with_default_TimeOnly(bool isAsync)
     {
@@ -102,7 +102,7 @@ WHERE CAST(`i`.`BestServedBefore` AS datetime(6)) = @__matchExpireDateTime_0
 LIMIT 2");
     }
 
-    [ConditionalFact]
+    [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
     public async Task DayNumber_FromDateTime(bool isAsync)
     {
@@ -119,8 +119,7 @@ LIMIT 2");
     }
 
     [ConditionalFact]
-    [MemberData(nameof(IsAsyncData))]
-    public async Task DateDiffDay(bool isAsync)
+    public async Task DateDiffDay()
     {
         await using var context = CreateContext();
 
@@ -140,8 +139,7 @@ WHERE TIMESTAMPDIFF(DAY, @__todayDateOnly_1, `i`.`BestServedBefore`) < 30");
     }
 
     [ConditionalFact]
-    [MemberData(nameof(IsAsyncData))]
-    public async Task DateDiffDay_ToDateTime(bool isAsync)
+    public async Task DateDiffDay_ToDateTime()
     {
         await using var context = CreateContext();
 

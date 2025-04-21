@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal;
 
@@ -27,6 +28,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal;
 public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
 {
     private readonly List<IReadOnlyModificationCommand> _pendingBulkInsertCommands = new();
+    private readonly List<IReadOnlyModificationCommand> _pendingBulkDeleteCommands = new();
 
     public XGModificationCommandBatch(
         ModificationCommandBatchFactoryDependencies dependencies,
@@ -81,14 +83,51 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
 
         for (var i = 0; i < _pendingBulkInsertCommands.Count; i++)
         {
-            ResultSetMappings.Add(resultSetMapping);
+            ResultSetMappings.Add(CheckResult(_pendingBulkInsertCommands[i]));
         }
 
-        if (resultSetMapping != ResultSetMapping.NoResults)
+        //if (resultSetMapping != ResultSetMapping.NoResults)
+        //{
+        //    ResultSetMappings[^1] = ResultSetMapping.LastInResultSet;
+        //}
+    }
+
+    private void ApplyPendingBulkDeleteCommands()
+    {
+        if (_pendingBulkDeleteCommands.Count == 0)
         {
-            ResultSetMappings[^1] = ResultSetMapping.LastInResultSet;
+            return;
+        }
+
+        var commandPosition = ResultSetMappings.Count;
+
+        var wasCachedCommandTextEmpty = IsCommandTextEmpty;
+
+        var resultSetMapping = UpdateSqlGenerator.AppendBulkDeleteOperation(
+            SqlBuilder, _pendingBulkDeleteCommands, commandPosition, out var requiresTransaction);
+
+        SetRequiresTransaction(!wasCachedCommandTextEmpty || requiresTransaction);
+
+        for (var i = 0; i < _pendingBulkDeleteCommands.Count; i++)
+        {
+            ResultSetMappings.Add(CheckResult(_pendingBulkDeleteCommands[i]));
         }
     }
+
+
+    public virtual ResultSetMapping CheckResult(IReadOnlyModificationCommand command)
+    {
+        var operations = command.ColumnModifications;
+        var readOperations = operations.Where(o => o.IsRead).ToList();
+        return readOperations.Count > 0 ? ResultSetMapping.LastInResultSet : ResultSetMapping.NoResults;
+    }
+
+    public virtual ResultSetMapping CheckResult(RawSqlCommand command)
+    {
+        Match match = Regex.Match(command.RelationalCommand.CommandText, @"SELECT\s+.*?\s+FROM\s+.*?(?:;|$)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        return match.Success ? ResultSetMapping.LastInResultSet : ResultSetMapping.NoResults;
+    }
+
 
     protected override void AddCommand(IReadOnlyModificationCommand modificationCommand)
     {
@@ -106,6 +145,12 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
             _pendingBulkInsertCommands.Add(modificationCommand);
             AddParameters(modificationCommand);
         }
+        //else if (modificationCommand.EntityState == EntityState.Deleted && modificationCommand.StoreStoredProcedure is null)
+        //{
+
+        //    _pendingBulkDeleteCommands.Add(modificationCommand);
+        //    AddParameters(modificationCommand);
+        //}
         else
         {
             // If we have any pending bulk insert commands, write them out before the next non-Add command
@@ -116,6 +161,12 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
                 ApplyPendingBulkInsertCommands();
                 _pendingBulkInsertCommands.Clear();
             }
+
+            //if (_pendingBulkDeleteCommands.Count > 0)
+            //{
+            //    ApplyPendingBulkDeleteCommands();
+            //    _pendingBulkDeleteCommands.Clear();
+            //}
 
             base.AddCommand(modificationCommand);
         }
@@ -134,7 +185,7 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
     public override void Complete(bool moreBatchesExpected)
     {
         ApplyPendingBulkInsertCommands();
-
+        //ApplyPendingBulkDeleteCommands();
         base.Complete(moreBatchesExpected);
     }
 
@@ -393,7 +444,8 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
     protected List<RawSqlCommand> CreateStoreCommand()
     {
         List<RawSqlCommand> commands = new List<RawSqlCommand>();
-        foreach (var text in StoreCommand.RelationalCommand.CommandText.Split("--GO"))
+        string result = Regex.Replace(StoreCommand.RelationalCommand.CommandText, @"--GO\s*\z", "");
+        foreach (var text in result.Split("--GO"))
         {
             var commandBuilder = Dependencies.CommandBuilderFactory
             .Create()
@@ -460,6 +512,8 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
                         Dependencies.CurrentContext.Context,
                         Dependencies.Logger));
 
+                ResultSetMappings[i] = CheckResult(storeCommand);
+
                 if (ResultSetMappings[i] == ResultSetMapping.LastInResultSet)
                 {
                     Consume(dataReader,i);
@@ -479,6 +533,55 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
                     ModificationCommands.SelectMany(c => c.Entries).ToList());
             }
         }
+    }
+
+    public override async Task ExecuteAsync(
+        IRelationalConnection connection,
+        CancellationToken cancellationToken = default)
+    {
+        if (StoreCommand is null)
+        {
+            throw new InvalidOperationException(RelationalStrings.ModificationCommandBatchNotComplete);
+        }
+
+        var storeCommands = CreateStoreCommand();
+
+        int i = 0;
+        foreach (var storeCommand in storeCommands)
+        {
+            try
+            {
+                var dataReader = await storeCommand.RelationalCommand.ExecuteReaderAsync(
+                    new RelationalCommandParameterObject(
+                        connection,
+                        storeCommand.ParameterValues,
+                        null,
+                        Dependencies.CurrentContext.Context,
+                        Dependencies.Logger, CommandSource.SaveChanges),
+                    cancellationToken).ConfigureAwait(false);
+
+                await using var _ = dataReader.ConfigureAwait(false);
+
+                
+                ResultSetMappings[i] = CheckResult(storeCommand);
+
+                if (ResultSetMappings[i] == ResultSetMapping.LastInResultSet)
+                {
+                    await ConsumeAsync(dataReader,i, cancellationToken).ConfigureAwait(false);
+                }
+
+                i++;
+            }
+            catch (Exception ex) when (ex is not DbUpdateException and not OperationCanceledException)
+            {
+                throw new DbUpdateException(
+                    RelationalStrings.UpdateStoreException,
+                    ex,
+                    ModificationCommands.SelectMany(c => c.Entries).ToList());
+            }
+        }
+
+        
     }
 
     protected void Consume(RelationalDataReader reader, int commandIndex)
@@ -538,6 +641,119 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
                 RelationalStrings.UpdateStoreException,
                 ex,
                 ModificationCommands[commandIndex].Entries);
+        }
+    }
+
+    protected async Task ConsumeAsync(
+        RelationalDataReader reader,
+        int commandIndex,
+        CancellationToken cancellationToken = default)
+    {
+        Check.DebugAssert(
+            ResultSetMappings.Count == ModificationCommands.Count,
+            $"CommandResultSet.Count of {ResultSetMappings.Count} != ModificationCommands.Count of {ModificationCommands.Count}");
+
+
+        try
+        {
+            bool? onResultSet = null;
+            var hasOutputParameters = false;
+
+            while (commandIndex < ResultSetMappings.Count && await reader.DbDataReader.NextResultAsync())
+            {
+                var resultSetMapping = ResultSetMappings[commandIndex];
+
+                if (resultSetMapping.HasFlag(ResultSetMapping.HasResultRow))
+                {
+                    if (onResultSet == false)
+                    {
+                        throw new InvalidOperationException(RelationalStrings.MissingResultSetWhenSaving);
+                    }
+
+                    var lastHandledCommandIndex = resultSetMapping.HasFlag(ResultSetMapping.ResultSetWithRowsAffectedOnly)
+                        ? await ConsumeResultSetWithRowsAffectedOnlyAsync(commandIndex, reader, cancellationToken).ConfigureAwait(false)
+                        : await ConsumeResultSetAsync(commandIndex, reader, cancellationToken).ConfigureAwait(false);
+
+                    Check.DebugAssert(
+                        resultSetMapping.HasFlag(ResultSetMapping.LastInResultSet)
+                            ? lastHandledCommandIndex == commandIndex
+                            : lastHandledCommandIndex > commandIndex, "Bad handling of ResultSetMapping and command indexing");
+
+                    //commandIndex = lastHandledCommandIndex + 1;
+
+                    onResultSet = await reader.DbDataReader.NextResultAsync(cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    commandIndex++;
+                }
+
+                if (resultSetMapping.HasFlag(ResultSetMapping.HasOutputParameters))
+                {
+                    hasOutputParameters = true;
+                }
+            }
+
+            if (onResultSet == true)
+            {
+                Dependencies.UpdateLogger.UnexpectedTrailingResultSetWhenSaving();
+            }
+
+            await reader.CloseAsync().ConfigureAwait(false);
+
+            if (hasOutputParameters)
+            {
+                var parameterCounter = 0;
+                IReadOnlyModificationCommand command;
+
+                for (commandIndex = 0;
+                     commandIndex < ResultSetMappings.Count;
+                     commandIndex++, parameterCounter += command.StoreStoredProcedure!.Parameters.Count)
+                {
+                    command = ModificationCommands[commandIndex];
+
+                    if (!ResultSetMappings[commandIndex].HasFlag(ResultSetMapping.HasOutputParameters))
+                    {
+                        continue;
+                    }
+
+                    // Note: we assume that the return value is the parameter at position 0, and skip it here for the purpose of calculating
+                    // the right baseParameterIndex to pass to PropagateOutputParameters below.
+                    var rowsAffectedDbParameter = command.RowsAffectedColumn is IStoreStoredProcedureParameter rowsAffectedParameter
+                        ? reader.DbCommand.Parameters[parameterCounter + rowsAffectedParameter.Position]
+                        : command.StoreStoredProcedure!.ReturnValue is not null
+                            ? reader.DbCommand.Parameters[parameterCounter++]
+                            : null;
+
+                    if (rowsAffectedDbParameter is not null)
+                    {
+                        if (rowsAffectedDbParameter.Value is int rowsAffected)
+                        {
+                            if (rowsAffected != 1)
+                            {
+                                await ThrowAggregateUpdateConcurrencyExceptionAsync(
+                                        reader, commandIndex + 1, expectedRowsAffected: 1, rowsAffected: 0, cancellationToken)
+                                    .ConfigureAwait(false);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException(
+                                RelationalStrings.StoredProcedureRowsAffectedNotPopulated(
+                                    command.StoreStoredProcedure!.SchemaQualifiedName));
+                        }
+                    }
+
+                    command.PropagateOutputParameters(reader.DbCommand.Parameters, parameterCounter);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not DbUpdateException and not OperationCanceledException)
+        {
+            throw new DbUpdateException(
+                RelationalStrings.UpdateStoreException,
+                ex,
+                ModificationCommands[commandIndex < ModificationCommands.Count ? commandIndex : ModificationCommands.Count - 1].Entries);
         }
     }
 

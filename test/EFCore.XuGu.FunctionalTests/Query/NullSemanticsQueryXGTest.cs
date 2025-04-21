@@ -36,7 +36,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
             }
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Compare_left_bool_parameter_with_right_nullable_hasvalue(bool async)
         {
@@ -52,11 +52,14 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
                     .Select(e => e.Id));
 
             AssertSql(
-                @"@__prm_0='False'
+                @":__prm_0='False'
 
 SELECT `e`.`Id`
 FROM `Entities1` AS `e`
-WHERE @__prm_0 = (`e`.`NullableBoolC` IS NOT NULL)");
+WHERE :__prm_0 = CASE
+    WHEN `e`.`NullableBoolC` IS NOT NULL THEN 1
+    ELSE 0
+END");
         }
 
         protected override NullSemanticsContext CreateContext(bool useRelationalNulls = false)

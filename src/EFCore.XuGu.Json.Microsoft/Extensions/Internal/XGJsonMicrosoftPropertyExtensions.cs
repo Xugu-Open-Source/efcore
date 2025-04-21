@@ -38,8 +38,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Json.Microsoft.Extensions.Internal
 
             var valueComparer = property.GetValueComparer() ?? property.FindTypeMapping()?.Comparer;
             property.SetValueComparer(
-                valueComparer is IXGJsonValueComparer mySqlJsonValueComparer
-                    ? mySqlJsonValueComparer.Clone(options.Value)
+                valueComparer is IXGJsonValueComparer xgJsonValueComparer
+                    ? xgJsonValueComparer.Clone(options.Value)
                     : XGJsonMicrosoftValueComparer.Create(property.ClrType, options.Value));
         }
     }

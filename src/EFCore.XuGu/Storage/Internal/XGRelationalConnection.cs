@@ -14,6 +14,7 @@ using XuguClient;
 using Microsoft.EntityFrameworkCore.XuGu.Infrastructure;
 using Microsoft.EntityFrameworkCore.XuGu.Infrastructure.Internal;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
 {
@@ -33,15 +34,18 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
         // TODO: Remove, because we don't use it anywhere.
         private bool IsMasterConnection { get; set; }
 
+
         protected override DbConnection CreateDbConnection()
             => new XGConnection(AddConnectionStringOptions(new XGConnectionStringBuilder(ConnectionString!)).ConnectionString);
 
         public virtual IXGRelationalConnection CreateMasterConnection()
         {
             // Add master connection specific options.
-            var csb = new XGConnectionStringBuilder(ConnectionString!)
+            string pattern = @"DB=[^;]+";
+            var csb = new XGConnectionStringBuilder(ConnectionString)
             {
-                Database = string.Empty
+                Database = string.Empty,
+                ConnectionString = Regex.Replace(ConnectionString, pattern, $"DB=SYSTEM")
             };
 
             csb = AddConnectionStringOptions(csb);

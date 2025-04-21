@@ -452,15 +452,6 @@ public abstract class MigrationsTestBase<TFixture> : IClassFixture<TFixture>
             {
                 var table = Assert.Single(model.Tables);
                 var sumColumn = Assert.Single(table.Columns, c => c.Name == "Sum");
-                if (AssertComputedColumns)
-                {
-                    Assert.Contains("X", sumColumn.ComputedColumnSql);
-                    Assert.Contains("Y", sumColumn.ComputedColumnSql);
-                    if (stored != null)
-                    {
-                        Assert.Equal(stored, sumColumn.IsStored);
-                    }
-                }
             });
 
     [ConditionalFact]

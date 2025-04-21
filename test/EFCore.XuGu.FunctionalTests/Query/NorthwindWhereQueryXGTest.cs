@@ -25,33 +25,30 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
         protected override bool CanExecuteQueryString
             => true;
 
-        [ConditionalFact]
         public override async Task Where_datetime_now(bool async)
         {
             await base.Where_datetime_now(async);
 
             AssertSql(
-                @"@__myDatetime_0='2015-04-10T00:00:00.0000000' (DbType = DateTime)
+                @":__myDatetime_0='2015-04-10T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE CURRENT_TIMESTAMP() <> @__myDatetime_0");
+WHERE CURRENT_TIMESTAMP() <> :__myDatetime_0");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_utcnow(bool async)
         {
             await base.Where_datetime_utcnow(async);
 
             AssertSql(
-                @"@__myDatetime_0='2015-04-10T00:00:00.0000000' (DbType = DateTime)
+                @":__myDatetime_0='2015-04-10T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE UTC_TIMESTAMP() <> @__myDatetime_0");
+WHERE UTC_TIMESTAMP() <> :__myDatetime_0");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_today(bool async)
         {
             await base.Where_datetime_today(async);
@@ -59,23 +56,26 @@ WHERE UTC_TIMESTAMP() <> @__myDatetime_0");
             AssertSql(
                 @"SELECT `e`.`EmployeeID`, `e`.`City`, `e`.`Country`, `e`.`FirstName`, `e`.`ReportsTo`, `e`.`Title`
 FROM `Employees` AS `e`
-WHERE CONVERT(CURRENT_TIMESTAMP(), date) = CURDATE()");
+WHERE CAST(CURRENT_TIMESTAMP() AS date) = CURDATE()");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_date_component(bool async)
         {
-            await base.Where_datetime_date_component(async);
+            var myDatetime = new DateTime(1998, 5, 4);
+
+            await AssertQuery(
+                async,
+                ss => ss.Set<Order>().Where(o => o.OrderDate.Value.Date == myDatetime),
+                entryCount: 3);
 
             AssertSql(
-                @"@__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
+                @":__myDatetime_0='1998-05-04T00:00:00.0000000' (DbType = DateTime)
 
 SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM `Orders` AS `o`
-WHERE CONVERT(`o`.`OrderDate`, date) = @__myDatetime_0");
+WHERE CAST(o.OrderDate AS date) = :__myDatetime_0");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_year_component(bool async)
         {
             await base.Where_datetime_year_component(async);
@@ -86,7 +86,6 @@ FROM `Orders` AS `o`
 WHERE EXTRACT(year FROM `o`.`OrderDate`) = 1998");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_month_component(bool async)
         {
             await base.Where_datetime_month_component(async);
@@ -97,7 +96,6 @@ FROM `Orders` AS `o`
 WHERE EXTRACT(month FROM `o`.`OrderDate`) = 4");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_dayOfYear_component(bool async)
         {
             await base.Where_datetime_dayOfYear_component(async);
@@ -108,7 +106,6 @@ FROM `Orders` AS `o`
 WHERE DAYOFYEAR(`o`.`OrderDate`) = 68");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_day_component(bool async)
         {
             await base.Where_datetime_day_component(async);
@@ -119,7 +116,6 @@ FROM `Orders` AS `o`
 WHERE EXTRACT(day FROM `o`.`OrderDate`) = 4");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_hour_component(bool async)
         {
             await base.Where_datetime_hour_component(async);
@@ -130,7 +126,6 @@ FROM `Orders` AS `o`
 WHERE EXTRACT(hour FROM `o`.`OrderDate`) = 14");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_minute_component(bool async)
         {
             await base.Where_datetime_minute_component(async);
@@ -141,7 +136,6 @@ FROM `Orders` AS `o`
 WHERE EXTRACT(minute FROM `o`.`OrderDate`) = 23");
         }
 
-        [ConditionalFact]
         public override async Task Where_datetime_second_component(bool async)
         {
             await base.Where_datetime_second_component(async);
@@ -152,10 +146,13 @@ FROM `Orders` AS `o`
 WHERE EXTRACT(second FROM `o`.`OrderDate`) = 44");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory(Skip = "数据库不支持毫秒转换")]
+        [MemberData(nameof(IsAsyncData))]
         public override async Task Where_datetime_millisecond_component(bool async)
         {
-            await base.Where_datetime_millisecond_component(async);
+            await AssertQuery(
+            async,
+            ss => ss.Set<Order>().Where(o => o.OrderDate.Value.Millisecond == 88));
 
             AssertSql(
                 @"SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
@@ -163,7 +160,6 @@ FROM `Orders` AS `o`
 WHERE (EXTRACT(microsecond FROM `o`.`OrderDate`)) DIV (1000) = 88");
         }
 
-        [ConditionalFact]
         public override async Task Where_string_length(bool async)
         {
             await base.Where_string_length(async);
@@ -173,7 +169,6 @@ FROM `Customers` AS `c`
 WHERE CHAR_LENGTH(`c`.`City`) = 6");
         }
 
-        [ConditionalFact]
         public override async Task Where_string_indexof(bool async)
         {
             await base.Where_string_indexof(async);
@@ -184,7 +179,6 @@ FROM `Customers` AS `c`
 WHERE ((LOCATE('Sea', `c`.`City`) - 1) <> -1) OR `c`.`City` IS NULL");
         }
 
-        [ConditionalFact]
         public override async Task Where_string_replace(bool async)
         {
             await base.Where_string_replace(async);
@@ -195,7 +189,6 @@ FROM `Customers` AS `c`
 WHERE REPLACE(`c`.`City`, 'Sea', 'Rea') = 'Reattle'");
         }
 
-        [ConditionalFact]
         public override async Task Where_string_substring(bool async)
         {
             await base.Where_string_substring(async);
@@ -206,25 +199,28 @@ FROM `Customers` AS `c`
 WHERE SUBSTRING(`c`.`City`, 1 + 1, 2) = 'ea'");
         }
 
-        [ConditionalFact(Skip = "issue #573")]
+        [ConditionalTheory(Skip = "issue #573")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Where_as_queryable_expression(bool async)
         {
             return base.Where_as_queryable_expression(async);
         }
 
-        [ConditionalFact(Skip = "issue #552")]
+        [ConditionalTheory(Skip = "issue #552")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Where_multiple_contains_in_subquery_with_and(bool async)
         {
             return base.Where_multiple_contains_in_subquery_with_and(async);
         }
 
-        [ConditionalFact(Skip = "issue #552")]
+        [ConditionalTheory(Skip = "issue #552")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Where_multiple_contains_in_subquery_with_or(bool async)
         {
             return base.Where_multiple_contains_in_subquery_with_or(async);
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_remove(bool async)
         {
@@ -239,7 +235,7 @@ FROM `Customers` AS `c`
 WHERE SUBSTRING(`c`.`City`, 1, 3) = 'Sea'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_remove_count(bool async)
         {
@@ -254,7 +250,7 @@ FROM `Customers` AS `c`
 WHERE CONCAT(SUBSTRING(`c`.`City`, 1, 3), SUBSTRING(`c`.`City`, (3 + 1) + 1, CHAR_LENGTH(`c`.`City`) - (3 + 1))) = 'Seatle'");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_guid(bool async)
         {
@@ -266,11 +262,11 @@ WHERE CONCAT(SUBSTRING(`c`.`City`, 1, 3), SUBSTRING(`c`.`City`, (3 + 1) + 1, CHA
                 entryCount: 0);
 
             AssertSql(
-                @"@__guidParameter_0='4d68fe70-ddb0-47d7-b6db-437684fa3e1f'
+                @":__guidParameter_0='4d68fe70-ddb0-47d7-b6db-437684fa3e1f' (DbType = Binary)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE @__guidParameter_0 = UUID()");
+WHERE :__guidParameter_0 = UUID()");
         }
 
         public override async Task Where_string_concat_method_comparison_2(bool async)
@@ -278,12 +274,12 @@ WHERE @__guidParameter_0 = UUID()");
             await base.Where_string_concat_method_comparison_2(async);
 
             AssertSql(
-                @"@__i_0='A' (Size = 4000)
-@__j_1='B' (Size = 4000)
+                @":__i_0='A' (Size = 4000)
+:__j_1='B' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE CONCAT(@__i_0, @__j_1, `c`.`CustomerID`) = `c`.`CompanyName`");
+WHERE CONCAT(:__i_0, :__j_1, `c`.`CustomerID`) = `c`.`CompanyName`");
         }
 
         public override async Task Where_string_concat_method_comparison_3(bool async)
@@ -291,16 +287,16 @@ WHERE CONCAT(@__i_0, @__j_1, `c`.`CustomerID`) = `c`.`CompanyName`");
             await base.Where_string_concat_method_comparison_3(async);
 
             AssertSql(
-                @"@__i_0='A' (Size = 4000)
-@__j_1='B' (Size = 4000)
-@__k_2='C' (Size = 4000)
+                @":__i_0='A' (Size = 4000)
+:__j_1='B' (Size = 4000)
+:__k_2='C' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE CONCAT(@__i_0, @__j_1, @__k_2, `c`.`CustomerID`) = `c`.`CompanyName`");
+WHERE CONCAT(:__i_0, :__j_1, :__k_2, `c`.`CustomerID`) = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_single_object(bool async)
         {
@@ -311,14 +307,14 @@ WHERE CONCAT(@__i_0, @__j_1, @__k_2, `c`.`CustomerID`) = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(i) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='1' (Size = 4000)
+                @":__Concat_0='1' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_object(bool async)
         {
@@ -329,14 +325,14 @@ WHERE @__Concat_0 = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(i, c.CustomerID) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__i_0='1' (Size = 4000)
+                @":__i_0='1' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE CONCAT(@__i_0, `c`.`CustomerID`) = `c`.`CompanyName`");
+WHERE CONCAT(:__i_0, `c`.`CustomerID`) = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_object_2(bool async)
         {
@@ -348,15 +344,15 @@ WHERE CONCAT(@__i_0, `c`.`CustomerID`) = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(i, j, c.CustomerID) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__i_0='1' (Size = 4000)
-@__j_1='2' (Size = 4000)
+                @":__i_0='1' (Size = 4000)
+:__j_1='2' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE CONCAT(@__i_0, @__j_1, `c`.`CustomerID`) = `c`.`CompanyName`");
+WHERE CONCAT(:__i_0, :__j_1, `c`.`CustomerID`) = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_object_3(bool async)
         {
@@ -369,16 +365,16 @@ WHERE CONCAT(@__i_0, @__j_1, `c`.`CustomerID`) = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(i, j, k, c.CustomerID) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__i_0='1' (Size = 4000)
-@__j_1='2' (Size = 4000)
-@__k_2='3' (Size = 4000)
+                @":__i_0='1' (Size = 4000)
+:__j_1='2' (Size = 4000)
+:__k_2='3' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE (CONCAT(@__i_0, @__j_1, @__k_2, `c`.`CustomerID`) = `c`.`CompanyName`) OR (CONCAT(@__i_0, @__j_1, @__k_2, `c`.`CustomerID`) IS NULL AND (`c`.`CompanyName` IS NULL))");
+WHERE (CONCAT(:__i_0, :__j_1, :__k_2, `c`.`CustomerID`) = `c`.`CompanyName`) OR (CONCAT(:__i_0, :__j_1, :__k_2, `c`.`CustomerID`) IS NULL AND (`c`.`CompanyName` IS NULL))");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_params_string_array(bool async)
         {
@@ -392,17 +388,17 @@ WHERE (CONCAT(@__i_0, @__j_1, @__k_2, `c`.`CustomerID`) = `c`.`CompanyName`) OR 
                 ss => ss.Set<Customer>().Where(c => string.Concat(i, j, k, m, c.CustomerID) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__i_0='A' (Size = 4000)
-@__j_1='B' (Size = 4000)
-@__k_2='C' (Size = 4000)
-@__m_3='D' (Size = 4000)
+                @":__i_0='A' (Size = 4000)
+:__j_1='B' (Size = 4000)
+:__k_2='C' (Size = 4000)
+:__m_3='D' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE (CONCAT(@__i_0, @__j_1, @__k_2, @__m_3, `c`.`CustomerID`) = `c`.`CompanyName`) OR (CONCAT(@__i_0, @__j_1, @__k_2, @__m_3, `c`.`CustomerID`) IS NULL AND (`c`.`CompanyName` IS NULL))");
+WHERE (CONCAT(:__i_0, :__j_1, :__k_2, :__m_3, `c`.`CustomerID`) = `c`.`CompanyName`) OR (CONCAT(:__i_0, :__j_1, :__k_2, :__m_3, `c`.`CustomerID`) IS NULL AND (`c`.`CompanyName` IS NULL))");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_explicit_string_array(bool async)
         {
@@ -413,14 +409,14 @@ WHERE (CONCAT(@__i_0, @__j_1, @__k_2, @__m_3, `c`.`CustomerID`) = `c`.`CompanyNa
                 ss => ss.Set<Customer>().Where(c => string.Concat(array) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='ABCD' (Size = 4000)
+                @":__Concat_0='ABCD' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_explicit_string_array_single_element(bool async)
         {
@@ -431,14 +427,14 @@ WHERE @__Concat_0 = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(array) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='A' (Size = 4000)
+                @":__Concat_0='A' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_params_object_array(bool async)
         {
@@ -452,17 +448,17 @@ WHERE @__Concat_0 = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(i, j, k, m, c.CustomerID) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__i_0='1' (Size = 4000)
-@__j_1='2' (Size = 4000)
-@__k_2='3' (Size = 4000)
-@__m_3='4' (Size = 4000)
+                @":__i_0='1' (Size = 4000)
+:__j_1='2' (Size = 4000)
+:__k_2='3' (Size = 4000)
+:__m_3='4' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE (CONCAT(@__i_0, @__j_1, @__k_2, @__m_3, `c`.`CustomerID`) = `c`.`CompanyName`) OR (CONCAT(@__i_0, @__j_1, @__k_2, @__m_3, `c`.`CustomerID`) IS NULL AND (`c`.`CompanyName` IS NULL))");
+WHERE (CONCAT(:__i_0, :__j_1, :__k_2, :__m_3, `c`.`CustomerID`) = `c`.`CompanyName`) OR (CONCAT(:__i_0, :__j_1, :__k_2, :__m_3, `c`.`CustomerID`) IS NULL AND (`c`.`CompanyName` IS NULL))");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_explicit_object_array(bool async)
         {
@@ -473,14 +469,14 @@ WHERE (CONCAT(@__i_0, @__j_1, @__k_2, @__m_3, `c`.`CustomerID`) = `c`.`CompanyNa
                 ss => ss.Set<Customer>().Where(c => string.Concat(array) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='1234' (Size = 4000)
+                @":__Concat_0='1234' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_explicit_object_array_single_element(bool async)
         {
@@ -491,14 +487,14 @@ WHERE @__Concat_0 = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(array) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='1' (Size = 4000)
+                @":__Concat_0='1' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_string_enumerable(bool async)
         {
@@ -509,14 +505,14 @@ WHERE @__Concat_0 = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(enumerable) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='ABCD' (Size = 4000)
+                @":__Concat_0='ABCD' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_string_enumerable_single_element(bool async)
         {
@@ -527,14 +523,14 @@ WHERE @__Concat_0 = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(enumerable) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='A' (Size = 4000)
+                @":__Concat_0='A' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_generic_enumerable(bool async)
         {
@@ -545,14 +541,14 @@ WHERE @__Concat_0 = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(enumerable) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='1234' (Size = 4000)
+                @":__Concat_0='1234' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_string_concat_method_comparison_generic_enumerable_single_element(bool async)
         {
@@ -563,11 +559,11 @@ WHERE @__Concat_0 = `c`.`CompanyName`");
                 ss => ss.Set<Customer>().Where(c => string.Concat(enumerable) == c.CompanyName).Select(c => c.CustomerID));
 
             AssertSql(
-                @"@__Concat_0='1' (Size = 4000)
+                @":__Concat_0='1' (Size = 4000)
 
 SELECT `c`.`CustomerID`
 FROM `Customers` AS `c`
-WHERE @__Concat_0 = `c`.`CompanyName`");
+WHERE :__Concat_0 = `c`.`CompanyName`");
         }
 
         public override async Task Where_bitwise_xor(bool async)

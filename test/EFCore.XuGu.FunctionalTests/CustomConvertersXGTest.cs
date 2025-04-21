@@ -434,15 +434,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
             {
                 base.OnModelCreating(modelBuilder, context);
 
-                var ciCollation = ((XGTestStore)TestStore).ServerVersion.Value.DefaultUtf8CiCollation;
-
                 // Needed to make Can_insert_and_read_back_with_case_insensitive_string_key() work.
                 modelBuilder.Entity<StringForeignKeyDataType>()
-                    .Property(e => e.StringKeyDataTypeId)
-                    .UseCollation(ciCollation);
+                    .Property(e => e.StringKeyDataTypeId);
                 modelBuilder.Entity<StringKeyDataType>()
-                    .Property(e => e.Id)
-                    .UseCollation(ciCollation);
+                    .Property(e => e.Id);
             }
         }
     }

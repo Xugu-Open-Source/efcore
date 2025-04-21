@@ -15,7 +15,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
             //fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
         }
 
-        [ConditionalFact]
         public override void Input_query_escapes_parameter()
         {
             base.Input_query_escapes_parameter();
@@ -51,7 +50,6 @@ WHERE `a`.`Name` LIKE '% Garden Party'");
             }
         }
 
-        [ConditionalFact]
         public override async Task Where_query_escapes_literal(bool async)
         {
             await base.Where_query_escapes_literal(async);
@@ -62,7 +60,6 @@ FROM `Artists` AS `a`
 WHERE `a`.`Name` = 'Back\\slasher''s'");
         }
 
-        [ConditionalFact]
         public override async Task Where_query_escapes_parameter(bool async)
         {
             await base.Where_query_escapes_parameter(async);
@@ -75,7 +72,6 @@ FROM `Artists` AS `a`
 WHERE `a`.`Name` = @__artistName_0");
         }
 
-        [ConditionalFact]
         public override async Task Where_contains_query_escapes(bool async)
         {
             await base.Where_contains_query_escapes(async);

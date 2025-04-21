@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+using System;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -8,6 +10,7 @@ using Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities;
 using Microsoft.EntityFrameworkCore.XuGu.Infrastructure;
 using Microsoft.EntityFrameworkCore.XuGu.Migrations.Internal;
 using Xunit;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Migrations;
 
@@ -20,7 +23,7 @@ public class XGHistoryRepositoryTest
             .ExistsSql;
 
         Assert.Equal(
-            @"SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='DummyDatabase' AND TABLE_NAME='__EFMigrationsHistory';",
+            @"SELECT 1 FROM ALL_TABLES WHERE SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='IgnoreThisDefaultSchema') AND TABLE_NAME='__EFMigrationsHistory';",
             sql);
     }
 
@@ -31,12 +34,12 @@ public class XGHistoryRepositoryTest
             .ExistsSql;
 
         Assert.Equal(
-            @"SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='DummyDatabase' AND TABLE_NAME='__EFMigrationsHistory';",
+            @"SELECT 1 FROM ALL_TABLES WHERE SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='IgnoreThisExplicitSchema') AND TABLE_NAME='__EFMigrationsHistory';",
             sql);
     }
 
-    private static TestMysqlHistoryRepository CreateHistoryRepository(string schema = null)
-        => (TestMysqlHistoryRepository)new TestDbContext(
+    private static TestXGHistoryRepository CreateHistoryRepository(string schema = null)
+        => (TestXGHistoryRepository)new TestDbContext(
                 new DbContextOptionsBuilder(
                         XGTestHelpers.Instance.CreateOptions(builder => builder
                             .SchemaBehavior(XGSchemaBehavior.Ignore)
@@ -44,13 +47,13 @@ public class XGHistoryRepositoryTest
                     .UseInternalServiceProvider(
                         XGTestHelpers.Instance.CreateServiceProvider(
                             new ServiceCollection()
-                                .AddScoped<IHistoryRepository, TestMysqlHistoryRepository>()))
+                                .AddScoped<IHistoryRepository, TestXGHistoryRepository>()))
                     .Options)
             .GetService<IHistoryRepository>();
 
-    private class TestMysqlHistoryRepository : XGHistoryRepository
+    private class TestXGHistoryRepository : XGHistoryRepository
     {
-        public TestMysqlHistoryRepository([NotNull] HistoryRepositoryDependencies dependencies)
+        public TestXGHistoryRepository([NotNull] HistoryRepositoryDependencies dependencies)
             : base(dependencies)
         {
         }

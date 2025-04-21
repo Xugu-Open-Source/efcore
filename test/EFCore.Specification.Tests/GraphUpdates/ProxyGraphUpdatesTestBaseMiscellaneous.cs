@@ -67,7 +67,7 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture>
                     context.CreateProxy<RecordCar>(
                         car =>
                         {
-                            car.Owner = context.CreateProxy<RecordPerson>();
+                            car.Owner = context.CreateProxy<RecordPerson>( new RecordPerson { Id = 1 });
                         }));
 
                 context.SaveChanges();

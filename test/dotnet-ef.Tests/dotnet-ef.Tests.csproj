@@ -4,6 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>Microsoft.EntityFrameworkCore.Tools</RootNamespace>
     <ImplicitUsings>true</ImplicitUsings>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>

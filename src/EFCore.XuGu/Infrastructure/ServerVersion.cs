@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.XuGu.Infrastructure;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    /// The abstract base class of <see cref="XGServerVersion"/> and <see cref="MariaDbServerVersion"/>.
+    /// The abstract base class of <see cref="XGServerVersion"/>.
     /// Contains static methods to create a <see cref="ServerVersion"/> from a string or to auto detect the server version from a database
     /// server.
     /// </summary>
@@ -35,9 +35,7 @@ namespace Microsoft.EntityFrameworkCore
         public abstract ServerVersionSupport Supports { get; }
 
         public virtual int MaxKeyLength => Supports.LargerKeyLength ? 3072 : 767;
-        public virtual CharSet DefaultCharSet => Supports.DefaultCharSetUtf8Mb4 ? CharSet.Utf8Mb4 : CharSet.Latin1;
-        public virtual string DefaultUtf8CsCollation => Supports.DefaultCharSetUtf8Mb4 ? "utf8mb4_0900_as_cs" : "utf8mb4_bin";
-        public virtual string DefaultUtf8CiCollation => Supports.DefaultCharSetUtf8Mb4 ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+        public virtual CharSet DefaultCharSet => CharSet.Gb2312;
 
         public override bool Equals(object obj)
             => obj is ServerVersion version &&
@@ -112,10 +110,6 @@ namespace Microsoft.EntityFrameworkCore
         /// </summary>
         /// <param name="versionString">The server version (mandatory) and type (optional).</param>
         /// <returns>The <see cref="ServerVersion"/>.</returns>
-        /// <remarks>
-        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-mysql` or `10.5.3-mariadb`. If the type is being omitted, it is
-        /// assumed to be XuGu (and not MariaDB).
-        /// </remarks>
         public static ServerVersion Parse(string versionString)
             => Parse(versionString, null);
 
@@ -125,11 +119,6 @@ namespace Microsoft.EntityFrameworkCore
         /// <param name="versionString">The server version (mandatory) and type (optional).</param>
         /// <param name="serverType">The <see cref="ServerType"/> or <see langword="null" />. </param>
         /// <returns>The <see cref="ServerVersion"/>.</returns>
-        /// <remarks>
-        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-mysql` or `10.5.3-mariadb`. If the type is being omitted, it is
-        /// assumed to be XuGu (and not MariaDB). The <paramref name="serverType"/> parameter takes precedence over a server type specified
-        /// in the <paramref name="versionString"/> parameter, if not <see langword="null" />.
-        /// </remarks>
         public static ServerVersion Parse(string versionString, ServerType? serverType)
         {
             Check.NotEmpty(versionString, nameof(versionString));
@@ -148,10 +137,6 @@ namespace Microsoft.EntityFrameworkCore
         /// <param name="versionString">The server version (mandatory) and type (optional).</param>
         /// <param name="serverVersion">The <see cref="ServerVersion"/>.</param>
         /// <returns><see langword="true" /> if the conversion was successful, otherwise <see langword="false" />.</returns>
-        /// <remarks>
-        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-mysql` or `10.5.3-mariadb`. If the type is being omitted, it is
-        /// assumed to be XuGu (and not MariaDB).
-        /// </remarks>
         public static bool TryParse(string versionString, out ServerVersion serverVersion)
             => TryParse(versionString, null, out serverVersion);
 
@@ -162,11 +147,6 @@ namespace Microsoft.EntityFrameworkCore
         /// <param name="serverType">The <see cref="ServerType"/> or <see langword="null" />. </param>
         /// <param name="serverVersion">The <see cref="ServerVersion"/>.</param>
         /// <returns><see langword="true" /> if the conversion was successful, otherwise <see langword="false" />.</returns>
-        /// <remarks>
-        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-mysql` or `10.5.3-mariadb`. If the type is being omitted, it is
-        /// assumed to be XuGu (and not MariaDB). The <paramref name="serverType"/> parameter takes precedence over a server type specified
-        /// in the <paramref name="versionString"/> parameter, if not <see langword="null" />.
-        /// </remarks>
         public static bool TryParse(string versionString, ServerType? serverType, out ServerVersion serverVersion)
         {
             Check.NotEmpty(versionString, nameof(versionString));
@@ -193,7 +173,7 @@ namespace Microsoft.EntityFrameworkCore
         /// <returns>The <see cref="ServerVersion"/>.</returns>
         /// <remarks>
         /// Call this static method to obtain a <see cref="ServerVersion"/> object to use in a `UseXG()` call.
-        /// Alternatively, directly instantiate an instance of the <see cref="XGServerVersion"/> or <see cref="MariaDbServerVersion"/>
+        /// Alternatively, directly instantiate an instance of the <see cref="XGServerVersion"/>
         /// classes using <see langword="new"/>, or call the static `Parse()`, `TryParse()` or `AutoDetect()` methods.
         /// </remarks>
         public static ServerVersion Create(Version version, ServerType serverType) => new XGServerVersion(version);
@@ -208,7 +188,7 @@ namespace Microsoft.EntityFrameworkCore
         /// <returns>The <see cref="ServerVersion"/>.</returns>
         /// <remarks>
         /// Call this static method to obtain a <see cref="ServerVersion"/> object to use in a `UseXG()` call.
-        /// Alternatively, directly instantiate an instance of the <see cref="XGServerVersion"/> or <see cref="MariaDbServerVersion"/>
+        /// Alternatively, directly instantiate an instance of the <see cref="XGServerVersion"/>
         /// classes using <see langword="new"/>, or call the static `Parse()`, `TryParse()` or `AutoDetect()` methods.
         /// </remarks>
         public static ServerVersion Create(int major, int minor, int patch, ServerType serverType)

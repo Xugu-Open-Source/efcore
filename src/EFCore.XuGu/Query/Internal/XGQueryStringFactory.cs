@@ -42,12 +42,14 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
             var builder = new StringBuilder();
             foreach (DbParameter parameter in command.Parameters)
             {
-                builder
-                    .Append("SET ")
-                    .Append(parameter.ParameterName)
-                    .Append(" = ")
-                    .Append(GetParameterValue(parameter))
-                    .AppendLine(";");
+                //builder
+                //    .Append("SET ")
+                //    .Append(parameter.ParameterName)
+                //    .Append(" = ")
+                //    .Append(GetParameterValue(parameter))
+                //    .AppendLine(";");
+                string value= GetParameterValue(parameter);
+                command.CommandText=command.CommandText.Replace(parameter.ParameterName, value);
             }
 
             return builder
@@ -70,7 +72,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
         protected virtual void PrepareCommand(DbCommand command)
         {
             // XuGu does not support user variables in LIMIT statements.
-            // (It does however support parameters in LIMIT statements since 2010. See https://bugs.mysql.com/bug.php?id=11918)
+            // (It does however support parameters in LIMIT statements since 2010. 
             //
             // Because of that, we need to inline the parameter values as constants into the SQL command, in cases where they appear in a
             // LIMIT clause.

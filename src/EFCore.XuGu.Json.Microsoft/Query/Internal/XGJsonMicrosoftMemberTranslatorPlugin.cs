@@ -15,15 +15,15 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Json.Microsoft.Query.Internal
             ISqlExpressionFactory sqlExpressionFactory,
             IXGJsonPocoTranslator jsonPocoTranslator)
         {
-            var mySqlSqlExpressionFactory = (XGSqlExpressionFactory)sqlExpressionFactory;
-            var mySqlJsonPocoTranslator = (XGJsonPocoTranslator)jsonPocoTranslator;
+            var xgSqlExpressionFactory = (XGSqlExpressionFactory)sqlExpressionFactory;
+            var xgJsonPocoTranslator = (XGJsonPocoTranslator)jsonPocoTranslator;
 
             Translators = new IMemberTranslator[]
             {
                 new XGJsonMicrosoftDomTranslator(
-                    mySqlSqlExpressionFactory,
+                    xgSqlExpressionFactory,
                     typeMappingSource,
-                    mySqlJsonPocoTranslator),
+                    xgJsonPocoTranslator),
                 jsonPocoTranslator,
             };
         }

@@ -122,7 +122,7 @@ WHERE TIMESTAMPDIFF(SECOND, `o`.`OrderDate`, CURRENT_TIMESTAMP()) = 0");
                 AssertSql(
                     @"SELECT COUNT(*)
 FROM `Orders` AS `o`
-WHERE TIMESTAMPDIFF(MICROSECOND, CURRENT_TIMESTAMP(), DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL CAST(1.0 AS signed) second)) = 0");
+WHERE TIMESTAMPDIFF(MICROSECOND, CURRENT_TIMESTAMP(), DATE_ADD(CURRENT_TIMESTAMP(), NUMTODSINTERVAL( CAST(1.0 AS int) ,'second'))) = 0");
             }
         }
 
@@ -255,9 +255,9 @@ WHERE UNHEX(HEX(`o`.`CustomerID`)) = 'VINET'");
             Assert.Equal(degrees, office.OfficeRoofAngleDegrees);
 
             AssertSql(
-                @"@__radians_1='1.5707963267948966'
+                @":__radians_1='1.5707963267948966'
 
-SELECT `c`.`CustomerID`, DEGREES(@__radians_1) AS `OfficeRoofAngleDegrees`
+SELECT `c`.`CustomerID`, DEGREES(:__radians_1) AS `OfficeRoofAngleDegrees`
 FROM `Customers` AS `c`
 WHERE `c`.`CustomerID` = 'VINET'
 LIMIT 1");
@@ -278,9 +278,9 @@ LIMIT 1");
             Assert.Equal(radians, office.OfficeRoofAngleRadians);
 
             AssertSql(
-                @"@__degrees_1='90'
+                @":__degrees_1='90'
 
-SELECT `c`.`CustomerID`, RADIANS(@__degrees_1) AS `OfficeRoofAngleRadians`
+SELECT `c`.`CustomerID`, RADIANS(:__degrees_1) AS `OfficeRoofAngleRadians`
 FROM `Customers` AS `c`
 WHERE `c`.`CustomerID` = 'VINET'
 LIMIT 1");

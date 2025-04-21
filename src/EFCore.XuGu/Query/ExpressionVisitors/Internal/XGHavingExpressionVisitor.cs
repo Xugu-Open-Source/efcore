@@ -33,10 +33,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
 
         protected virtual Expression VisitSelect(SelectExpression selectExpression)
         {
-            // XuGu & MariaDB currently do not support complex expressions in HAVING clauses (e.g. function calls).
-            // Instead, they want you to reference SELECT aliases for those expressions in the HAVING clause.
-            // See https://bugs.mysql.com/bug.php?id=103961
-            // This is only an issue for HAVING expressions that do not contain any aggregate functions.
             var havingExpression = selectExpression.Having;
             if (havingExpression is not null &&
                 havingExpression is not SqlConstantExpression &&
@@ -92,7 +88,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         /// </summary>
         private sealed class XGContainsAggregateFunctionExpressionVisitor : ExpressionVisitor
         {
-            // See https://dev.mysql.com/doc/refman/8.0/en/aggregate-functions.html
             private static readonly SortedSet<string> _aggregateFunctions = new SortedSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "AVG",

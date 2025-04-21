@@ -1,7 +1,9 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
 using System;
 using System.Linq;
 using Moq;
-using XGConnector;
+using XuguClient;
 using Microsoft.EntityFrameworkCore.XuGu.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.Storage.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.ValueGeneration.Internal;
@@ -9,11 +11,11 @@ using Xunit;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Tests.ValueGeneration.Internal
 {
-    public class MysqlSequentialGuidValueGeneratorTest
+    public class XGSequentialGuidValueGeneratorTest
     {
-        private XGSequentialGuidValueGenerator GetGenerator(bool mysqlGuidFormatIsLittleEndianBinary16) {
+        private XGSequentialGuidValueGenerator GetGenerator(bool xgGuidFormatIsLittleEndianBinary16) {
             var connectionSettings = new Mock<XGConnectionSettings>();
-            connectionSettings.SetupGet(x => x.GuidFormat).Returns(mysqlGuidFormatIsLittleEndianBinary16 ? XGGuidFormat.LittleEndianBinary16 : XGGuidFormat.None);
+            //connectionSettings.SetupGet(x => x.GuidFormat).Returns(xgGuidFormatIsLittleEndianBinary16 ? XGGuidFormat.LittleEndianBinary16 : XGGuidFormat.None);
 
             var options = new Mock<XGOptions>();
             options.SetupGet(x => x.ConnectionSettings).Returns(connectionSettings.Object);

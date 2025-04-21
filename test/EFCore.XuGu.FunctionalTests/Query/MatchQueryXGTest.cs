@@ -27,7 +27,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`) AGAINST ('First')");
+WHERE CONTAINS (h.Name,'First')");
         }
 
         [ConditionalFact]
@@ -40,20 +40,20 @@ WHERE MATCH (`h`.`Name`) AGAINST ('First')");
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First')");
+WHERE CONTAINS (h.Name, `h`.`Garden`, 'First')");
         }
 
         [ConditionalFact]
         public virtual void Match_in_natural_language_mode_keywords_separated()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First, Second", XGMatchSearchMode.NaturalLanguage));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First", XGMatchSearchMode.NaturalLanguage)|| EF.Functions.Match(herb.Name, "Second", XGMatchSearchMode.NaturalLanguage));
 
             Assert.Equal(6, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`) AGAINST ('First, Second')");
+WHERE CONTAINS (h.Name,'First') OR CONTAINS (h.Name,'Second')");
         }
 
         [ConditionalFact]
@@ -66,20 +66,20 @@ WHERE MATCH (`h`.`Name`) AGAINST ('First, Second')");
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First, Second')");
+WHERE CONTAINS (h.Name, `h`.`Garden`, 'First, Second')");
         }
 
         [ConditionalFact]
         public virtual void Match_in_natural_language_mode_multiple_keywords()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First Herb", XGMatchSearchMode.NaturalLanguage));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First", XGMatchSearchMode.NaturalLanguage) || EF.Functions.Match(herb.Name, "Herb", XGMatchSearchMode.NaturalLanguage));
 
             Assert.Equal(9, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`) AGAINST ('First Herb')");
+WHERE CONTAINS (h.Name,'First') OR CONTAINS (h.Name,'Herb')");
         }
 
         [ConditionalFact]
@@ -92,20 +92,20 @@ WHERE MATCH (`h`.`Name`) AGAINST ('First Herb')");
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First Herb')");
+WHERE CONTAINS (h.Name, `h`.`Garden`, 'First Herb')");
         }
 
         [ConditionalFact]
         public virtual void Match_in_natural_language_mode_multiple_keywords_separated()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First, Second", XGMatchSearchMode.NaturalLanguage));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First", XGMatchSearchMode.NaturalLanguage) || EF.Functions.Match(herb.Name, "Second", XGMatchSearchMode.NaturalLanguage));
 
             Assert.Equal(6, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`) AGAINST ('First, Second')");
+WHERE CONTAINS (h.Name,'First') OR CONTAINS (h.Name,'Second')");
         }
 
         [ConditionalFact]
@@ -118,33 +118,33 @@ WHERE MATCH (`h`.`Name`) AGAINST ('First, Second')");
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First, Second')");
+WHERE CONTAINS (h.Name, `h`.`Garden`, 'First, Second')");
         }
 
         [ConditionalFact]
         public virtual void Match_in_boolean_mode()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First*", XGMatchSearchMode.Boolean));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First%", XGMatchSearchMode.Boolean));
 
             Assert.Equal(3, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`) AGAINST ('First*' IN BOOLEAN MODE)");
+WHERE CONTAINS (h.Name,'First%')");
         }
 
         [ConditionalFact]
         public virtual void Match_in_boolean_mode_multiple_columns()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(new []{herb.Name, herb.Garden}, "First*", XGMatchSearchMode.Boolean));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(new []{herb.Name, herb.Garden}, "First%", XGMatchSearchMode.Boolean));
 
             Assert.Equal(5, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First*' IN BOOLEAN MODE)");
+WHERE CONTAINS (h.Name, `h`.`Garden`,'First%')");
         }
 
         [ConditionalFact]
@@ -153,16 +153,16 @@ WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First*' IN BOOLEAN MODE)");
             using var context = CreateContext();
 
             var searchMode = XGMatchSearchMode.Boolean;
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First*", searchMode));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First%", searchMode));
 
             Assert.Equal(3, count);
 
             AssertSql(
-                @"@__searchMode_1='2'
+                @":__searchMode_1='2'
 
 SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE ((@__searchMode_1 = 0) AND MATCH (`h`.`Name`) AGAINST ('First*')) OR (((@__searchMode_1 = 1) AND MATCH (`h`.`Name`) AGAINST ('First*' WITH QUERY EXPANSION)) OR ((@__searchMode_1 = 2) AND MATCH (`h`.`Name`) AGAINST ('First*' IN BOOLEAN MODE)))");
+WHERE ((:__searchMode_1 = 0) AND CONTAINS (h.Name,'First%')) OR (((:__searchMode_1 = 1) AND CONTAINS (h.Name,'First%')) OR ((:__searchMode_1 = 2) AND CONTAINS (h.Name,'First%')))");
         }
 
         [ConditionalFact]
@@ -171,68 +171,68 @@ WHERE ((@__searchMode_1 = 0) AND MATCH (`h`.`Name`) AGAINST ('First*')) OR (((@_
             using var context = CreateContext();
 
             var searchMode = XGMatchSearchMode.Boolean;
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(new []{herb.Name, herb.Garden}, "First*", searchMode));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(new []{herb.Name, herb.Garden}, "First%", searchMode));
 
             Assert.Equal(5, count);
 
             AssertSql(
-                @"@__searchMode_1='2'
+                @":__searchMode_1='2'
 
 SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE ((@__searchMode_1 = 0) AND MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First*')) OR (((@__searchMode_1 = 1) AND MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First*' WITH QUERY EXPANSION)) OR ((@__searchMode_1 = 2) AND MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First*' IN BOOLEAN MODE)))");
+WHERE ((:__searchMode_1 = 0) AND CONTAINS (h.Name, `h`.`Garden`,'First%')) OR (((:__searchMode_1 = 1) AND CONTAINS (h.Name, `h`.`Garden`,'First%' WITH QUERY EXPANSION)) OR ((:__searchMode_1 = 2) AND CONTAINS (h.Name, `h`.`Garden`,'First%')))");
         }
 
         [ConditionalFact]
         public virtual void Match_in_boolean_mode_keywords()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First* Herb*", XGMatchSearchMode.Boolean));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First%", XGMatchSearchMode.Boolean) || EF.Functions.Match(herb.Name,"Herb%", XGMatchSearchMode.Boolean));
 
             Assert.Equal(9, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`) AGAINST ('First* Herb*' IN BOOLEAN MODE)");
+WHERE CONTAINS (h.Name,'First%') OR CONTAINS (h.Name,'Herb%')");
         }
 
         [ConditionalFact]
         public virtual void Match_in_boolean_mode_keywords_multiple_columns()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(new []{herb.Name, herb.Garden}, "First* Herb*", XGMatchSearchMode.Boolean));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(new []{herb.Name, herb.Garden}, "First% Herb*", XGMatchSearchMode.Boolean));
 
             Assert.Equal(9, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First* Herb*' IN BOOLEAN MODE)");
+WHERE CONTAINS (h.Name, `h`.`Garden`, 'First% Herb*')");
         }
 
         [ConditionalFact]
         public virtual void Match_in_boolean_mode_keyword_excluded()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "Herb* -Second", XGMatchSearchMode.Boolean));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "Herb%", XGMatchSearchMode.Boolean) && !EF.Functions.Match(herb.Name, "Second", XGMatchSearchMode.Boolean));
 
             Assert.Equal(6, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`) AGAINST ('Herb* -Second' IN BOOLEAN MODE)");
+WHERE CONTAINS (h.Name,'Herb%') AND NOT (CONTAINS (h.Name,'Second'))");
         }
 
         [ConditionalFact]
         public virtual void Match_in_boolean_mode_keyword_excluded_multiple_columns()
         {
             using var context = CreateContext();
-            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(new []{herb.Name, herb.Garden}, "Herb* -Second", XGMatchSearchMode.Boolean));
+            var count = context.Set<Herb>().Count(herb => EF.Functions.Match(new []{herb.Name, herb.Garden}, "Herb*", XGMatchSearchMode.Boolean) && !EF.Functions.Match(new[] { herb.Name, herb.Garden }, "Second", XGMatchSearchMode.Boolean));
 
             Assert.Equal(4, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('Herb* -Second' IN BOOLEAN MODE)");
+WHERE CONTAINS (h.Name, `h`.`Garden`, 'Herb* -Second')");
         }
 
         [ConditionalFact]
@@ -241,11 +241,11 @@ WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('Herb* -Second' IN BOOLEAN MODE)
             using var context = CreateContext();
             var count = context.Set<Herb>().Count(herb => EF.Functions.Match(herb.Name, "First", XGMatchSearchMode.NaturalLanguageWithQueryExpansion));
 
-            Assert.Equal(9, count);
+            Assert.Equal(3, count);
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`) AGAINST ('First' WITH QUERY EXPANSION)");
+WHERE CONTAINS (h.Name,'First')");
         }
 
         [ConditionalFact]
@@ -258,7 +258,7 @@ WHERE MATCH (`h`.`Name`) AGAINST ('First' WITH QUERY EXPANSION)");
 
             AssertSql(@"SELECT COUNT(*)
 FROM `Herb` AS `h`
-WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First' WITH QUERY EXPANSION)");
+WHERE CONTAINS (h.Name, `h`.`Garden`, 'First' WITH QUERY EXPANSION)");
         }
 
         private void AssertSql(params string[] expected) => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
@@ -297,8 +297,8 @@ WHERE MATCH (`h`.`Name`, `h`.`Garden`) AGAINST ('First' WITH QUERY EXPANSION)");
 
                         // We force a case-insensitive collation here, because there exists a bug, where XuGu and MariaDB will handle
                         // FULLTEXT searches for `..._bin` collations incorrectly.
-                        herb.Property(h => h.Name).UseCollation(AppConfig.ServerVersion.DefaultUtf8CiCollation);
-                        herb.Property(h => h.Garden).UseCollation(AppConfig.ServerVersion.DefaultUtf8CiCollation);
+                        herb.Property(h => h.Name);
+                        herb.Property(h => h.Garden);
                     });
             }
 

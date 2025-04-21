@@ -11,7 +11,6 @@ namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
     /// Represents a <see cref="ServerVersion"/> for XuGu database servers.
-    /// For MariaDB database servers, use <see cref="MariaDbServerVersion"/> instead.
     /// </summary>
     public class XGServerVersion : ServerVersion
     {

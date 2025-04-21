@@ -38,6 +38,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
                 ? AppendInsertReturningOperation(commandStringBuilder, command, commandPosition, out requiresTransaction)
                 : base.AppendInsertOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
 
+
+
         public virtual ResultSetMapping AppendBulkInsertOperation(
             StringBuilder commandStringBuilder,
             IReadOnlyList<IReadOnlyModificationCommand> modificationCommands,
@@ -68,6 +70,34 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
                 AppendInsertOperation(commandStringBuilder, modification, commandPosition, out var localRequiresTransaction);
                 requiresTransaction = requiresTransaction || localRequiresTransaction;
                 if(index<modificationCommands.Count-1) commandStringBuilder.AppendLine("--GO");
+                index++;
+            }
+
+            return ResultSetMapping.LastInResultSet;
+        }
+
+        public virtual ResultSetMapping AppendBulkDeleteOperation(
+            StringBuilder commandStringBuilder,
+            IReadOnlyList<IReadOnlyModificationCommand> modificationCommands,
+            int commandPosition,
+            out bool requiresTransaction)
+        {
+            if (modificationCommands.Count == 1)
+            {
+                return AppendDeleteOperation(commandStringBuilder, modificationCommands[0], commandPosition, out requiresTransaction);
+            }
+
+            var readOperations = modificationCommands[0].ColumnModifications.Where(o => o.IsRead).ToList();
+            var writeOperations = modificationCommands[0].ColumnModifications.Where(o => o.IsWrite).ToList();
+
+
+            requiresTransaction = modificationCommands.Count > 1;
+            int index = 0;
+            foreach (var modification in modificationCommands)
+            {
+                AppendDeleteOperation(commandStringBuilder, modification, commandPosition, out var localRequiresTransaction);
+                requiresTransaction = requiresTransaction || localRequiresTransaction;
+                if (index < modificationCommands.Count - 1) commandStringBuilder.AppendLine("--GO");
                 index++;
             }
 
@@ -115,7 +145,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
             {
                 // An empty column and value list signales XuGu that only default values should be used.
                 // If not all columns have default values defined, an error occurs if STRICT_ALL_TABLES has been set.
-                commandStringBuilder.Append(" ()");
+                commandStringBuilder.Append(" DEFAULT");
             }
         }
 
@@ -140,7 +170,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
 
             if (operations.Count <= 0)
             {
-                commandStringBuilder.Append("()");
+                commandStringBuilder.Append("");
             }
         }
 
@@ -217,8 +247,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
         {
             commandStringBuilder
                 .Append("SELECT ROWNUM")
-                .Append(SqlGenerationHelper.StatementTerminator).AppendLine()
-                .AppendLine();
+                .Append(SqlGenerationHelper.StatementTerminator).AppendLine().AppendLine("--GO");
 
             return ResultSetMapping.LastInResultSet | ResultSetMapping.ResultSetWithRowsAffectedOnly;
         }

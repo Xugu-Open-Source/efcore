@@ -42,7 +42,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
             base.AddColumnOperation_with_unicode_overridden();
 
             AssertSql(
-                @"ALTER TABLE `Person` ADD `Name` longtext NULL;");
+                @"ALTER TABLE `Person` ADD `Name` varchar NULL;");
         }
 
         public override void AddColumnOperation_with_unicode_no_model()
@@ -50,7 +50,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
             base.AddColumnOperation_with_unicode_no_model();
 
             AssertSql(
-                @"ALTER TABLE `Person` ADD `Name` longtext NULL;");
+                @"ALTER TABLE `Person` ADD `Name` varchar NULL;");
         }
 
         public override void AddColumnOperation_with_fixed_length_no_model()
@@ -58,7 +58,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
             base.AddColumnOperation_with_fixed_length_no_model();
 
             AssertSql(
-                @"ALTER TABLE `Person` ADD `Name` char(100) NULL;");
+                @"ALTER TABLE `Person` ADD `Name` varchar(100) NULL;");
         }
 
         public override void AddColumnOperation_with_maxLength_no_model()
@@ -106,7 +106,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
             base.RenameTableOperation_legacy();
 
             AssertSql(
-                @"ALTER TABLE `People` RENAME `Person`;");
+                @"ALTER TABLE `People` RENAME TO `Person`;");
         }
 
         public override void RenameTableOperation()
@@ -114,7 +114,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
             base.RenameTableOperation();
 
             AssertSql(
-                @"ALTER TABLE `People` RENAME `Person`;");
+                @"ALTER TABLE `People` RENAME TO `Person`;");
         }
 
         public override void InsertDataOperation_all_args_spatial()
@@ -157,8 +157,9 @@ VALUES ('John', 'Snow');");
 
             AssertSql(
                 @"INSERT INTO `People` (`First Name`)
-VALUES ('John'),
-('Daenerys');");
+VALUES ('John');
+INSERT INTO `People` (`First Name`)
+VALUES ('Daenerys');");
         }
 
         public override void InsertDataOperation_throws_for_unsupported_column_types()
@@ -423,8 +424,8 @@ SELECT ROW_COUNT();");
             base.DefaultValue_with_line_breaks(isUnicode);
 
             AssertSql(
-                @"CREATE TABLE `TestLineBreaks` (
-    `TestDefaultValue` longtext NOT NULL DEFAULT (CONCAT('', CHAR(13, 10), 'Various Line', CHAR(13), 'Breaks', CHAR(10), ''))
+                @"CREATE TABLE `dbo`.`TestLineBreaks` (
+    `TestDefaultValue` varchar DEFAULT CONCAT('', CHR(13) || CHR(10), 'Various Line', CHR(13), 'Breaks', CHR(10), '') NOT NULL
 );");
         }
 
@@ -434,8 +435,8 @@ SELECT ROW_COUNT();");
             base.DefaultValue_with_line_breaks_2(isUnicode);
 
         AssertSql(
-            @"CREATE TABLE `TestLineBreaks` (
-    `TestDefaultValue` longtext NOT NULL DEFAULT (CONCAT('0', CHAR(13, 10), '1', CHAR(13, 10), '2', CHAR(13, 10), '3', CHAR(13, 10), '4', CHAR(13, 10), '5', CHAR(13, 10), '6', CHAR(13, 10), '7', CHAR(13, 10), '8', CHAR(13, 10), '9', CHAR(13, 10), '10', CHAR(13, 10), '11', CHAR(13, 10), '12', CHAR(13, 10), '13', CHAR(13, 10), '14', CHAR(13, 10), '15', CHAR(13, 10), '16', CHAR(13, 10), '17', CHAR(13, 10), '18', CHAR(13, 10), '19', CHAR(13, 10), '20', CHAR(13, 10), '21', CHAR(13, 10), '22', CHAR(13, 10), '23', CHAR(13, 10), '24', CHAR(13, 10), '25', CHAR(13, 10), '26', CHAR(13, 10), '27', CHAR(13, 10), '28', CHAR(13, 10), '29', CHAR(13, 10), '30', CHAR(13, 10), '31', CHAR(13, 10), '32', CHAR(13, 10), '33', CHAR(13, 10), '34', CHAR(13, 10), '35', CHAR(13, 10), '36', CHAR(13, 10), '37', CHAR(13, 10), '38', CHAR(13, 10), '39', CHAR(13, 10), '40', CHAR(13, 10), '41', CHAR(13, 10), '42', CHAR(13, 10), '43', CHAR(13, 10), '44', CHAR(13, 10), '45', CHAR(13, 10), '46', CHAR(13, 10), '47', CHAR(13, 10), '48', CHAR(13, 10), '49', CHAR(13, 10), '50', CHAR(13, 10), '51', CHAR(13, 10), '52', CHAR(13, 10), '53', CHAR(13, 10), '54', CHAR(13, 10), '55', CHAR(13, 10), '56', CHAR(13, 10), '57', CHAR(13, 10), '58', CHAR(13, 10), '59', CHAR(13, 10), '60', CHAR(13, 10), '61', CHAR(13, 10), '62', CHAR(13, 10), '63', CHAR(13, 10), '64', CHAR(13, 10), '65', CHAR(13, 10), '66', CHAR(13, 10), '67', CHAR(13, 10), '68', CHAR(13, 10), '69', CHAR(13, 10), '70', CHAR(13, 10), '71', CHAR(13, 10), '72', CHAR(13, 10), '73', CHAR(13, 10), '74', CHAR(13, 10), '75', CHAR(13, 10), '76', CHAR(13, 10), '77', CHAR(13, 10), '78', CHAR(13, 10), '79', CHAR(13, 10), '80', CHAR(13, 10), '81', CHAR(13, 10), '82', CHAR(13, 10), '83', CHAR(13, 10), '84', CHAR(13, 10), '85', CHAR(13, 10), '86', CHAR(13, 10), '87', CHAR(13, 10), '88', CHAR(13, 10), '89', CHAR(13, 10), '90', CHAR(13, 10), '91', CHAR(13, 10), '92', CHAR(13, 10), '93', CHAR(13, 10), '94', CHAR(13, 10), '95', CHAR(13, 10), '96', CHAR(13, 10), '97', CHAR(13, 10), '98', CHAR(13, 10), '99', CHAR(13, 10), '100', CHAR(13, 10), '101', CHAR(13, 10), '102', CHAR(13, 10), '103', CHAR(13, 10), '104', CHAR(13, 10), '105', CHAR(13, 10), '106', CHAR(13, 10), '107', CHAR(13, 10), '108', CHAR(13, 10), '109', CHAR(13, 10), '110', CHAR(13, 10), '111', CHAR(13, 10), '112', CHAR(13, 10), '113', CHAR(13, 10), '114', CHAR(13, 10), '115', CHAR(13, 10), '116', CHAR(13, 10), '117', CHAR(13, 10), '118', CHAR(13, 10), '119', CHAR(13, 10), '120', CHAR(13, 10), '121', CHAR(13, 10), '122', CHAR(13, 10), '123', CHAR(13, 10), '124', CHAR(13, 10), '125', CHAR(13, 10), '126', CHAR(13, 10), '127', CHAR(13, 10), '128', CHAR(13, 10), '129', CHAR(13, 10), '130', CHAR(13, 10), '131', CHAR(13, 10), '132', CHAR(13, 10), '133', CHAR(13, 10), '134', CHAR(13, 10), '135', CHAR(13, 10), '136', CHAR(13, 10), '137', CHAR(13, 10), '138', CHAR(13, 10), '139', CHAR(13, 10), '140', CHAR(13, 10), '141', CHAR(13, 10), '142', CHAR(13, 10), '143', CHAR(13, 10), '144', CHAR(13, 10), '145', CHAR(13, 10), '146', CHAR(13, 10), '147', CHAR(13, 10), '148', CHAR(13, 10), '149', CHAR(13, 10), '150', CHAR(13, 10), '151', CHAR(13, 10), '152', CHAR(13, 10), '153', CHAR(13, 10), '154', CHAR(13, 10), '155', CHAR(13, 10), '156', CHAR(13, 10), '157', CHAR(13, 10), '158', CHAR(13, 10), '159', CHAR(13, 10), '160', CHAR(13, 10), '161', CHAR(13, 10), '162', CHAR(13, 10), '163', CHAR(13, 10), '164', CHAR(13, 10), '165', CHAR(13, 10), '166', CHAR(13, 10), '167', CHAR(13, 10), '168', CHAR(13, 10), '169', CHAR(13, 10), '170', CHAR(13, 10), '171', CHAR(13, 10), '172', CHAR(13, 10), '173', CHAR(13, 10), '174', CHAR(13, 10), '175', CHAR(13, 10), '176', CHAR(13, 10), '177', CHAR(13, 10), '178', CHAR(13, 10), '179', CHAR(13, 10), '180', CHAR(13, 10), '181', CHAR(13, 10), '182', CHAR(13, 10), '183', CHAR(13, 10), '184', CHAR(13, 10), '185', CHAR(13, 10), '186', CHAR(13, 10), '187', CHAR(13, 10), '188', CHAR(13, 10), '189', CHAR(13, 10), '190', CHAR(13, 10), '191', CHAR(13, 10), '192', CHAR(13, 10), '193', CHAR(13, 10), '194', CHAR(13, 10), '195', CHAR(13, 10), '196', CHAR(13, 10), '197', CHAR(13, 10), '198', CHAR(13, 10), '199', CHAR(13, 10), '200', CHAR(13, 10), '201', CHAR(13, 10), '202', CHAR(13, 10), '203', CHAR(13, 10), '204', CHAR(13, 10), '205', CHAR(13, 10), '206', CHAR(13, 10), '207', CHAR(13, 10), '208', CHAR(13, 10), '209', CHAR(13, 10), '210', CHAR(13, 10), '211', CHAR(13, 10), '212', CHAR(13, 10), '213', CHAR(13, 10), '214', CHAR(13, 10), '215', CHAR(13, 10), '216', CHAR(13, 10), '217', CHAR(13, 10), '218', CHAR(13, 10), '219', CHAR(13, 10), '220', CHAR(13, 10), '221', CHAR(13, 10), '222', CHAR(13, 10), '223', CHAR(13, 10), '224', CHAR(13, 10), '225', CHAR(13, 10), '226', CHAR(13, 10), '227', CHAR(13, 10), '228', CHAR(13, 10), '229', CHAR(13, 10), '230', CHAR(13, 10), '231', CHAR(13, 10), '232', CHAR(13, 10), '233', CHAR(13, 10), '234', CHAR(13, 10), '235', CHAR(13, 10), '236', CHAR(13, 10), '237', CHAR(13, 10), '238', CHAR(13, 10), '239', CHAR(13, 10), '240', CHAR(13, 10), '241', CHAR(13, 10), '242', CHAR(13, 10), '243', CHAR(13, 10), '244', CHAR(13, 10), '245', CHAR(13, 10), '246', CHAR(13, 10), '247', CHAR(13, 10), '248', CHAR(13, 10), '249', CHAR(13, 10), '250', CHAR(13, 10), '251', CHAR(13, 10), '252', CHAR(13, 10), '253', CHAR(13, 10), '254', CHAR(13, 10), '255', CHAR(13, 10), '256', CHAR(13, 10), '257', CHAR(13, 10), '258', CHAR(13, 10), '259', CHAR(13, 10), '260', CHAR(13, 10), '261', CHAR(13, 10), '262', CHAR(13, 10), '263', CHAR(13, 10), '264', CHAR(13, 10), '265', CHAR(13, 10), '266', CHAR(13, 10), '267', CHAR(13, 10), '268', CHAR(13, 10), '269', CHAR(13, 10), '270', CHAR(13, 10), '271', CHAR(13, 10), '272', CHAR(13, 10), '273', CHAR(13, 10), '274', CHAR(13, 10), '275', CHAR(13, 10), '276', CHAR(13, 10), '277', CHAR(13, 10), '278', CHAR(13, 10), '279', CHAR(13, 10), '280', CHAR(13, 10), '281', CHAR(13, 10), '282', CHAR(13, 10), '283', CHAR(13, 10), '284', CHAR(13, 10), '285', CHAR(13, 10), '286', CHAR(13, 10), '287', CHAR(13, 10), '288', CHAR(13, 10), '289', CHAR(13, 10), '290', CHAR(13, 10), '291', CHAR(13, 10), '292', CHAR(13, 10), '293', CHAR(13, 10), '294', CHAR(13, 10), '295', CHAR(13, 10), '296', CHAR(13, 10), '297', CHAR(13, 10), '298', CHAR(13, 10), '299', CHAR(13, 10), ''))
+            @"CREATE TABLE `dbo`.`TestLineBreaks` (
+    `TestDefaultValue` varchar DEFAULT CONCAT('0', CHR(13) || CHR(10), '1', CHR(13) || CHR(10), '2', CHR(13) || CHR(10), '3', CHR(13) || CHR(10), '4', CHR(13) || CHR(10), '5', CHR(13) || CHR(10), '6', CHR(13) || CHR(10), '7', CHR(13) || CHR(10), '8', CHR(13) || CHR(10), '9', CHR(13) || CHR(10), '10', CHR(13) || CHR(10), '11', CHR(13) || CHR(10), '12', CHR(13) || CHR(10), '13', CHR(13) || CHR(10), '14', CHR(13) || CHR(10), '15', CHR(13) || CHR(10), '16', CHR(13) || CHR(10), '17', CHR(13) || CHR(10), '18', CHR(13) || CHR(10), '19', CHR(13) || CHR(10), '20', CHR(13) || CHR(10), '21', CHR(13) || CHR(10), '22', CHR(13) || CHR(10), '23', CHR(13) || CHR(10), '24', CHR(13) || CHR(10), '25', CHR(13) || CHR(10), '26', CHR(13) || CHR(10), '27', CHR(13) || CHR(10), '28', CHR(13) || CHR(10), '29', CHR(13) || CHR(10), '30', CHR(13) || CHR(10), '31', CHR(13) || CHR(10), '32', CHR(13) || CHR(10), '33', CHR(13) || CHR(10), '34', CHR(13) || CHR(10), '35', CHR(13) || CHR(10), '36', CHR(13) || CHR(10), '37', CHR(13) || CHR(10), '38', CHR(13) || CHR(10), '39', CHR(13) || CHR(10), '40', CHR(13) || CHR(10), '41', CHR(13) || CHR(10), '42', CHR(13) || CHR(10), '43', CHR(13) || CHR(10), '44', CHR(13) || CHR(10), '45', CHR(13) || CHR(10), '46', CHR(13) || CHR(10), '47', CHR(13) || CHR(10), '48', CHR(13) || CHR(10), '49', CHR(13) || CHR(10), '50', CHR(13) || CHR(10), '51', CHR(13) || CHR(10), '52', CHR(13) || CHR(10), '53', CHR(13) || CHR(10), '54', CHR(13) || CHR(10), '55', CHR(13) || CHR(10), '56', CHR(13) || CHR(10), '57', CHR(13) || CHR(10), '58', CHR(13) || CHR(10), '59', CHR(13) || CHR(10), '60', CHR(13) || CHR(10), '61', CHR(13) || CHR(10), '62', CHR(13) || CHR(10), '63', CHR(13) || CHR(10), '64', CHR(13) || CHR(10), '65', CHR(13) || CHR(10), '66', CHR(13) || CHR(10), '67', CHR(13) || CHR(10), '68', CHR(13) || CHR(10), '69', CHR(13) || CHR(10), '70', CHR(13) || CHR(10), '71', CHR(13) || CHR(10), '72', CHR(13) || CHR(10), '73', CHR(13) || CHR(10), '74', CHR(13) || CHR(10), '75', CHR(13) || CHR(10), '76', CHR(13) || CHR(10), '77', CHR(13) || CHR(10), '78', CHR(13) || CHR(10), '79', CHR(13) || CHR(10), '80', CHR(13) || CHR(10), '81', CHR(13) || CHR(10), '82', CHR(13) || CHR(10), '83', CHR(13) || CHR(10), '84', CHR(13) || CHR(10), '85', CHR(13) || CHR(10), '86', CHR(13) || CHR(10), '87', CHR(13) || CHR(10), '88', CHR(13) || CHR(10), '89', CHR(13) || CHR(10), '90', CHR(13) || CHR(10), '91', CHR(13) || CHR(10), '92', CHR(13) || CHR(10), '93', CHR(13) || CHR(10), '94', CHR(13) || CHR(10), '95', CHR(13) || CHR(10), '96', CHR(13) || CHR(10), '97', CHR(13) || CHR(10), '98', CHR(13) || CHR(10), '99', CHR(13) || CHR(10), '100', CHR(13) || CHR(10), '101', CHR(13) || CHR(10), '102', CHR(13) || CHR(10), '103', CHR(13) || CHR(10), '104', CHR(13) || CHR(10), '105', CHR(13) || CHR(10), '106', CHR(13) || CHR(10), '107', CHR(13) || CHR(10), '108', CHR(13) || CHR(10), '109', CHR(13) || CHR(10), '110', CHR(13) || CHR(10), '111', CHR(13) || CHR(10), '112', CHR(13) || CHR(10), '113', CHR(13) || CHR(10), '114', CHR(13) || CHR(10), '115', CHR(13) || CHR(10), '116', CHR(13) || CHR(10), '117', CHR(13) || CHR(10), '118', CHR(13) || CHR(10), '119', CHR(13) || CHR(10), '120', CHR(13) || CHR(10), '121', CHR(13) || CHR(10), '122', CHR(13) || CHR(10), '123', CHR(13) || CHR(10), '124', CHR(13) || CHR(10), '125', CHR(13) || CHR(10), '126', CHR(13) || CHR(10), '127', CHR(13) || CHR(10), '128', CHR(13) || CHR(10), '129', CHR(13) || CHR(10), '130', CHR(13) || CHR(10), '131', CHR(13) || CHR(10), '132', CHR(13) || CHR(10), '133', CHR(13) || CHR(10), '134', CHR(13) || CHR(10), '135', CHR(13) || CHR(10), '136', CHR(13) || CHR(10), '137', CHR(13) || CHR(10), '138', CHR(13) || CHR(10), '139', CHR(13) || CHR(10), '140', CHR(13) || CHR(10), '141', CHR(13) || CHR(10), '142', CHR(13) || CHR(10), '143', CHR(13) || CHR(10), '144', CHR(13) || CHR(10), '145', CHR(13) || CHR(10), '146', CHR(13) || CHR(10), '147', CHR(13) || CHR(10), '148', CHR(13) || CHR(10), '149', CHR(13) || CHR(10), '150', CHR(13) || CHR(10), '151', CHR(13) || CHR(10), '152', CHR(13) || CHR(10), '153', CHR(13) || CHR(10), '154', CHR(13) || CHR(10), '155', CHR(13) || CHR(10), '156', CHR(13) || CHR(10), '157', CHR(13) || CHR(10), '158', CHR(13) || CHR(10), '159', CHR(13) || CHR(10), '160', CHR(13) || CHR(10), '161', CHR(13) || CHR(10), '162', CHR(13) || CHR(10), '163', CHR(13) || CHR(10), '164', CHR(13) || CHR(10), '165', CHR(13) || CHR(10), '166', CHR(13) || CHR(10), '167', CHR(13) || CHR(10), '168', CHR(13) || CHR(10), '169', CHR(13) || CHR(10), '170', CHR(13) || CHR(10), '171', CHR(13) || CHR(10), '172', CHR(13) || CHR(10), '173', CHR(13) || CHR(10), '174', CHR(13) || CHR(10), '175', CHR(13) || CHR(10), '176', CHR(13) || CHR(10), '177', CHR(13) || CHR(10), '178', CHR(13) || CHR(10), '179', CHR(13) || CHR(10), '180', CHR(13) || CHR(10), '181', CHR(13) || CHR(10), '182', CHR(13) || CHR(10), '183', CHR(13) || CHR(10), '184', CHR(13) || CHR(10), '185', CHR(13) || CHR(10), '186', CHR(13) || CHR(10), '187', CHR(13) || CHR(10), '188', CHR(13) || CHR(10), '189', CHR(13) || CHR(10), '190', CHR(13) || CHR(10), '191', CHR(13) || CHR(10), '192', CHR(13) || CHR(10), '193', CHR(13) || CHR(10), '194', CHR(13) || CHR(10), '195', CHR(13) || CHR(10), '196', CHR(13) || CHR(10), '197', CHR(13) || CHR(10), '198', CHR(13) || CHR(10), '199', CHR(13) || CHR(10), '200', CHR(13) || CHR(10), '201', CHR(13) || CHR(10), '202', CHR(13) || CHR(10), '203', CHR(13) || CHR(10), '204', CHR(13) || CHR(10), '205', CHR(13) || CHR(10), '206', CHR(13) || CHR(10), '207', CHR(13) || CHR(10), '208', CHR(13) || CHR(10), '209', CHR(13) || CHR(10), '210', CHR(13) || CHR(10), '211', CHR(13) || CHR(10), '212', CHR(13) || CHR(10), '213', CHR(13) || CHR(10), '214', CHR(13) || CHR(10), '215', CHR(13) || CHR(10), '216', CHR(13) || CHR(10), '217', CHR(13) || CHR(10), '218', CHR(13) || CHR(10), '219', CHR(13) || CHR(10), '220', CHR(13) || CHR(10), '221', CHR(13) || CHR(10), '222', CHR(13) || CHR(10), '223', CHR(13) || CHR(10), '224', CHR(13) || CHR(10), '225', CHR(13) || CHR(10), '226', CHR(13) || CHR(10), '227', CHR(13) || CHR(10), '228', CHR(13) || CHR(10), '229', CHR(13) || CHR(10), '230', CHR(13) || CHR(10), '231', CHR(13) || CHR(10), '232', CHR(13) || CHR(10), '233', CHR(13) || CHR(10), '234', CHR(13) || CHR(10), '235', CHR(13) || CHR(10), '236', CHR(13) || CHR(10), '237', CHR(13) || CHR(10), '238', CHR(13) || CHR(10), '239', CHR(13) || CHR(10), '240', CHR(13) || CHR(10), '241', CHR(13) || CHR(10), '242', CHR(13) || CHR(10), '243', CHR(13) || CHR(10), '244', CHR(13) || CHR(10), '245', CHR(13) || CHR(10), '246', CHR(13) || CHR(10), '247', CHR(13) || CHR(10), '248', CHR(13) || CHR(10), '249', CHR(13) || CHR(10), '250', CHR(13) || CHR(10), '251', CHR(13) || CHR(10), '252', CHR(13) || CHR(10), '253', CHR(13) || CHR(10), '254', CHR(13) || CHR(10), '255', CHR(13) || CHR(10), '256', CHR(13) || CHR(10), '257', CHR(13) || CHR(10), '258', CHR(13) || CHR(10), '259', CHR(13) || CHR(10), '260', CHR(13) || CHR(10), '261', CHR(13) || CHR(10), '262', CHR(13) || CHR(10), '263', CHR(13) || CHR(10), '264', CHR(13) || CHR(10), '265', CHR(13) || CHR(10), '266', CHR(13) || CHR(10), '267', CHR(13) || CHR(10), '268', CHR(13) || CHR(10), '269', CHR(13) || CHR(10), '270', CHR(13) || CHR(10), '271', CHR(13) || CHR(10), '272', CHR(13) || CHR(10), '273', CHR(13) || CHR(10), '274', CHR(13) || CHR(10), '275', CHR(13) || CHR(10), '276', CHR(13) || CHR(10), '277', CHR(13) || CHR(10), '278', CHR(13) || CHR(10), '279', CHR(13) || CHR(10), '280', CHR(13) || CHR(10), '281', CHR(13) || CHR(10), '282', CHR(13) || CHR(10), '283', CHR(13) || CHR(10), '284', CHR(13) || CHR(10), '285', CHR(13) || CHR(10), '286', CHR(13) || CHR(10), '287', CHR(13) || CHR(10), '288', CHR(13) || CHR(10), '289', CHR(13) || CHR(10), '290', CHR(13) || CHR(10), '291', CHR(13) || CHR(10), '292', CHR(13) || CHR(10), '293', CHR(13) || CHR(10), '294', CHR(13) || CHR(10), '295', CHR(13) || CHR(10), '296', CHR(13) || CHR(10), '297', CHR(13) || CHR(10), '298', CHR(13) || CHR(10), '299', CHR(13) || CHR(10), '') NOT NULL
 );");
         }
 
@@ -461,7 +462,7 @@ SELECT ROW_COUNT();");
 
             Assert.Equal(
                 @"CREATE TABLE `History` (
-    `Event` longtext NOT NULL
+    `Event` varchar NOT NULL
 );
 ",
                 Sql,
@@ -489,8 +490,8 @@ SELECT ROW_COUNT();");
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `History` (
-    `Event` longtext NOT NULL DEFAULT ('The Battle of Waterloo')
+                @"CREATE TABLE `SYSDBA`.`History` (
+    `Event` varchar DEFAULT 'The Battle of Waterloo' NOT NULL
 );
 ",
                 Sql,
@@ -518,8 +519,8 @@ SELECT ROW_COUNT();");
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `History` (
-    `Event` varchar(128) NOT NULL DEFAULT 'The Battle of Waterloo'
+                @"CREATE TABLE `SYSDBA`.`History` (
+    `Event` varchar(128) DEFAULT 'The Battle of Waterloo' NOT NULL
 );
 ",
                 Sql,
@@ -546,8 +547,8 @@ SELECT ROW_COUNT();");
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `History` (
-    `Event` VARCHAR(255) NOT NULL DEFAULT '2015-04-12 17:05:00'
+                @"CREATE TABLE `SYSDBA`.`History` (
+    `Event` VARCHAR(255) DEFAULT '2015-04-12 17:05:00' NOT NULL
 );
 ",
                 Sql,
@@ -580,7 +581,7 @@ SELECT ROW_COUNT();");
             Generate(new XGCreateDatabaseOperation { Name = "Northwind", Collation = "latin1_general_ci"});
 
             Assert.Equal(
-                @"CREATE DATABASE `Northwind` COLLATE latin1_general_ci;" + EOL,
+                @"CREATE DATABASE `Northwind`;" + EOL,
                 Sql);
         }
 
@@ -592,9 +593,7 @@ SELECT ROW_COUNT();");
                 new AlterDatabaseOperation {[XGAnnotationNames.CharSet] = "utf8mb4"});
 
             Assert.Equal(
-                @"CREATE DATABASE `Northwind` CHARACTER SET latin1;
-
-ALTER DATABASE CHARACTER SET utf8mb4;" + EOL,
+                @"CREATE DATABASE `Northwind` CHARACTER SET latin1;" + EOL,
                 Sql);
         }
 
@@ -606,13 +605,11 @@ ALTER DATABASE CHARACTER SET utf8mb4;" + EOL,
                 new AlterDatabaseOperation {Collation = "latin1_swedish_ci"});
 
             Assert.Equal(
-                @"CREATE DATABASE `Northwind` COLLATE latin1_general_ci;
-
-ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
+                @"CREATE DATABASE `Northwind`;" + EOL,
                 Sql);
         }
 
-        [ConditionalFact]
+        [ConditionalFact(Skip = "Not supported by XuGu")]
         public virtual void CreateTableUlongAutoincrement()
         {
             Generate(
@@ -638,14 +635,14 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                "CREATE TABLE `TestUlongAutoIncrement` (" + EOL +
-                "    `Id` bigint unsigned NOT NULL AUTO_INCREMENT," + EOL +
+                "CREATE TABLE `SYSDBA`.`TestUlongAutoIncrement` (" + EOL +
+                "    `Id` bigint unsigned IDENTITY NOT NULL," + EOL +
                 "    PRIMARY KEY (`Id`)" + EOL +
                 ");" + EOL,
                 Sql);
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [InlineData(false, false, "Latin1")]
         [InlineData(false, false, null)]
         [InlineData(false, true, "Latin1")]
@@ -700,10 +697,10 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
 
             var columnType = isIndex
                 ? $"varchar({XGTestHelpers.Instance.GetIndexedStringPropertyDefaultLength})"
-                : "longtext";
+                : "varchar";
 
             Assert.Equal(
-                $"ALTER TABLE `Person` ADD `Name` {columnType}{expectedCharSetName} NULL;" + EOL,
+                $"ALTER TABLE `Person` ADD `Name` {columnType} NULL;" + EOL,
                 Sql);
         }
 
@@ -713,7 +710,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
             base.AddColumnOperation_without_column_type();
 
             Assert.Equal(
-                @"ALTER TABLE `People` ADD `Alias` longtext NOT NULL;" + EOL,
+                @"ALTER TABLE `People` ADD `Alias` varchar NOT NULL;" + EOL,
                 Sql);
         }
 
@@ -731,9 +728,9 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
             });
 
             Assert.Equal(
-                "ALTER TABLE `People` ADD `Birthday` timestamp(6) NOT NULL DEFAULT '" +
+                "ALTER TABLE `People` ADD `Birthday` timestamp(6) DEFAULT '" +
                 new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified).ToString("yyyy-MM-dd HH:mm:ss.FFFFFF") +
-                "';" + EOL,
+                "' NOT NULL;" + EOL,
                 Sql);
         }
 
@@ -762,7 +759,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                @"ALTER TABLE `People` ADD `Birthday` timestamp NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP();" +
+                @"ALTER TABLE `People` ADD `Birthday` timestamp DEFAULT CURRENT_TIMESTAMP NULL;" +
                 EOL,
                 Sql);
         }
@@ -781,7 +778,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
             });
 
             Assert.Equal(
-                "ALTER TABLE `People` ADD `foo` int NOT NULL AUTO_INCREMENT;" + EOL,
+                "ALTER TABLE `People` ADD `foo` int IDENTITY NOT NULL;" + EOL,
                 Sql);
         }
 
@@ -800,7 +797,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                "ALTER TABLE `People` ADD `foo` int NOT NULL DEFAULT 8;" + EOL,
+                "ALTER TABLE `People` ADD `foo` int DEFAULT 8 NOT NULL;" + EOL,
                 Sql);
         }
 
@@ -837,7 +834,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                "ALTER TABLE `People` ADD `Birthday` timestamp(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6);" +
+                "ALTER TABLE `People` ADD `Birthday` timestamp(6) DEFAULT CURRENT_TIMESTAMP NULL;" +
                 EOL,
                 Sql);
         }
@@ -857,29 +854,15 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                "ALTER TABLE `People` ADD `IsLeader` bit NULL DEFAULT TRUE;" + EOL,
+                "ALTER TABLE `People` ADD `IsLeader` bit DEFAULT 1 NULL;" + EOL,
                 Sql);
         }
 
 
-        [ConditionalFact]
-        [InlineData("tinyblob")]
+        [ConditionalTheory]
         [InlineData("blob")]
-        [InlineData("mediumblob")]
-        [InlineData("longblob")]
-        [InlineData("tinytext")]
-        [InlineData("text")]
-        [InlineData("mediumtext")]
-        [InlineData("longtext")]
-        [InlineData("geometry")]
-        [InlineData("point")]
-        [InlineData("linestring")]
-        [InlineData("polygon")]
-        [InlineData("multipoint")]
-        [InlineData("multilinestring")]
-        [InlineData("multipolygon")]
-        [InlineData("geometrycollection")]
-        [InlineData("json")]
+        [InlineData("clob")]
+        [InlineData("varchar")]
         public void AlterColumnOperation_with_no_default_value_column_types(string type)
         {
             Generate(
@@ -979,7 +962,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                "ALTER TABLE `People` MODIFY COLUMN `Blob` varchar(95) AS ('TEST');" + EOL,
+                "ALTER TABLE `People` MODIFY COLUMN `Blob` varchar(95) NOT NULL;" + EOL,
                 Sql);
         }
 
@@ -998,7 +981,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                "ALTER TABLE `Universes` ADD `AnswerToEverything` int AS (6 * 9) STORED;" + EOL,
+                "ALTER TABLE `Universes` ADD `AnswerToEverything` int NOT NULL;" + EOL,
                 Sql);
         }
 
@@ -1181,7 +1164,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
             Assert.Equal(
                 AppConfig.ServerVersion.Supports.RenameColumn
                     ? "ALTER TABLE `Person` RENAME COLUMN `Name` TO `FullName`;" + EOL
-                    : "ALTER TABLE `Person` CHANGE `Name` `FullName` longtext NULL;" + EOL,
+                    : "ALTER TABLE `Person` CHANGE `Name` `FullName` varchar NULL;" + EOL,
                 Sql);
         }
 
@@ -1242,7 +1225,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                "ALTER TABLE `People` ADD `Name` varchar(255) CHARACTER SET sjis NULL;" +
+                "ALTER TABLE `People` ADD `Name` varchar(255) NULL;" +
                 EOL,
                 Sql);
         }
@@ -1288,7 +1271,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                         new AddColumnOperation
                         {
                             Name = "Brand",
-                            ColumnType = "longtext",
+                            ColumnType = "varchar",
                             ClrType = typeof(string),
                             Collation = "latin1_swedish_ci"
                         },
@@ -1308,11 +1291,11 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `IceCreams` (
-    `Brand` longtext COLLATE latin1_swedish_ci NOT NULL,
+                @"CREATE TABLE `SYSDBA`.`IceCreams` (
+    `Brand` varchar NOT NULL,
     `Name` varchar(255) NOT NULL,
     PRIMARY KEY (`Name`, `Brand`(20))
-) COLLATE=latin1_general_ci;" + EOL,
+);" + EOL,
                 Sql,
                 ignoreLineEndingDifferences: true);
         }
@@ -1347,7 +1330,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                @"ALTER TABLE `IceCreams` COLLATE=latin1_general_cs;" + EOL,
+                @"",
                 Sql,
                 ignoreLineEndingDifferences: true);
         }
@@ -1381,16 +1364,7 @@ ALTER DATABASE COLLATE latin1_swedish_ci;" + EOL,
                 });
 
             Assert.Equal(
-                @"set @__pomelo_TableCharset = (
-    SELECT `ccsa`.`CHARACTER_SET_NAME` as `TABLE_CHARACTER_SET`
-    FROM `INFORMATION_SCHEMA`.`TABLES` as `t`
-    LEFT JOIN `INFORMATION_SCHEMA`.`COLLATION_CHARACTER_SET_APPLICABILITY` as `ccsa` ON `ccsa`.`COLLATION_NAME` = `t`.`TABLE_COLLATION`
-    WHERE `TABLE_SCHEMA` = SCHEMA() AND `TABLE_NAME` = 'IceCreams' AND `TABLE_TYPE` IN ('BASE TABLE', 'VIEW'));
-
-SET @__pomelo_SqlExpr = CONCAT('ALTER TABLE `IceCreams` CHARACTER SET = ', @__pomelo_TableCharset, ';');
-PREPARE __pomelo_SqlExprExecute FROM @__pomelo_SqlExpr;
-EXECUTE __pomelo_SqlExprExecute;
-DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
+                @"",
                 Sql,
                 ignoreLineEndingDifferences: true);
         }
@@ -1407,7 +1381,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
                         new AddColumnOperation
                         {
                             Name = "Brand",
-                            ColumnType = "longtext",
+                            ColumnType = "varchar",
                             ClrType = typeof(string),
                             [XGAnnotationNames.CharSet] = "utf8mb4"
                         },
@@ -1427,11 +1401,11 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `IceCreams` (
-    `Brand` longtext CHARACTER SET utf8mb4 NOT NULL,
+                @"CREATE TABLE `SYSDBA`.`IceCreams` (
+    `Brand` varchar NOT NULL,
     `Name` varchar(255) NOT NULL,
     PRIMARY KEY (`Name`, `Brand`(20))
-) CHARACTER SET=latin1;" + EOL,
+);" + EOL,
                 Sql,
                 ignoreLineEndingDifferences: true);
         }
@@ -1466,7 +1440,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
                 });
 
             Assert.Equal(
-                @"ALTER TABLE `IceCreams` CHARACTER SET=utf8mb4;" + EOL,
+                @"",
                 Sql,
                 ignoreLineEndingDifferences: true);
         }
@@ -1500,16 +1474,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
                 });
 
             Assert.Equal(
-                @"set @__pomelo_TableCharset = (
-    SELECT `ccsa`.`CHARACTER_SET_NAME` as `TABLE_CHARACTER_SET`
-    FROM `INFORMATION_SCHEMA`.`TABLES` as `t`
-    LEFT JOIN `INFORMATION_SCHEMA`.`COLLATION_CHARACTER_SET_APPLICABILITY` as `ccsa` ON `ccsa`.`COLLATION_NAME` = `t`.`TABLE_COLLATION`
-    WHERE `TABLE_SCHEMA` = SCHEMA() AND `TABLE_NAME` = 'IceCreams' AND `TABLE_TYPE` IN ('BASE TABLE', 'VIEW'));
-
-SET @__pomelo_SqlExpr = CONCAT('ALTER TABLE `IceCreams` CHARACTER SET = ', @__pomelo_TableCharset, ';');
-PREPARE __pomelo_SqlExprExecute FROM @__pomelo_SqlExpr;
-EXECUTE __pomelo_SqlExprExecute;
-DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
+                @"",
                 Sql,
                 ignoreLineEndingDifferences: true);
         }
@@ -1539,10 +1504,10 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `IceCreams` (
+                @"CREATE TABLE `SYSDBA`.`IceCreams` (
     `Name` varchar(128) NOT NULL,
     PRIMARY KEY (`Name`)
-) CHECKSUM=1 MAX_ROWS=100;" + EOL,
+);" + EOL,
                 Sql,
                 ignoreLineEndingDifferences: true);
         }
@@ -1574,7 +1539,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
                 });
 
             Assert.Equal(
-                @"ALTER TABLE `IceCreams` MIN_ROWS=20 MAX_ROWS=200;" + EOL,
+                @"",
                 Sql,
                 ignoreLineEndingDifferences: true);
         }
@@ -1591,7 +1556,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
                         new AddColumnOperation
                         {
                             Name = "Brand",
-                            ColumnType = "longtext",
+                            ColumnType = "varchar",
                             ClrType = typeof(string),
                         },
                         new AddColumnOperation
@@ -1609,8 +1574,8 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;" + EOL,
                 });
 
             Assert.Equal(
-                @"CREATE TABLE `IceCreams` (
-    `Brand` longtext NOT NULL,
+                @"CREATE TABLE `SYSDBA`.`IceCreams` (
+    `Brand` varchar NOT NULL,
     `Name` varchar(255) NOT NULL,
     PRIMARY KEY (`Name`, `Brand`(20))
 );" + EOL,

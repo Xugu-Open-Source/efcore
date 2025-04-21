@@ -43,7 +43,7 @@ WHERE EXISTS (
     FROM (
         SELECT `ProductID` AS `Value` FROM `Products`
     ) AS `t`
-    WHERE CAST(`t`.`Value` AS signed) = `o`.`OrderID`)
+    WHERE `t`.`Value` = `o`.`OrderID`)
 """);
     }
 
@@ -53,11 +53,11 @@ WHERE EXISTS (
 
         AssertSql(
 """
-SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`, CAST(`t`.`Value` AS signed) AS `p`
+SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`, `t`.`Value` AS `p`
 FROM `Orders` AS `o`
 INNER JOIN (
     SELECT `ProductID` AS `Value` FROM `Products`
-) AS `t` ON `o`.`OrderID` = CAST(`t`.`Value` AS signed)
+) AS `t` ON `o`.`OrderID` = `t`.`Value`
 """);
     }
 
@@ -69,7 +69,7 @@ INNER JOIN (
 """
 p0='10'
 
-SELECT `ProductID` FROM `Products` WHERE `ProductID` = @p0
+SELECT `ProductID` FROM `Products` WHERE `ProductID` = :p0
 """);
     }
 

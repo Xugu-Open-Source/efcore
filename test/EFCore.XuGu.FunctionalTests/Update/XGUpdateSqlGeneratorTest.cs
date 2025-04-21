@@ -182,10 +182,10 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Update
             {
                 AssertBaseline(
                     @"INSERT INTO `Ducks` (`Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2)
+VALUES (:p0, :p1, :p2)
 RETURNING `Id`, `Computed`;
 INSERT INTO `Ducks` (`Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2)
+VALUES (:p0, :p1, :p2)
 RETURNING `Id`, `Computed`;
 ",
                     stringBuilder.ToString());
@@ -194,16 +194,17 @@ RETURNING `Id`, `Computed`;
             {
                 AssertBaseline(
                     @"INSERT INTO `Ducks` (`Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2);
+VALUES (:p0, :p1, :p2);
 SELECT `Id`, `Computed`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
+WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
 
+--GO
 INSERT INTO `Ducks` (`Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2);
+VALUES (:p0, :p1, :p2);
 SELECT `Id`, `Computed`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
+WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
 
 ",
                     stringBuilder.ToString());
@@ -223,8 +224,10 @@ WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
 
             AssertBaseline(
                 @"INSERT INTO `Ducks` (`Id`, `Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2, @p3),
-(@p0, @p1, @p2, @p3);
+VALUES (:p0, :p1, :p2, :p3);
+--GO
+INSERT INTO `Ducks` (`Id`, `Name`, `Quacks`, `ConcurrencyToken`)
+VALUES (:p0, :p1, :p2, :p3);
 ",
                 stringBuilder.ToString());
             Assert.Equal(ResultSetMapping.NoResults, grouping);
@@ -258,18 +261,56 @@ RETURNING `Id`, `Computed`;
 VALUES ();
 SELECT `Id`, `Computed`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
+WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
 
+--GO
 INSERT INTO `Ducks` ()
 VALUES ();
 SELECT `Id`, `Computed`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
+WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
 
 ",
                     stringBuilder.ToString());
             }
             Assert.Equal(ResultSetMapping.LastInResultSet, grouping);
+        }
+
+        public override void
+        AppendInsertOperation_appends_insert_and_select_rowcount_if_no_store_generated_columns_exist_or_conditions_exist()
+        {
+            var stringBuilder = new StringBuilder();
+            var command = CreateInsertCommand(false, false);
+
+            CreateSqlGenerator().AppendInsertOperation(stringBuilder, command, 0);
+
+            Assert.Equal(
+                "INSERT INTO "
+                + SchemaPrefix
+                + OpenDelimiter
+                + "Ducks"
+                + CloseDelimiter
+                + " ("
+                + OpenDelimiter
+                + "Id"
+                + CloseDelimiter
+                + ", "
+                + OpenDelimiter
+                + "Name"
+                + CloseDelimiter
+                + ", "
+                + OpenDelimiter
+                + "Quacks"
+                + CloseDelimiter
+                + ", "
+                + OpenDelimiter
+                + "ConcurrencyToken"
+                + CloseDelimiter
+                + ")"
+                + Environment.NewLine
+                + "VALUES (:p0, :p1, :p2, :p3);"
+                + Environment.NewLine,
+                stringBuilder.ToString());
         }
 
         [ConditionalFact]
@@ -282,8 +323,10 @@ WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
             var grouping = sqlGenerator.AppendBulkInsertOperation(stringBuilder, new[] { command, command }, 0, out _);
 
             var expectedText = @"INSERT INTO `Ducks` ()
-VALUES (),
-();
+VALUES ();
+--GO
+INSERT INTO `Ducks` ()
+VALUES ();
 ";
             AssertBaseline(
                 expectedText,
@@ -297,7 +340,7 @@ VALUES (),
             {
                 AssertBaseline(
                     @"DELETE FROM `Ducks`
-WHERE `Id` = @p0
+WHERE `Id` = :p0
 RETURNING 1;
 ",
                     stringBuilder.ToString());
@@ -306,8 +349,8 @@ RETURNING 1;
             {
                 AssertBaseline(
                     @"DELETE FROM `Ducks`
-WHERE `Id` = @p0;
-SELECT ROW_COUNT();
+WHERE `Id` = :p0;
+SELECT ROWNUM;
 
 ",
                     stringBuilder.ToString());
@@ -321,7 +364,7 @@ SELECT ROW_COUNT();
             {
                 AssertBaseline(
                     @"DELETE FROM `Ducks`
-WHERE `Id` = @p0 AND `ConcurrencyToken` IS NULL
+WHERE `Id` = :p0 AND `ConcurrencyToken` IS NULL
 RETURNING 1;
 ",
                     stringBuilder.ToString());
@@ -330,8 +373,8 @@ RETURNING 1;
             {
                 AssertBaseline(
                     @"DELETE FROM `Ducks`
-WHERE `Id` = @p0 AND `ConcurrencyToken` IS NULL;
-SELECT ROW_COUNT();
+WHERE `Id` = :p0 AND `ConcurrencyToken` IS NULL;
+SELECT ROWNUM;
 
 ",
                     stringBuilder.ToString());
@@ -344,7 +387,7 @@ SELECT ROW_COUNT();
             {
                 AssertBaseline(
                     @"INSERT INTO `Ducks` (`Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2)
+VALUES (:p0, :p1, :p2)
 RETURNING `Id`, `Computed`;
 ",
                     stringBuilder.ToString());
@@ -353,10 +396,10 @@ RETURNING `Id`, `Computed`;
             {
                 AssertBaseline(
                     @"INSERT INTO `Ducks` (`Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2);
+VALUES (:p0, :p1, :p2);
 SELECT `Id`, `Computed`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
+WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
 
 ",
                     stringBuilder.ToString());
@@ -370,7 +413,7 @@ WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
             {
                 AssertBaseline(
                     @"INSERT INTO `Ducks` (`Id`, `Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2, @p3)
+VALUES (:p0, :p1, :p2, :p3)
 RETURNING `Computed`;
 ",
                     stringBuilder.ToString());
@@ -379,10 +422,10 @@ RETURNING `Computed`;
             {
                 AssertBaseline(
                     @"INSERT INTO `Ducks` (`Id`, `Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2, @p3);
+VALUES (:p0, :p1, :p2, :p3);
 SELECT `Computed`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = @p0;
+WHERE ROWNUM = 1 AND `Id` = :p0;
 
 ",
                     stringBuilder.ToString());
@@ -396,7 +439,7 @@ WHERE ROW_COUNT() = 1 AND `Id` = @p0;
             {
                 AssertBaseline(
                     @"INSERT INTO `Ducks` (`Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2)
+VALUES (:p0, :p1, :p2)
 RETURNING `Id`;",
                     stringBuilder.ToString());
             }
@@ -404,10 +447,10 @@ RETURNING `Id`;",
             {
                 AssertBaseline(
                     @"INSERT INTO `Ducks` (`Name`, `Quacks`, `ConcurrencyToken`)
-VALUES (@p0, @p1, @p2);
+VALUES (:p0, :p1, :p2);
 SELECT `Id`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
+WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
 
 ",
                     stringBuilder.ToString());
@@ -503,11 +546,11 @@ WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
         protected override void AppendUpdateOperation_if_store_generated_columns_exist_verification(
             StringBuilder stringBuilder)
             => AssertBaseline(
-                @"UPDATE `Ducks` SET `Name` = @p0, `Quacks` = @p1, `ConcurrencyToken` = @p2
-WHERE `Id` = @p3 AND `ConcurrencyToken` IS NULL;
+                @"UPDATE `Ducks` SET `Name` = :p0, `Quacks` = :p1, `ConcurrencyToken` = :p2
+WHERE `Id` = :p3 AND `ConcurrencyToken` IS NULL;
 SELECT `Computed`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = @p3;
+WHERE ROWNUM = 1 AND `Id` = :p3;
 
 ",
                 stringBuilder.ToString());
@@ -515,29 +558,29 @@ WHERE ROW_COUNT() = 1 AND `Id` = @p3;
         protected override void AppendUpdateOperation_if_store_generated_columns_dont_exist_verification(
             StringBuilder stringBuilder)
             => AssertBaseline(
-                @"UPDATE `Ducks` SET `Name` = @p0, `Quacks` = @p1, `ConcurrencyToken` = @p2
-WHERE `Id` = @p3;
-SELECT ROW_COUNT();
+                @"UPDATE `Ducks` SET `Name` = :p0, `Quacks` = :p1, `ConcurrencyToken` = :p2
+WHERE `Id` = :p3;
+SELECT ROWNUM;
 
 ",
                 stringBuilder.ToString());
 
         protected override void AppendUpdateOperation_appends_where_for_concurrency_token_verification(StringBuilder stringBuilder)
             => AssertBaseline(
-                @"UPDATE `Ducks` SET `Name` = @p0, `Quacks` = @p1, `ConcurrencyToken` = @p2
-WHERE `Id` = @p3 AND `ConcurrencyToken` IS NULL;
-SELECT ROW_COUNT();
+                @"UPDATE `Ducks` SET `Name` = :p0, `Quacks` = :p1, `ConcurrencyToken` = :p2
+WHERE `Id` = :p3 AND `ConcurrencyToken` IS NULL;
+SELECT ROWNUM;
 
 ",
                 stringBuilder.ToString());
 
         protected override void AppendUpdateOperation_for_computed_property_verification(StringBuilder stringBuilder)
             => AssertBaseline(
-                @"UPDATE `Ducks` SET `Name` = @p0, `Quacks` = @p1, `ConcurrencyToken` = @p2
-WHERE `Id` = @p3;
+                @"UPDATE `Ducks` SET `Name` = :p0, `Quacks` = :p1, `ConcurrencyToken` = :p2
+WHERE `Id` = :p3;
 SELECT `Computed`
 FROM `Ducks`
-WHERE ROW_COUNT() = 1 AND `Id` = @p3;
+WHERE ROWNUM = 1 AND `Id` = :p3;
 
 ",
                 stringBuilder.ToString());
@@ -545,7 +588,7 @@ WHERE ROW_COUNT() = 1 AND `Id` = @p3;
 
 
         protected override string RowsAffected
-            => "ROW_COUNT()";
+            => "ROWNUM";
 
         protected override string Identity
             => "LAST_INSERT_ID()";

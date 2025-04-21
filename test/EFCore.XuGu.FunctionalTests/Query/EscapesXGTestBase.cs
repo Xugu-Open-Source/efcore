@@ -44,7 +44,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
                 });
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_query_escapes_literal(bool async)
         {
@@ -60,7 +60,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
             }
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_query_escapes_parameter(bool async)
         {
@@ -78,7 +78,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
             }
         }
 
-        [ConditionalFact]
+        [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_contains_query_escapes(bool async)
         {

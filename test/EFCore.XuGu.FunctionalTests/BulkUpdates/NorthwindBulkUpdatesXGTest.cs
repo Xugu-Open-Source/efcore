@@ -58,11 +58,11 @@ WHERE `o`.`OrderID` < 10300
 
         AssertSql(
 """
-@__quantity_0='1' (Nullable = true) (DbType = Int16)
+:__quantity_0='1' (Nullable = true) (DbType = Int16)
 
 DELETE `o`
 FROM `Order Details` AS `o`
-WHERE `o`.`Quantity` = @__quantity_0
+WHERE `o`.`Quantity` = :__quantity_0
 """,
                 //
                 """
@@ -91,7 +91,7 @@ ORDER BY `OrderID`
 
         AssertSql(
 """
-@__p_0='100'
+:__p_0='100'
 
 DELETE `o`
 FROM `Order Details` AS `o`
@@ -102,7 +102,7 @@ WHERE EXISTS (
         FROM `Order Details` AS `o0`
         WHERE `o0`.`OrderID` < 10300
         ORDER BY `o0`.`OrderID`
-        LIMIT 18446744073709551610 OFFSET @__p_0
+        LIMIT 18446744073709551610 OFFSET :__p_0
     ) AS `t`
     WHERE (`t`.`OrderID` = `o`.`OrderID`) AND (`t`.`ProductID` = `o`.`ProductID`))
 """);
@@ -114,13 +114,13 @@ WHERE EXISTS (
 
         AssertSql(
 """
-@__p_0='100'
+:__p_0='100'
 
 DELETE
 FROM `Order Details`
 WHERE `OrderID` < 10300
 ORDER BY `OrderID`
-LIMIT @__p_0
+LIMIT :__p_0
 """);
     }
 
@@ -130,7 +130,7 @@ LIMIT @__p_0
 
         AssertSql(
 """
-@__p_0='100'
+:__p_0='100'
 
 DELETE `o`
 FROM `Order Details` AS `o`
@@ -141,7 +141,7 @@ WHERE EXISTS (
         FROM `Order Details` AS `o0`
         WHERE `o0`.`OrderID` < 10300
         ORDER BY `o0`.`OrderID`
-        LIMIT @__p_0 OFFSET @__p_0
+        LIMIT :__p_0 OFFSET :__p_0
     ) AS `t`
     WHERE (`t`.`OrderID` = `o`.`OrderID`) AND (`t`.`ProductID` = `o`.`ProductID`))
 """);
@@ -153,7 +153,7 @@ WHERE EXISTS (
 
         AssertSql(
 """
-@__p_0='100'
+:__p_0='100'
 
 DELETE `o`
 FROM `Order Details` AS `o`
@@ -163,7 +163,7 @@ WHERE EXISTS (
         SELECT `o0`.`OrderID`, `o0`.`ProductID`, `o0`.`Discount`, `o0`.`Quantity`, `o0`.`UnitPrice`
         FROM `Order Details` AS `o0`
         WHERE `o0`.`OrderID` < 10300
-        LIMIT 18446744073709551610 OFFSET @__p_0
+        LIMIT 18446744073709551610 OFFSET :__p_0
     ) AS `t`
     WHERE (`t`.`OrderID` = `o`.`OrderID`) AND (`t`.`ProductID` = `o`.`ProductID`))
 """);
@@ -175,12 +175,12 @@ WHERE EXISTS (
 
         AssertSql(
 """
-@__p_0='100'
+:__p_0='100'
 
 DELETE
 FROM `Order Details`
 WHERE `OrderID` < 10300
-LIMIT @__p_0
+LIMIT :__p_0
 """);
     }
 
@@ -190,7 +190,7 @@ LIMIT @__p_0
 
         AssertSql(
 """
-@__p_0='100'
+:__p_0='100'
 
 DELETE `o`
 FROM `Order Details` AS `o`
@@ -200,7 +200,7 @@ WHERE EXISTS (
         SELECT `o0`.`OrderID`, `o0`.`ProductID`, `o0`.`Discount`, `o0`.`Quantity`, `o0`.`UnitPrice`
         FROM `Order Details` AS `o0`
         WHERE `o0`.`OrderID` < 10300
-        LIMIT @__p_0 OFFSET @__p_0
+        LIMIT :__p_0 OFFSET :__p_0
     ) AS `t`
     WHERE (`t`.`OrderID` = `o`.`OrderID`) AND (`t`.`ProductID` = `o`.`ProductID`))
 """);
@@ -268,9 +268,9 @@ WHERE EXISTS (
 
         AssertSql(
 """
-@__p_0='100'
-@__p_2='5'
-@__p_1='20'
+:__p_0='100'
+:__p_2='5'
+:__p_1='20'
 
 DELETE `o`
 FROM `Order Details` AS `o`
@@ -282,9 +282,9 @@ WHERE EXISTS (
             SELECT `o0`.`OrderID`, `o0`.`ProductID`, `o0`.`Discount`, `o0`.`Quantity`, `o0`.`UnitPrice`
             FROM `Order Details` AS `o0`
             WHERE `o0`.`OrderID` < 10300
-            LIMIT @__p_0 OFFSET @__p_0
+            LIMIT :__p_0 OFFSET :__p_0
         ) AS `t`
-        LIMIT @__p_2 OFFSET @__p_1
+        LIMIT :__p_2 OFFSET :__p_1
     ) AS `t0`
     WHERE (`t0`.`OrderID` = `o`.`OrderID`) AND (`t0`.`ProductID` = `o`.`ProductID`))
 """);
@@ -514,8 +514,8 @@ WHERE `c`.`City` IS NOT NULL AND (`c`.`City` LIKE 'Se%')
 
         AssertSql(
 """
-@__p_1='100'
-@__p_0='0'
+:__p_1='100'
+:__p_0='0'
 
 DELETE `o`
 FROM `Order Details` AS `o`
@@ -524,7 +524,7 @@ INNER JOIN (
     FROM `Orders` AS `o0`
     WHERE `o0`.`OrderID` < 10300
     ORDER BY `o0`.`OrderID`
-    LIMIT @__p_1 OFFSET @__p_0
+    LIMIT :__p_1 OFFSET :__p_0
 ) AS `t` ON `o`.`OrderID` = `t`.`OrderID`
 """);
     }
@@ -535,8 +535,8 @@ INNER JOIN (
 
         AssertSql(
 """
-@__p_1='100'
-@__p_0='0'
+:__p_1='100'
+:__p_0='0'
 
 DELETE `o`
 FROM `Order Details` AS `o`
@@ -545,7 +545,7 @@ LEFT JOIN (
     FROM `Orders` AS `o0`
     WHERE `o0`.`OrderID` < 10300
     ORDER BY `o0`.`OrderID`
-    LIMIT @__p_1 OFFSET @__p_0
+    LIMIT :__p_1 OFFSET :__p_0
 ) AS `t` ON `o`.`OrderID` = `t`.`OrderID`
 WHERE `o`.`OrderID` < 10276
 """);
@@ -640,19 +640,19 @@ WHERE `c`.`CustomerID` LIKE 'F%'
 
         AssertExecuteUpdateSql(
             """
-@__customer_0='ALFKI' (Size = 255)
+:__customer_0='ALFKI' (Size = 255)
 
 UPDATE `Customers` AS `c`
 SET `c`.`ContactName` = 'Updated'
-WHERE `c`.`CustomerID` = @__customer_0
+WHERE `c`.`CustomerID` = :__customer_0
 """,
             //
             """
-@__customer_0='ALFKI' (Size = 255)
+:__customer_0='ALFKI' (Size = 255)
 
 SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM `Customers` AS `c`
-WHERE `c`.`CustomerID` = @__customer_0
+WHERE `c`.`CustomerID` = :__customer_0
 """,
             //
             """
@@ -674,10 +674,10 @@ WHERE FALSE
 
         AssertExecuteUpdateSql(
 """
-@__value_0='Abc' (Size = 4000)
+:__value_0='Abc' (Size = 4000)
 
 UPDATE `Customers` AS `c`
-SET `c`.`ContactName` = @__value_0
+SET `c`.`ContactName` = :__value_0
 WHERE `c`.`CustomerID` LIKE 'F%'
 """);
     }
@@ -688,10 +688,10 @@ WHERE `c`.`CustomerID` LIKE 'F%'
 
         AssertExecuteUpdateSql(
 """
-@__p_0='Abc' (Size = 4000)
+:__p_0='Abc' (Size = 4000)
 
 UPDATE `Customers` AS `c`
-SET `c`.`ContactName` = @__p_0
+SET `c`.`ContactName` = :__p_0
 WHERE `c`.`CustomerID` LIKE 'F%'
 """);
     }
@@ -714,10 +714,10 @@ WHERE `c`.`CustomerID` LIKE 'F%'
 
         AssertExecuteUpdateSql(
 """
-@__container_Containee_Property_0='Abc' (Size = 4000)
+:__container_Containee_Property_0='Abc' (Size = 4000)
 
 UPDATE `Customers` AS `c`
-SET `c`.`ContactName` = @__container_Containee_Property_0
+SET `c`.`ContactName` = :__container_Containee_Property_0
 WHERE `c`.`CustomerID` LIKE 'F%'
 """);
     }
@@ -728,14 +728,14 @@ WHERE `c`.`CustomerID` LIKE 'F%'
 
         AssertExecuteUpdateSql(
 """
-@__p_0='4'
+:__p_0='4'
 
 UPDATE `Customers` AS `c`
 INNER JOIN (
     SELECT `c0`.`CustomerID`, `c0`.`Address`, `c0`.`City`, `c0`.`CompanyName`, `c0`.`ContactName`, `c0`.`ContactTitle`, `c0`.`Country`, `c0`.`Fax`, `c0`.`Phone`, `c0`.`PostalCode`, `c0`.`Region`
     FROM `Customers` AS `c0`
     WHERE `c0`.`CustomerID` LIKE 'F%'
-    LIMIT 18446744073709551610 OFFSET @__p_0
+    LIMIT 18446744073709551610 OFFSET :__p_0
 ) AS `t` ON `c`.`CustomerID` = `t`.`CustomerID`
 SET `c`.`ContactName` = 'Updated'
 """);
@@ -753,12 +753,12 @@ SET `c`.`ContactName` = 'Updated'
 
         AssertExecuteUpdateSql(
 """
-@__p_0='4'
+:__p_0='4'
 
 UPDATE `Customers` AS `c`
 SET `c`.`ContactName` = 'Updated'
 WHERE `c`.`CustomerID` LIKE 'F%'
-LIMIT @__p_0
+LIMIT :__p_0
 """);
     }
 
@@ -768,15 +768,15 @@ LIMIT @__p_0
 
         AssertExecuteUpdateSql(
 """
-@__p_1='4'
-@__p_0='2'
+:__p_1='4'
+:__p_0='2'
 
 UPDATE `Customers` AS `c`
 INNER JOIN (
     SELECT `c0`.`CustomerID`, `c0`.`Address`, `c0`.`City`, `c0`.`CompanyName`, `c0`.`ContactName`, `c0`.`ContactTitle`, `c0`.`Country`, `c0`.`Fax`, `c0`.`Phone`, `c0`.`PostalCode`, `c0`.`Region`
     FROM `Customers` AS `c0`
     WHERE `c0`.`CustomerID` LIKE 'F%'
-    LIMIT @__p_1 OFFSET @__p_0
+    LIMIT :__p_1 OFFSET :__p_0
 ) AS `t` ON `c`.`CustomerID` = `t`.`CustomerID`
 SET `c`.`ContactName` = 'Updated'
 """);
@@ -804,7 +804,7 @@ SET `c`.`ContactName` = 'Updated'
 
         AssertExecuteUpdateSql(
 """
-@__p_0='4'
+:__p_0='4'
 
 UPDATE `Customers` AS `c`
 INNER JOIN (
@@ -812,7 +812,7 @@ INNER JOIN (
     FROM `Customers` AS `c0`
     WHERE `c0`.`CustomerID` LIKE 'F%'
     ORDER BY `c0`.`City`
-    LIMIT 18446744073709551610 OFFSET @__p_0
+    LIMIT 18446744073709551610 OFFSET :__p_0
 ) AS `t` ON `c`.`CustomerID` = `t`.`CustomerID`
 SET `c`.`ContactName` = 'Updated'
 """);
@@ -824,7 +824,7 @@ SET `c`.`ContactName` = 'Updated'
 
         AssertExecuteUpdateSql(
 """
-@__p_0='4'
+:__p_0='4'
 
 UPDATE `Customers` AS `c`
 INNER JOIN (
@@ -832,7 +832,7 @@ INNER JOIN (
     FROM `Customers` AS `c0`
     WHERE `c0`.`CustomerID` LIKE 'F%'
     ORDER BY `c0`.`City`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t` ON `c`.`CustomerID` = `t`.`CustomerID`
 SET `c`.`ContactName` = 'Updated'
 """);
@@ -844,8 +844,8 @@ SET `c`.`ContactName` = 'Updated'
 
         AssertExecuteUpdateSql(
 """
-@__p_1='4'
-@__p_0='2'
+:__p_1='4'
+:__p_0='2'
 
 UPDATE `Customers` AS `c`
 INNER JOIN (
@@ -853,7 +853,7 @@ INNER JOIN (
     FROM `Customers` AS `c0`
     WHERE `c0`.`CustomerID` LIKE 'F%'
     ORDER BY `c0`.`City`
-    LIMIT @__p_1 OFFSET @__p_0
+    LIMIT :__p_1 OFFSET :__p_0
 ) AS `t` ON `c`.`CustomerID` = `t`.`CustomerID`
 SET `c`.`ContactName` = 'Updated'
 """);
@@ -865,8 +865,8 @@ SET `c`.`ContactName` = 'Updated'
 
         AssertExecuteUpdateSql(
 """
-@__p_1='6'
-@__p_0='2'
+:__p_1='6'
+:__p_0='2'
 
 UPDATE `Customers` AS `c`
 INNER JOIN (
@@ -876,10 +876,10 @@ INNER JOIN (
         FROM `Customers` AS `c0`
         WHERE `c0`.`CustomerID` LIKE 'F%'
         ORDER BY `c0`.`City`
-        LIMIT @__p_1 OFFSET @__p_0
+        LIMIT :__p_1 OFFSET :__p_0
     ) AS `t`
     ORDER BY `t`.`City`
-    LIMIT @__p_0 OFFSET @__p_0
+    LIMIT :__p_0 OFFSET :__p_0
 ) AS `t0` ON `c`.`CustomerID` = `t0`.`CustomerID`
 SET `c`.`ContactName` = 'Updated'
 """);
@@ -1032,10 +1032,10 @@ WHERE `c`.`CustomerID` LIKE 'F%'
 
         AssertExecuteUpdateSql(
 """
-@__value_0='Abc' (Size = 4000)
+:__value_0='Abc' (Size = 4000)
 
 UPDATE `Customers` AS `c`
-SET `c`.`ContactName` = CONCAT(COALESCE(`c`.`ContactName`, ''), @__value_0)
+SET `c`.`ContactName` = CONCAT(COALESCE(`c`.`ContactName`, ''), :__value_0)
 WHERE `c`.`CustomerID` LIKE 'F%'
 """);
     }
@@ -1096,11 +1096,11 @@ WHERE `c`.`CustomerID` LIKE 'F%'
 
         AssertExecuteUpdateSql(
 """
-@__value_0='Abc' (Size = 4000)
+:__value_0='Abc' (Size = 4000)
 
 UPDATE `Customers` AS `c`
 SET `c`.`City` = 'Seattle',
-    `c`.`ContactName` = @__value_0
+    `c`.`ContactName` = :__value_0
 WHERE `c`.`CustomerID` LIKE 'F%'
 """);
     }

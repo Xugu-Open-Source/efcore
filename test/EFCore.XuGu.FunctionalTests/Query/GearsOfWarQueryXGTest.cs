@@ -55,7 +55,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
                 ss => ss.Set<Mission>().Where(m => m.Timeline == dateTimeOffset));
         }
 
-        [ConditionalFact(Skip = "TODO: Does not work as expected, probably due to some test definition issues.")]
+        [ConditionalTheory(Skip = "TODO: Does not work as expected, probably due to some test definition issues.")]
+        [MemberData(nameof(IsAsyncData))]
         public override async Task DateTimeOffsetNow_minus_timespan(bool async)
         {
             var timeSpan = new TimeSpan(10000); // <-- changed from 1000 to 10000 ticks
@@ -75,7 +76,8 @@ WHERE `m`.`Timeline` > (UTC_TIMESTAMP() - @__timeSpan_0)
         }
 
         // TODO: Implement strategy as discussed with @roji (including emails) for EF Core 5.
-        [ConditionalFact(Skip = "#996")]
+        [ConditionalTheory(Skip = "#996")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Client_member_and_unsupported_string_Equals_in_the_same_query(bool async)
         {
             return base.Client_member_and_unsupported_string_Equals_in_the_same_query(async);
@@ -129,109 +131,111 @@ WHERE `m`.`Timeline` > (UTC_TIMESTAMP() - @__timeSpan_0)
             return base.Where_subquery_distinct_singleordefault_boolean_with_pushdown(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_distinct_firstordefault_boolean(bool async)
         {
             return base.Where_subquery_distinct_firstordefault_boolean(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_distinct_firstordefault_boolean_with_pushdown(bool async)
         {
             return base.Where_subquery_distinct_firstordefault_boolean_with_pushdown(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_distinct_lastordefault_boolean(bool async)
         {
             return base.Where_subquery_distinct_lastordefault_boolean(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_distinct_last_boolean(bool async)
         {
             return base.Where_subquery_distinct_last_boolean(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_distinct_orderby_firstordefault_boolean(bool async)
         {
             return base.Where_subquery_distinct_orderby_firstordefault_boolean(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_distinct_orderby_firstordefault_boolean_with_pushdown(bool async)
         {
             return base.Where_subquery_distinct_orderby_firstordefault_boolean_with_pushdown(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Concat_with_collection_navigations(bool async)
         {
             return base.Concat_with_collection_navigations(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Select_navigation_with_concat_and_count(bool async)
         {
             return base.Select_navigation_with_concat_and_count(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Union_with_collection_navigations(bool async)
         {
             return base.Union_with_collection_navigations(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_concat_firstordefault_boolean(bool async)
         {
             return base.Where_subquery_concat_firstordefault_boolean(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_join_firstordefault_boolean(bool async)
         {
             return base.Where_subquery_join_firstordefault_boolean(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_left_join_firstordefault_boolean(bool async)
         {
             return base.Where_subquery_left_join_firstordefault_boolean(async);
         }
 
-        [SupportedServerVersionCondition("8.0.18-mysql", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
+        [SupportedServerVersionCondition("12.0.0-xugu", Skip = "TODO: Pinpoint exact version number! Referencing outer column from WHERE subquery does not work in previous versions. Inverse of #573")]
         public override Task Where_subquery_union_firstordefault_boolean(bool async)
         {
             return base.Where_subquery_union_firstordefault_boolean(async);
         }
 
-        [ConditionalFact(Skip = "XuGu does not support LIMIT with a parameterized argument, unless the statement was prepared. The argument needs to be a numeric constant.")]
+        [ConditionalTheory(Skip = "XuGu does not support LIMIT with a parameterized argument, unless the statement was prepared. The argument needs to be a numeric constant.")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Take_without_orderby_followed_by_orderBy_is_pushed_down1(bool async)
         {
             return base.Take_without_orderby_followed_by_orderBy_is_pushed_down1(async);
         }
 
-        [ConditionalFact(Skip = "XuGu does not support LIMIT with a parameterized argument, unless the statement was prepared. The argument needs to be a numeric constant.")]
+        [ConditionalTheory(Skip = "XuGu does not support LIMIT with a parameterized argument, unless the statement was prepared. The argument needs to be a numeric constant.")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Take_without_orderby_followed_by_orderBy_is_pushed_down2(bool async)
         {
             return base.Take_without_orderby_followed_by_orderBy_is_pushed_down2(async);
         }
 
-        [SupportedServerVersionCondition("8.0.22-mysql")]
+        
         public override Task Subquery_projecting_nullable_scalar_contains_nullable_value_needs_null_expansion(bool async)
         {
             return base.Subquery_projecting_nullable_scalar_contains_nullable_value_needs_null_expansion(async);
         }
 
-        [SupportedServerVersionCondition("8.0.22-mysql")]
+        
         public override Task Subquery_projecting_non_nullable_scalar_contains_non_nullable_value_doesnt_need_null_expansion(bool async)
         {
             return base.Subquery_projecting_non_nullable_scalar_contains_non_nullable_value_doesnt_need_null_expansion(async);
         }
 
-        [ConditionalFact(Skip = "Another LATERAL JOIN bug in XuGu. Grouping leads to unexpected result set.")]
+        [ConditionalTheory(Skip = "Another LATERAL JOIN bug in XuGu. Grouping leads to unexpected result set.")]
         [MemberData(nameof(IsAsyncData))]
         public override Task Correlated_collection_with_groupby_with_complex_grouping_key_not_projecting_identifier_column_with_group_aggregate_in_final_projection(bool async)
         {

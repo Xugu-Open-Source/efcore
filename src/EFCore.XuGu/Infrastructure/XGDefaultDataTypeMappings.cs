@@ -26,32 +26,32 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Infrastructure
         public virtual XGTimeSpanType ClrTimeSpan { get; private set; }
         public virtual int ClrTimeOnlyPrecision { get; private set; } = -1;
 
-        public virtual XGDefaultDataTypeMappings WithClrBoolean(XGBooleanType mysqlBooleanType)
+        public virtual XGDefaultDataTypeMappings WithClrBoolean(XGBooleanType xgBooleanType)
         {
             var clone = Clone();
-            clone.ClrBoolean = mysqlBooleanType;
+            clone.ClrBoolean = xgBooleanType;
             return clone;
         }
 
-        public virtual XGDefaultDataTypeMappings WithClrDateTime(XGDateTimeType mysqlDateTimeType)
+        public virtual XGDefaultDataTypeMappings WithClrDateTime(XGDateTimeType xgDateTimeType)
         {
             var clone = Clone();
-            clone.ClrDateTime = mysqlDateTimeType;
+            clone.ClrDateTime = xgDateTimeType;
             return clone;
         }
 
-        public virtual XGDefaultDataTypeMappings WithClrDateTimeOffset(XGDateTimeType mysqlDateTimeType)
+        public virtual XGDefaultDataTypeMappings WithClrDateTimeOffset(XGDateTimeType xgDateTimeType)
         {
             var clone = Clone();
-            clone.ClrDateTimeOffset = mysqlDateTimeType;
+            clone.ClrDateTimeOffset = xgDateTimeType;
             return clone;
         }
 
         // TODO: Remove Time6, add optional precision parameter for Time types.
-        public virtual XGDefaultDataTypeMappings WithClrTimeSpan(XGTimeSpanType mysqlTimeSpanType)
+        public virtual XGDefaultDataTypeMappings WithClrTimeSpan(XGTimeSpanType xgTimeSpanType)
         {
             var clone = Clone();
-            clone.ClrTimeSpan = mysqlTimeSpanType;
+            clone.ClrTimeSpan = xgTimeSpanType;
             return clone;
         }
 

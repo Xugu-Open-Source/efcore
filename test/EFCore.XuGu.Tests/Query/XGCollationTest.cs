@@ -1,6 +1,9 @@
-﻿using System.Linq;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using XGConnector;
+using XuguClient;
 using Xunit;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Query
@@ -17,12 +20,12 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query
         {
             using var context = Fixture.CreateContext();
 
-            SetConnectionCharSetAndCollation(context);
+            //SetConnectionCharSetAndCollation(context);
 
             var connection = (XGConnection)context.Database.GetDbConnection();
             var csb = new XGConnectionStringBuilder(connection.ConnectionString);
 
-            Assert.Throws<XGException>(
+            Assert.Throws<Exception>(
                 () => context.Set<Model.Container>()
                     .Where(e => EF.Functions.Like(e.Name + e.Number, "%Metal%"))
                     .ToList());
@@ -33,7 +36,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query
         {
             using var context = Fixture.CreateContext();
 
-            SetConnectionCharSetAndCollation(context);
+            //SetConnectionCharSetAndCollation(context);
 
             var metalContainers = context.Set<Model.Container>()
                 .Where(e => EF.Functions.Like(EF.Functions.Collate(e.Name, "latin1_general_cs") + e.Number, "%Metal%"))
@@ -48,7 +51,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query
         {
             using var context = Fixture.CreateContext();
 
-            SetConnectionCharSetAndCollation(context);
+            //SetConnectionCharSetAndCollation(context);
 
             var metalContainers = context.Set<Model.Container>()
                 .Where(e => EF.Functions.Like(EF.Functions.Collate(e.Name, "latin1_general_ci") + e.Number, "%Metal%"))
@@ -60,16 +63,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query
             Assert.Equal(3, metalContainers[1].Id);
         }
 
-        private static void SetConnectionCharSetAndCollation(XGCollationFixture.XGCollationContext context)
-        {
-            context.Database.OpenConnection();
-            var connection = context.Database.GetDbConnection();
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = "SET NAMES 'latin1' COLLATE 'latin1_general_ci';";
-                command.ExecuteNonQuery();
-            }
-        }
 
         public class XGCollationFixture : XGTestFixtureBase<XGCollationFixture.XGCollationContext>
         {

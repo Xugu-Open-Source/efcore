@@ -23,6 +23,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
         {
         }
 
+        
         protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
             => facade.UseTransaction(transaction.GetDbTransaction());
 

@@ -7,9 +7,9 @@ using Xunit.Sdk;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities.Xunit
 {
-    /// <remarks>
-    /// We cannot inherit from ConditionalTheoryTestCase, because it's sealed.
-    /// </remarks>
+    /// <summary>
+    /// Represents a theory test case that can be skipped based on a condition.
+    /// </summary>
     public sealed class XGConditionalTheoryTestCase : XunitTheoryTestCase
     {
         [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]

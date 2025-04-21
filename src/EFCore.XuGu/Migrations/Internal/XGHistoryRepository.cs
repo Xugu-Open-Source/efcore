@@ -43,15 +43,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations.Internal
 
                 var builder = new StringBuilder();
 
-                builder.Append("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE ");
+                builder.Append("SELECT 1 FROM ALL_TABLES WHERE ");
 
                 builder
-                    .Append("TABLE_SCHEMA=")
+                    .Append("SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME=")
                     .Append(
-                        stringTypeMapping.GenerateSqlLiteral(
-                            _sqlGenerationHelper.GetSchemaName(TableName, TableSchema) ??
-                            Dependencies.Connection.DbConnection.Database))
-                    .Append(" AND TABLE_NAME=")
+                        stringTypeMapping.GenerateSqlLiteral(TableSchema ?? "SYSDBA"))
+                    .Append(") AND TABLE_NAME=")
                     .Append(
                         stringTypeMapping.GenerateSqlLiteral(
                             _sqlGenerationHelper.GetObjectName(TableName, TableSchema)))

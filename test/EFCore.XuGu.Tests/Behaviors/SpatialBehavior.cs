@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NetTopologySuite;
@@ -25,30 +27,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Behaviors
 
             Assert.All(iceCreamShops, s => Assert.Equal(13.3777041, s.Location.X));
             Assert.All(iceCreamShops, s => Assert.Equal(52.5162746, s.Location.Y));
-        }
-
-        [Fact]
-        public void XG7_and_MariaDb_use_x_longitude_and_y_latitude_order()
-        {
-            using var command = Connection.CreateCommand();
-            command.CommandText = @"
-SELECT
-ST_X(`Location`) as `X`,
-ST_Y(`Location`) as `Y`
-FROM `IceCreamShops`;";
-
-            using var dataReader = command.ExecuteReader();
-            while (dataReader.Read())
-            {
-                var x = (double)dataReader["X"];
-                var y = (double)dataReader["Y"];
-
-                // X and Y coordinates should be in the same order in the database that they are used in NTS, because XuGu < 8 and MariaDB
-                // do not really support any SRIDs and treat everything as SRID 0.
-                // Longitude is stored as X and Latitude is stored as Y.
-                Assert.Equal(13.3777041, x); // lon
-                Assert.Equal(52.5162746, y); // lat
-            }
         }
 
         public static class Model

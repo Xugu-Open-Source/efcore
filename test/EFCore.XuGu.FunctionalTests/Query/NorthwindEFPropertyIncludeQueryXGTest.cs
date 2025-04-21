@@ -105,7 +105,7 @@ SELECT `o`.`OrderID`, `o`.`ProductID`, `o`.`Discount`, `o`.`Quantity`, `o`.`Unit
 FROM `Order Details` AS `o`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 """);
     }
 
@@ -158,14 +158,14 @@ ORDER BY `o`.`OrderID`, `o0`.`OrderID`
 
         AssertSql(
 """
-@__p_1='5'
-@__p_0='10'
+:__p_1='5'
+:__p_0='10'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
-    LIMIT @__p_1 OFFSET @__p_0
+    LIMIT :__p_1 OFFSET :__p_0
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`CustomerID`
@@ -276,14 +276,14 @@ ORDER BY `c`.`CustomerID`, `t`.`CustomerID`
 
         AssertSql(
 """
-@__p_0='2'
+:__p_0='2'
 
 SELECT `t`.`OrderID`, `t`.`CustomerID`, `t`.`EmployeeID`, `t`.`OrderDate`, `t0`.`OrderID`, `t0`.`CustomerID`, `t0`.`EmployeeID`, `t0`.`OrderDate`, `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
 FROM (
     SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
     FROM `Orders` AS `o`
     ORDER BY `o`.`OrderID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 CROSS JOIN (
     SELECT `o0`.`OrderID`, `o0`.`CustomerID`, `o0`.`EmployeeID`, `o0`.`OrderDate`
@@ -302,14 +302,14 @@ ORDER BY `t`.`OrderID`
 
         AssertSql(
 """
-@__p_0='10'
+:__p_0='10'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
     ORDER BY `c`.`ContactTitle`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`ContactTitle`, `t`.`CustomerID`
@@ -344,13 +344,13 @@ ORDER BY `t`.`CustomerID`, `t0`.`OrderID`, `t0`.`OrderID0`
 
         AssertSql(
 """
-@__p_0='10'
+:__p_0='10'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`CustomerID`
@@ -416,8 +416,8 @@ ORDER BY `o`.`OrderID`, `o0`.`OrderID`
 
         AssertSql(
 """
-@__p_0='2'
-@__p_1='1'
+:__p_0='2'
+:__p_1='1'
 
 SELECT `t1`.`CustomerID`, `t1`.`Address`, `t1`.`City`, `t1`.`CompanyName`, `t1`.`ContactName`, `t1`.`ContactTitle`, `t1`.`Country`, `t1`.`Fax`, `t1`.`Phone`, `t1`.`PostalCode`, `t1`.`Region`, `t1`.`CustomerID0`, `o0`.`OrderID`, `o0`.`CustomerID`, `o0`.`EmployeeID`, `o0`.`OrderDate`, `t1`.`Address0`, `t1`.`City0`, `t1`.`CompanyName0`, `t1`.`ContactName0`, `t1`.`ContactTitle0`, `t1`.`Country0`, `t1`.`Fax0`, `t1`.`Phone0`, `t1`.`PostalCode0`, `t1`.`Region0`
 FROM (
@@ -430,7 +430,7 @@ FROM (
             FROM `Orders` AS `o`
             WHERE `c`.`CustomerID` = `o`.`CustomerID`
             LIMIT 1)
-        LIMIT @__p_0
+        LIMIT :__p_0
     ) AS `t`
     CROSS JOIN (
         SELECT `c0`.`CustomerID`, `c0`.`Address`, `c0`.`City`, `c0`.`CompanyName`, `c0`.`ContactName`, `c0`.`ContactTitle`, `c0`.`Country`, `c0`.`Fax`, `c0`.`Phone`, `c0`.`PostalCode`, `c0`.`Region`
@@ -439,7 +439,7 @@ FROM (
         LIMIT 2 OFFSET 2
     ) AS `t0`
     ORDER BY `t`.`CustomerID`, `t0`.`CustomerID`
-    LIMIT @__p_1
+    LIMIT :__p_1
 ) AS `t1`
 LEFT JOIN `Orders` AS `o0` ON `t1`.`CustomerID` = `o0`.`CustomerID`
 ORDER BY `t1`.`CustomerID`, `t1`.`CustomerID0`
@@ -460,21 +460,27 @@ ORDER BY `t1`.`CustomerID`, `t1`.`CustomerID0`
 
         AssertSql(
 """
-@__p_0='2'
+:__p_0='2'
 
 SELECT `t`.`OrderID`, `t`.`CustomerID`, `t`.`EmployeeID`, `t`.`OrderDate`, `t`.`CustomerID0`, `o0`.`OrderID`, `o0`.`ProductID`, `o0`.`Discount`, `o0`.`Quantity`, `o0`.`UnitPrice`
 FROM (
-    SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`, `c`.`CustomerID` AS `CustomerID0`, `c`.`CustomerID` IS NOT NULL AS `c`, CASE
+    SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`, `c`.`CustomerID` AS `CustomerID0`, CASE
+        WHEN `c`.`CustomerID` IS NOT NULL THEN 1
+        ELSE 0
+    END AS `c`, CASE
         WHEN `c`.`CustomerID` IS NOT NULL THEN `c`.`CustomerID`
         ELSE ''
     END AS `c0`
     FROM `Orders` AS `o`
     LEFT JOIN `Customers` AS `c` ON `o`.`CustomerID` = `c`.`CustomerID`
-    ORDER BY `c`.`CustomerID` IS NOT NULL, CASE
+    ORDER BY CASE
+        WHEN `c`.`CustomerID` IS NOT NULL THEN 1
+        ELSE 0
+    END, CASE
         WHEN `c`.`CustomerID` IS NOT NULL THEN `c`.`CustomerID`
         ELSE ''
     END, `o`.`EmployeeID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 LEFT JOIN `Order Details` AS `o0` ON `t`.`OrderID` = `o0`.`OrderID`
 ORDER BY `t`.`c`, `t`.`c0`, `t`.`EmployeeID`, `t`.`OrderID`, `t`.`CustomerID0`, `o0`.`OrderID`
@@ -541,14 +547,14 @@ ORDER BY `c`.`CustomerID`, `o`.`OrderID`
 
         AssertSql(
 """
-@__p_0='2'
+:__p_0='2'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `t0`.`CustomerID`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`, `t0`.`Address`, `t0`.`City`, `t0`.`CompanyName`, `t0`.`ContactName`, `t0`.`ContactTitle`, `t0`.`Country`, `t0`.`Fax`, `t0`.`Phone`, `t0`.`PostalCode`, `t0`.`Region`, `o0`.`OrderID`, `o0`.`CustomerID`, `o0`.`EmployeeID`, `o0`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
     ORDER BY `c`.`CustomerID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 CROSS JOIN (
     SELECT `c0`.`CustomerID`, `c0`.`Address`, `c0`.`City`, `c0`.`CompanyName`, `c0`.`ContactName`, `c0`.`ContactTitle`, `c0`.`Country`, `c0`.`Fax`, `c0`.`Phone`, `c0`.`PostalCode`, `c0`.`Region`
@@ -635,7 +641,7 @@ FROM `Order Details` AS `o`
 INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 """);
     }
 
@@ -660,15 +666,21 @@ ORDER BY `c`.`CustomerID`, `o`.`OrderID`
 
         AssertSql(
 """
-@__p_1='1'
+:__p_1='1'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
-    SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`, `c`.`CustomerID` <> 'ALFKI' AS `c`
+    SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`, CASE
+        WHEN `c`.`CustomerID` <> 'ALFKI' THEN 1
+        ELSE 0
+    END AS `c`
     FROM `Customers` AS `c`
     WHERE `c`.`CustomerID` LIKE 'A%'
-    ORDER BY `c`.`CustomerID` <> 'ALFKI'
-    LIMIT 18446744073709551610 OFFSET @__p_1
+    ORDER BY CASE
+        WHEN `c`.`CustomerID` <> 'ALFKI' THEN 1
+        ELSE 0
+    END
+    LIMIT 999999999 OFFSET :__p_1
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`c`, `t`.`CustomerID`
@@ -714,14 +726,14 @@ WHERE `o`.`CustomerID` = 'ALFKI'
 
         AssertSql(
 """
-@__p_0='2'
+:__p_0='2'
 
 SELECT `t`.`OrderID`, `t`.`CustomerID`, `t`.`EmployeeID`, `t`.`OrderDate`, `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`, `t0`.`OrderID`, `t0`.`CustomerID`, `t0`.`EmployeeID`, `t0`.`OrderDate`, `c0`.`CustomerID`, `c0`.`Address`, `c0`.`City`, `c0`.`CompanyName`, `c0`.`ContactName`, `c0`.`ContactTitle`, `c0`.`Country`, `c0`.`Fax`, `c0`.`Phone`, `c0`.`PostalCode`, `c0`.`Region`
 FROM (
     SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
     FROM `Orders` AS `o`
     ORDER BY `o`.`CustomerID`, `o`.`OrderID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 CROSS JOIN (
     SELECT `o0`.`OrderID`, `o0`.`CustomerID`, `o0`.`EmployeeID`, `o0`.`OrderDate`
@@ -753,7 +765,7 @@ LEFT JOIN `Customers` AS `c` ON `o`.`CustomerID` = `c`.`CustomerID`
 
         AssertSql(
 """
-@__p_0='2'
+:__p_0='2'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
@@ -761,7 +773,7 @@ FROM (
     FROM `Customers` AS `c`
     WHERE `c`.`CustomerID` LIKE 'F%'
     ORDER BY `c`.`ContactTitle`
-    LIMIT 18446744073709551610 OFFSET @__p_0
+    LIMIT 999999999 OFFSET :__p_0
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`ContactTitle`, `t`.`CustomerID`
@@ -789,7 +801,7 @@ ORDER BY `c`.`City`, `c`.`CustomerID`, `o`.`OrderID`
 
         AssertSql(
 """
-@__p_0='1'
+:__p_0='1'
 
 SELECT `t0`.`CustomerID`, `t1`.`OrderID`, `t1`.`CustomerID`, `t1`.`EmployeeID`, `t1`.`OrderDate`, `t1`.`OrderID0`, `t1`.`ProductID`, `t1`.`Discount`, `t1`.`Quantity`, `t1`.`UnitPrice`
 FROM (
@@ -799,7 +811,7 @@ FROM (
         FROM `Customers` AS `c`
         WHERE `c`.`CustomerID` LIKE 'A%'
         ORDER BY `c`.`CustomerID`
-        LIMIT @__p_0
+        LIMIT :__p_0
     ) AS `t`
     ORDER BY `t`.`CustomerID`
     LIMIT 1
@@ -825,7 +837,7 @@ INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
 LEFT JOIN `Orders` AS `o1` ON `c`.`CustomerID` = `o1`.`CustomerID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 ORDER BY `o`.`OrderID`, `o`.`ProductID`, `p`.`ProductID`, `o0`.`OrderID`, `c`.`CustomerID`
 """);
     }
@@ -843,7 +855,7 @@ LEFT JOIN (
     FROM `Order Details` AS `o`
     INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 ) AS `t` ON `p`.`ProductID` = `t`.`ProductID`
-WHERE (`p`.`ProductID` % 17) = 5
+WHERE (MOD(`p`.`ProductID`, 17)) = 5
 ORDER BY `p`.`ProductID`, `t`.`OrderID`, `t`.`ProductID`
 """);
     }
@@ -889,14 +901,14 @@ ORDER BY `c`.`CustomerID`, `t`.`OrderID`
 
         AssertSql(
 """
-@__p_0='5'
+:__p_0='5'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
     ORDER BY `c`.`CustomerID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 CROSS JOIN `Customers` AS `c0`
 ORDER BY `t`.`CustomerID`
@@ -974,7 +986,7 @@ ORDER BY `t`.`OrderID`, `t0`.`OrderID`, `t0`.`ProductID`
 
         AssertSql(
 """
-@__p_0='1'
+:__p_0='1'
 
 SELECT `t0`.`CustomerID`, `t1`.`OrderID`, `t1`.`CustomerID`, `t1`.`EmployeeID`, `t1`.`OrderDate`, `t1`.`OrderID0`, `t1`.`ProductID`, `t1`.`Discount`, `t1`.`Quantity`, `t1`.`UnitPrice`
 FROM (
@@ -984,7 +996,7 @@ FROM (
         FROM `Customers` AS `c`
         WHERE `c`.`CustomerID` LIKE 'A%'
         ORDER BY `c`.`CustomerID`
-        LIMIT @__p_0 OFFSET @__p_0
+        LIMIT :__p_0 OFFSET :__p_0
     ) AS `t`
     ORDER BY `t`.`CustomerID`
     LIMIT 1
@@ -1004,7 +1016,7 @@ ORDER BY `t0`.`CustomerID`, `t1`.`OrderID`, `t1`.`OrderID0`
 
         AssertSql(
 """
-@__p_1='1'
+:__p_1='1'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
@@ -1012,7 +1024,7 @@ FROM (
     FROM `Customers` AS `c`
     WHERE `c`.`CustomerID` LIKE 'A%'
     ORDER BY (SELECT 1)
-    LIMIT 18446744073709551610 OFFSET @__p_1
+    LIMIT 18446744073709551610 OFFSET :__p_1
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`c`, `t`.`CustomerID`
@@ -1030,7 +1042,7 @@ FROM `Order Details` AS `o`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
 LEFT JOIN `Orders` AS `o1` ON `c`.`CustomerID` = `o1`.`CustomerID`
-WHERE ((`o`.`OrderID` % 23) = 13) AND (`o`.`UnitPrice` < 10.0)
+WHERE ((MOD(`o`.`OrderID`, 23)) = 13) AND (`o`.`UnitPrice` < 10.0)
 ORDER BY `o`.`OrderID`, `o`.`ProductID`, `o0`.`OrderID`, `c`.`CustomerID`
 """);
     }
@@ -1102,7 +1114,7 @@ SELECT `o`.`OrderID`, `o`.`ProductID`, `o`.`Discount`, `o`.`Quantity`, `o`.`Unit
 FROM `Order Details` AS `o`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 """);
     }
 
@@ -1141,21 +1153,27 @@ ORDER BY `c`.`CustomerID`, `t`.`OrderID`, `t`.`OrderID0`
 
         AssertSql(
 """
-@__p_0='5'
+:__p_0='5'
 
 SELECT `t`.`OrderID`, `t`.`CustomerID`, `t`.`EmployeeID`, `t`.`OrderDate`, `t`.`CustomerID0`, `o0`.`OrderID`, `o0`.`ProductID`, `o0`.`Discount`, `o0`.`Quantity`, `o0`.`UnitPrice`
 FROM (
-    SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`, `c`.`CustomerID` AS `CustomerID0`, `o`.`OrderID` > 0 AS `c`, CASE
+    SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`, `c`.`CustomerID` AS `CustomerID0`, CASE
+        WHEN `o`.`OrderID` > 0 THEN 1
+        ELSE 0
+    END AS `c`, CASE
         WHEN `c`.`CustomerID` IS NOT NULL THEN `c`.`City`
         ELSE ''
     END AS `c0`
     FROM `Orders` AS `o`
     LEFT JOIN `Customers` AS `c` ON `o`.`CustomerID` = `c`.`CustomerID`
-    ORDER BY `o`.`OrderID` > 0, CASE
+    ORDER BY CASE
+        WHEN `o`.`OrderID` > 0 THEN 1
+        ELSE 0
+    END, CASE
         WHEN `c`.`CustomerID` IS NOT NULL THEN `c`.`City`
         ELSE ''
     END, `o`.`OrderID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 LEFT JOIN `Order Details` AS `o0` ON `t`.`OrderID` = `o0`.`OrderID`
 ORDER BY `t`.`c`, `t`.`c0`, `t`.`OrderID`, `t`.`CustomerID0`, `o0`.`OrderID`
@@ -1198,7 +1216,7 @@ LIMIT 2
 SELECT `o`.`OrderID`, `o`.`ProductID`, `o`.`Discount`, `o`.`Quantity`, `o`.`UnitPrice`, `o0`.`OrderID`, `o0`.`CustomerID`, `o0`.`EmployeeID`, `o0`.`OrderDate`
 FROM `Order Details` AS `o`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 """);
     }
 
@@ -1228,7 +1246,7 @@ FROM `Order Details` AS `o`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
 LEFT JOIN `Orders` AS `o1` ON `c`.`CustomerID` = `o1`.`CustomerID`
-WHERE ((`o`.`ProductID` % 23) = 17) AND (`o`.`Quantity` < 10)
+WHERE ((MOD(`o`.`ProductID`, 23)) = 17) AND (`o`.`Quantity` < 10)
 ORDER BY `o`.`OrderID`, `o`.`ProductID`, `o0`.`OrderID`, `c`.`CustomerID`
 """);
     }
@@ -1312,7 +1330,7 @@ INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
 INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
 LEFT JOIN `Orders` AS `o1` ON `c`.`CustomerID` = `o1`.`CustomerID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 ORDER BY `o`.`OrderID`, `o`.`ProductID`, `o0`.`OrderID`, `c`.`CustomerID`, `p`.`ProductID`
 """);
     }
@@ -1395,7 +1413,7 @@ ORDER BY `t`.`OrderID`, `t0`.`OrderID`, `t0`.`OrderID0`, `t0`.`ProductID`, `o3`.
 
         AssertSql(
 """
-@__p_1='1'
+:__p_1='1'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
@@ -1403,7 +1421,7 @@ FROM (
     FROM `Customers` AS `c`
     WHERE `c`.`CustomerID` LIKE 'A%'
     ORDER BY `c`.`CustomerID` = 'ALFKI'
-    LIMIT 18446744073709551610 OFFSET @__p_1
+    LIMIT 18446744073709551610 OFFSET :__p_1
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`c`, `t`.`CustomerID`
@@ -1416,7 +1434,7 @@ ORDER BY `t`.`c`, `t`.`CustomerID`
 
         AssertSql(
 """
-@__p_0='1'
+:__p_0='1'
 
 SELECT `t`.`CustomerID`, `t0`.`OrderID`, `t0`.`CustomerID`, `t0`.`EmployeeID`, `t0`.`OrderDate`, `t0`.`OrderID0`, `t0`.`ProductID`, `t0`.`Discount`, `t0`.`Quantity`, `t0`.`UnitPrice`
 FROM (
@@ -1424,7 +1442,7 @@ FROM (
     FROM `Customers` AS `c`
     WHERE `c`.`CustomerID` LIKE 'A%'
     ORDER BY `c`.`CustomerID`
-    LIMIT 1 OFFSET @__p_0
+    LIMIT 1 OFFSET :__p_0
 ) AS `t`
 LEFT JOIN (
     SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`, `o0`.`OrderID` AS `OrderID0`, `o0`.`ProductID`, `o0`.`Discount`, `o0`.`Quantity`, `o0`.`UnitPrice`
@@ -1441,14 +1459,14 @@ ORDER BY `t`.`CustomerID`, `t0`.`OrderID`, `t0`.`OrderID0`
 
         AssertSql(
 """
-@__p_0='5'
+:__p_0='5'
 
 SELECT `t0`.`CustomerID`, `t0`.`Address`, `t0`.`City`, `t0`.`CompanyName`, `t0`.`ContactName`, `t0`.`ContactTitle`, `t0`.`Country`, `t0`.`Fax`, `t0`.`Phone`, `t0`.`PostalCode`, `t0`.`Region`, `t`.`CustomerID`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`
     FROM `Customers` AS `c`
     ORDER BY `c`.`CustomerID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 CROSS JOIN (
     SELECT `c0`.`CustomerID`, `c0`.`Address`, `c0`.`City`, `c0`.`CompanyName`, `c0`.`ContactName`, `c0`.`ContactTitle`, `c0`.`Country`, `c0`.`Fax`, `c0`.`Phone`, `c0`.`PostalCode`, `c0`.`Region`
@@ -1524,8 +1542,8 @@ FROM `Orders` AS `o`
 
         AssertSql(
 """
-@__p_0='2'
-@__p_1='1'
+:__p_0='2'
+:__p_1='1'
 
 SELECT `t1`.`CustomerID`, `t1`.`Address`, `t1`.`City`, `t1`.`CompanyName`, `t1`.`ContactName`, `t1`.`ContactTitle`, `t1`.`Country`, `t1`.`Fax`, `t1`.`Phone`, `t1`.`PostalCode`, `t1`.`Region`, `t1`.`CustomerID0`, `o0`.`OrderID`, `o0`.`CustomerID`, `o0`.`EmployeeID`, `o0`.`OrderDate`, `t1`.`Address0`, `t1`.`City0`, `t1`.`CompanyName0`, `t1`.`ContactName0`, `t1`.`ContactTitle0`, `t1`.`Country0`, `t1`.`Fax0`, `t1`.`Phone0`, `t1`.`PostalCode0`, `t1`.`Region0`, `o1`.`OrderID`, `o1`.`CustomerID`, `o1`.`EmployeeID`, `o1`.`OrderDate`
 FROM (
@@ -1538,7 +1556,7 @@ FROM (
             FROM `Orders` AS `o`
             WHERE `c`.`CustomerID` = `o`.`CustomerID`
             LIMIT 1)
-        LIMIT @__p_0
+        LIMIT :__p_0
     ) AS `t`
     CROSS JOIN (
         SELECT `c0`.`CustomerID`, `c0`.`Address`, `c0`.`City`, `c0`.`CompanyName`, `c0`.`ContactName`, `c0`.`ContactTitle`, `c0`.`Country`, `c0`.`Fax`, `c0`.`Phone`, `c0`.`PostalCode`, `c0`.`Region`
@@ -1547,7 +1565,7 @@ FROM (
         LIMIT 2 OFFSET 2
     ) AS `t0`
     ORDER BY `t`.`CustomerID`, `t0`.`CustomerID`
-    LIMIT @__p_1
+    LIMIT :__p_1
 ) AS `t1`
 LEFT JOIN `Orders` AS `o0` ON `t1`.`CustomerID` = `o0`.`CustomerID`
 LEFT JOIN `Orders` AS `o1` ON `t1`.`CustomerID0` = `o1`.`CustomerID`
@@ -1580,7 +1598,7 @@ INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
 LEFT JOIN `Orders` AS `o1` ON `c`.`CustomerID` = `o1`.`CustomerID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 ORDER BY `o`.`OrderID`, `o`.`ProductID`, `p`.`ProductID`, `o0`.`OrderID`, `c`.`CustomerID`
 """);
     }
@@ -1613,14 +1631,14 @@ FROM `Products` AS `p`
 
         AssertSql(
 """
-@__p_0='80'
+:__p_0='80'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
     ORDER BY `c`.`ContactName`
-    LIMIT 18446744073709551610 OFFSET @__p_0
+    LIMIT 999999999 OFFSET :__p_0
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`ContactName`, `t`.`CustomerID`
@@ -1689,14 +1707,14 @@ ORDER BY `t`.`OrderID`, `t0`.`OrderID`, `o1`.`OrderID`
 
         AssertSql(
 """
-@__p_0='5'
+:__p_0='5'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
     ORDER BY `c`.`CustomerID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`CustomerID`
@@ -1752,9 +1770,12 @@ ORDER BY `c`.`PostalCode`, `c`.`CustomerID`
 
         AssertSql(
 """
-SELECT EXISTS (
-    SELECT 1
-    FROM `Customers` AS `c`)
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM `Customers` AS `c`) THEN 1
+    ELSE 0
+END
 """);
     }
 
@@ -1764,14 +1785,14 @@ SELECT EXISTS (
 
         AssertSql(
 """
-@__p_0='2'
+:__p_0='2'
 
 SELECT `t`.`OrderID`, `t`.`CustomerID`, `t`.`EmployeeID`, `t`.`OrderDate`, `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`, `t0`.`OrderID`, `t0`.`CustomerID`, `t0`.`EmployeeID`, `t0`.`OrderDate`
 FROM (
     SELECT `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
     FROM `Orders` AS `o`
     ORDER BY `o`.`OrderID`
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 CROSS JOIN (
     SELECT `o0`.`OrderID`, `o0`.`CustomerID`, `o0`.`EmployeeID`, `o0`.`OrderDate`
@@ -1810,7 +1831,7 @@ FROM `Order Details` AS `o`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
 INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 """);
     }
 
@@ -1883,7 +1904,7 @@ ORDER BY `t`.`CompanyName` DESC, `t`.`CustomerID`
 
         AssertSql(
 """
-@__p_1='1'
+:__p_1='1'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
@@ -1891,7 +1912,7 @@ FROM (
     FROM `Customers` AS `c`
     WHERE `c`.`CustomerID` LIKE 'A%'
     ORDER BY (SELECT 1)
-    LIMIT 18446744073709551610 OFFSET @__p_1
+    LIMIT 18446744073709551610 OFFSET :__p_1
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`c`, `t`.`CustomerID`
@@ -1909,7 +1930,7 @@ FROM `Order Details` AS `o`
 INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 """);
     }
 
@@ -1934,7 +1955,10 @@ ORDER BY `o`.`OrderID`, `c`.`CustomerID`, `o0`.`OrderID`
 
         AssertSql(
 """
-SELECT `e0`.`EmployeeID` IS NOT NULL, `e`.`EmployeeID`, `e`.`City`, `e`.`Country`, `e`.`FirstName`, `e`.`ReportsTo`, `e`.`Title`, `e0`.`EmployeeID`, `e0`.`City`, `e0`.`Country`, `e0`.`FirstName`, `e0`.`ReportsTo`, `e0`.`Title`
+SELECT CASE
+    WHEN `e0`.`EmployeeID` IS NOT NULL THEN 1
+    ELSE 0
+END, `e`.`EmployeeID`, `e`.`City`, `e`.`Country`, `e`.`FirstName`, `e`.`ReportsTo`, `e`.`Title`, `e0`.`EmployeeID`, `e0`.`City`, `e0`.`Country`, `e0`.`FirstName`, `e0`.`ReportsTo`, `e0`.`Title`
 FROM `Employees` AS `e`
 LEFT JOIN `Employees` AS `e0` ON `e`.`ReportsTo` = `e0`.`EmployeeID`
 WHERE `e`.`EmployeeID` IN (1, 2)
@@ -2043,7 +2067,7 @@ FROM `Order Details` AS `o`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
 INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 """);
     }
 
@@ -2053,13 +2077,13 @@ WHERE (`o`.`OrderID` % 23) = 13
 
         AssertSql(
 """
-@__p_0='10'
+:__p_0='10'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
-    LIMIT 18446744073709551610 OFFSET @__p_0
+    LIMIT 18446744073709551610 OFFSET :__p_0
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`CustomerID`
@@ -2097,7 +2121,7 @@ INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 LEFT JOIN `Customers` AS `c` ON `o0`.`CustomerID` = `c`.`CustomerID`
 INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
 LEFT JOIN `Orders` AS `o1` ON `c`.`CustomerID` = `o1`.`CustomerID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 ORDER BY `o`.`OrderID`, `o`.`ProductID`, `o0`.`OrderID`, `c`.`CustomerID`, `p`.`ProductID`
 """);
     }
@@ -2108,8 +2132,8 @@ ORDER BY `o`.`OrderID`, `o`.`ProductID`, `o0`.`OrderID`, `c`.`CustomerID`, `p`.`
 
         AssertSql(
 """
-@__p_1='2'
-@__p_0='1'
+:__p_1='2'
+:__p_0='1'
 
 SELECT `o0`.`CustomerID`
 FROM (
@@ -2117,7 +2141,7 @@ FROM (
     FROM `Order Details` AS `o`
     WHERE `o`.`Quantity` = 10
     ORDER BY `o`.`OrderID`, `o`.`ProductID`
-    LIMIT @__p_1 OFFSET @__p_0
+    LIMIT :__p_1 OFFSET :__p_0
 ) AS `t`
 INNER JOIN `Orders` AS `o0` ON `t`.`OrderID` = `o0`.`OrderID`
 ORDER BY `t`.`OrderID`, `t`.`ProductID`
@@ -2130,14 +2154,14 @@ ORDER BY `t`.`OrderID`, `t`.`ProductID`
 
         AssertSql(
 """
-@__p_0='10'
+:__p_0='10'
 
 SELECT `t`.`CustomerID`, `t`.`Address`, `t`.`City`, `t`.`CompanyName`, `t`.`ContactName`, `t`.`ContactTitle`, `t`.`Country`, `t`.`Fax`, `t`.`Phone`, `t`.`PostalCode`, `t`.`Region`, `o`.`OrderID`, `o`.`CustomerID`, `o`.`EmployeeID`, `o`.`OrderDate`
 FROM (
     SELECT `c`.`CustomerID`, `c`.`Address`, `c`.`City`, `c`.`CompanyName`, `c`.`ContactName`, `c`.`ContactTitle`, `c`.`Country`, `c`.`Fax`, `c`.`Phone`, `c`.`PostalCode`, `c`.`Region`
     FROM `Customers` AS `c`
     ORDER BY `c`.`ContactName` DESC
-    LIMIT @__p_0
+    LIMIT :__p_0
 ) AS `t`
 LEFT JOIN `Orders` AS `o` ON `t`.`CustomerID` = `o`.`CustomerID`
 ORDER BY `t`.`ContactName` DESC, `t`.`CustomerID`
@@ -2154,7 +2178,7 @@ SELECT `o`.`OrderID`, `o`.`ProductID`, `o`.`Discount`, `o`.`Quantity`, `o`.`Unit
 FROM `Order Details` AS `o`
 INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 INNER JOIN `Products` AS `p` ON `o`.`ProductID` = `p`.`ProductID`
-WHERE (`o`.`OrderID` % 23) = 13
+WHERE (MOD(`o`.`OrderID`, 23)) = 13
 """);
     }
 
@@ -2171,7 +2195,7 @@ LEFT JOIN (
     FROM `Order Details` AS `o`
     INNER JOIN `Orders` AS `o0` ON `o`.`OrderID` = `o0`.`OrderID`
 ) AS `t` ON `p`.`ProductID` = `t`.`ProductID`
-WHERE ((`p`.`ProductID` % 17) = 5) AND (`p`.`UnitPrice` < 20.0)
+WHERE ((MOD(`p`.`ProductID`, 17)) = 5) AND (`p`.`UnitPrice` < 20.0)
 ORDER BY `p`.`ProductID`, `t`.`OrderID`, `t`.`ProductID`
 """);
     }

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Pomelo.EntityFrameworkCore.MySql.Utilities
+namespace Microsoft.EntityFrameworkCore.XuGu.Utilities
 {
     internal static class Statics
     {

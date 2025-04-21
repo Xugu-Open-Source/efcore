@@ -25,6 +25,23 @@ public abstract partial class ProxyGraphUpdatesTestBase<TFixture> : IClassFixtur
         protected override bool UsePooling
             => false;
 
+
+        public override async Task InitializeAsync()
+        {
+            await base.InitializeAsync();
+            ResetDatabase();
+        }
+
+        public void ResetDatabase()
+        {
+            using(var context = CreateContext())
+            {
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
+                Seed(context); // 重新种子数据
+            }
+            
+        }
         public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
             => base.AddOptions(builder).AddInterceptors(new UpdatingIdentityResolutionInterceptor());
 

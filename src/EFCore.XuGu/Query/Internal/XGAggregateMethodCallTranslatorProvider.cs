@@ -26,6 +26,9 @@ public class XGAggregateMethodCallTranslatorProvider : RelationalAggregateMethod
             new IAggregateMethodCallTranslator[]
             {
                 new XGCountMethodTranslator(sqlExpressionFactory),
+                new XGMaxMethodTranslator(sqlExpressionFactory),
+                new XGMinMethodTranslator(sqlExpressionFactory),
+                new XGAvgMethodTranslator(sqlExpressionFactory)
             });
     }
 }

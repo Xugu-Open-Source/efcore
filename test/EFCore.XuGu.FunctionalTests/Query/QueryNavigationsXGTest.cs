@@ -23,13 +23,15 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
         protected override bool CanExecuteQueryString
             => true;
 
-        [ConditionalFact(Skip = "Issue #573")]
+        [ConditionalTheory(Skip = "Issue #573")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Where_subquery_on_navigation(bool async)
         {
             return base.Where_subquery_on_navigation(async);
         }
 
-        [ConditionalFact(Skip = "Issue #573")]
+        [ConditionalTheory(Skip = "Issue #573")]
+        [MemberData(nameof(IsAsyncData))]
         public override Task Where_subquery_on_navigation2(bool async)
         {
             return base.Where_subquery_on_navigation2(async);

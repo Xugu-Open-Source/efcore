@@ -13,11 +13,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Infrastructure
         /// <summary>
         /// XuGu server
         /// </summary>
-        XG,
-
-        /// <summary>
-        /// MariaDB server
-        /// </summary>
-        MariaDb
+        XG
     }
 }

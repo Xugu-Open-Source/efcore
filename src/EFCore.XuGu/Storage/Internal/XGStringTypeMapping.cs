@@ -142,7 +142,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
         {
             var stringValue = _forceToString
                 ? value.ToString()
-                : (string)value;
+                : value.ToString();
 
             return IsUnquoted
                 ? EscapeSqlLiteral(stringValue, !_options.NoBackslashEscapes)

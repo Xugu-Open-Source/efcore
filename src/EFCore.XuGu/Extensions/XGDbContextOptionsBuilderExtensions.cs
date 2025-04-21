@@ -44,8 +44,7 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) or
-        ///         <see cref="MariaDbServerVersion"/> (for MariaDB) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu)
         ///      </para>
         /// </param>
         /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
@@ -83,8 +82,7 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) or
-        ///         <see cref="MariaDbServerVersion"/> (for MariaDB) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu)
         ///      </para>
         /// </param>
         /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
@@ -170,8 +168,7 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) or
-        ///         <see cref="MariaDbServerVersion"/> (for MariaDB) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu)
         ///      </para>
         /// </param>
         /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
@@ -229,8 +226,7 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) or
-        ///         <see cref="MariaDbServerVersion"/> (for MariaDB) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu)
         ///      </para>
         /// </param>
         /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
@@ -260,8 +256,7 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) or
-        ///         <see cref="MariaDbServerVersion"/> (for MariaDB) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu)
         ///      </para>
         /// </param>
         /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
@@ -296,8 +291,7 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) or
-        ///         <see cref="MariaDbServerVersion"/> (for MariaDB) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu)
         ///      </para>
         /// </param>
         /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
