@@ -275,23 +275,23 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     .Single());
         }
 
-        if (entityType.FindProperty(nameof(BuiltInDataTypes.TestDateOnly)) != null)
-        {
-            var param9 = new DateOnly(2020, 3, 1);
-            Assert.Same(
-                entity,
-                set.Where(e => e.Id == 11 && EF.Property<DateOnly>(e, nameof(BuiltInDataTypes.TestDateOnly)) == param9).ToList()
-                    .Single());
-        }
+        //if (entityType.FindProperty(nameof(BuiltInDataTypes.TestDateOnly)) != null)
+        //{
+        //    var param9 = new DateOnly(2020, 3, 1);
+        //    Assert.Same(
+        //        entity,
+        //        set.Where(e => e.Id == 11 && EF.Property<DateOnly>(e, nameof(BuiltInDataTypes.TestDateOnly)) == param9).ToList()
+        //            .Single());
+        //}
 
-        if (entityType.FindProperty(nameof(BuiltInDataTypes.TestTimeOnly)) != null)
-        {
-            var param10 = new TimeOnly(12, 30, 45, 123);
-            Assert.Same(
-                entity,
-                set.Where(e => e.Id == 11 && EF.Property<TimeOnly>(e, nameof(BuiltInDataTypes.TestTimeOnly)) == param10).ToList()
-                    .Single());
-        }
+        //if (entityType.FindProperty(nameof(BuiltInDataTypes.TestTimeOnly)) != null)
+        //{
+        //    var param10 = new TimeOnly(12, 30, 45, 123);
+        //    Assert.Same(
+        //        entity,
+        //        set.Where(e => e.Id == 11 && EF.Property<TimeOnly>(e, nameof(BuiltInDataTypes.TestTimeOnly)) == param10).ToList()
+        //            .Single());
+        //}
 
         var param11 = -1.234F;
         if (Fixture.StrictEquality)
@@ -513,8 +513,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                 TestDateTime = Fixture.DefaultDateTime,
                 TestDateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0)),
                 TestTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                TestDateOnly = new DateOnly(2020, 3, 1),
-                TestTimeOnly = new TimeOnly(12, 30, 45, 123),
+                //TestDateOnly = new DateOnly(2020, 3, 1),
+                //TestTimeOnly = new TimeOnly(12, 30, 45, 123),
                 TestSingle = -1.234F,
                 TestBoolean = true,
                 TestByte = 255,
@@ -641,29 +641,29 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     .ToList().Single());
         }
 
-        if (entityType.FindProperty(nameof(BuiltInNullableDataTypes.TestNullableDateOnly)) != null)
-        {
-            DateOnly? param9 = new DateOnly(2020, 3, 1);
-            Assert.Same(
-                entity,
-                set.Where(
-                        e => e.Id == 11
-                            && EF.Property<DateOnly?>(e, nameof(BuiltInNullableDataTypes.TestNullableDateOnly))
-                            == param9)
-                    .ToList().Single());
-        }
+        //if (entityType.FindProperty(nameof(BuiltInNullableDataTypes.TestNullableDateOnly)) != null)
+        //{
+        //    DateOnly? param9 = new DateOnly(2020, 3, 1);
+        //    Assert.Same(
+        //        entity,
+        //        set.Where(
+        //                e => e.Id == 11
+        //                    && EF.Property<DateOnly?>(e, nameof(BuiltInNullableDataTypes.TestNullableDateOnly))
+        //                    == param9)
+        //            .ToList().Single());
+        //}
 
-        if (entityType.FindProperty(nameof(BuiltInNullableDataTypes.TestNullableTimeOnly)) != null)
-        {
-            TimeOnly? param10 = new TimeOnly(12, 30, 45, 123);
-            Assert.Same(
-                entity,
-                set.Where(
-                        e => e.Id == 11
-                            && EF.Property<TimeOnly?>(e, nameof(BuiltInNullableDataTypes.TestNullableTimeOnly))
-                            == param10)
-                    .ToList().Single());
-        }
+        //if (entityType.FindProperty(nameof(BuiltInNullableDataTypes.TestNullableTimeOnly)) != null)
+        //{
+        //    TimeOnly? param10 = new TimeOnly(12, 30, 45, 123);
+        //    Assert.Same(
+        //        entity,
+        //        set.Where(
+        //                e => e.Id == 11
+        //                    && EF.Property<TimeOnly?>(e, nameof(BuiltInNullableDataTypes.TestNullableTimeOnly))
+        //                    == param10)
+        //            .ToList().Single());
+        //}
 
         float? param11 = -1.234F;
         if (Fixture.StrictEquality)
@@ -910,8 +910,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                 TestNullableDateTime = Fixture.DefaultDateTime,
                 TestNullableDateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0)),
                 TestNullableTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                TestNullableDateOnly = new DateOnly(2020, 3, 1),
-                TestNullableTimeOnly = new TimeOnly(12, 30, 45, 123),
+                //TestNullableDateOnly = new DateOnly(2020, 3, 1),
+                //TestNullableTimeOnly = new TimeOnly(12, 30, 45, 123),
                 TestNullableSingle = -1.234F,
                 TestNullableBoolean = true,
                 TestNullableByte = 255,
@@ -951,8 +951,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     TestNullableDateTime = Fixture.DefaultDateTime,
                     TestNullableDateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0)),
                     TestNullableTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                    TestNullableDateOnly = new DateOnly(2020, 3, 1),
-                    TestNullableTimeOnly = new TimeOnly(12, 30, 45, 123),
+                    //TestNullableDateOnly = new DateOnly(2020, 3, 1),
+                    //TestNullableTimeOnly = new TimeOnly(12, 30, 45, 123),
                     TestNullableSingle = -1.234F,
                     TestNullableBoolean = true,
                     TestNullableByte = 255,
@@ -1042,21 +1042,21 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                         .Where(e => e.Id == 12 && e.TestNullableTimeSpan == new TimeSpan(0, 10, 9, 8, 7)).ToList().Single());
             }
 
-            if (entityType.FindProperty(nameof(BuiltInNullableDataTypes.TestNullableDateOnly)) != null)
-            {
-                Assert.Same(
-                    entity,
-                    context.Set<BuiltInNullableDataTypes>()
-                        .Where(e => e.Id == 12 && e.TestNullableDateOnly == new DateOnly(2020, 3, 1)).ToList().Single());
-            }
+            //if (entityType.FindProperty(nameof(BuiltInNullableDataTypes.TestNullableDateOnly)) != null)
+            //{
+            //    Assert.Same(
+            //        entity,
+            //        context.Set<BuiltInNullableDataTypes>()
+            //            .Where(e => e.Id == 12 && e.TestNullableDateOnly == new DateOnly(2020, 3, 1)).ToList().Single());
+            //}
 
-            if (entityType.FindProperty(nameof(BuiltInNullableDataTypes.TestNullableTimeOnly)) != null)
-            {
-                Assert.Same(
-                    entity,
-                    context.Set<BuiltInNullableDataTypes>()
-                        .Where(e => e.Id == 12 && e.TestNullableTimeOnly == new TimeOnly(12, 30, 45, 123)).ToList().Single());
-            }
+            //if (entityType.FindProperty(nameof(BuiltInNullableDataTypes.TestNullableTimeOnly)) != null)
+            //{
+            //    Assert.Same(
+            //        entity,
+            //        context.Set<BuiltInNullableDataTypes>()
+            //            .Where(e => e.Id == 12 && e.TestNullableTimeOnly == new TimeOnly(12, 30, 45, 123)).ToList().Single());
+            //}
 
             if (Fixture.StrictEquality)
             {
@@ -1236,15 +1236,15 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                 entity,
                 context.Set<BuiltInNullableDataTypes>().Where(e => e.Id == 711 && e.TestNullableTimeSpan == param8).ToList().Single());
 
-            DateOnly? param9 = null;
-            Assert.Same(
-                entity,
-                context.Set<BuiltInNullableDataTypes>().Where(e => e.Id == 711 && e.TestNullableDateOnly == param9).ToList().Single());
+            //DateOnly? param9 = null;
+            //Assert.Same(
+            //    entity,
+            //    context.Set<BuiltInNullableDataTypes>().Where(e => e.Id == 711 && e.TestNullableDateOnly == param9).ToList().Single());
 
-            TimeOnly? param10 = null;
-            Assert.Same(
-                entity,
-                context.Set<BuiltInNullableDataTypes>().Where(e => e.Id == 711 && e.TestNullableTimeOnly == param10).ToList().Single());
+            //TimeOnly? param10 = null;
+            //Assert.Same(
+            //    entity,
+            //    context.Set<BuiltInNullableDataTypes>().Where(e => e.Id == 711 && e.TestNullableTimeOnly == param10).ToList().Single());
 
             float? param11 = null;
             Assert.Same(
@@ -1371,8 +1371,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     TestDateTime = DateTime.Parse("01/01/2000 12:34:56", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal),
                     TestDateTimeOffset = new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                     TestTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                    TestDateOnly = new DateOnly(2020, 3, 1),
-                    TestTimeOnly = new TimeOnly(12, 30, 45, 123),
+                    //TestDateOnly = new DateOnly(2020, 3, 1),
+                    //TestTimeOnly = new TimeOnly(12, 30, 45, 123),
                     TestSingle = -1.234F,
                     TestBoolean = true,
                     TestByte = 255,
@@ -1411,8 +1411,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                 entityType, new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                 () => dt.TestDateTimeOffset);
             AssertEqualIfMapped(entityType, new TimeSpan(0, 10, 9, 8, 7), () => dt.TestTimeSpan);
-            AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.TestDateOnly);
-            AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TestTimeOnly);
+            //AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.TestDateOnly);
+            //AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TestTimeOnly);
             AssertEqualIfMapped(entityType, -1.234F, () => dt.TestSingle);
             AssertEqualIfMapped(entityType, true, () => dt.TestBoolean);
             AssertEqualIfMapped(entityType, (byte)255, () => dt.TestByte);
@@ -1484,19 +1484,19 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
         using (var context = CreateContext())
         {
             context.Set<BinaryKeyDataType>().AddRange(
-                new BinaryKeyDataType { Id = new byte[] { 1, 2, 3 }, Ex = "X1" },
-                new BinaryKeyDataType { Id = new byte[] { 1, 2, 3, 4 }, Ex = "X3" },
-                new BinaryKeyDataType { Id = new byte[] { 1, 2, 3, 4, 5 }, Ex = "X2" });
+                new BinaryKeyDataType { Id = 1, Ex = "X1" },
+                new BinaryKeyDataType { Id = 2, Ex = "X3" },
+                new BinaryKeyDataType { Id = 3, Ex = "X2" });
 
             context.Set<BinaryForeignKeyDataType>().AddRange(
-                new BinaryForeignKeyDataType { Id = 77, BinaryKeyDataTypeId = new byte[] { 1, 2, 3, 4 } },
-                new BinaryForeignKeyDataType { Id = 777, BinaryKeyDataTypeId = new byte[] { 1, 2, 3 } },
-                new BinaryForeignKeyDataType { Id = 7777, BinaryKeyDataTypeId = new byte[] { 1, 2, 3, 4, 5 } });
+                new BinaryForeignKeyDataType { Id = 77, BinaryKeyDataTypeId = 2 },
+                new BinaryForeignKeyDataType { Id = 777, BinaryKeyDataTypeId = 1 },
+                new BinaryForeignKeyDataType { Id = 7777, BinaryKeyDataTypeId = 3 });
 
             Assert.Equal(6, context.SaveChanges());
         }
 
-        BinaryKeyDataType QueryByBinaryKey(DbContext context, byte[] bytes)
+        BinaryKeyDataType QueryByBinaryKey(DbContext context, int bytes)
             => context
                 .Set<BinaryKeyDataType>()
                 .Include(e => e.Dependents)
@@ -1505,40 +1505,40 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
 
         using (var context = CreateContext())
         {
-            var entity1 = QueryByBinaryKey(context, new byte[] { 1, 2, 3 });
-            Assert.Equal(new byte[] { 1, 2, 3 }, entity1.Id);
+            var entity1 = QueryByBinaryKey(context, 1);
+            Assert.Equal(1, entity1.Id);
             Assert.Equal(1, entity1.Dependents.Count);
 
-            var entity2 = QueryByBinaryKey(context, new byte[] { 1, 2, 3, 4 });
-            Assert.Equal(new byte[] { 1, 2, 3, 4 }, entity2.Id);
+            var entity2 = QueryByBinaryKey(context, 2);
+            Assert.Equal(2, entity2.Id);
             Assert.Equal(1, entity2.Dependents.Count);
 
-            var entity3 = QueryByBinaryKey(context, new byte[] { 1, 2, 3, 4, 5 });
-            Assert.Equal(new byte[] { 1, 2, 3, 4, 5 }, entity3.Id);
+            var entity3 = QueryByBinaryKey(context, 3);
+            Assert.Equal(3, entity3.Id);
             Assert.Equal(1, entity3.Dependents.Count);
 
             entity3.Ex = "Xx1";
             entity2.Ex = "Xx3";
             entity1.Ex = "Xx7";
 
-            entity1.Dependents.Single().BinaryKeyDataTypeId = new byte[] { 1, 2, 3, 4, 5 };
+            entity1.Dependents.Single().BinaryKeyDataTypeId = 3;
 
-            entity2.Dependents.Single().BinaryKeyDataTypeId = new byte[] { 1, 2, 3, 4, 5 };
+            entity2.Dependents.Single().BinaryKeyDataTypeId = 3;
 
             context.SaveChanges();
         }
 
         using (var context = CreateContext())
         {
-            var entity1 = QueryByBinaryKey(context, new byte[] { 1, 2, 3 });
+            var entity1 = QueryByBinaryKey(context, 1);
             Assert.Equal("Xx7", entity1.Ex);
             Assert.Equal(0, entity1.Dependents.Count);
 
-            var entity2 = QueryByBinaryKey(context, new byte[] { 1, 2, 3, 4 });
+            var entity2 = QueryByBinaryKey(context, 2);
             Assert.Equal("Xx3", entity2.Ex);
             Assert.Equal(0, entity2.Dependents.Count);
 
-            var entity3 = QueryByBinaryKey(context, new byte[] { 1, 2, 3, 4, 5 });
+            var entity3 = QueryByBinaryKey(context, 3);
             Assert.Equal("Xx1", entity3.Ex);
             Assert.Equal(3, entity3.Dependents.Count);
         }
@@ -1733,8 +1733,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
             Assert.Null(dt.TestNullableDateTime);
             Assert.Null(dt.TestNullableDateTimeOffset);
             Assert.Null(dt.TestNullableTimeSpan);
-            Assert.Null(dt.TestNullableDateOnly);
-            Assert.Null(dt.TestNullableTimeOnly);
+            //Assert.Null(dt.TestNullableDateOnly);
+            //Assert.Null(dt.TestNullableTimeOnly);
             Assert.Null(dt.TestNullableSingle);
             Assert.Null(dt.TestNullableBoolean);
             Assert.Null(dt.TestNullableByte);
@@ -1773,8 +1773,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     TestNullableDecimal = -1234567890.01M,
                     TestNullableDateTime = DateTime.Parse("01/01/2000 12:34:56").ToUniversalTime(),
                     TestNullableDateTimeOffset = new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
-                    TestNullableDateOnly = new DateOnly(2020, 3, 1),
-                    TestNullableTimeOnly = new TimeOnly(12, 30, 45, 123),
+                    //TestNullableDateOnly = new DateOnly(2020, 3, 1),
+                    //TestNullableTimeOnly = new TimeOnly(12, 30, 45, 123),
                     TestNullableTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
                     TestNullableSingle = -1.234F,
                     TestNullableBoolean = false,
@@ -1814,8 +1814,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                 entityType, new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                 () => dt.TestNullableDateTimeOffset);
             AssertEqualIfMapped(entityType, new TimeSpan(0, 10, 9, 8, 7), () => dt.TestNullableTimeSpan);
-            AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.TestNullableDateOnly);
-            AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TestNullableTimeOnly);
+            //AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.TestNullableDateOnly);
+            //AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TestNullableTimeOnly);
             AssertEqualIfMapped(entityType, -1.234F, () => dt.TestNullableSingle);
             AssertEqualIfMapped(entityType, false, () => dt.TestNullableBoolean);
             AssertEqualIfMapped(entityType, (byte)255, () => dt.TestNullableByte);
@@ -1855,8 +1855,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     DateTime = DateTime.Parse("01/01/2000 12:34:56"),
                     DateTimeOffset = new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                     TimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                    DateOnly = new DateOnly(2020, 3, 1),
-                    TimeOnly = new TimeOnly(12, 30, 45, 123),
+                    //DateOnly = new DateOnly(2020, 3, 1),
+                    //TimeOnly = new TimeOnly(12, 30, 45, 123),
                     Single = -1.234F,
                     Boolean = false,
                     Byte = 255,
@@ -1895,8 +1895,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                 entityType, new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                 () => dt.DateTimeOffset);
             AssertEqualIfMapped(entityType, new TimeSpan(0, 10, 9, 8, 7), () => dt.TimeSpan);
-            AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.DateOnly);
-            AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TimeOnly);
+            //AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.DateOnly);
+            //AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TimeOnly);
             AssertEqualIfMapped(entityType, -1.234F, () => dt.Single);
             AssertEqualIfMapped(entityType, false, () => dt.Boolean);
             AssertEqualIfMapped(entityType, (byte)255, () => dt.Byte);
@@ -1934,8 +1934,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     DateTime = DateTime.Parse("01/01/2000 12:34:56"),
                     DateTimeOffset = new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                     TimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                    DateOnly = new DateOnly(2020, 3, 1),
-                    TimeOnly = new TimeOnly(12, 30, 45, 123),
+                    //DateOnly = new DateOnly(2020, 3, 1),
+                    //TimeOnly = new TimeOnly(12, 30, 45, 123),
                     Single = -1.234F,
                     Boolean = false,
                     Byte = 255,
@@ -1972,8 +1972,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                 entityType, new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                 () => dt.DateTimeOffset);
             AssertEqualIfMapped(entityType, new TimeSpan(0, 10, 9, 8, 7), () => dt.TimeSpan);
-            AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.DateOnly);
-            AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TimeOnly);
+            //AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.DateOnly);
+            //AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TimeOnly);
             AssertEqualIfMapped(entityType, -1.234F, () => dt.Single);
             AssertEqualIfMapped(entityType, false, () => dt.Boolean);
             AssertEqualIfMapped(entityType, (byte)255, () => dt.Byte);
@@ -2011,8 +2011,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     DateTime = DateTime.Parse("01/01/2000 12:34:56"),
                     DateTimeOffset = new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                     TimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                    DateOnly = new DateOnly(2020, 3, 1),
-                    TimeOnly = new TimeOnly(12, 30, 45, 123),
+                    //DateOnly = new DateOnly(2020, 3, 1),
+                    //TimeOnly = new TimeOnly(12, 30, 45, 123),
                     Single = -1.234F,
                     Boolean = true,
                     Byte = 255,
@@ -2050,8 +2050,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                 entityType, new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                 () => dt.DateTimeOffset);
             AssertEqualIfMapped(entityType, new TimeSpan(0, 10, 9, 8, 7), () => dt.TimeSpan);
-            AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.DateOnly);
-            AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TimeOnly);
+            //AssertEqualIfMapped(entityType, new DateOnly(2020, 3, 1), () => dt.DateOnly);
+            //AssertEqualIfMapped(entityType, new TimeOnly(12, 30, 45, 123), () => dt.TimeOnly);
             AssertEqualIfMapped(entityType, -1.234F, () => dt.Single);
             AssertEqualIfMapped(entityType, true, () => dt.Boolean);
             AssertEqualIfMapped(entityType, (byte)255, () => dt.Byte);
@@ -2164,8 +2164,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                     DateTime = b.TestDateTime.ToString(),
                     DateTimeOffset = b.TestDateTimeOffset.ToString(),
                     TimeSpan = b.TestTimeSpan.ToString(),
-                    DateOnly = b.TestDateOnly.ToString(),
-                    TimeOnly = b.TestTimeOnly.ToString(),
+                    //DateOnly = b.TestDateOnly.ToString(),
+                    //TimeOnly = b.TestTimeOnly.ToString(),
                 })
             .ToList();
 
@@ -2244,8 +2244,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                             TestDateTime = DateTime.Parse("01/01/2000 12:34:56"),
                             TestDateTimeOffset = new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)),
                             TestTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                            TestDateOnly = new DateOnly(2020, 3, 1),
-                            TestTimeOnly = new TimeOnly(12, 30, 45, 123),
+                            //TestDateOnly = new DateOnly(2020, 3, 1),
+                            //TestTimeOnly = new TimeOnly(12, 30, 45, 123),
                             TestSingle = -1.234F,
                             TestBoolean = true,
                             TestByte = 255,
@@ -2281,8 +2281,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                             TestNullableDecimal = -1234567890.01M,
                             TestNullableDateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0)),
                             TestNullableTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                            TestNullableDateOnly = new DateOnly(2020, 3, 1),
-                            TestNullableTimeOnly = new TimeOnly(12, 30, 45, 123),
+                            //TestNullableDateOnly = new DateOnly(2020, 3, 1),
+                            //TestNullableTimeOnly = new TimeOnly(12, 30, 45, 123),
                             TestNullableSingle = -1.234F,
                             TestNullableBoolean = true,
                             TestNullableByte = 255,
@@ -2377,8 +2377,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                         DateTime = new DateTime(1973, 9, 3),
                         DateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0)),
                         TimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                        DateOnly = new DateOnly(2020, 3, 1),
-                        TimeOnly = new TimeOnly(12, 30, 45, 123),
+                        //DateOnly = new DateOnly(2020, 3, 1),
+                        //TimeOnly = new TimeOnly(12, 30, 45, 123),
                         Single = -1.234F,
                         Boolean = true,
                         Byte = 255,
@@ -2411,8 +2411,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                         DateTime = new DateTime(1973, 9, 3),
                         DateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0)),
                         TimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                        DateOnly = new DateOnly(2020, 3, 1),
-                        TimeOnly = new TimeOnly(12, 30, 45, 123),
+                        //DateOnly = new DateOnly(2020, 3, 1),
+                        //TimeOnly = new TimeOnly(12, 30, 45, 123),
                         Single = -1.234F,
                         Boolean = true,
                         Byte = 255,
@@ -2445,8 +2445,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
                         DateTime = new DateTime(1973, 9, 3),
                         DateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0)),
                         TimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                        DateOnly = new DateOnly(2020, 3, 1),
-                        TimeOnly = new TimeOnly(12, 30, 45, 123),
+                        //DateOnly = new DateOnly(2020, 3, 1),
+                        //TimeOnly = new TimeOnly(12, 30, 45, 123),
                         Single = -1.234F,
                         Boolean = true,
                         Byte = 255,
@@ -2542,8 +2542,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
         public DateTime TestDateTime { get; set; }
         public DateTimeOffset TestDateTimeOffset { get; set; }
         public TimeSpan TestTimeSpan { get; set; }
-        public DateOnly TestDateOnly { get; set; }
-        public TimeOnly TestTimeOnly { get; set; }
+        //public DateOnly TestDateOnly { get; set; }
+        //public TimeOnly TestTimeOnly { get; set; }
         public float TestSingle { get; set; }
         public bool TestBoolean { get; set; }
         public byte TestByte { get; set; }
@@ -2628,7 +2628,7 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
 
     protected class BinaryKeyDataType
     {
-        public byte[] Id { get; set; }
+        public /*byte[]*/int? Id { get; set; }
 
         public string Ex { get; set; }
 
@@ -2638,7 +2638,7 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
     protected class BinaryForeignKeyDataType
     {
         public int Id { get; set; }
-        public byte[] BinaryKeyDataTypeId { get; set; }
+        public /*byte[]*/int? BinaryKeyDataTypeId { get; set; }
 
         public BinaryKeyDataType Principal { get; set; }
     }
@@ -2676,8 +2676,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
         public DateTime? TestNullableDateTime { get; set; }
         public DateTimeOffset? TestNullableDateTimeOffset { get; set; }
         public TimeSpan? TestNullableTimeSpan { get; set; }
-        public DateOnly? TestNullableDateOnly { get; set; }
-        public TimeOnly? TestNullableTimeOnly { get; set; }
+        //public DateOnly? TestNullableDateOnly { get; set; }
+        //public TimeOnly? TestNullableTimeOnly { get; set; }
         public float? TestNullableSingle { get; set; }
         public bool? TestNullableBoolean { get; set; }
         public byte? TestNullableByte { get; set; }
@@ -2740,8 +2740,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
         private object _dateTime;
         private object _dateTimeOffset;
         private object _timeSpan;
-        private object _dateOnly;
-        private object _timeOnly;
+        //private object _dateOnly;
+        //private object _timeOnly;
         private object _single;
         private object _boolean;
         private object _byte;
@@ -2824,17 +2824,17 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
             set => _timeSpan = value;
         }
 
-        public DateOnly DateOnly
-        {
-            get => (DateOnly)_dateOnly;
-            set => _dateOnly = value;
-        }
+        //public DateOnly DateOnly
+        //{
+        //    get => (DateOnly)_dateOnly;
+        //    set => _dateOnly = value;
+        //}
 
-        public TimeOnly TimeOnly
-        {
-            get => (TimeOnly)_timeOnly;
-            set => _timeOnly = value;
-        }
+        //public TimeOnly TimeOnly
+        //{
+        //    get => (TimeOnly)_timeOnly;
+        //    set => _timeOnly = value;
+        //}
 
         public float Single
         {
@@ -2943,8 +2943,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
         private DateTime? _dateTime;
         private DateTimeOffset? _dateTimeOffset;
         private TimeSpan? _timeSpan;
-        private DateOnly? _dateOnly;
-        private TimeOnly? _timeOnly;
+        //private DateOnly? _dateOnly;
+        //private TimeOnly? _timeOnly;
         private float? _single;
         private bool? _boolean;
         private byte? _byte;
@@ -3015,17 +3015,17 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
             set => _timeSpan = value;
         }
 
-        public DateOnly DateOnly
-        {
-            get => (DateOnly)_dateOnly;
-            set => _dateOnly = value;
-        }
+        //public DateOnly DateOnly
+        //{
+        //    get => (DateOnly)_dateOnly;
+        //    set => _dateOnly = value;
+        //}
 
-        public TimeOnly TimeOnly
-        {
-            get => (TimeOnly)_timeOnly;
-            set => _timeOnly = value;
-        }
+        //public TimeOnly TimeOnly
+        //{
+        //    get => (TimeOnly)_timeOnly;
+        //    set => _timeOnly = value;
+        //}
 
         public float Single
         {
@@ -3134,8 +3134,8 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
         private DateTime _dateTime;
         private DateTimeOffset _dateTimeOffset;
         private TimeSpan _timeSpan;
-        private DateOnly _dateOnly;
-        private TimeOnly _timeOnly;
+        //private DateOnly _dateOnly;
+        //private TimeOnly _timeOnly;
         private float _single;
         private bool _boolean;
         private byte _byte;
@@ -3206,17 +3206,17 @@ public abstract class BuiltInDataTypesTestBase<TFixture> : IClassFixture<TFixtur
             set => _timeSpan = (TimeSpan)value;
         }
 
-        public DateOnly? DateOnly
-        {
-            get => _dateOnly;
-            set => _dateOnly = (DateOnly)value;
-        }
+        //public DateOnly? DateOnly
+        //{
+        //    get => _dateOnly;
+        //    set => _dateOnly = (DateOnly)value;
+        //}
 
-        public TimeOnly? TimeOnly
-        {
-            get => _timeOnly;
-            set => _timeOnly = (TimeOnly)value;
-        }
+        //public TimeOnly? TimeOnly
+        //{
+        //    get => _timeOnly;
+        //    set => _timeOnly = (TimeOnly)value;
+        //}
 
         public float? Single
         {

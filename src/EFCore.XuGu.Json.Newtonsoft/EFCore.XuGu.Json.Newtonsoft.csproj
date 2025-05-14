@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>SA0001;SA1633</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EFCore.XuGu\EFCore.XuGu.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="XuguClient">
+      <HintPath>..\..\..\csharp-driver8.0\XGCSClient\bin\Debug\netstandard2.1\XuguClient.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

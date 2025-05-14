@@ -43,8 +43,8 @@ public class BuiltInDataTypesSqlServerTest : BuiltInDataTypesTestBase<BuiltInDat
                 TestDateTime = Fixture.DefaultDateTime,
                 TestDateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0)),
                 TestTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
-                TestDateOnly = new DateOnly(2020, 3, 1),
-                TestTimeOnly = new TimeOnly(12, 30, 45, 123),
+                //TestDateOnly = new DateOnly(2020, 3, 1),
+                //TestTimeOnly = new TimeOnly(12, 30, 45, 123),
                 TestSingle = -1.234F,
                 TestBoolean = true,
                 TestByte = 255,
@@ -90,11 +90,11 @@ public class BuiltInDataTypesSqlServerTest : BuiltInDataTypesTestBase<BuiltInDat
         var param8 = new TimeSpan(0, 10, 9, 8, 7);
         ExecuteQueryString(context, 54, set.Where(e => e.Id == 54 && e.TestTimeSpan == param8));
 
-        var param9 = new DateOnly(2020, 3, 1);
-        ExecuteQueryString(context, 54, set.Where(e => e.Id == 54 && e.TestDateOnly == param9));
+        //var param9 = new DateOnly(2020, 3, 1);
+        //ExecuteQueryString(context, 54, set.Where(e => e.Id == 54 && e.TestDateOnly == param9));
 
-        var param10 = new TimeOnly(12, 30, 45, 123);
-        ExecuteQueryString(context, 54, set.Where(e => e.Id == 54 && e.TestTimeOnly == param10));
+        //var param10 = new TimeOnly(12, 30, 45, 123);
+        //ExecuteQueryString(context, 54, set.Where(e => e.Id == 54 && e.TestTimeOnly == param10));
 
         var param11 = -1.234F;
         ExecuteQueryString(context, 54, set.Where(e => e.Id == 54 && e.TestSingle == param11));

@@ -1,0 +1,61 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.EntityFrameworkCore.Storage;
+using NetTopologySuite.Geometries;
+
+namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
+{
+    public class XGPolygonMemberTranslator : IMemberTranslator
+    {
+        private static readonly IDictionary<MemberInfo, (string Name, bool OnlyNullByArgs)> _memberToFunctionName = new Dictionary<MemberInfo, (string Name, bool OnlyNullByArgs)>
+        {
+            { typeof(Polygon).GetRuntimeProperty(nameof(Polygon.ExteriorRing)), ("ST_ExteriorRing", false) },
+            { typeof(Polygon).GetRuntimeProperty(nameof(Polygon.NumInteriorRings)), ("ST_NumInteriorRings", false) },
+        };
+
+        private readonly IRelationalTypeMappingSource _typeMappingSource;
+        private readonly XGSqlExpressionFactory _sqlExpressionFactory;
+
+        public XGPolygonMemberTranslator(
+            IRelationalTypeMappingSource typeMappingSource,
+            XGSqlExpressionFactory sqlExpressionFactory)
+        {
+            _typeMappingSource = typeMappingSource;
+            _sqlExpressionFactory = sqlExpressionFactory;
+        }
+
+        public virtual SqlExpression Translate(SqlExpression instance, MemberInfo member, Type returnType, IDiagnosticsLogger<DbLoggerCategory.Query> logger)
+        {
+            if (typeof(Polygon).IsAssignableFrom(member.DeclaringType))
+            {
+                Debug.Assert(instance.TypeMapping != null, "Instance must have typeMapping assigned.");
+                var storeType = instance.TypeMapping.StoreType;
+
+                if (_memberToFunctionName.TryGetValue(member, out var mapping))
+                {
+                    var resultTypeMapping = typeof(Geometry).IsAssignableFrom(returnType)
+                        ? _typeMappingSource.FindMapping(returnType, storeType)
+                        : _typeMappingSource.FindMapping(returnType);
+
+                    return _sqlExpressionFactory.NullableFunction(
+                        mapping.Name,
+                        new [] {instance},
+                        returnType,
+                        resultTypeMapping,
+                        mapping.OnlyNullByArgs);
+                }
+            }
+
+            return null;
+        }
+    }
+}

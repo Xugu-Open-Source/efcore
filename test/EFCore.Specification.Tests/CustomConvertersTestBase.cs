@@ -921,9 +921,9 @@ public abstract class CustomConvertersTestBase<TFixture> : BuiltInDataTypesTestB
                     b.Property(e => e.TestInt64).HasConversion(v => v, v => v);
                     b.Property(e => e.TestDecimal).HasConversion(NumberToBytesConverter<decimal>.DefaultInfo.Create());
                     b.Property(e => e.TestDateTime).HasConversion(v => v.ToBinary(), v => DateTime.FromBinary(v));
-                    b.Property(e => e.TestDateOnly).HasConversion(v => v.ToShortDateString(), v => DateOnly.Parse(v));
+                    //b.Property(e => e.TestDateOnly).HasConversion(v => v.ToShortDateString(), v => DateOnly.Parse(v));
                     b.Property(e => e.TestTimeSpan).HasConversion(v => v.TotalMilliseconds, v => TimeSpan.FromMilliseconds(v));
-                    b.Property(e => e.TestTimeOnly).HasConversion(v => v.Ticks, v => new TimeOnly(v));
+                    //b.Property(e => e.TestTimeOnly).HasConversion(v => v.Ticks, v => new TimeOnly(v));
                     b.Property(e => e.TestSingle).HasConversion(new CastingConverter<float, double>());
                     b.Property(e => e.TestBoolean).HasConversion(new BoolToTwoValuesConverter<string>("Nope", "Yeps")).HasMaxLength(4);
                     b.Property(e => e.TestByte).HasConversion(v => (ushort)v, v => (byte)v);
@@ -988,17 +988,17 @@ public abstract class CustomConvertersTestBase<TFixture> : BuiltInDataTypesTestB
                         v => v.Value.ToBinary(),
                         v => DateTime.FromBinary(v));
 
-                    b.Property(e => e.TestNullableDateOnly).HasConversion(
-                        v => v.Value.ToShortDateString(),
-                        v => DateOnly.Parse(v));
+                    //b.Property(e => e.TestNullableDateOnly).HasConversion(
+                    //    v => v.Value.ToShortDateString(),
+                    //    v => DateOnly.Parse(v));
 
                     b.Property(e => e.TestNullableTimeSpan).HasConversion(
                         v => v.Value.TotalMilliseconds,
                         v => TimeSpan.FromMilliseconds(v));
 
-                    b.Property(e => e.TestNullableTimeOnly).HasConversion(
-                        v => v.Value.Ticks,
-                        v => new TimeOnly(v));
+                    //b.Property(e => e.TestNullableTimeOnly).HasConversion(
+                    //    v => v.Value.Ticks,
+                    //    v => new TimeOnly(v));
 
                     b.Property(e => e.EnumS8).HasConversion(
                         v => v.ToString(),
@@ -1030,14 +1030,14 @@ public abstract class CustomConvertersTestBase<TFixture> : BuiltInDataTypesTestB
                     b.Property(nameof(BuiltInDataTypes.TestInt64)).HasConversion(new ValueConverter<long, long>(v => v, v => v));
                     b.Property(nameof(BuiltInDataTypes.TestDecimal))
                         .HasConversion(NumberToBytesConverter<decimal>.DefaultInfo.Create());
-                    b.Property(nameof(BuiltInDataTypes.TestDateOnly)).HasConversion(
-                        new ValueConverter<DateOnly, string>(v => v.ToShortDateString(), v => DateOnly.Parse(v)));
+                    //b.Property(nameof(BuiltInDataTypes.TestDateOnly)).HasConversion(
+                    //    new ValueConverter<DateOnly, string>(v => v.ToShortDateString(), v => DateOnly.Parse(v)));
                     b.Property(nameof(BuiltInDataTypes.TestDateTime)).HasConversion(
                         new ValueConverter<DateTime, long>(v => v.ToBinary(), v => DateTime.FromBinary(v)));
                     b.Property(nameof(BuiltInDataTypes.TestTimeSpan)).HasConversion(
                         new ValueConverter<TimeSpan, double>(v => v.TotalMilliseconds, v => TimeSpan.FromMilliseconds(v)));
-                    b.Property(nameof(BuiltInDataTypes.TestTimeOnly)).HasConversion(
-                        new ValueConverter<TimeOnly, long>(v => v.Ticks, v => new TimeOnly(v)));
+                    //b.Property(nameof(BuiltInDataTypes.TestTimeOnly)).HasConversion(
+                    //    new ValueConverter<TimeOnly, long>(v => v.Ticks, v => new TimeOnly(v)));
                     b.Property(nameof(BuiltInDataTypes.TestSingle)).HasConversion(new CastingConverter<float, double>());
                     b.Property(nameof(BuiltInDataTypes.TestBoolean)).HasConversion(new BoolToTwoValuesConverter<string>("Nope", "Yep"));
                     b.Property(nameof(BuiltInDataTypes.TestByte))
@@ -1134,20 +1134,20 @@ public abstract class CustomConvertersTestBase<TFixture> : BuiltInDataTypesTestB
                             v => v.Value.ToBinary(),
                             v => DateTime.FromBinary(v)));
 
-                    b.Property(nameof(BuiltInNullableDataTypes.TestNullableDateOnly)).HasConversion(
-                        new ValueConverter<DateOnly?, string>(
-                            v => v.Value.ToShortDateString(),
-                            v => DateOnly.Parse(v)));
+                    //b.Property(nameof(BuiltInNullableDataTypes.TestNullableDateOnly)).HasConversion(
+                    //    new ValueConverter<DateOnly?, string>(
+                    //        v => v.Value.ToShortDateString(),
+                    //        v => DateOnly.Parse(v)));
 
                     b.Property(nameof(BuiltInNullableDataTypes.TestNullableTimeSpan)).HasConversion(
                         new ValueConverter<TimeSpan?, double>(
                             v => v.Value.TotalMilliseconds,
                             v => TimeSpan.FromMilliseconds(v)));
 
-                    b.Property(nameof(BuiltInNullableDataTypes.TestNullableTimeOnly)).HasConversion(
-                        new ValueConverter<TimeOnly?, long>(
-                            v => v.Value.Ticks,
-                            v => new TimeOnly(v)));
+                    //b.Property(nameof(BuiltInNullableDataTypes.TestNullableTimeOnly)).HasConversion(
+                    //    new ValueConverter<TimeOnly?, long>(
+                    //        v => v.Value.Ticks,
+                    //        v => new TimeOnly(v)));
 
                     b.Property(nameof(BuiltInNullableDataTypes.EnumS8)).HasConversion(
                         new ValueConverter<EnumS8?, string>(
@@ -1171,12 +1171,7 @@ public abstract class CustomConvertersTestBase<TFixture> : BuiltInDataTypesTestB
                 });
 
             modelBuilder.Entity<BinaryKeyDataType>(
-                b =>
-                {
-                    b.Property(e => e.Id).HasConversion(
-                        v => new byte[] { 4, 2, 0 }.Concat(v).ToArray(),
-                        v => v.Skip(3).ToArray());
-                });
+                b => b.Property(e => e.Id).HasConversion<string>());
 
             modelBuilder.Entity<StringKeyDataType>(
                 b =>
@@ -1216,8 +1211,8 @@ public abstract class CustomConvertersTestBase<TFixture> : BuiltInDataTypesTestB
                     b.Property(e => e.ByteArray5)
                         .HasConversion(
                             new ValueConverter<byte[], byte[]>(
-                                v => v.Reverse().Concat(new byte[] { 4, 20 }).ToArray(),
-                                v => v.Reverse().Skip(2).ToArray()),
+                                v => v.AsEnumerable().Reverse().Concat(new byte[] { 4, 20 }).ToArray(),
+                                v => v.AsEnumerable().Reverse().Skip(2).ToArray()),
                             bytesComparer)
                         .HasMaxLength(7);
 

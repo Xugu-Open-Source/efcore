@@ -1,0 +1,310 @@
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.TestModels.ConferencePlanner;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore.XuGu.Infrastructure;
+using Microsoft.EntityFrameworkCore.XuGu.Infrastructure.Internal;
+using Microsoft.EntityFrameworkCore.XuGu.Internal;
+using Microsoft.EntityFrameworkCore.XuGu.Tests;
+using Xunit;
+
+namespace Microsoft.EntityFrameworkCore.XuGu
+{
+    public class XGDbContextOptionsBuilderExtensionsTest
+    {
+        [Fact]
+        public void Multiple_UseXG_calls_each_get_fully_applied()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                "Server=first;",
+                AppConfig.ServerVersion,
+                options =>
+                    options.DefaultDataTypeMappings(
+                        mappings =>
+                            mappings.WithClrBoolean(XGBooleanType.Bit1)));
+
+            builder.UseXG(
+                "Server=second;",
+                AppConfig.ServerVersion,
+                options =>
+                    options.DefaultDataTypeMappings(
+                        mappings =>
+                            mappings.WithClrBoolean(XGBooleanType.TinyInt1)));
+
+            var xgOptionsExtension = builder.Options.GetExtension<XGOptionsExtension>();
+            Assert.StartsWith("Server=second;", xgOptionsExtension.ConnectionString, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(XGBooleanType.TinyInt1, xgOptionsExtension.DefaultDataTypeMappings.ClrBoolean);
+        }
+
+        [Fact]
+        public void TreatTinyAsBoolean_true()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG("TreatTinyAsBoolean=True", AppConfig.ServerVersion);
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(XGBooleanType.Default, xgOptions.DefaultDataTypeMappings.ClrBoolean);
+        }
+
+        [Fact]
+        public void TreatTinyAsBoolean_false()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG("TreatTinyAsBoolean=False", AppConfig.ServerVersion);
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(XGBooleanType.Default, xgOptions.DefaultDataTypeMappings.ClrBoolean);
+        }
+
+        [Fact]
+        public void TreatTinyAsBoolean_unspecified()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG("Server=foo", AppConfig.ServerVersion);
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(XGBooleanType.Default, xgOptions.DefaultDataTypeMappings.ClrBoolean);
+        }
+
+        [Fact]
+        public void Explicit_DefaultDataTypeMappings_take_precedence_over_TreatTinyAsBoolean_true()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                "TreatTinyAsBoolean=True",
+                AppConfig.ServerVersion,
+                b => b.DefaultDataTypeMappings(m => m.WithClrBoolean(XGBooleanType.Bit1)));
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(XGBooleanType.Bit1, xgOptions.DefaultDataTypeMappings.ClrBoolean);
+        }
+
+        [Fact]
+        public void Explicit_DefaultDataTypeMappings_take_precedence_over_TreatTinyAsBoolean_false()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                "TreatTinyAsBoolean=False",
+                AppConfig.ServerVersion,
+                b => b.DefaultDataTypeMappings(m => m.WithClrBoolean(XGBooleanType.TinyInt1)));
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(XGBooleanType.TinyInt1, xgOptions.DefaultDataTypeMappings.ClrBoolean);
+        }
+
+        [Fact]
+        public void UseXG_with_XGServerVersion_Version()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                "Server=foo",
+                new XGServerVersion(new Version(8, 0, 21)));
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(new Version(8, 0, 21), xgOptions.ServerVersion.Version);
+            Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
+        }
+
+        [Fact]
+        public void UseXG_with_XGServerVersion_string_version_only()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                "Server=foo",
+                new XGServerVersion("12.0.0"));
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(new Version(12, 0, 0), xgOptions.ServerVersion.Version);
+            Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
+        }
+
+        [Fact]
+        public void UseXG_with_XGServerVersion_string_version_full()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                "Server=foo",
+                new XGServerVersion("12.0.0-xg"));
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(new Version(12, 0, 0), xgOptions.ServerVersion.Version);
+            Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
+        }
+
+        [Fact]
+        public void UseXG_with_XGServerVersion_ServerVersion()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                "Server=foo",
+                new XGServerVersion(new XGServerVersion(new Version(8, 0, 21))));
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(new Version(8, 0, 21), xgOptions.ServerVersion.Version);
+            Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
+        }
+
+        [Fact]
+        public void UseXG_with_XGServerVersion_LatestSupportedServerVersion()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                "Server=foo",
+                XGServerVersion.LatestSupportedServerVersion);
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(XGServerVersion.LatestSupportedServerVersion.Version, xgOptions.ServerVersion.Version);
+            Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
+        }
+
+        
+
+        [Fact]
+        public void UseXG_with_ServerVersion_FromString()
+        {
+            var builder = new DbContextOptionsBuilder();
+            var serverVersion = ServerVersion.Parse("12.0.0-xg");
+
+            builder.UseXG(
+                "Server=foo",
+                serverVersion);
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(new Version(12,0,0), xgOptions.ServerVersion.Version);
+            Assert.Equal(ServerType.XG, xgOptions.ServerVersion.Type);
+            Assert.Equal("xg", xgOptions.ServerVersion.TypeIdentifier);
+        }
+
+        [Fact]
+        public void UseXG_with_ServerVersion_AutoDetect()
+        {
+            var builder = new DbContextOptionsBuilder();
+            var serverVersion = ServerVersion.AutoDetect(AppConfig.ConnectionString);
+
+            builder.UseXG(
+                "Server=foo",
+                serverVersion);
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(serverVersion.Version, xgOptions.ServerVersion.Version);
+            Assert.Equal(serverVersion.Type, xgOptions.ServerVersion.Type);
+            Assert.Equal(serverVersion.TypeIdentifier, xgOptions.ServerVersion.TypeIdentifier);
+        }
+
+        [Fact]
+        public void UseXG_without_connection_string()
+        {
+            var builder = new DbContextOptionsBuilder();
+            var serverVersion = ServerVersion.AutoDetect(AppConfig.ConnectionString);
+
+            builder.UseXG(serverVersion);
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+        }
+
+        [Fact]
+        public void UseXG_without_connection_explicit_DefaultDataTypeMappings_is_applied()
+        {
+            var builder = new DbContextOptionsBuilder();
+
+            builder.UseXG(
+                AppConfig.ServerVersion,
+                b => b.DefaultDataTypeMappings(m => m.WithClrBoolean(XGBooleanType.Bit1)));
+
+            var xgOptions = new XGOptions();
+            xgOptions.Initialize(builder.Options);
+
+            Assert.Equal(XGBooleanType.Bit1, xgOptions.DefaultDataTypeMappings.ClrBoolean);
+        }
+
+        [ConditionalTheory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Service_collection_extension_method_can_configure_provider_options(bool nullConnectionString)
+        {
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddXG<ApplicationDbContext>(
+                nullConnectionString
+                    ? null
+                    : AppConfig.ConnectionString,
+                AppConfig.ServerVersion,
+                xgOption =>
+                {
+                    xgOption.MaxBatchSize(123);
+                    xgOption.CommandTimeout(30);
+                },
+                dbContextOption =>
+                {
+                    dbContextOption.EnableDetailedErrors();
+                });
+
+            var services = serviceCollection.BuildServiceProvider();
+
+            using (var serviceScope = services
+                       .GetRequiredService<IServiceScopeFactory>()
+                       .CreateScope())
+            {
+                var coreOptions = serviceScope.ServiceProvider.GetRequiredService<DbContextOptions<ApplicationDbContext>>().GetExtension<CoreOptionsExtension>();
+                Assert.True(coreOptions.DetailedErrorsEnabled);
+
+                var xgOptions = serviceScope.ServiceProvider.GetRequiredService<DbContextOptions<ApplicationDbContext>>().GetExtension<XGOptionsExtension>();
+                Assert.Equal(123, xgOptions.MaxBatchSize);
+                Assert.Equal(30, xgOptions.CommandTimeout);
+
+                if (nullConnectionString)
+                {
+                    Assert.Null(xgOptions.ConnectionString);
+                }
+                else
+                {
+                    Assert.StartsWith(AppConfig.ConnectionString, xgOptions.ConnectionString);
+                }
+            }
+        }
+    }
+}
