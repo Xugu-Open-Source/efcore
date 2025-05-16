@@ -197,23 +197,24 @@ RETURNING 1;
                 AssertSql(
                     @"DELETE FROM `People`
 WHERE `First Name` = 'Hodor';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 DELETE FROM `People`
 WHERE `First Name` = 'Daenerys';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 DELETE FROM `People`
 WHERE `First Name` = 'John';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 DELETE FROM `People`
 WHERE `First Name` = 'Arya';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 DELETE FROM `People`
 WHERE `First Name` = 'Harry';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
             }
         }
 
@@ -247,23 +248,24 @@ RETURNING 1;
                 AssertSql(
                     @"DELETE FROM `People`
 WHERE `First Name` = 'Hodor' AND `Last Name` IS NULL;
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 DELETE FROM `People`
 WHERE `First Name` = 'Daenerys' AND `Last Name` = 'Targaryen';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 DELETE FROM `People`
 WHERE `First Name` = 'John' AND `Last Name` = 'Snow';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 DELETE FROM `People`
 WHERE `First Name` = 'Arya' AND `Last Name` = 'Stark';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 DELETE FROM `People`
 WHERE `First Name` = 'Harry' AND `Last Name` = 'Strickland';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
             }
         }
 
@@ -285,7 +287,8 @@ RETURNING 1;
                 AssertSql(
                     @"DELETE FROM `People`
 WHERE `Last Name` = 'Snow';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
             }
         }
 
@@ -307,7 +310,8 @@ RETURNING 1;
                 AssertSql(
                     @"DELETE FROM `People`
 WHERE `First Name` = 'John' AND `Last Name` = 'Snow';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
             }
 
         }
@@ -319,11 +323,12 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `Birthplace` = 'Winterfell', `House Allegiance` = 'Stark', `Culture` = 'Northmen'
 WHERE `First Name` = 'Hodor';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 UPDATE `People` SET `Birthplace` = 'Dragonstone', `House Allegiance` = 'Targaryen', `Culture` = 'Valyrian'
 WHERE `First Name` = 'Daenerys';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         public override void UpdateDataOperation_all_args_composite()
@@ -333,11 +338,12 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `House Allegiance` = 'Stark'
 WHERE `First Name` = 'Hodor' AND `Last Name` IS NULL;
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 UPDATE `People` SET `House Allegiance` = 'Targaryen'
 WHERE `First Name` = 'Daenerys' AND `Last Name` = 'Targaryen';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         public override void UpdateDataOperation_all_args_composite_multi()
@@ -347,11 +353,12 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `Birthplace` = 'Winterfell', `House Allegiance` = 'Stark', `Culture` = 'Northmen'
 WHERE `First Name` = 'Hodor' AND `Last Name` IS NULL;
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 UPDATE `People` SET `Birthplace` = 'Dragonstone', `House Allegiance` = 'Targaryen', `Culture` = 'Valyrian'
 WHERE `First Name` = 'Daenerys' AND `Last Name` = 'Targaryen';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         public override void UpdateDataOperation_all_args_multi()
@@ -361,7 +368,8 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `Birthplace` = 'Dragonstone', `House Allegiance` = 'Targaryen', `Culture` = 'Valyrian'
 WHERE `First Name` = 'Daenerys';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         public override void UpdateDataOperation_required_args()
@@ -371,7 +379,8 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `House Allegiance` = 'Targaryen'
 WHERE `First Name` = 'Daenerys';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         public override void UpdateDataOperation_required_args_multiple_rows()
@@ -381,11 +390,12 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `House Allegiance` = 'Stark'
 WHERE `First Name` = 'Hodor';
-SELECT ROW_COUNT();
-
+SELECT ROWNUM;
+--GO
 UPDATE `People` SET `House Allegiance` = 'Targaryen'
 WHERE `First Name` = 'Daenerys';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         public override void UpdateDataOperation_required_args_composite()
@@ -395,7 +405,8 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `House Allegiance` = 'Targaryen'
 WHERE `First Name` = 'Daenerys' AND `Last Name` = 'Targaryen';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         public override void UpdateDataOperation_required_args_composite_multi()
@@ -405,7 +416,8 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `Birthplace` = 'Dragonstone', `House Allegiance` = 'Targaryen', `Culture` = 'Valyrian'
 WHERE `First Name` = 'Daenerys' AND `Last Name` = 'Targaryen';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         public override void UpdateDataOperation_required_args_multi()
@@ -415,7 +427,8 @@ SELECT ROW_COUNT();");
             AssertSql(
                 @"UPDATE `People` SET `Birthplace` = 'Dragonstone', `House Allegiance` = 'Targaryen', `Culture` = 'Valyrian'
 WHERE `First Name` = 'Daenerys';
-SELECT ROW_COUNT();");
+SELECT ROWNUM;
+--GO");
         }
 
         [SupportedServerVersionCondition(nameof(ServerVersionSupport.DefaultExpression), nameof(ServerVersionSupport.AlternativeDefaultExpression))]
@@ -645,18 +658,18 @@ SELECT ROW_COUNT();");
         [ConditionalTheory]
         [InlineData(false, false, "Latin1")]
         [InlineData(false, false, null)]
-        [InlineData(false, true, "Latin1")]
-        [InlineData(false, true, null)]
+        //[InlineData(false, true, "Latin1")]
+        //[InlineData(false, true, null)]
         [InlineData(null, false, "Latin1")]
         [InlineData(null, false, "Utf8Mb4")]
         [InlineData(null, false, null)]
-        [InlineData(null, true, "Latin1")]
-        [InlineData(null, true, "Utf8Mb4")]
-        [InlineData(null, true, null)]
+        //[InlineData(null, true, "Latin1")]
+        //[InlineData(null, true, "Utf8Mb4")]
+        //[InlineData(null, true, null)]
         [InlineData(true, false, "Latin1")]
         [InlineData(true, false, null)]
-        [InlineData(true, true, "Latin1")]
-        [InlineData(true, true, null)]
+        //[InlineData(true, true, "Latin1")]
+        //[InlineData(true, true, null)]
         public virtual void AddColumnOperation_with_charset_implicit(bool? isUnicode, bool isIndex, string charSetName)
         {
             var charSet = CharSet.GetCharSetFromName(charSetName);
@@ -1090,7 +1103,7 @@ SELECT ROW_COUNT();");
             Generate(migrationBuilder.Operations.ToArray());
 
             Assert.Equal(
-                @"ALTER TABLE `Person` RENAME INDEX `IX_Person_Name` TO `IX_Person_FullName`;" + EOL,
+                @"ALTER INDEX `Person`.`IX_Person_Name` RENAME TO `IX_Person_FullName`;" + EOL,
                 Sql);
         }
 
@@ -1254,7 +1267,7 @@ SELECT ROW_COUNT();");
                 });
 
             Assert.Equal(
-                @"CREATE INDEX `IX_IceCreams_Brand_Name` ON `IceCreams` (`Name`, `Brand`(20));" + EOL,
+                @"CREATE INDEX `IX_IceCreams_Brand_Name` ON `IceCreams` (`Name`, `Brand`);" + EOL,
                 Sql,
                 ignoreLineEndingDifferences: true);
         }

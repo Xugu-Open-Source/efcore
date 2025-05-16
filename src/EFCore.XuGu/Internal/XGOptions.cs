@@ -238,8 +238,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Internal
                 return false;
             }
             
-            return false;
-            //return Equals((XGOptions)obj);
+            //return false;
+            return Equals((XGOptions)obj);
         }
 
         public override int GetHashCode()

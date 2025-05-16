@@ -24,10 +24,10 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
 
             Assert.Equal(
                 @"CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `MigrationId` varchar(150) NOT NULL,
+    `ProductVersion` varchar(32) NOT NULL,
     CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-) CHARACTER SET=utf8mb4;
+);
 
 ",
                 Sql,
@@ -40,10 +40,10 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
 
             Assert.Equal(
                 @"CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `MigrationId` varchar(150) NOT NULL,
+    `ProductVersion` varchar(32) NOT NULL,
     CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-) CHARACTER SET=utf8mb4;
+);
 
 ",
                 Sql,
@@ -56,10 +56,10 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
 
             Assert.Equal(
                 @"CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `MigrationId` varchar(150) NOT NULL,
+    `ProductVersion` varchar(32) NOT NULL,
     CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-) CHARACTER SET=utf8mb4;
+);
 
 START TRANSACTION;
 
@@ -137,11 +137,11 @@ COMMIT;
         {
             base.Can_generate_idempotent_up_scripts();
 
-            Assert.Equal(@"CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+            Assert.Equal(@"CREATE TABLE IF NOT EXISTS `SYSDBA`.`__EFMigrationsHistory` (
+    `MigrationId` varchar(150) NOT NULL,
+    `ProductVersion` varchar(32) NOT NULL,
     CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-) CHARACTER SET=utf8mb4;
+);
 
 START TRANSACTION;
 
@@ -151,7 +151,7 @@ CREATE PROCEDURE MigrationsScript()
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '00000000000001_Migration1') THEN
 
-    CREATE TABLE `Table1` (
+    CREATE TABLE `SYSDBA`.`Table1` (
         `Id` int NOT NULL,
         `Foo` int NOT NULL,
         CONSTRAINT `PK_Table1` PRIMARY KEY (`Id`)
@@ -253,7 +253,7 @@ COMMIT;
 
 START TRANSACTION;
 
-DROP TABLE `Table1`;
+DROP TABLE `SYSDBA`.`Table1`;
 
 DELETE FROM `__EFMigrationsHistory`
 WHERE `MigrationId` = '00000000000001_Migration1';
@@ -349,7 +349,7 @@ CREATE PROCEDURE MigrationsScript()
 BEGIN
     IF EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '00000000000001_Migration1') THEN
 
-    DROP TABLE `Table1`;
+    DROP TABLE `SYSDBA`.`Table1`;
 
     END IF;
 END //
@@ -392,10 +392,10 @@ COMMIT;
 
             Assert.Equal(
                 @"CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `MigrationId` varchar(150) NOT NULL,
+    `ProductVersion` varchar(32) NOT NULL,
     CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-) CHARACTER SET=utf8mb4;
+);
 
 CREATE TABLE `Table1` (
     `Id` int NOT NULL,
@@ -424,11 +424,11 @@ VALUES ('00000000000003_Migration3', '7.0.0-test');
             base.Can_generate_idempotent_up_scripts_noTransactions();
 
             Assert.Equal(
-                @"CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+                @"CREATE TABLE IF NOT EXISTS `SYSDBA`.`__EFMigrationsHistory` (
+    `MigrationId` varchar(150) NOT NULL,
+    `ProductVersion` varchar(32) NOT NULL,
     CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-) CHARACTER SET=utf8mb4;
+);
 
 DROP PROCEDURE IF EXISTS MigrationsScript;
 DELIMITER //

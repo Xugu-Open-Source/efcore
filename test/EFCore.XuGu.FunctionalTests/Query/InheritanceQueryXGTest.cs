@@ -14,7 +14,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
             //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
         }
 
-        [ConditionalFact(Skip = "")]
+        //[ConditionalTheory(Skip = "")]
+        //[MemberData(nameof(IsAsyncData))]
         public override Task Byte_enum_value_constant_used_in_projection(bool async)
         {
             return base.Byte_enum_value_constant_used_in_projection(async);

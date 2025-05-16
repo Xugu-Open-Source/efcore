@@ -70,7 +70,7 @@ GROUP BY `a`.`FirstName`
 
         AssertSql(
 """
-SELECT `a`.`Id` * 2
+SELECT `a`.`Id` * 2.0
 FROM `ArubaOwner` AS `a`
 GROUP BY `a`.`Id`
 """);

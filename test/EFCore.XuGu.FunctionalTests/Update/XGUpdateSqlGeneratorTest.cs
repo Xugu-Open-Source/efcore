@@ -245,11 +245,11 @@ VALUES (:p0, :p1, :p2, :p3);
             if (AppConfig.ServerVersion.Supports.Returning)
             {
                 AssertBaseline(
-                    @"INSERT INTO `Ducks` ()
-VALUES ()
+                    @"INSERT INTO `Ducks` DEFAULT
+VALUES 
 RETURNING `Id`, `Computed`;
-INSERT INTO `Ducks` ()
-VALUES ()
+INSERT INTO `Ducks` DEFAULT
+VALUES 
 RETURNING `Id`, `Computed`;
 ",
                     stringBuilder.ToString());
@@ -257,15 +257,15 @@ RETURNING `Id`, `Computed`;
             else
             {
                 AssertBaseline(
-                    @"INSERT INTO `Ducks` ()
-VALUES ();
+                    @"INSERT INTO `Ducks` DEFAULT
+VALUES ;
 SELECT `Id`, `Computed`
 FROM `Ducks`
 WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
 
 --GO
-INSERT INTO `Ducks` ()
-VALUES ();
+INSERT INTO `Ducks` DEFAULT
+VALUES ;
 SELECT `Id`, `Computed`
 FROM `Ducks`
 WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
@@ -322,11 +322,11 @@ WHERE ROWNUM = 1 AND `Id` = LAST_INSERT_ID();
             var sqlGenerator = (IXGUpdateSqlGenerator)CreateSqlGenerator();
             var grouping = sqlGenerator.AppendBulkInsertOperation(stringBuilder, new[] { command, command }, 0, out _);
 
-            var expectedText = @"INSERT INTO `Ducks` ()
-VALUES ();
+            var expectedText = @"INSERT INTO `Ducks` DEFAULT
+VALUES ;
 --GO
-INSERT INTO `Ducks` ()
-VALUES ();
+INSERT INTO `Ducks` DEFAULT
+VALUES ;
 ";
             AssertBaseline(
                 expectedText,
@@ -351,7 +351,7 @@ RETURNING 1;
                     @"DELETE FROM `Ducks`
 WHERE `Id` = :p0;
 SELECT ROWNUM;
-
+--GO
 ",
                     stringBuilder.ToString());
             }
@@ -375,7 +375,7 @@ RETURNING 1;
                     @"DELETE FROM `Ducks`
 WHERE `Id` = :p0 AND `ConcurrencyToken` IS NULL;
 SELECT ROWNUM;
-
+--GO
 ",
                     stringBuilder.ToString());
             }
@@ -561,7 +561,7 @@ WHERE ROWNUM = 1 AND `Id` = :p3;
                 @"UPDATE `Ducks` SET `Name` = :p0, `Quacks` = :p1, `ConcurrencyToken` = :p2
 WHERE `Id` = :p3;
 SELECT ROWNUM;
-
+--GO
 ",
                 stringBuilder.ToString());
 
@@ -570,7 +570,7 @@ SELECT ROWNUM;
                 @"UPDATE `Ducks` SET `Name` = :p0, `Quacks` = :p1, `ConcurrencyToken` = :p2
 WHERE `Id` = :p3 AND `ConcurrencyToken` IS NULL;
 SELECT ROWNUM;
-
+--GO
 ",
                 stringBuilder.ToString());
 
@@ -594,10 +594,10 @@ WHERE ROWNUM = 1 AND `Id` = :p3;
             => "LAST_INSERT_ID()";
 
         protected virtual string NoColumns
-            => " ()"; // null
+            => " DEFAULT"; // null
 
         protected virtual string DefaultValues
-            => "VALUES ()"; // "DEFAULT VALUES"
+            => "VALUES "; // "DEFAULT VALUES"
 
         protected override string Schema
             => null;

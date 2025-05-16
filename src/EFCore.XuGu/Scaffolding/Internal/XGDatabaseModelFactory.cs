@@ -136,6 +136,9 @@ WHERE
                 DefaultSchema = GetDefaultSchema(connection)
             };
 
+            connection.Close();
+            connection.Open();
+
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = GetDatabaseSettings;
@@ -164,7 +167,7 @@ WHERE
                 databaseModel.Tables.Add(table);
             }
 
-            if (_options.ServerVersion.Supports.Sequences)
+            if (_options.ServerVersion!=null&&_options.ServerVersion.Supports.Sequences)
             {
                 foreach (var sequence in GetSequences(connection))
                 {
@@ -243,7 +246,7 @@ WHERE
                         var comment = reader.GetValueOrDefault<string>("TABLE_COMMENT");
                         var charset = reader.GetValueOrDefault<string>("TABLE_CHARACTER_SET");
 
-                        var table = string.Equals(type, "base table", StringComparison.OrdinalIgnoreCase)
+                        var table = string.Equals(type, "TABLE", StringComparison.OrdinalIgnoreCase)
                             ? new DatabaseTable()
                             : new DatabaseView();
 
@@ -336,7 +339,31 @@ AND
             return sequences;
         }
 
-            private const string GetColumnsQuery = @"SELECT COL_NAME AS `COLUMN_NAME`,COL_NO AS `ORDINAL_POSITION`,DEF_VAL AS `COLUMN_DEFAULT`,IF(`NOT_NULL`=TRUE,FALSE,TRUE) AS `IS_NULLABLE`,TYPE_NAME AS `DATA_TYPE`,`VARYING`,COMMENTS AS `COLUMN_COMMENT`,IF(`TYPE_NAME` = 'GUID' AND `DEF_VAL`='""UUID""()', 'IDENTITY', IF(`IS_SERIAL` = TRUE, 'IDENTITY', '')) AS `EXTRA`,(SCALE/65536)::INT AS `PRECISION`,CAST(MOD(SCALE,65536) AS INT) AS `SCALE` FROM ALL_COLUMNS WHERE TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{0}');";
+            private const string GetColumnsQuery = @"SELECT COL_NAME AS `COLUMN_NAME`,
+COL_NO AS `ORDINAL_POSITION`,
+DEF_VAL AS `COLUMN_DEFAULT`,
+IF(`NOT_NULL`=TRUE,FALSE,TRUE) AS `IS_NULLABLE`,
+TYPE_NAME AS `DATA_TYPE`,
+`VARYING`,
+COMMENTS AS `COLUMN_COMMENT`,
+IF(`TYPE_NAME` = 'GUID' AND `DEF_VAL`='""UUID""()', 'IDENTITY', IF(`IS_SERIAL` = TRUE, 'IDENTITY', '')) AS `EXTRA`,
+(SCALE/65536)::INT AS `PRECISION`,
+CAST(MOD(SCALE,65536) AS INT) AS `SCALE`
+FROM ALL_COLUMNS
+WHERE TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{0}')
+UNION ALL
+SELECT COL_NAME AS `COLUMN_NAME`,
+COL_NO AS `ORDINAL_POSITION`,
+NULL AS `COLUMN_DEFAULT`,
+FALSE AS `IS_NULLABLE`,
+TYPE_NAME AS `DATA_TYPE`,
+`VARYING`,
+COMMENTS AS `COLUMN_COMMENT`,
+'' AS `EXTRA`,
+(SCALE/65536)::INT AS `PRECISION`,
+CAST(MOD(SCALE,65536) AS INT) AS `SCALE`
+FROM all_view_columns
+WHERE VIEW_ID=(SELECT VIEW_ID FROM ALL_VIEWS WHERE VIEW_NAME='{0}');";
 
         protected virtual void GetColumns(
             DbConnection connection,
@@ -397,12 +424,12 @@ AND
                             if (generation is not null)
                             {
                                 // XuGu saves the generation expression with enclosing parenthesis, while MariaDB doesn't.
-                                generation = _options.ServerVersion.Supports.ParenthesisEnclosedGeneratedColumnExpressions
+                                generation = _options.ServerVersion!=null&&_options.ServerVersion.Supports.ParenthesisEnclosedGeneratedColumnExpressions
                                     ? Regex.Replace(generation, @"^\((.*)\)$", "$1", RegexOptions.Singleline)
                                     : generation;
 
                                 // XuGu 8 contains a regression bug, that escapes the outer quotes of a string in a generated expression.
-                                generation = _options.ServerVersion.Supports.XGBug104294Workaround
+                                generation = _options.ServerVersion!=null&&_options.ServerVersion.Supports.XGBug104294Workaround
                                     ? generation.Replace(@"\'", @"'")
                                     : generation;
                             }
@@ -426,6 +453,13 @@ AND
                             }
 
                             ValueGenerated? valueGenerated;
+                            if (dataType.Equals("GUID", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (defaultValue != null)
+                                {
+                                    valueGenerated = ValueGenerated.OnAdd;
+                                }
+                            }
                             if (extra.IndexOf("IDENTITY", StringComparison.Ordinal) >= 0)
                             {
                                 valueGenerated = ValueGenerated.OnAdd;
@@ -507,7 +541,7 @@ AND
             }
 
             // If SQL functions are used as a default value in MariaDB, they will always end in a parenthesis pair.
-            if (_options.ServerVersion.Supports.AlternativeDefaultExpression &&
+            if (_options.ServerVersion!=null&&_options.ServerVersion.Supports.AlternativeDefaultExpression &&
                 defaultValue.EndsWith("()", StringComparison.Ordinal))
             {
                 return true;
@@ -669,7 +703,9 @@ AND
                         {
                             try
                             {
-                                var columns = reader.GetValueOrDefault<string>("COLUMNS").Split(',').Select(s => GetColumn(table, s)).ToList();
+                                var columns = reader.GetValueOrDefault<string>("COLUMNS").Split(',').Select(s => GetColumn(table, s.Replace(" DESC", "").Replace(" ASC", ""))).ToList();
+
+                                var isDescs = reader.GetValueOrDefault<string>("COLUMNS").Split(',').Select(s => columns.Select(c => c.Name).Contains(s) ? false : s.Contains(" ASC") ? false : true).ToList();
 
                                 // Reuse an existing index over the same columns, to workaround an EF Core
                                 // bug (EF#11846 and #1189).
@@ -684,7 +720,12 @@ AND
                                                 Name = reader.GetValueOrDefault<string>("INDEX_NAME"),
                                             };
 
-                                index.IsUnique |= !reader.GetValueOrDefault<bool>("NON_UNIQUE");
+                                index.IsUnique = reader.GetValueOrDefault<bool>("NON_UNIQUE");
+
+                                if (isDescs != null && isDescs.Count > 0)
+                                {
+                                    index.IsDescending = isDescs;
+                                }
 
                                 string subParts = reader.GetValueOrDefault<string>("SUB_PARTS");
                                 var prefixLengths = string.IsNullOrEmpty(subParts)?new int[0] : reader.GetValueOrDefault<string>("SUB_PARTS")
@@ -913,7 +954,7 @@ REPLACE(DEFINE,'""','') AS PAIRED_COLUMNS FROM ALL_CONSTRAINTS c LEFT JOIN ALL_T
             // For MariaDB. the `json` type is just an alias for `longtext`.
             // In newer versions however, it adds a json_valid(`columnName`) check constraint when a column was created with the type
             // `json`, which we can use as a very strong heuristic that a `longtext` column is being used as a `json` column.
-            if (_options.ServerVersion.Supports.IdentifyJsonColumsByCheckConstraints &&
+            if (_options.ServerVersion!=null&&_options.ServerVersion.Supports.IdentifyJsonColumsByCheckConstraints &&
                 _options.ServerVersion.Supports.InformationSchemaCheckConstraintsTable)
             {
                 using var command = connection.CreateCommand();
@@ -944,10 +985,11 @@ REPLACE(DEFINE,'""','') AS PAIRED_COLUMNS FROM ALL_CONSTRAINTS c LEFT JOIN ALL_T
         protected virtual ReferentialAction? ConvertToReferentialAction(string onDeleteAction)
             => onDeleteAction.ToUpperInvariant() switch
             {
-                "NO ACTION" => ReferentialAction.NoAction,
-                "RESTRICT" => ReferentialAction.NoAction, // RESTRICT is the same as NO ACTION in XuGu/MariaDB
-                "CASCADE" => ReferentialAction.Cascade,
-                "SET NULL" => ReferentialAction.SetNull,
+                "N" => ReferentialAction.NoAction,
+                "R" => ReferentialAction.NoAction, // RESTRICT is the same as NO ACTION in XuGu/MariaDB
+                "C" => ReferentialAction.Cascade,
+                "U" => ReferentialAction.SetNull,
+                "D" => ReferentialAction.SetDefault,
                 _ => null
             };
 

@@ -207,17 +207,47 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
             // TODO: Add support for DateTime and DateTimeOffset.
             // To support DateTime and DateTimeOffset in Pomelo, we need propert TimeSpan support (representing MICROSECONDS or Ticks stored
             // as BIGINT, not just a simple mapping to TIME, which is very limited in its range).
-            if (binaryExpression.NodeType == ExpressionType.Subtract &&
-                Visit(binaryExpression.Left) is SqlExpression subtractLeftVisited &&
-                Visit(binaryExpression.Right) is SqlExpression subtractRightVisited &&
-                (/*subtractLeftVisited.Type == typeof(DateTime) && subtractRightVisited.Type == typeof(DateTime) ||
-                 subtractLeftVisited.Type == typeof(DateTimeOffset) && subtractRightVisited.Type == typeof(DateTimeOffset) ||*/
-                 subtractLeftVisited.Type == typeof(TimeOnly) && subtractRightVisited.Type == typeof(TimeOnly)))
+            List<string> skipMethods = new List<string> { "SUM", "NEXT" };
+
+            if ((binaryExpression.NodeType == ExpressionType.Subtract ||
+                binaryExpression.NodeType == ExpressionType.Add ||
+                binaryExpression.NodeType == ExpressionType.Multiply ||
+                binaryExpression.NodeType == ExpressionType.Divide) &&
+                binaryExpression.Type == typeof(int))
             {
-                return _sqlExpressionFactory.Subtract(
-                    subtractLeftVisited,
-                    subtractRightVisited,
-                    Dependencies.TypeMappingSource.FindMapping(typeof(TimeSpan)));
+                if ((binaryExpression.Left is MethodCallExpression leftFunc && skipMethods.Contains(leftFunc.Method.Name, StringComparer.OrdinalIgnoreCase)) || (binaryExpression.Right is MethodCallExpression rightFunc && skipMethods.Contains(rightFunc.Method.Name, StringComparer.OrdinalIgnoreCase)))
+                {
+                    return base.VisitBinary(binaryExpression);
+                }
+                Type type = binaryExpression.Type == typeof(int) ? typeof(decimal) : binaryExpression.Type;
+                if (binaryExpression.NodeType == ExpressionType.Subtract)
+                {
+                    return _sqlExpressionFactory.Subtract(
+                        (SqlExpression)Visit(binaryExpression.Left),
+                        (SqlExpression)Visit(binaryExpression.Right),
+                        Dependencies.TypeMappingSource.FindMapping(type));
+                }
+                else if (binaryExpression.NodeType == ExpressionType.Add)
+                {
+                    return _sqlExpressionFactory.Add(
+                        (SqlExpression)Visit(binaryExpression.Left),
+                        (SqlExpression)Visit(binaryExpression.Right),
+                        Dependencies.TypeMappingSource.FindMapping(type));
+                }
+                else if (binaryExpression.NodeType == ExpressionType.Divide)
+                {
+                    return _sqlExpressionFactory.Divide(
+                        (SqlExpression)Visit(binaryExpression.Left),
+                        (SqlExpression)Visit(binaryExpression.Right),
+                        Dependencies.TypeMappingSource.FindMapping(type));
+                }
+                else if (binaryExpression.NodeType == ExpressionType.Multiply)
+                {
+                    return _sqlExpressionFactory.Multiply(
+                        (SqlExpression)Visit(binaryExpression.Left),
+                        (SqlExpression)Visit(binaryExpression.Right),
+                        Dependencies.TypeMappingSource.FindMapping(type));
+                }
 
                 // Previous statement is simpler than this:
                 //

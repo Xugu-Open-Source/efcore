@@ -24,6 +24,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
         }
         public virtual bool? TreatTinyAsBoolean { get; }
 
+        protected virtual bool Equals(XGConnectionSettings other)
+        {
+            return TreatTinyAsBoolean == other.TreatTinyAsBoolean;
+        }
+
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj))

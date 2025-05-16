@@ -33,7 +33,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Scaffolding.Internal
             => value is XGCodeGenerationServerVersionCreation serverVersionCreation
                 ? Expression.Call(
                     typeof(ServerVersion).GetMethod(nameof(ServerVersion.Parse), new[] {typeof(string)}),
-                    Expression.Constant(serverVersionCreation.ServerVersion.ToString()))
+                    Expression.Constant(serverVersionCreation.ServerVersion!=null?serverVersionCreation.ServerVersion.ToString():"xugu-12.0.0"))
                 : null;
     }
 }

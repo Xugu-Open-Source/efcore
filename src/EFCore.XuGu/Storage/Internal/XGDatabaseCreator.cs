@@ -37,11 +37,14 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
             [NotNull] IRawSqlCommandBuilder rawSqlCommandBuilder)
             : base(dependencies)
         {
-            Match match = Regex.Match(relationalConnection.DbConnection.ConnectionString, @".*DB=([^;]+)");
-
-            if (match.Success)
+            if (relationalConnection.DbConnection.ConnectionString != null)
             {
-                _databaseName = match.Groups[1].Value;
+                Match match = Regex.Match(relationalConnection.DbConnection.ConnectionString, @".*DB=([^;]+)");
+
+                if (match.Success)
+                {
+                    _databaseName = match.Groups[1].Value;
+                }
             }
             _relationalConnection = relationalConnection;
             ((XGConnection)_relationalConnection.DbConnection).ChangeDatabase(_databaseName, false);

@@ -201,7 +201,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             if (operation.Comment != operation.OldTable.Comment)
             {
                 builder.Append("COMMENT ON TABLE ")
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Schema ?? "SYSDBA"))
+                    .Append(".")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
                     .Append(" IS '")
                     .Append(operation.Comment ?? "")
                     .Append("'");
@@ -279,11 +281,12 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             {
                 if (_options.ServerVersion.Supports.RenameIndex)
                 {
-                    builder.Append("ALTER TABLE ")
+                    builder.Append("ALTER INDEX ")
                         .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                        .Append(" RENAME INDEX ")
+                        .Append(".")
                         .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
-                        .Append(" TO ")
+                        .Append(" RENAME ")
+                        .Append("TO ")
                         .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName))
                         .AppendLine(";");
 
@@ -412,7 +415,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                 .Append(" ON ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
                 .Append(" (")
-                .Append(ColumnListWithIndexPrefixLength(operation, operation.Columns))
+                .Append(ColumnListWithIndexOrder(operation, operation.Columns))
                 .Append(")");
 
             IndexOptions(operation, model, builder);
@@ -422,6 +425,21 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                 builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
                 EndStatement(builder);
             }
+        }
+
+
+        private string ColumnListWithIndexOrder(CreateIndexOperation operation, string[] columns)
+        {
+            string result = "";
+            if (operation.IsDescending != null && operation.IsDescending is bool[] orderValues)
+            {
+                result = string.Join(", ", columns.Select((c, i) => $"{Dependencies.SqlGenerationHelper.DelimitIdentifier(c)}{(orderValues.Length > i ? (orderValues[i] ? " DESC" : " ASC") : " DESC")}"));
+            }
+            else
+            {
+                result = ColumnList(columns);
+            }
+            return result;
         }
 
         /// /// <summary>
@@ -898,7 +916,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             }
             else
             {
-                builder.Append(" NO MINVALUE");
+                builder.Append(" NOMINVALUE");
             }
 
             if (operation.MaxValue.HasValue)
@@ -909,7 +927,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             }
             else
             {
-                builder.Append(" NO MAXVALUE");
+                builder.Append(" NOMAXVALUE");
             }
 
             builder.Append(operation.IsCyclic ? " CYCLE" : " NOCYCLE");
@@ -1040,7 +1058,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                 return;
 
             builder.Append(" COMMENT ")
-                .Append(_stringTypeMapping.GenerateSqlLiteral(comment));
+                .Append($"'{comment}'"/*_stringTypeMapping.GenerateSqlLiteral(comment)*/);
         }
 
         private void ColumnDefinitionWithCharSet(string schema, string table, string name, ColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
@@ -1135,7 +1153,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             Check.NotNull(builder, nameof(builder));
 
             var primaryKey = operation.PrimaryKey;
-            if (primaryKey == null || operation.Columns.Where(i => i.ColumnType.Contains("binary")).Select(i => i.Name).Any(primaryKey.Columns.Contains)) return;
+            if (primaryKey == null || operation.Columns.Where(i => i.ColumnType != null && i.ColumnType.Contains("binary")).Select(i => i.Name).Any(primaryKey.Columns.Contains)) return;
             if (primaryKey != null)
             {
                 builder.AppendLine(",");
@@ -1300,18 +1318,15 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
 
             void DropPrimaryKey()
             {
-                builder.AppendLine($"DECLARE")
-                    .AppendLine("pktotal int;")
-                    .AppendLine("BEGIN")
-                    .AppendLine($"pktotal:=(SELECT COUNT(CONS_NAME) FROM ALL_CONSTRAINTS WHERE CONS_TYPE='P' AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{operation.Table}' AND SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='{operation.Schema}' LIMIT 1) LIMIT 1) LIMIT 1);")
-                    .AppendLine("IF pktotal>0 THEN")
-                    .AppendLine($"EXECUTE IMMEDIATE 'ALTER TABLE TESTDELETEP DROP CONSTRAINT '||(SELECT CONS_NAME FROM ALL_CONSTRAINTS WHERE CONS_TYPE='P' AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{operation.Table}' AND SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='{operation.Schema}' LIMIT 1) LIMIT 1) LIMIT 1);")
+                builder.AppendLine("BEGIN")
+                    .AppendLine($"IF (SELECT COUNT(CONS_NAME) FROM ALL_CONSTRAINTS WHERE CONS_TYPE='P' AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{operation.Table}' AND SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='{operation.Schema ?? "SYSDBA"}' LIMIT 1) LIMIT 1) LIMIT 1)>0 THEN")
+                    .AppendLine($"EXECUTE IMMEDIATE 'ALTER TABLE `{operation.Table}` DROP CONSTRAINT '||(SELECT CONS_NAME FROM ALL_CONSTRAINTS WHERE CONS_TYPE='P' AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{operation.Table}' AND SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='{operation.Schema ?? "SYSDBA"}' LIMIT 1) LIMIT 1) LIMIT 1);")
                     .AppendLine("END IF;")
                     .AppendLine("END;");
 
                 if (terminate)
                 {
-                    builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                    //builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
                     EndStatement(builder);
                 }
             }
@@ -1363,11 +1378,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
 
-            var fullText = operation[XGAnnotationNames.FullTextIndex] as bool?;
-            if (fullText == true)
-            {
-                builder.Append("FULLTEXT ");
-            }
+            //var fullText = operation[XGAnnotationNames.FullTextIndex] as bool?;
+            //if (fullText == true)
+            //{
+            //    builder.Append("FULLTEXT ");
+            //}
 
             var spatial = operation[XGAnnotationNames.SpatialIndex] as bool?;
             if (spatial == true)
@@ -1387,12 +1402,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                 var fullTextParser = operation[XGAnnotationNames.FullTextParser] as string;
                 if (!string.IsNullOrEmpty(fullTextParser))
                 {
-                    // Official XG support exists since 5.1, but since MariaDB does not support full-text parsers and does not recognize
-                    // the "/*!xxxxx" syntax for versions below 50700, we use 50700 here, even though the statement would work in lower
-                    // versions as well. Since we don't support XG 5.6 officially anymore, this is fine.
-                    builder.Append(" /*!50700 WITH PARSER ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(fullTextParser))
-                        .Append(" */");
+                    builder.AppendLine(" USING VOCABLE TABLE 'vocab_table'")
+                        .AppendLine("USING FILTER 'default_filter'")
+                        .Append("USING LEXER 'default_lexer'");
                 }
             }
         }
