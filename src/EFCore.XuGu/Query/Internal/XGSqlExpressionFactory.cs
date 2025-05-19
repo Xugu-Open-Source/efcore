@@ -320,7 +320,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
             var newSqlBinaryExpression = (SqlBinaryExpression)base.ApplyTypeMapping(sqlBinaryExpression, typeMapping);
 
             // Handle the special case, that a JSON value is compared to a string (e.g. when used together with
-            // JSON_EXTRACT()).
+            // JSON_VALUE()).
             // The string argument should not be interpreted as a JSON value, which it normally would due to inference
             // if its type mapping hasn't been explicitly set before, but just as a string.
             if (newSqlBinaryExpression.Left.TypeMapping is XGJsonTypeMapping newLeftTypeMapping &&

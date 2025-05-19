@@ -83,7 +83,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionTranslators.Interna
                         method.ReturnType),
                 nameof(XGJsonDbFunctionsExtensions.JsonExtract)
                     => _sqlExpressionFactory.NullableFunction(
-                        "JSON_EXTRACT",
+                        "JSON_VALUE",
                         Array.Empty<SqlExpression>()
                             .Append(Json(args[0]))
                             .Concat(DeconstructParamsArray(args[1])),

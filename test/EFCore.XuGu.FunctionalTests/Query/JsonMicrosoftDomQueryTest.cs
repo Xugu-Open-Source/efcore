@@ -78,18 +78,18 @@ WHERE `j`.`CustomerDocument` = '{""Name"":""Test customer"",""Age"":80}'");
 
             Assert.Equal(actual, expected);
             AssertSql(
-                @"@__p_0='1'
+                @":__p_0='1'
 
 SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE `j`.`Id` = @__p_0
+WHERE `j`.`Id` = :__p_0
 LIMIT 1",
                 //
-                $@"{InsertJsonDocument(@"@__expected_0='{""ID"":""00000000-0000-0000-0000-000000000000"",""Age"":25,""Name"":""Joe"",""IsVip"":false,""Orders"":[{""Price"":99.5,""ShippingDate"":""2019-10-01"",""ShippingAddress"":""Some address 1""},{""Price"":23.1,""ShippingDate"":""2019-10-10"",""ShippingAddress"":""Some address 2""}],""Statistics"":{""Nested"":{""IntArray"":[3,4],""SomeProperty"":10,""SomeNullableInt"":20,""SomeNullableGuid"":""d5f2685d-e5c4-47e5-97aa-d0266154eb2d""},""Visits"":4,""Purchases"":3}}'")} (Size = 4000)
+                $@"{InsertJsonDocument(@":__expected_0='{""ID"":""00000000-0000-0000-0000-000000000000"",""Age"":25,""Name"":""Joe"",""IsVip"":false,""Orders"":[{""Price"":99.5,""ShippingDate"":""2019-10-01"",""ShippingAddress"":""Some address 1""},{""Price"":23.1,""ShippingDate"":""2019-10-10"",""ShippingAddress"":""Some address 2""}],""Statistics"":{""Nested"":{""IntArray"":[3,4],""SomeProperty"":10,""SomeNullableInt"":20,""SomeNullableGuid"":""d5f2685d-e5c4-47e5-97aa-d0266154eb2d""},""Visits"":4,""Purchases"":3}}'")} (Size = 4000)
 
 SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE `j`.`CustomerDocument` = {InsertJsonConvert("@__expected_0")}
+WHERE `j`.`CustomerDocument` = {InsertJsonConvert(":__expected_0")}
 LIMIT 2");
         }
 
@@ -102,18 +102,18 @@ LIMIT 2");
 
             Assert.Equal(actual, expected);
             AssertSql(
-                @"@__p_0='1'
+                @":__p_0='1'
 
 SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE `j`.`Id` = @__p_0
+WHERE `j`.`Id` = :__p_0
 LIMIT 1",
                 //
-                $@"{InsertJsonDocument(@"@__expected_0='{""ID"":""00000000-0000-0000-0000-000000000000"",""Age"":25,""Name"":""Joe"",""IsVip"":false,""Orders"":[{""Price"":99.5,""ShippingDate"":""2019-10-01"",""ShippingAddress"":""Some address 1""},{""Price"":23.1,""ShippingDate"":""2019-10-10"",""ShippingAddress"":""Some address 2""}],""Statistics"":{""Nested"":{""IntArray"":[3,4],""SomeProperty"":10,""SomeNullableInt"":20,""SomeNullableGuid"":""d5f2685d-e5c4-47e5-97aa-d0266154eb2d""},""Visits"":4,""Purchases"":3}}'")} (Nullable = false) (Size = 4000)
+                $@"{InsertJsonDocument(@":__expected_0='{""ID"":""00000000-0000-0000-0000-000000000000"",""Age"":25,""Name"":""Joe"",""IsVip"":false,""Orders"":[{""Price"":99.5,""ShippingDate"":""2019-10-01"",""ShippingAddress"":""Some address 1""},{""Price"":23.1,""ShippingDate"":""2019-10-10"",""ShippingAddress"":""Some address 2""}],""Statistics"":{""Nested"":{""IntArray"":[3,4],""SomeProperty"":10,""SomeNullableInt"":20,""SomeNullableGuid"":""d5f2685d-e5c4-47e5-97aa-d0266154eb2d""},""Visits"":4,""Purchases"":3}}'")} (Nullable = false) (Size = 4000)
 
 SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE `j`.`CustomerElement` = {InsertJsonConvert("@__expected_0")}
+WHERE `j`.`CustomerElement` = {InsertJsonConvert(":__expected_0")}
 LIMIT 2");
         }
 
@@ -127,7 +127,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_UNQUOTE(JSON_EXTRACT(`j`.`CustomerDocument`, '$.Name')) = 'Joe'
+WHERE JSON_UNQUOTE(JSON_VALUE(`j`.`CustomerDocument`, '$.Name')) = 'Joe'
 LIMIT 2");
         }
 
@@ -141,7 +141,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_UNQUOTE(JSON_EXTRACT(`j`.`CustomerElement`, '$.Name')) = 'Joe'
+WHERE JSON_UNQUOTE(JSON_VALUE(`j`.`CustomerElement`, '$.Name')) = 'Joe'
 LIMIT 2");
         }
 
@@ -155,7 +155,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, '$.Age') < 30
+WHERE JSON_VALUE(`j`.`CustomerElement`, '$.Age') < 30
 LIMIT 2");
         }
 
@@ -169,7 +169,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, '$.ID') = '00000000-0000-0000-0000-000000000000'
+WHERE JSON_VALUE(`j`.`CustomerElement`, '$.ID') = '00000000-0000-0000-0000-000000000000'
 LIMIT 2");
         }
 
@@ -183,7 +183,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, '$.IsVip') = TRUE
+WHERE JSON_VALUE(`j`.`CustomerElement`, '$.IsVip') = TRUE
 LIMIT 2");
         }
 
@@ -197,7 +197,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, '$.Statistics.Visits') = 4
+WHERE JSON_VALUE(`j`.`CustomerElement`, '$.Statistics.Visits') = 4
 LIMIT 2");
         }
 
@@ -211,7 +211,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, '$.Statistics.Nested.SomeProperty') = 10
+WHERE JSON_VALUE(`j`.`CustomerElement`, '$.Statistics.Nested.SomeProperty') = 10
 LIMIT 2");
         }
 
@@ -225,7 +225,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, '$.Orders[0].Price') = 99.5
+WHERE JSON_VALUE(`j`.`CustomerElement`, '$.Orders[0].Price') = 99.5
 LIMIT 2");
         }
 
@@ -240,7 +240,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, '$.Statistics.Nested.IntArray[1]') = 4
+WHERE JSON_VALUE(`j`.`CustomerElement`, '$.Statistics.Nested.IntArray[1]') = 4
 LIMIT 2");
         }
 
@@ -254,11 +254,11 @@ LIMIT 2");
 
             Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
             AssertSql(
-                @"@__i_0='1'
+                @":__i_0='1'
 
 SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, CONCAT('$.Statistics.Nested.IntArray[', @__i_0, ']')) = 4
+WHERE JSON_VALUE(`j`.`CustomerElement`, CONCAT('$.Statistics.Nested.IntArray[', :__i_0, ']')) = 4
 LIMIT 2");
         }
 
@@ -272,7 +272,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_LENGTH(JSON_EXTRACT(`j`.`CustomerElement`, '$.Orders')) = 2
+WHERE JSON_LENGTH(JSON_VALUE(`j`.`CustomerElement`, '$.Orders')) = 2
 LIMIT 2");
         }
 
@@ -286,7 +286,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_UNQUOTE(JSON_EXTRACT(`j`.`CustomerElement`, '$.Name')) LIKE 'J%'
+WHERE JSON_UNQUOTE(JSON_VALUE(`j`.`CustomerElement`, '$.Name')) LIKE 'J%'
 LIMIT 2");
         }
 
@@ -302,7 +302,7 @@ LIMIT 2");
             AssertSql(
                 @"SELECT `j`.`Id`, `j`.`CustomerDocument`, `j`.`CustomerElement`
 FROM `JsonEntities` AS `j`
-WHERE JSON_EXTRACT(`j`.`CustomerElement`, '$.Statistics.Nested.SomeNullableGuid') = 'd5f2685d-e5c4-47e5-97aa-d0266154eb2d'
+WHERE JSON_VALUE(`j`.`CustomerElement`, '$.Statistics.Nested.SomeNullableGuid') = 'd5f2685d-e5c4-47e5-97aa-d0266154eb2d'
 LIMIT 2");
         }
 
@@ -331,11 +331,11 @@ LIMIT 2");
 
             Assert.Equal(1, count);
             AssertSql(
-                $@"@__element_1='{{""Name"":""Joe"",""Age"":25}}' (Nullable = false) (Size = 4000)
+                $@":__element_1='{{""Name"":""Joe"",""Age"":25}}' (Nullable = false) (Size = 4000) (DbType = Object)
 
 SELECT COUNT(*)
 FROM `JsonEntities` AS `j`
-WHERE JSON_CONTAINS(`j`.`CustomerElement`, {InsertJsonConvert("@__element_1")})");
+WHERE JSON_CONTAINS(`j`.`CustomerElement`, {InsertJsonConvert(":__element_1")}) = 1");
         }
 
         [Fact]
@@ -349,7 +349,7 @@ WHERE JSON_CONTAINS(`j`.`CustomerElement`, {InsertJsonConvert("@__element_1")})"
             AssertSql(
                 @"SELECT COUNT(*)
 FROM `JsonEntities` AS `j`
-WHERE JSON_CONTAINS(`j`.`CustomerElement`, '{""Name"": ""Joe"", ""Age"": 25}')");
+WHERE JSON_CONTAINS(`j`.`CustomerElement`, '{""Name"": ""Joe"", ""Age"": 25}') = 1");
         }
 
         [Fact]
@@ -363,7 +363,7 @@ WHERE JSON_CONTAINS(`j`.`CustomerElement`, '{""Name"": ""Joe"", ""Age"": 25}')")
             AssertSql(
                 @"SELECT COUNT(*)
 FROM `JsonEntities` AS `j`
-WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'one', '$.Statistics.Visits')");
+WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'one', '$.Statistics.Visits') = 1");
         }
 
         [Fact]
@@ -377,7 +377,7 @@ WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'one', '$.Statistics.Visits')");
             AssertSql(
                 @"SELECT COUNT(*)
 FROM `JsonEntities` AS `j`
-WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'one', '$.Statistics.Foo', '$.Statistics.Visits')");
+WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'one', '$.Statistics.Foo', '$.Statistics.Visits') = 1");
         }
 
         [Fact]
@@ -391,7 +391,7 @@ WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'one', '$.Statistics.Foo', '$.St
             AssertSql(
                 @"SELECT COUNT(*)
 FROM `JsonEntities` AS `j`
-WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'all', '$.Statistics.Foo', '$.Statistics.Visits')");
+WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'all', '$.Statistics.Foo', '$.Statistics.Visits') = 1");
         }
 
         [Fact]
@@ -405,7 +405,7 @@ WHERE JSON_CONTAINS_PATH(`j`.`CustomerElement`, 'all', '$.Statistics.Foo', '$.St
             AssertSql(
                 @"SELECT COUNT(*)
 FROM `JsonEntities` AS `j`
-WHERE JSON_TYPE(JSON_EXTRACT(`j`.`CustomerElement`, '$.Statistics.Visits')) = 'INTEGER'");
+WHERE JSON_TYPE(JSON_VALUE(`j`.`CustomerElement`, '$.Statistics.Visits')) = 'INTEGER'");
         }
 
         [Fact]

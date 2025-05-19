@@ -170,7 +170,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         {
             // If the path contains parameters, then the -> and ->> aliases are not supported by XuGu, because
             // we need to concatenate the path and the parameters.
-            // We will use JSON_EXTRACT (and JSON_UNQUOTE if needed) only in this case, because the aliases
+            // We will use JSON_VALUE (and JSON_UNQUOTE if needed) only in this case, because the aliases
             // are much more readable.
             var isSimplePath = expression.Path.All(
                 l => l is SqlConstantExpression ||
@@ -183,7 +183,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
 
             if (expression.Path.Count > 0)
             {
-                Sql.Append("JSON_EXTRACT(");
+                Sql.Append("JSON_VALUE(");
             }
 
             Visit(expression.Expression);

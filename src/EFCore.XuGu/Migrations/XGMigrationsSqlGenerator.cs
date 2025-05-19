@@ -1345,11 +1345,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
                     .AppendLine("END IF;")
                     .AppendLine("END;");
 
-                //if (terminate)
-                //{
-                //    builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-                //    EndStatement(builder);
-                //}
+                if (terminate)
+                {
+                    //builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                    EndStatement(builder);
+                }
             }
 
             // A foreign key might reuse the primary key for its own purposes and prohibit its deletion,
