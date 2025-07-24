@@ -4,27 +4,14 @@
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<LangVersion>9.0</LangVersion>
 		<Platforms>AnyCPU;x64</Platforms>
+		<AssemblyName>Microsoft.EntityFrameworkCore.XuGu</AssemblyName>
+		<RootNamespace>Microsoft.EntityFrameworkCore.XuGu</RootNamespace>
 	</PropertyGroup>
 
 	
 
 	<ItemGroup>
 		<Compile Include="..\Shared\**\*.cs" />
-	</ItemGroup>
-
-	
-
-	<ItemGroup>
-	  <None Remove="Properties\XGStrings.Designer.tt" />
-	</ItemGroup>
-
-	
-
-	<ItemGroup>
-	  <EmbeddedResource Include="Properties\XGStrings.Designer.tt">
-	    <Generator>TextTemplatingFileGenerator</Generator>
-	    <LastGenOutput>XGStrings.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
 	</ItemGroup>
 
 	
@@ -44,22 +31,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="Properties\XGJsonStrings.Designer.tt">
-			<Generator>TextTemplatingFileGenerator</Generator>
-			<LastGenOutput>XGJsonStrings.Designer.cs</LastGenOutput>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
 		<Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Update="Properties\XGJsonStrings.Designer.cs">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>XGJsonStrings.Designer.tt</DependentUpon>
-		</Compile>
 	</ItemGroup>
 
 </Project>

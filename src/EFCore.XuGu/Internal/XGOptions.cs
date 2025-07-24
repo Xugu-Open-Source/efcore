@@ -27,13 +27,13 @@ namespace EntityFrameworkCore.XuGu.Internal
             // This is also being used as the universal fallback character set, if no character set was explicitly defined for the model,
             // which will result in similar behavior as in previous versions and ensure that databases use a decent/the recommended charset
             // by default, if none was explicitly set.
-            DefaultCharSet = CharSet.Utf8Mb4;
+            DefaultCharSet = CharSet.Gb2312;
 
             // NCHAR and NVARCHAR are prefdefined by XG.
-            NationalCharSet = CharSet.Utf8Mb3;
+            NationalCharSet = CharSet.Gb2312;
 
             // Optimize space and performance for GUID columns.
-            DefaultGuidCollation = "ascii_general_ci";
+            //DefaultGuidCollation = "ascii_general_ci";
 
             ReplaceLineBreaksWithCharFunction = true;
             DefaultDataTypeMappings = new XGDefaultDataTypeMappings();
