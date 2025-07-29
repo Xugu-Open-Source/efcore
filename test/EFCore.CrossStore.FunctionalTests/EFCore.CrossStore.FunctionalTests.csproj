@@ -9,6 +9,11 @@
     <!-- Put this project into its own test group to avoid running parallel with other test projects. Northwind is not inialized properly in this test assembly. -->
     <TestGroupName>CrossStore.FunctionalTests</TestGroupName>
     <CodeAnalysisRuleSet>..\..\EFCore.ruleset</CodeAnalysisRuleSet>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>NU1902;NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

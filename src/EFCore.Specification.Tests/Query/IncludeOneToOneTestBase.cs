@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.TestUtilities;
 using Xunit;
@@ -262,6 +263,7 @@ namespace Microsoft.EntityFrameworkCore.Query
 
         protected class Person
         {
+            [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
             public int Id { get; set; }
             public string Name { get; set; }
             public Address Address { get; set; }

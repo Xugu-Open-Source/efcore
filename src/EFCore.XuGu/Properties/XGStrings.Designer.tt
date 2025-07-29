@@ -1,0 +1,4 @@
+﻿<#
+    Session["ResourceFile"] = "XGStrings.resx";
+#>
+<#@ include file="..\..\..\tools\Resources.tt" #>

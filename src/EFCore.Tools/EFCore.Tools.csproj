@@ -22,6 +22,7 @@ Scaffold-DbContext
 Script-Migrations
 Update-Database
   </Description>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -74,11 +75,7 @@ Update-Database
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
-  <Target Name="Compile"
-    Inputs="$(MSBuildAllProjects);@(GeneratedContent)"
-    Outputs="@(GeneratedContent->'$(TargetDir)%(FileName)'">
-    <Sdk_GenerateFileFromTemplate TemplateFile="%(GeneratedContent.Identity)" OutputPath="$(TargetDir)%(FileName)" Properties="%(Properties)" />
-  </Target>
+  
 
   <Target Name="CopyFilesToOutputDirectory" />
 

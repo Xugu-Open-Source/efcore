@@ -2257,7 +2257,7 @@ namespace Microsoft.EntityFrameworkCore
         protected class Whiteboard
         {
 #pragma warning disable IDE1006 // Naming Styles
-            public byte[] iD { get; set; }
+            public int iD { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
             public string AssetTag { get; set; }
             public Office Office { get; set; }
@@ -2442,19 +2442,19 @@ namespace Microsoft.EntityFrameworkCore
                     new Whiteboard
                     {
                         AssetTag = "WB1973",
-                        iD = new byte[] { 1, 9, 7, 3 },
+                        iD = 1,
                         Office = offices[0]
                     },
                     new Whiteboard
                     {
                         AssetTag = "WB1977",
-                        iD = new byte[] { 1, 9, 7, 7 },
+                        iD = 2,
                         Office = offices[0]
                     },
                     new Whiteboard
                     {
                         AssetTag = "WB1970",
-                        iD = new byte[] { 1, 9, 7, 0 },
+                        iD = 3,
                         Office = offices[2]
                     }
                 };

@@ -1,0 +1,24 @@
+using Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.TestUtilities;
+
+namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests
+{
+    public class LazyLoadProxyXGTest : LazyLoadProxyTestBase<LazyLoadProxyXGTest.LoadXGFixture>
+    {
+        public LazyLoadProxyXGTest(LoadXGFixture fixture)
+            : base(fixture)
+        {
+        }
+
+        public class LoadXGFixture : LoadFixtureBase
+        {
+            protected override ITestStoreFactory TestStoreFactory => XGTestStoreFactory.Instance;
+
+            public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
+                => base.AddOptions(builder).ConfigureWarnings(
+                    c => c.Log(RelationalEventId.QueryClientEvaluationWarning));
+        }
+    }
+}

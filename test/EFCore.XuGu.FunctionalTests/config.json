@@ -1,0 +1,6 @@
+﻿{
+  "Data": {
+    "ConnectionString": "IP=127.0.0.1;DB=SYSTEM;User=SYSDBA;PWD=SYSDBA;Port=5138;AUTO_COMMIT=on;CHAR_SET=UTF8_general_ci;",
+    "ServerVersion": "12.0.0-xg"
+  }
+}

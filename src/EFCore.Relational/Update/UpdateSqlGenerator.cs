@@ -241,7 +241,8 @@ namespace Microsoft.EntityFrameworkCore.Update
             // TODO: there is no notion of operator - currently all the where conditions check equality
             AppendWhereAffectedClause(commandStringBuilder, conditionOperations);
             commandStringBuilder.AppendLine(SqlGenerationHelper.StatementTerminator)
-                .AppendLine();
+                .AppendLine()
+                .AppendLine("--GO");
 
             return ResultSetMapping.LastInResultSet;
         }

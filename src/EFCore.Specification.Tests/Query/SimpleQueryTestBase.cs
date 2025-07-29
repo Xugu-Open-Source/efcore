@@ -1748,7 +1748,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                     pr.Where(
                         p => od
                             .Where(o => o.ProductID == p.ProductID)
-                            .Select(odd => odd.Quantity).Contains<short>(5)),
+                            .Select(odd => odd.Quantity).Contains<int>(5)),
                 entryCount: 43);
         }
 

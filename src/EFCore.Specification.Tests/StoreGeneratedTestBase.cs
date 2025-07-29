@@ -1305,8 +1305,8 @@ namespace Microsoft.EntityFrameworkCore
             {
                 modelBuilder.Entity<IntToString>().Property(e => e.Id).HasConversion<string>();
                 modelBuilder.Entity<GuidToString>().Property(e => e.Id).HasConversion<string>();
-                modelBuilder.Entity<GuidToBytes>().Property(e => e.Id).HasConversion<byte[]>();
-                modelBuilder.Entity<ShortToBytes>().Property(e => e.Id).HasConversion<byte[]>();
+                //modelBuilder.Entity<GuidToBytes>().Property(e => e.Id).HasConversion<byte[]>();
+                //modelBuilder.Entity<ShortToBytes>().Property(e => e.Id).HasConversion<byte[]>();
 
                 modelBuilder.Entity<Gumball>(
                     b =>

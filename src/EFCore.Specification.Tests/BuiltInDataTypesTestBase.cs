@@ -414,7 +414,7 @@ namespace Microsoft.EntityFrameworkCore
                     TestTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
                     TestSingle = -1.234F,
                     TestBoolean = true,
-                    TestByte = 255,
+                    TestByte = 127,
                     TestUnsignedInt16 = 1234,
                     TestUnsignedInt32 = 1234565789U,
                     TestUnsignedInt64 = 1234567890123456789UL,
@@ -679,7 +679,7 @@ namespace Microsoft.EntityFrameworkCore
                     TestNullableTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
                     TestNullableSingle = -1.234F,
                     TestNullableBoolean = true,
-                    TestNullableByte = 255,
+                    TestNullableByte = 127,
                     TestNullableUnsignedInt16 = 1234,
                     TestNullableUnsignedInt32 = 1234565789U,
                     TestNullableUnsignedInt64 = 1234567890123456789UL,
@@ -718,7 +718,7 @@ namespace Microsoft.EntityFrameworkCore
                         TestNullableTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
                         TestNullableSingle = -1.234F,
                         TestNullableBoolean = true,
-                        TestNullableByte = 255,
+                        TestNullableByte = 127,
                         TestNullableUnsignedInt16 = 1234,
                         TestNullableUnsignedInt32 = 1234565789U,
                         TestNullableUnsignedInt64 = 1234567890123456789UL,
@@ -991,7 +991,7 @@ namespace Microsoft.EntityFrameworkCore
                         TestTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
                         TestSingle = -1.234F,
                         TestBoolean = true,
-                        TestByte = 255,
+                        TestByte = 127,
                         TestUnsignedInt16 = 1234,
                         TestUnsignedInt32 = 1234565789U,
                         TestUnsignedInt64 = 1234567890123456789UL,
@@ -1094,14 +1094,14 @@ namespace Microsoft.EntityFrameworkCore
                 context.Set<BinaryKeyDataType>().Add(
                     new BinaryKeyDataType
                     {
-                        Id = new byte[] { 1, 2, 3 }
+                        Id = 1
                     });
 
                 context.Set<BinaryForeignKeyDataType>().Add(
                     new BinaryForeignKeyDataType
                     {
                         Id = 77,
-                        BinaryKeyDataTypeId = new byte[] { 1, 2, 3 }
+                        BinaryKeyDataTypeId = 1
                     });
 
                 Assert.Equal(2, context.SaveChanges());
@@ -1112,11 +1112,11 @@ namespace Microsoft.EntityFrameworkCore
                 var entity = context
                     .Set<BinaryKeyDataType>()
                     .Include(e => e.Dependents)
-                    .Where(e => e.Id == new byte[] { 1, 2, 3 })
+                    .Where(e => e.Id == 1)
                     .ToList().Single();
 
-                Assert.Equal(new byte[] { 1, 2, 3 }, entity.Id);
-                Assert.Equal(new byte[] { 1, 2, 3 }, entity.Dependents.First().BinaryKeyDataTypeId);
+                Assert.Equal(1, entity.Id);
+                Assert.Equal(1, entity.Dependents.First().BinaryKeyDataTypeId);
             }
         }
 
@@ -1279,7 +1279,7 @@ namespace Microsoft.EntityFrameworkCore
                         TestNullableTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
                         TestNullableSingle = -1.234F,
                         TestNullableBoolean = false,
-                        TestNullableByte = 255,
+                        TestNullableByte = 127,
                         TestNullableUnsignedInt16 = 1234,
                         TestNullableUnsignedInt32 = 1234565789U,
                         TestNullableUnsignedInt64 = 1234567890123456789UL,
@@ -1361,7 +1361,7 @@ namespace Microsoft.EntityFrameworkCore
                                 TestTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
                                 TestSingle = -1.234F,
                                 TestBoolean = true,
-                                TestByte = 255,
+                                TestByte = 127,
                                 TestUnsignedInt16 = 1234,
                                 TestUnsignedInt32 = 1234565789U,
                                 TestUnsignedInt64 = 1234567890123456789UL,
@@ -1398,7 +1398,7 @@ namespace Microsoft.EntityFrameworkCore
                                 TestNullableTimeSpan = new TimeSpan(0, 10, 9, 8, 7),
                                 TestNullableSingle = -1.234F,
                                 TestNullableBoolean = true,
-                                TestNullableByte = 255,
+                                TestNullableByte = 127,
                                 TestNullableUnsignedInt16 = 1234,
                                 TestNullableUnsignedInt32 = 1234565789U,
                                 TestNullableUnsignedInt64 = 1234567890123456789UL,
@@ -1506,7 +1506,7 @@ namespace Microsoft.EntityFrameworkCore
         protected class BuiltInDataTypes : BuiltInDataTypesBase
         {
             public int PartitionId { get; set; }
-            public short TestInt16 { get; set; }
+            public int TestInt16 { get; set; }
             public int TestInt32 { get; set; }
             public long TestInt64 { get; set; }
             public double TestDouble { get; set; }
@@ -1597,7 +1597,7 @@ namespace Microsoft.EntityFrameworkCore
 
         protected class BinaryKeyDataType
         {
-            public byte[] Id { get; set; }
+            public int Id { get; set; }
 
             public ICollection<BinaryForeignKeyDataType> Dependents { get; set; }
         }
@@ -1605,7 +1605,7 @@ namespace Microsoft.EntityFrameworkCore
         protected class BinaryForeignKeyDataType
         {
             public int Id { get; set; }
-            public byte[] BinaryKeyDataTypeId { get; set; }
+            public int BinaryKeyDataTypeId { get; set; }
 
             public BinaryKeyDataType Principal { get; set; }
         }
@@ -1635,7 +1635,7 @@ namespace Microsoft.EntityFrameworkCore
             public int PartitionId { get; set; }
             public string TestString { get; set; }
             public byte[] TestByteArray { get; set; }
-            public short? TestNullableInt16 { get; set; }
+            public int? TestNullableInt16 { get; set; }
             public int? TestNullableInt32 { get; set; }
             public long? TestNullableInt64 { get; set; }
             public double? TestNullableDouble { get; set; }

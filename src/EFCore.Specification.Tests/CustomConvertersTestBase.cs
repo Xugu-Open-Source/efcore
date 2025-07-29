@@ -586,13 +586,13 @@ namespace Microsoft.EntityFrameworkCore
                                 new ConverterMappingHints(precision: 26, scale: 16)));
                     });
 
-                modelBuilder.Entity<BinaryKeyDataType>(
-                    b =>
-                    {
-                        b.Property(e => e.Id).HasConversion(
-                            v => new byte[] { 4, 2, 0 }.Concat(v).ToArray(),
-                            v => v.Skip(3).ToArray());
-                    });
+                //modelBuilder.Entity<BinaryKeyDataType>(
+                //    b =>
+                //    {
+                //        b.Property(e => e.Id).HasConversion(
+                //            v => new byte[] { 4, 2, 0 }.Concat(v).ToArray(),
+                //            v => v.Skip(3).ToArray());
+                //    });
 
                 var caseInsensitiveComparer = new ValueComparer<string>(
                     (l, r) => (l == null || r == null) ? (l == r) : l.Equals(r, StringComparison.InvariantCultureIgnoreCase),

@@ -7,6 +7,11 @@
     <!-- Put this project into its own test group to avoid running parallel with other test projects. The test assembly is not loaded propertly on net461 otherwise. -->
     <TestGroupName>Cosmos.FunctionalTests</TestGroupName>
     <CodeAnalysisRuleSet>..\..\EFCore.ruleset</CodeAnalysisRuleSet>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>NU1902;NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

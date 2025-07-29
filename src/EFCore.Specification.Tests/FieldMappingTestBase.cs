@@ -1255,7 +1255,7 @@ namespace Microsoft.EntityFrameworkCore
             }
         }
 
-        protected class BlogReadOnly : IBlogAccesor
+        public class BlogReadOnly : IBlogAccesor
         {
             private int _id;
             private string _title;
@@ -1290,7 +1290,7 @@ namespace Microsoft.EntityFrameworkCore
             }
         }
 
-        protected class PostReadOnly : IPostAccesor
+        public class PostReadOnly : IPostAccesor
         {
             private int _id;
             private string _title;

@@ -5,12 +5,14 @@
     <TargetFrameworks>netcoreapp2.2;net461;netcoreapp2.0</TargetFrameworks>
     <AssemblyName>Microsoft.EntityFrameworkCore.Relational.Specification.Tests</AssemblyName>
     <RootNamespace>Microsoft.EntityFrameworkCore</RootNamespace>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;NU1902;NU1903</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <CodeAnalysisRuleSet>..\..\EFCore.ruleset</CodeAnalysisRuleSet>
     <EnableApiCheck>false</EnableApiCheck>
     <IsPackable>true</IsPackable>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
+
 
   <PropertyGroup Condition="'$(FunctionalTests_PackageVersion)' == '2.1.0'">
    <DefineConstants>$(DefineConstants);Test21</DefineConstants>
