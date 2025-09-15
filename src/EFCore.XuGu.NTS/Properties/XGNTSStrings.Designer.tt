@@ -1,0 +1,6 @@
+<#
+    Session["ResourceFile"] = "XGNTSStrings.resx";
+    Session["LoggingDefinitionsClass"] = "XGNtsLoggingDefinitions";
+    Session["NoDiagnostics"] = true;
+#>
+<#@ include file="..\..\..\tools\Resources.tt" #>
