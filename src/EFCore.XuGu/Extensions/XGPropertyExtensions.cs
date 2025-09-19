@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore.XuGu.Storage.Internal;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     MySQL specific extension methods for properties.
+    ///     XuGu specific extension methods for properties.
     /// </summary>
     public static class XGPropertyExtensions
     {

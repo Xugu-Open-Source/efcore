@@ -83,14 +83,14 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
             => WithOption(e => e.WithDisabledLineBreakToCharSubstition());
 
         /// <summary>
-        ///     Configures default mappings between specific CLR and MySQL types.
+        ///     Configures default mappings between specific CLR and XuGu types.
         /// </summary>
         public virtual XGDbContextOptionsBuilder DefaultDataTypeMappings(Func<XGDefaultDataTypeMappings, XGDefaultDataTypeMappings> defaultDataTypeMappings)
             => WithOption(e => e.WithDefaultDataTypeMappings(defaultDataTypeMappings(new XGDefaultDataTypeMappings())));
 
         /// <summary>
         ///     Configures the behavior for cases when a schema has been set for an entity. Because
-        ///     MySQL does not support the EF Core concept of schemas, the default is to throw an
+        ///     XuGu does not support the EF Core concept of schemas, the default is to throw an
         ///     exception.
         /// </summary>
         public virtual XGDbContextOptionsBuilder SchemaBehavior(XGSchemaBehavior behavior, XGSchemaNameTranslator translator = null)
@@ -114,8 +114,8 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
 
         /// <summary>
         ///     Configures the context to translate string related methods, containing a parameter of type <see cref="StringComparison"/>,
-        ///     to their SQL equivalent, even though MySQL might not be able to use indexes when executing the query, resulting in decreased
-        ///     performance. Whether MySQL is able to use indexes for the query, depends on the <see cref="StringComparison"/> option, the
+        ///     to their SQL equivalent, even though XuGu might not be able to use indexes when executing the query, resulting in decreased
+        ///     performance. Whether XuGu is able to use indexes for the query, depends on the <see cref="StringComparison"/> option, the
         ///     underlying collation and the scenario.
         ///     It is also possible to just use `EF.Functions.Collate()`, possibly in addition to `string.ToUpper()` if needed, to achieve
         ///     the same result but with full control over the SQL generation.
@@ -124,7 +124,7 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
             => WithOption(e => e.WithStringComparisonTranslations(enable));
 
         /// <summary>
-        ///     Configures the context to translate using primitive collections. At the time of the Pomelo 8.0.0 release, MySQL Server can
+        ///     Configures the context to translate using primitive collections. At the time of the Pomelo 8.0.0 release, XuGu Server can
         ///     crash when using primitive collections with JSON and MariaDB support is incomplete. Support and translations in regards to
         ///     this option can change at any time in the future. This optin is disabled by default. Enabled at your own risk.
         /// </summary>

@@ -16,13 +16,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     MySQL specific extension methods for <see cref="DbContext.Database" />.
+    ///     XuGu specific extension methods for <see cref="DbContext.Database" />.
     /// </summary>
     public static class XGDatabaseFacadeExtensions
     {
         /// <summary>
         ///     <para>
-        ///         Returns true if the database provider currently in use is the MySQL provider.
+        ///         Returns true if the database provider currently in use is the XuGu provider.
         ///     </para>
         ///     <para>
         ///         This method can only be used after the <see cref="DbContext" /> has been configured because
@@ -32,7 +32,7 @@ namespace Microsoft.EntityFrameworkCore
         ///     </para>
         /// </summary>
         /// <param name="database"> The facade from <see cref="DbContext.Database" />. </param>
-        /// <returns> True if MySQL is being used; false otherwise. </returns>
+        /// <returns> True if XuGu is being used; false otherwise. </returns>
         public static bool IsXG([NotNull] this DatabaseFacade database)
             => database.ProviderName.Equals(
                 typeof(XGOptionsExtension).GetTypeInfo().Assembly.GetName().Name,

@@ -11,7 +11,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Infrastructure
         Custom = -1,
 
         /// <summary>
-        /// MySQL server
+        /// XuGu server
         /// </summary>
         XG,
 

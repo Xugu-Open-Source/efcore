@@ -112,7 +112,7 @@ WHERE `l0`.`Name` IS NOT NULL AND (LEFT(`l0`.`Name`, CHAR_LENGTH(`l0`.`Name`)) =
         }
 
         // CHECK: Flaky only on XuGu 5.7.
-        [SupportedServerVersionCondition("8.0.0-mysql", "0.0.0-mariadb")]
+        [SupportedServerVersionCondition("8.0.0-xugu", "0.0.0-mariadb")]
         public override async Task Member_pushdown_with_multiple_collections(bool async)
         {
             await base.Member_pushdown_with_multiple_collections(async);

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.XuGu.Metadata.Internal;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     Extension methods for <see cref="IIndex" /> for MySQL-specific metadata.
+    ///     Extension methods for <see cref="IIndex" /> for XuGu-specific metadata.
     /// </summary>
     public static class XGIndexExtensions
     {

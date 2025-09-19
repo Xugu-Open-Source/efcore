@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.XuGu.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.Query.Internal;
+using ExpressionExtensions = Microsoft.EntityFrameworkCore.Query.ExpressionExtensions;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionTranslators.Internal
 {

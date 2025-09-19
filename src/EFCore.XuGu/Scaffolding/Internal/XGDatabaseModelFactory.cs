@@ -108,7 +108,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Scaffolding.Internal
                 catch (InvalidOperationException)
                 {
                     // If we cannot determine the server version for some reason, just fall
-                    // back on the latest MySQL version.
+                    // back on the latest XuGu version.
                     serverVersion = XGServerVersion.LatestSupportedServerVersion;
 
                     _logger.Logger.LogWarning($"No {nameof(ServerVersion)} could be automatically detected. The latest supported {nameof(ServerVersion)} will be used.");
@@ -122,12 +122,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Scaffolding.Internal
         }
 
         private const string GetDatabaseSettings = @"SELECT
-	`DEFAULT_CHARACTER_SET_NAME`,
-    `DEFAULT_COLLATION_NAME`
+	`CHAR_SET` AS `DEFAULT_CHARACTER_SET_NAME`
 FROM
-	`INFORMATION_SCHEMA`.`SCHEMATA`
+	`ALL_DATABASES`
 WHERE
-	`SCHEMA_NAME` = SCHEMA()";
+	`DB_NAME`=CURRENT_DATABASE()";
 
         protected virtual DatabaseModel GetDatabase(DbConnection connection, DatabaseModelFactoryOptions options)
         {
@@ -137,22 +136,20 @@ WHERE
                 DefaultSchema = GetDefaultSchema(connection)
             };
 
+            connection.Close();
+            connection.Open();
+
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = GetDatabaseSettings;
-
                 using (var reader = command.ExecuteReader())
                 {
                     if (reader.Read())
                     {
                         var defaultCharSet = reader.GetValueOrDefault<string>("DEFAULT_CHARACTER_SET_NAME");
-                        var defaultCollation = reader.GetValueOrDefault<string>("DEFAULT_COLLATION_NAME");
 
                         databaseModel[XGAnnotationNames.CharSet] = Settings.CharSet
                             ? defaultCharSet
-                            : null;
-                        databaseModel.Collation = Settings.Collation
-                            ? defaultCollation
                             : null;
                     }
                 }
@@ -162,14 +159,14 @@ WHERE
             var tableList = options.Tables.ToList();
             var tableFilter = GenerateTableFilter(tableList, schemaList);
 
-            var tables = GetTables(connection, tableFilter, (string)databaseModel[XGAnnotationNames.CharSet], databaseModel.Collation);
+            var tables = GetTables(connection, tableFilter, (string)databaseModel[XGAnnotationNames.CharSet]);
             foreach (var table in tables)
             {
                 table.Database = databaseModel;
                 databaseModel.Tables.Add(table);
             }
 
-            if (_options.ServerVersion.Supports.Sequences)
+            if (_options.ServerVersion != null && _options.ServerVersion.Supports.Sequences)
             {
                 foreach (var sequence in GetSequences(connection))
                 {
@@ -200,58 +197,64 @@ WHERE
         private static string EscapeLiteral(string s) => $"'{s}'";
 
         private const string GetTablesQuery = @"SELECT
+	`s`.`SCHEMA_NAME`,
     `t`.`TABLE_NAME`,
-    `t`.`TABLE_TYPE`,
-    IF(`t`.`TABLE_COMMENT` = 'VIEW' AND `t`.`TABLE_TYPE` = 'VIEW', '', `t`.`TABLE_COMMENT`) AS `TABLE_COMMENT`,
-    `ccsa`.`CHARACTER_SET_NAME` as `TABLE_CHARACTER_SET`,
-    `t`.`TABLE_COLLATION`
+    'TABLE' AS `TABLE_TYPE`,
+    `t`.COMMENTS AS `TABLE_COMMENT`,
+    `d`.`CHAR_SET` as `TABLE_CHARACTER_SET`
 FROM
-    `INFORMATION_SCHEMA`.`TABLES` as `t`
+    `ALL_TABLES` as `t`
 LEFT JOIN
-	`INFORMATION_SCHEMA`.`COLLATION_CHARACTER_SET_APPLICABILITY` as `ccsa` ON `ccsa`.`{0}` = `t`.`TABLE_COLLATION`
+	`ALL_DATABASES` as `d` ON `t`.`DB_ID`=`d`.`DB_ID`
+LEFT JOIN
+	`ALL_SCHEMAS` as `s` ON `t`.`SCHEMA_ID`=`s`.`SCHEMA_ID`
 WHERE
-    `TABLE_SCHEMA` = SCHEMA()
-AND
-    `TABLE_TYPE` IN ('BASE TABLE', 'VIEW');";
+    `d`.`DB_NAME` = CURRENT_DATABASE()
+UNION
+SELECT
+	`s`.`SCHEMA_NAME`,
+    `v`.`VIEW_NAME` AS `TABLE_NAME`,
+    'VIEW' AS `TABLE_TYPE`,
+    IF(`v`.`COMMENTS` = 'VIEW', '', `v`.`COMMENTS`) AS `TABLE_COMMENT`,
+    `d`.`CHAR_SET` as `TABLE_CHARACTER_SET`
+FROM
+	`ALL_VIEWS` as `v`
+LEFT JOIN
+	`ALL_DATABASES` as `d` ON `v`.`DB_ID`=`d`.`DB_ID`
+LEFT JOIN
+	`ALL_SCHEMAS` as `s` ON `v`.`SCHEMA_ID`=`s`.`SCHEMA_ID`
+WHERE
+    `d`.`DB_NAME` = CURRENT_DATABASE();";
 
         protected virtual IEnumerable<DatabaseTable> GetTables(
             DbConnection connection,
             Func<string, string, bool> filter,
-            string defaultCharSet,
-            string defaultCollation)
+            string defaultCharSet)
         {
             using (var command = connection.CreateCommand())
             {
-                var collationColumnName = _options.ServerVersion.Supports.CollationCharacterSetApplicabilityWithFullCollationNameColumn
-                    ? "FULL_COLLATION_NAME"
-                    : "COLLATION_NAME";
-
                 var tables = new List<DatabaseTable>();
-                command.CommandText = string.Format(GetTablesQuery, collationColumnName);
+                command.CommandText = GetTablesQuery;
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
+                        var schema = reader.GetValueOrDefault<string>("SCHEMA_NAME");
                         var name = reader.GetValueOrDefault<string>("TABLE_NAME");
                         var type = reader.GetValueOrDefault<string>("TABLE_TYPE");
                         var comment = reader.GetValueOrDefault<string>("TABLE_COMMENT");
                         var charset = reader.GetValueOrDefault<string>("TABLE_CHARACTER_SET");
-                        var collation = reader.GetValueOrDefault<string>("TABLE_COLLATION");
 
-                        var table = string.Equals(type, "base table", StringComparison.OrdinalIgnoreCase)
+                        var table = string.Equals(type, "TABLE", StringComparison.OrdinalIgnoreCase)
                             ? new DatabaseTable()
                             : new DatabaseView();
 
-                        table.Schema = null;
+                        table.Schema = schema;
                         table.Name = name;
                         table.Comment = string.IsNullOrEmpty(comment) ? null : comment;
                         table[XGAnnotationNames.CharSet] = Settings.CharSet &&
                                                               charset != defaultCharSet
                             ? charset
-                            : null;
-                        table[RelationalAnnotationNames.Collation] = Settings.Collation &&
-                                                                     collation != defaultCollation
-                            ? collation
                             : null;
 
                         var isValidByFilter = filter?.Invoke(table.Schema, table.Name) ?? true;
@@ -266,10 +269,11 @@ AND
                 }
 
                 // This is done separately due to MARS property may be turned off
-                GetColumns(connection, tables, filter, defaultCharSet, defaultCollation);
+                GetColumns(connection, tables, filter, defaultCharSet);
                 GetPrimaryKeys(connection, tables);
                 GetIndexes(connection, tables, filter);
                 GetConstraints(connection, tables);
+                GetUConstraints(connection, tables);
 
                 return tables;
             }
@@ -334,35 +338,37 @@ AND
             return sequences;
         }
 
-            private const string GetColumnsQuery = @"SELECT
-	`COLUMN_NAME`,
-    `ORDINAL_POSITION`,
-    `COLUMN_DEFAULT`,
-    IF(`IS_NULLABLE` = 'YES', 1, 0) AS `IS_NULLABLE`,
-    `DATA_TYPE`,
-    `CHARACTER_SET_NAME`,
-    `COLLATION_NAME`,
-    `COLUMN_TYPE`,
-    `COLUMN_COMMENT`,
-    `EXTRA`/*!50706 ,
-    `GENERATION_EXPRESSION` */ /*M!100200 ,
-    `GENERATION_EXPRESSION` */ /*!80003 ,
-    `SRS_ID` */
-FROM
-	`INFORMATION_SCHEMA`.`COLUMNS`
-WHERE
-	`TABLE_SCHEMA` = SCHEMA()
-AND
-	`TABLE_NAME` = '{0}'
-ORDER BY
-    `ORDINAL_POSITION`;";
+        private const string GetColumnsQuery = @"SELECT COL_NAME AS `COLUMN_NAME`,
+COL_NO AS `ORDINAL_POSITION`,
+DEF_VAL AS `COLUMN_DEFAULT`,
+IF(`NOT_NULL`=TRUE,FALSE,TRUE) AS `IS_NULLABLE`,
+TYPE_NAME AS `DATA_TYPE`,
+`VARYING`,
+COMMENTS AS `COLUMN_COMMENT`,
+IF(`TYPE_NAME` = 'GUID' AND `DEF_VAL`='""UUID""()', 'IDENTITY', IF(`IS_SERIAL` = TRUE, 'IDENTITY', '')) AS `EXTRA`,
+(SCALE/65536)::INT AS `PRECISION`,
+CAST(MOD(SCALE,65536) AS INT) AS `SCALE`
+FROM ALL_COLUMNS
+WHERE TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{0}')
+UNION ALL
+SELECT COL_NAME AS `COLUMN_NAME`,
+COL_NO AS `ORDINAL_POSITION`,
+NULL AS `COLUMN_DEFAULT`,
+FALSE AS `IS_NULLABLE`,
+TYPE_NAME AS `DATA_TYPE`,
+`VARYING`,
+COMMENTS AS `COLUMN_COMMENT`,
+'' AS `EXTRA`,
+(SCALE/65536)::INT AS `PRECISION`,
+CAST(MOD(SCALE,65536) AS INT) AS `SCALE`
+FROM all_view_columns
+WHERE VIEW_ID=(SELECT VIEW_ID FROM ALL_VIEWS WHERE VIEW_NAME='{0}');";
 
         protected virtual void GetColumns(
             DbConnection connection,
             IReadOnlyList<DatabaseTable> tables,
             Func<string, string, bool> tableFilter,
-            string defaultCharSet,
-            string defaultCollation)
+            string defaultCharSet)
         {
             foreach (var table in tables)
             {
@@ -379,59 +385,50 @@ ORDER BY
                             var defaultValue = reader.GetValueOrDefault<string>("COLUMN_DEFAULT");
                             var nullable = reader.GetValueOrDefault<bool>("IS_NULLABLE");
                             var dataType = reader.GetValueOrDefault<string>("DATA_TYPE");
-                            var charset = reader.GetValueOrDefault<string>("CHARACTER_SET_NAME");
-                            var collation = reader.GetValueOrDefault<string>("COLLATION_NAME");
-                            var columnType = reader.GetValueOrDefault<string>("COLUMN_TYPE");
+                            //var charset = reader.GetValueOrDefault<string>("CHARACTER_SET_NAME");
+                            //var collation = reader.GetValueOrDefault<string>("COLLATION_NAME");
+                            //var columnType = reader.GetValueOrDefault<string>("COLUMN_TYPE");
+                            var columnScale = reader.GetValueOrDefault<int>("SCALE");
+                            var columnPrecision = reader.GetValueOrDefault<int>("PRECISION");
+                            var isVar = reader.GetValueOrDefault<bool>("VARYING");
+                            var columnType = isVar ? "VAR" + GetColumnType(dataType, columnPrecision, columnScale) : GetColumnType(dataType, columnPrecision, columnScale);
                             var extra = reader.GetValueOrDefault<string>("EXTRA");
                             var comment = reader.GetValueOrDefault<string>("COLUMN_COMMENT");
 
-                            // Generated colums are not supported on every MySQL/MariaDB version.
+                            // Generated colums are not supported on every XuGu version.
                             var generation = reader.HasName("GENERATION_EXPRESSION")
                                 ? reader.GetValueOrDefault<string>("GENERATION_EXPRESSION").NullIfEmpty()
                                 : null;
 
-                            // MariaDB does not support SRID column restrictions.
-                            var srid = reader.HasName("SRS_ID")
-                                ? reader.GetValueOrDefault<uint?>("SRS_ID")
-                                : null;
 
-                            var isStored = generation != null
-                                ? (bool?)extra.Contains("stored generated", StringComparison.OrdinalIgnoreCase)
-                                : null;
+                            //var isStored = generation != null
+                            //    ? (bool?)extra.Contains("stored generated", StringComparison.OrdinalIgnoreCase)
+                            //    : null;
 
-                            // Cleanup the column type, because it might contain trailing C style comments on MariaDB, like the following,
+                            // Cleanup the column type, because it might contain trailing C style comments on XuGu, like the following,
                             // if an explicit cast is being done in the SELECT of a VIEW:
-                            //     datetime /* mariadb-5.3 */
+                            //     datetime /* xg-5.3 */
                             columnType = Regex.Replace(columnType, @"\s*/\*(?:.*?)\*/\s*$", string.Empty, RegexOptions.Singleline);
 
                             // Override this column's type, if we detected earlier that this column should actually by added to the model
                             // with a different type than the one returned by INFORMATION_SCHEMA.COLUMNS.
-                            // This ensures, that e.g. the `json` alias for the `longtext` type for MariaDB databases will be added to the
+                            // This ensures, that e.g. the `json` alias for the `longtext` type for XuGu databases will be added to the
                             // model as `json` instead of as `longtext`.
                             columnType = columnTypeOverrides.TryGetValue(name, out var columnTypeOverride)
-                                ? columnTypeOverride((dataType: dataType, charset: charset, collation: collation))
+                                ? columnTypeOverride((dataType: dataType, charset: defaultCharSet))
                                 : columnType;
 
-                            // MySQL enforces the `utf8mb4` charset and `utf8mb4_bin` collation for `json` columns and MariaDB will use them
-                            // automatically for `json` columns as well.
-                            // Both will refuse explicit specifications of other charsets/collations, even though `json` is just an alias
-                            // for `longtext` for MariaDB and setting `longtext` to other charsets/collations works fine.
-                            // We therefore do not scaffold thouse charsets/collations in the first place, so that users don't get confused.
-                            if (columnType == "json")
-                            {
-                                charset = null;
-                                collation = null;
-                            }
+
 
                             if (generation is not null)
                             {
-                                // MySQL saves the generation expression with enclosing parenthesis, while MariaDB doesn't.
-                                generation = _options.ServerVersion.Supports.ParenthesisEnclosedGeneratedColumnExpressions
+                                // XuGu saves the generation expression with enclosing parenthesis, while XuGu doesn't.
+                                generation = _options.ServerVersion != null && _options.ServerVersion.Supports.ParenthesisEnclosedGeneratedColumnExpressions
                                     ? Regex.Replace(generation, @"^\((.*)\)$", "$1", RegexOptions.Singleline)
                                     : generation;
 
-                                // MySQL 8 contains a regression bug, that escapes the outer quotes of a string in a generated expression.
-                                generation = _options.ServerVersion.Supports.XGBug104294Workaround
+                                // XuGu 8 contains a regression bug, that escapes the outer quotes of a string in a generated expression.
+                                generation = _options.ServerVersion != null && _options.ServerVersion.Supports.XGBug104294Workaround
                                     ? generation.Replace(@"\'", @"'")
                                     : generation;
                             }
@@ -441,14 +438,10 @@ ORDER BY
 
                             if (defaultValue != null)
                             {
-                                // MySQL 8.0.13+ fully supports complex default value expressions.
+                                // XuGu 8.0.13+ fully supports complex default value expressions.
                                 isDefaultValueExpression = extra.Contains("DEFAULT_GENERATED", StringComparison.OrdinalIgnoreCase) &&
                                                            !IsSimpleNumericDefaultValue(defaultValue);
 
-                                // MariaDB uses a slightly different syntax.
-                                defaultValue = _options.ServerVersion.Supports.AlternativeDefaultExpression
-                                    ? ConvertDefaultValueFromMariaDbToXG(defaultValue, out isDefaultValueExpression)
-                                    : defaultValue;
 
                                 defaultValue = generation == null
                                     ? FilterClrDefaults(
@@ -459,7 +452,14 @@ ORDER BY
                             }
 
                             ValueGenerated? valueGenerated;
-                            if (extra.IndexOf("auto_increment", StringComparison.Ordinal) >= 0)
+                            if (dataType.Equals("GUID", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (defaultValue != null)
+                                {
+                                    valueGenerated = ValueGenerated.OnAdd;
+                                }
+                            }
+                            if (extra.IndexOf("IDENTITY", StringComparison.Ordinal) >= 0)
                             {
                                 valueGenerated = ValueGenerated.OnAdd;
                             }
@@ -493,22 +493,10 @@ ORDER BY
                                 IsNullable = nullable,
                                 DefaultValueSql = CreateDefaultValueString(defaultValue, dataType, isDefaultValueSqlFunction, isDefaultValueExpression),
                                 ComputedColumnSql = generation,
-                                IsStored = isStored,
                                 ValueGenerated = valueGenerated,
                                 Comment = string.IsNullOrEmpty(comment)
                                     ? null
-                                    : comment,
-                                [XGAnnotationNames.CharSet] = Settings.CharSet &&
-                                                                 charset != (table[XGAnnotationNames.CharSet] as string ?? defaultCharSet)
-                                    ? charset
-                                    : null,
-                                Collation = Settings.Collation &&
-                                            collation != (table[RelationalAnnotationNames.Collation] as string ?? defaultCollation)
-                                    ? collation
-                                    : null,
-                                [XGAnnotationNames.SpatialReferenceSystemId] = srid.HasValue
-                                    ? (int?)(int)srid.Value
-                                    : null,
+                                    : comment
                             };
 
                             table.Columns.Add(column);
@@ -518,6 +506,21 @@ ORDER BY
             }
         }
 
+        private readonly List<string> ColumnCharTypes = new List<string> { "char", "varchar" };
+
+        protected virtual string GetColumnType(string dataType, int precision, int scale)
+        {
+            if (dataType.ToLower() == "numeric")
+            {
+                return $"numeric({precision},{scale})";
+            }
+            else if (ColumnCharTypes.Contains(dataType.ToLower()) && scale > 0)
+            {
+                return $"{dataType}({scale})";
+            }
+            return dataType;
+        }
+
         private bool IsDefaultValueSqlFunction(string defaultValue, string dataType)
         {
             if (defaultValue == null)
@@ -525,9 +528,9 @@ ORDER BY
                 return false;
             }
 
-            // MySQL uses `CURRENT_TIMESTAMP` (or `CURRENT_TIMESTAMP(6)`),
-            // while MariaDB uses `current_timestamp()` (or `current_timestamp(6)`).
-            // MariaDB also allows the usage of `curdate()` as a default for datetime or timestamp columns, but this is handled by the next
+            // XuGu uses `CURRENT_TIMESTAMP` (or `CURRENT_TIMESTAMP(6)`),
+            // while XuGu uses `current_timestamp()` (or `current_timestamp(6)`).
+            // XuGu also allows the usage of `curdate()` as a default for datetime or timestamp columns, but this is handled by the next
             // section.
             if ((string.Equals(dataType, "timestamp", StringComparison.OrdinalIgnoreCase) ||
                  string.Equals(dataType, "datetime", StringComparison.OrdinalIgnoreCase)) &&
@@ -536,44 +539,14 @@ ORDER BY
                 return true;
             }
 
-            // If SQL functions are used as a default value in MariaDB, they will always end in a parenthesis pair.
-            if (_options.ServerVersion.Supports.AlternativeDefaultExpression &&
+            // If SQL functions are used as a default value in XuGu, they will always end in a parenthesis pair.
+            if (_options.ServerVersion != null && _options.ServerVersion.Supports.AlternativeDefaultExpression &&
                 defaultValue.EndsWith("()", StringComparison.Ordinal))
             {
                 return true;
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// MariaDB 10.2.7+ implements default values differently from MySQL, to support their own default expression
-        /// syntax. We convert their column values to MySQL compatible syntax here.
-        /// See https://github.com/PomeloFoundation/Microsoft.EntityFrameworkCore.XuGu/issues/994#issuecomment-568271740
-        /// for tables with differences.
-        /// </summary>
-        protected virtual string ConvertDefaultValueFromMariaDbToXG([NotNull] string defaultValue, out bool isDefaultValueExpression)
-        {
-            isDefaultValueExpression = false;
-
-            if (string.Equals(defaultValue, "NULL", StringComparison.OrdinalIgnoreCase))
-            {
-                return null;
-            }
-
-            if (defaultValue.StartsWith("'", StringComparison.Ordinal) &&
-                defaultValue.EndsWith("'", StringComparison.Ordinal) &&
-                defaultValue.Length >= 2)
-            {
-                // MariaDb escapes all single quotes with two single quotes in default value strings, even if they are
-                // escaped with backslashes in the original `CREATE TABLE` statement.
-                return defaultValue.Substring(1, defaultValue.Length - 2)
-                    .Replace("''", "'");
-            }
-
-            isDefaultValueExpression = !IsSimpleNumericDefaultValue(defaultValue);
-
-            return defaultValue;
         }
 
         private static bool IsSimpleNumericDefaultValue(string defaultValue)
@@ -642,14 +615,7 @@ ORDER BY
             return "'" + defaultValue.Replace(@"\", @"\\").Replace("'", "''") + "'";
         }
 
-        private const string GetPrimaryQuery = @"SELECT `INDEX_NAME`,
-     GROUP_CONCAT(`COLUMN_NAME` ORDER BY `SEQ_IN_INDEX` SEPARATOR ',') AS `COLUMNS`,
-     GROUP_CONCAT(CAST(IFNULL(`SUB_PART`, 0) AS CHAR) ORDER BY `SEQ_IN_INDEX` SEPARATOR ',') AS `SUB_PARTS`
-     FROM `INFORMATION_SCHEMA`.`STATISTICS`
-     WHERE `TABLE_SCHEMA` = '{0}'
-     AND `TABLE_NAME` = '{1}'
-     AND `INDEX_NAME` = 'PRIMARY'
-     GROUP BY `INDEX_NAME`;";
+        private const string GetPrimaryQuery = @"SELECT INDEX_NAME,REPLACE(REPLACE(KEYS, '""""', '"",""'), '""', '') AS `COLUMNS`,REPLACE(REPLACE(SUBPARTI_KEY, '""""', '"",""'), '""', '') AS `SUB_PARTS` FROM ALL_INDEXES WHERE IS_PRIMARY=TRUE AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{0}');";
 
         protected virtual void GetPrimaryKeys(
             DbConnection connection,
@@ -659,7 +625,8 @@ ORDER BY
             {
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = string.Format(GetPrimaryQuery, connection.Database, table.Name);
+                    //command.CommandText = string.Format(GetPrimaryQuery, connection.Database, table.Name);
+                    command.CommandText = string.Format(GetPrimaryQuery, table.Name);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -678,7 +645,7 @@ ORDER BY
                                     key.Columns.Add(table.Columns.Single(y => y.Name == column));
                                 }
 
-                                var prefixLengths = reader.GetValueOrDefault<string>("SUB_PARTS")
+                                var prefixLengths = reader.IsDBNull("SUB_PARTS") ? Array.Empty<int>() : reader.GetValueOrDefault<string>("SUB_PARTS")
                                     .Split(',')
                                     .Select(int.Parse)
                                     .ToArray();
@@ -695,7 +662,8 @@ ORDER BY
                                     firstKeyColumn.ValueGenerated == null &&
                                     (firstKeyColumn.DefaultValueSql == null ||
                                      string.Equals(firstKeyColumn.DefaultValueSql, "uuid()", StringComparison.OrdinalIgnoreCase) ||
-                                     string.Equals(firstKeyColumn.DefaultValueSql, "uuid_to_bin(uuid())", StringComparison.OrdinalIgnoreCase)) &&
+                                     string.Equals(firstKeyColumn.DefaultValueSql, "uuid_to_bin(uuid())", StringComparison.OrdinalIgnoreCase)) ||
+                                     string.Equals(firstKeyColumn.DefaultValueSql, "'\"UUID\"()'", StringComparison.OrdinalIgnoreCase) &&
                                     _typeMappingSource.FindMapping(firstKeyColumn.StoreType) is XGGuidTypeMapping)
                                 {
                                     firstKeyColumn.ValueGenerated = ValueGenerated.OnAdd;
@@ -714,17 +682,7 @@ ORDER BY
             }
         }
 
-        private const string GetIndexesQuery = @"SELECT `INDEX_NAME`,
-     `NON_UNIQUE`,
-     GROUP_CONCAT(`COLUMN_NAME` ORDER BY `SEQ_IN_INDEX` SEPARATOR ',') AS `COLUMNS`,
-     GROUP_CONCAT(CAST(IFNULL(`SUB_PART`, 0) AS CHAR) ORDER BY `SEQ_IN_INDEX` SEPARATOR ',') AS `SUB_PARTS`,
-     GROUP_CONCAT(IFNULL(`COLLATION`, 'A') ORDER BY `SEQ_IN_INDEX` SEPARATOR ',') AS `COLLATION`,
-     `INDEX_TYPE`
-     FROM `INFORMATION_SCHEMA`.`STATISTICS`
-     WHERE `TABLE_SCHEMA` = '{0}'
-     AND `TABLE_NAME` = '{1}'
-     AND `INDEX_NAME` <> 'PRIMARY'
-     GROUP BY `INDEX_NAME`, `NON_UNIQUE`, `INDEX_TYPE`;";
+        private const string GetIndexesQuery = @"SELECT INDEX_NAME,IS_UNIQUE AS `NON_UNIQUE`,REPLACE(REPLACE(KEYS, '""""', '"",""'), '""', '') AS `COLUMNS`,REPLACE(REPLACE(SUBPARTI_KEY, '""""', '"",""'), '""', '') AS `SUB_PARTS`,INDEX_TYPE FROM ALL_INDEXES WHERE IS_PRIMARY=FALSE AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{0}');";
 
         private const string GetCreateTableStatementQuery = @"SHOW CREATE TABLE `{0}`.`{1}`;";
 
@@ -737,7 +695,7 @@ ORDER BY
             {
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = string.Format(GetIndexesQuery, connection.Database, table.Name);
+                    command.CommandText = string.Format(GetIndexesQuery, table.Name);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -745,7 +703,9 @@ ORDER BY
                         {
                             try
                             {
-                                var columns = reader.GetValueOrDefault<string>("COLUMNS").Split(',').Select(s => GetColumn(table, s)).ToList();
+                                var columns = reader.GetValueOrDefault<string>("COLUMNS").Split(',').Select(s => GetColumn(table, s.Replace(" DESC", "").Replace(" ASC", ""))).ToList();
+
+                                var isDescs = reader.GetValueOrDefault<string>("COLUMNS").Split(',').Select(s => columns.Select(c => c.Name).Contains(s) ? false : s.Contains(" ASC") ? false : true).ToList();
 
                                 // Reuse an existing index over the same columns, to workaround an EF Core
                                 // bug (EF#11846 and #1189).
@@ -760,9 +720,15 @@ ORDER BY
                                                 Name = reader.GetValueOrDefault<string>("INDEX_NAME"),
                                             };
 
-                                index.IsUnique |= !reader.GetValueOrDefault<bool>("NON_UNIQUE");
+                                index.IsUnique = reader.GetValueOrDefault<bool>("NON_UNIQUE");
 
-                                var prefixLengths = reader.GetValueOrDefault<string>("SUB_PARTS")
+                                if (isDescs != null && isDescs.Count > 0)
+                                {
+                                    index.IsDescending = isDescs;
+                                }
+
+                                string subParts = reader.GetValueOrDefault<string>("SUB_PARTS");
+                                var prefixLengths = string.IsNullOrEmpty(subParts) ? new int[0] : reader.GetValueOrDefault<string>("SUB_PARTS")
                                     .Split(',')
                                     .Select(int.Parse)
                                     .ToArray();
@@ -808,19 +774,14 @@ ORDER BY
                                     index[XGAnnotationNames.IndexPrefixLength] = null;
                                 }
 
-                                index.IsDescending = reader.GetValueOrDefault<string>("COLLATION")
-                                    .Split(',')
-                                    .Select(c => c == "D")
-                                    .ToArray();
+                                var indexType = reader.GetValueOrDefault<int>("INDEX_TYPE");
 
-                                var indexType = reader.GetValueOrDefault<string>("INDEX_TYPE");
-
-                                if (string.Equals(indexType, "spatial", StringComparison.OrdinalIgnoreCase))
+                                if (indexType == 1)
                                 {
                                     index[XGAnnotationNames.SpatialIndex] = true;
                                 }
 
-                                if (string.Equals(indexType, "fulltext", StringComparison.OrdinalIgnoreCase))
+                                if (indexType == 2)
                                 {
                                     index[XGAnnotationNames.FullTextIndex] = true;
                                 }
@@ -848,7 +809,7 @@ ORDER BY
                 //
 
                 var fullTextIndexes = table.Indexes
-                    .Where(i => ((bool?) i[XGAnnotationNames.FullTextIndex]).GetValueOrDefault())
+                    .Where(i => ((bool?)i[XGAnnotationNames.FullTextIndex]).GetValueOrDefault())
                     .ToList();
 
                 if (fullTextIndexes.Any())
@@ -891,21 +852,8 @@ ORDER BY
             throw new InvalidOperationException("The statement 'SHOW CREATE TABLE' did not return any results.");
         }
 
-        private const string GetConstraintsQuery = @"SELECT
- 	`CONSTRAINT_NAME`,
- 	`TABLE_NAME`,
- 	`REFERENCED_TABLE_NAME`,
- 	GROUP_CONCAT(CONCAT_WS('|', `COLUMN_NAME`, `REFERENCED_COLUMN_NAME`) ORDER BY `ORDINAL_POSITION` SEPARATOR ',') AS PAIRED_COLUMNS,
- 	(SELECT `DELETE_RULE` FROM `INFORMATION_SCHEMA`.`REFERENTIAL_CONSTRAINTS` WHERE `REFERENTIAL_CONSTRAINTS`.`CONSTRAINT_NAME` = `KEY_COLUMN_USAGE`.`CONSTRAINT_NAME` AND `REFERENTIAL_CONSTRAINTS`.`CONSTRAINT_SCHEMA` = `KEY_COLUMN_USAGE`.`CONSTRAINT_SCHEMA`) AS `DELETE_RULE`
- FROM `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE`
- WHERE `TABLE_SCHEMA` = '{0}'
- 		AND `TABLE_NAME` = '{1}'
- 		AND `CONSTRAINT_NAME` <> 'PRIMARY'
-        AND `REFERENCED_TABLE_NAME` IS NOT NULL
-        GROUP BY `CONSTRAINT_SCHEMA`,
-        `CONSTRAINT_NAME`,
-        `TABLE_NAME`,
-        `REFERENCED_TABLE_NAME`;";
+        private const string GetConstraintsQuery = @"SELECT CONS_NAME AS `CONSTRAINT_NAME`,t1.TABLE_NAME AS `TABLE_NAME`,t2.TABLE_NAME AS `REFERENCED_TABLE_NAME`,
+REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(DEFINE,',','|'),')(',','),'(',''),')',''),'""','') AS PAIRED_COLUMNS,DELETE_ACTION AS `DELETE_RULE` FROM ALL_CONSTRAINTS c LEFT JOIN ALL_TABLES t1 ON c.TABLE_ID=t1.TABLE_ID LEFT JOIN ALL_TABLES t2 ON c.REF_TABLE_ID=t2.TABLE_ID WHERE c.CONS_TYPE!='P' AND t1.TABLE_NAME='{0}' AND t2.TABLE_NAME IS NOT NULL;";
 
         protected virtual void GetConstraints(
             DbConnection connection,
@@ -915,7 +863,7 @@ ORDER BY
             {
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = string.Format(GetConstraintsQuery, connection.Database, table.Name);
+                    command.CommandText = string.Format(GetConstraintsQuery, table.Name);
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())
@@ -932,14 +880,28 @@ ORDER BY
                             }
                             if (referencedTable != null)
                             {
-                                var fkInfo = new DatabaseForeignKey {Name = reader.GetString(0), OnDelete = ConvertToReferentialAction(reader.GetString(4)), Table = table, PrincipalTable = referencedTable};
-                                foreach (var pair in reader.GetString(3).Split(','))
+                                var fkInfo = new DatabaseForeignKey { Name = reader.GetString(0), OnDelete = ConvertToReferentialAction(reader.GetString(4)), Table = table, PrincipalTable = referencedTable };
+                                //foreach ()
+                                //{
+                                //    fkInfo.Columns.Add(table.Columns.Single(y =>
+                                //        string.Equals(y.Name, pair.Split('|')[0], StringComparison.OrdinalIgnoreCase)));
+                                //    fkInfo.PrincipalColumns.Add(fkInfo.PrincipalTable.Columns.Single(y =>
+                                //        string.Equals(y.Name, pair.Split('|')[1], StringComparison.OrdinalIgnoreCase)));
+                                //}
+                                var pair = reader.GetString(3).Split(',');
+                                if (table.Name != fkInfo.PrincipalTable.Name)
                                 {
-                                    fkInfo.Columns.Add(table.Columns.Single(y =>
-                                        string.Equals(y.Name, pair.Split('|')[0], StringComparison.OrdinalIgnoreCase)));
-                                    fkInfo.PrincipalColumns.Add(fkInfo.PrincipalTable.Columns.Single(y =>
-                                        string.Equals(y.Name, pair.Split('|')[1], StringComparison.OrdinalIgnoreCase)));
+                                    foreach (var item in pair[0].Split('|'))
+                                    {
+                                        fkInfo.Columns.Add(table.Columns.Single(y => string.Equals(y.Name, item, StringComparison.OrdinalIgnoreCase)));
+                                    }
                                 }
+
+                                foreach (var item in pair[1].Split('|'))
+                                {
+                                    fkInfo.PrincipalColumns.Add(fkInfo.PrincipalTable.Columns.Single(y => string.Equals(y.Name, item, StringComparison.OrdinalIgnoreCase)));
+                                }
+
 
                                 table.ForeignKeys.Add(fkInfo);
                             }
@@ -953,25 +915,51 @@ ORDER BY
             }
         }
 
-        private const string GetCheckConstraintsQuery = @"SELECT `c`.`CONSTRAINT_NAME`, `c`.`CHECK_CLAUSE`
-FROM `INFORMATION_SCHEMA`.`CHECK_CONSTRAINTS` as `c`
-INNER JOIN `INFORMATION_SCHEMA`.`TABLE_CONSTRAINTS` as `t` on `t`.`CONSTRAINT_CATALOG` = `c`.`CONSTRAINT_CATALOG` and `t`.`CONSTRAINT_SCHEMA` = `c`.`CONSTRAINT_SCHEMA` and `t`.`CONSTRAINT_NAME` = `c`.`CONSTRAINT_NAME`
-WHERE `t`.`TABLE_SCHEMA` = '{0}' AND `t`.`CONSTRAINT_SCHEMA` = `t`.`TABLE_SCHEMA` AND `t`.`TABLE_NAME` = '{1}';";
+        private const string GetUConstraintsQuery = @"SELECT CONS_NAME AS `CONSTRAINT_NAME`,t.TABLE_NAME AS `TABLE_NAME`,
+REPLACE(DEFINE,'""','') AS PAIRED_COLUMNS FROM ALL_CONSTRAINTS c LEFT JOIN ALL_TABLES t ON c.TABLE_ID=t.TABLE_ID WHERE c.CONS_TYPE='U' AND t.TABLE_NAME='{0}';";
 
-        protected virtual Dictionary<string, Func<(string dataType, string charset, string collation), string>> GetColumnTypeOverrides(
+        protected virtual void GetUConstraints(
+            DbConnection connection,
+            IReadOnlyList<DatabaseTable> tables)
+        {
+            foreach (var table in tables)
+            {
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = string.Format(GetUConstraintsQuery, table.Name);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            table.UniqueConstraints.Add(new DatabaseUniqueConstraint { Name = reader.GetString(0), Table = table });
+                            var pair = reader.GetString(2).Split(',');
+                            foreach (var item in pair)
+                            {
+                                table.UniqueConstraints.Last().Columns.Add(table.Columns.Single(y => string.Equals(y.Name, item, StringComparison.OrdinalIgnoreCase)));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private const string GetCheckConstraintsQuery = @"SELECT CONS_NAME AS `CONSTRAINT_NAME`,DEFINE AS `CHECK_CLAUSE` FROM ALL_CONSTRAINTS c LEFT JOIN ALL_TABLES t ON c.TABLE_ID=t.TABLE_ID WHERE c.CONS_TYPE='C' AND t.TABLE_NAME='{0}';";
+
+        protected virtual Dictionary<string, Func<(string dataType, string charset), string>> GetColumnTypeOverrides(
             DbConnection connection,
             DatabaseTable table)
         {
-            var columnTypeOverrides = new Dictionary<string, Func<(string dataType, string charset, string collation), string>>();
+            var columnTypeOverrides = new Dictionary<string, Func<(string dataType, string charset), string>>();
 
-            // For MariaDB. the `json` type is just an alias for `longtext`.
+            // For XuGu. the `json` type is just an alias for `longtext`.
             // In newer versions however, it adds a json_valid(`columnName`) check constraint when a column was created with the type
             // `json`, which we can use as a very strong heuristic that a `longtext` column is being used as a `json` column.
-            if (_options.ServerVersion.Supports.IdentifyJsonColumsByCheckConstraints &&
+            if (_options.ServerVersion != null && _options.ServerVersion.Supports.IdentifyJsonColumsByCheckConstraints &&
                 _options.ServerVersion.Supports.InformationSchemaCheckConstraintsTable)
             {
                 using var command = connection.CreateCommand();
-                command.CommandText = string.Format(GetCheckConstraintsQuery, connection.Database, table.Name);
+                //command.CommandText = string.Format(GetCheckConstraintsQuery, connection.Database, table.Name);
+                command.CommandText = string.Format(GetCheckConstraintsQuery, table.Name);
 
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
@@ -981,17 +969,12 @@ WHERE `t`.`TABLE_SCHEMA` = '{0}' AND `t`.`CONSTRAINT_SCHEMA` = `t`.`TABLE_SCHEMA
 
                     var match = Regex.Match(
                         checkClause,
-                        @"json_valid\s*\(\s*`(?<columnName>(?:[^`]|``)+)`\s*\)",
+                        @"\("".+""\)",
                         RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
                     if (match.Success)
                     {
-                        columnTypeOverrides.TryAdd(
-                            match.Groups["columnName"].Value,
-                            t => t.charset == "utf8mb4" &&
-                                 t.collation == "utf8mb4_bin"
-                                ? "json"
-                                : t.dataType);
+                        columnTypeOverrides.TryAdd(match.Groups["columnName"].Value.Replace("(\"", "").Replace("\")", ""), t => t.dataType);
                     }
                 }
             }
@@ -1002,10 +985,11 @@ WHERE `t`.`TABLE_SCHEMA` = '{0}' AND `t`.`CONSTRAINT_SCHEMA` = `t`.`TABLE_SCHEMA
         protected virtual ReferentialAction? ConvertToReferentialAction(string onDeleteAction)
             => onDeleteAction.ToUpperInvariant() switch
             {
-                "NO ACTION" => ReferentialAction.NoAction,
-                "RESTRICT" => ReferentialAction.NoAction, // RESTRICT is the same as NO ACTION in MySQL/MariaDB
-                "CASCADE" => ReferentialAction.Cascade,
-                "SET NULL" => ReferentialAction.SetNull,
+                "N" => ReferentialAction.NoAction,
+                "R" => ReferentialAction.NoAction, // RESTRICT is the same as NO ACTION in XuGu
+                "C" => ReferentialAction.Cascade,
+                "U" => ReferentialAction.SetNull,
+                "D" => ReferentialAction.SetDefault,
                 _ => null
             };
 

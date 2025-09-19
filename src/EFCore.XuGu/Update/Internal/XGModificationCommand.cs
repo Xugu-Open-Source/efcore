@@ -27,7 +27,7 @@ public class XGModificationCommand : ModificationCommand
     {
         // The default implementation of PropagateResults skips (output) parameters, since for e.g. SQL Server these aren't yet populated
         // when consuming the result set (propagating output columns is done later, after the reader is closed).
-        // However, in MySQL, output parameters actually get returned as the result set, so we override and take care of that here.
+        // However, in XuGu, output parameters actually get returned as the result set, so we override and take care of that here.
         var columnCount = ColumnModifications.Count;
 
         var readerIndex = -1;

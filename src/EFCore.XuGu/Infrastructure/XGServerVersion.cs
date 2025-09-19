@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.XuGu.Infrastructure;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    /// Represents a <see cref="ServerVersion"/> for MySQL database servers.
+    /// Represents a <see cref="ServerVersion"/> for XuGu database servers.
     /// </summary>
     public class XGServerVersion : ServerVersion
     {
@@ -18,8 +18,8 @@ namespace Microsoft.EntityFrameworkCore
 
         public override ServerVersionSupport Supports { get; }
 
-        public override string DefaultUtf8CsCollation => Supports.DefaultCharSetUtf8Mb4 ? "utf8mb4_0900_as_cs" : "utf8mb4_bin";
-        public override string DefaultUtf8CiCollation => Supports.DefaultCharSetUtf8Mb4 ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+        public override string DefaultUtf8CsCollation => "utf8";
+        public override string DefaultUtf8CiCollation => "utf8";
 
         public XGServerVersion(Version version)
             : base(version, ServerType.XG)
@@ -85,7 +85,7 @@ namespace Microsoft.EntityFrameworkCore
                                                             ServerVersion.Version < new Version(8, 0, 23); // Exact version has not been verified yet, but it is 5.7.x and could very well be 5.7.0
             public override bool XGBug104294Workaround => ServerVersion.Version >= new Version(8, 0, 0); // Exact version has not been determined yet
             public override bool FullTextParser => ServerVersion.Version >= new Version(5, 7, 3);
-            public override bool InformationSchemaCheckConstraintsTable => ServerVersion.Version >= new Version(8, 0, 16); // MySQL is missing the explicit TABLE_NAME column that MariaDB supports, so always join the TABLE_CONSTRAINTS table when accessing CHECK_CONSTRAINTS for any database server that supports CHECK_CONSTRAINTS.
+            public override bool InformationSchemaCheckConstraintsTable => ServerVersion.Version >= new Version(8, 0, 16); // XuGu is missing the explicit TABLE_NAME column that MariaDB supports, so always join the TABLE_CONSTRAINTS table when accessing CHECK_CONSTRAINTS for any database server that supports CHECK_CONSTRAINTS.
             public override bool XGBugLimit0Offset0ExistsWorkaround => true;
             public override bool DescendingIndexes => ServerVersion.Version >= new Version(8, 0, 1);
             public override bool CommonTableExpressions => ServerVersion.Version >= new Version(8, 0, 1);
@@ -102,7 +102,7 @@ namespace Microsoft.EntityFrameworkCore
 
             public override bool JsonTableImplementationStable => false;
             public override bool JsonTableImplementationWithoutXGBugs => false; // Other non-fatal bugs regarding JSON_TABLE.
-            public override bool JsonTableImplementationUsingParameterAsSourceWithoutEngineCrash => false; // MySQL non-deterministically crashes when using a parameter with JSON as the source of a JSON_TABLE call.
+            public override bool JsonTableImplementationUsingParameterAsSourceWithoutEngineCrash => false; // XuGu non-deterministically crashes when using a parameter with JSON as the source of a JSON_TABLE call.
         }
     }
 }

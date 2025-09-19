@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.XuGu.Query.Internal;
 namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal;
 
 /// <summary>
-///     <para>MySQL implicitly casts numbers used in all bitwise operations to BIGINT UNSIGNED.</para>
+///     <para>XuGu implicitly casts numbers used in all bitwise operations to BIGINT UNSIGNED.</para>
 ///     <para>Bitwise operations are:</para>
 ///     <list type="table">
 ///         <listheader>

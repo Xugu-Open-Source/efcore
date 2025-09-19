@@ -8,7 +8,7 @@ using XuguClient;
 namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
 {
     /// <summary>
-    ///     Detects the exceptions caused by MySQL transient failures.
+    ///     Detects the exceptions caused by XuGu transient failures.
     /// </summary>
     public static class XGTransientExceptionDetector
     {

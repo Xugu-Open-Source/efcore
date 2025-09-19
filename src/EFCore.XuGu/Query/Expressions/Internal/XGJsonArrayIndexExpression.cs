@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace Microsoft.EntityFrameworkCore.XuGu.Query.Expressions.Internal
 {
     /// <summary>
-    /// Represents a MySQL JSON array index (i.e. x[y]).
+    /// Represents a XuGu JSON array index (i.e. x[y]).
     /// </summary>
     public class XGJsonArrayIndexExpression : SqlExpression, IEquatable<XGJsonArrayIndexExpression>
     {

@@ -13,17 +13,17 @@ using Microsoft.EntityFrameworkCore.XuGu.Infrastructure.Internal;
 namespace Microsoft.EntityFrameworkCore.Migrations
 {
     /// <summary>
-    ///     MySQL specific extension methods for <see cref="MigrationBuilder" />.
+    ///     XuGu specific extension methods for <see cref="MigrationBuilder" />.
     /// </summary>
     public static class XGMigrationBuilderExtensions
     {
         /// <summary>
         ///     <para>
-        ///         Returns true if the database provider currently in use is the MySQL provider.
+        ///         Returns true if the database provider currently in use is the XuGu provider.
         ///     </para>
         /// </summary>
         /// <param name="migrationBuilder"> The migrationBuilder from the parameters on <see cref="Migration.Up(MigrationBuilder)" /> or <see cref="Migration.Down(MigrationBuilder)" />. </param>
-        /// <returns> True if MySQL is being used; false otherwise. </returns>
+        /// <returns> True if XuGu is being used; false otherwise. </returns>
         public static bool IsXG([NotNull] this MigrationBuilder migrationBuilder)
             => string.Equals(migrationBuilder.ActiveProvider,
                 typeof(XGOptionsExtension).GetTypeInfo().Assembly.GetName().Name,

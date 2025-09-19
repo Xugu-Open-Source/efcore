@@ -1,4 +1,4 @@
-Entity Framework Core (EF Core) is a modern object-database mapper that lets you build a clean, portable, and high-level data access layer with .NET (C#) across a variety of databases, including SQL Server (on-premises and Azure), SQLite, MySQL, PostgreSQL, Oracle, and Azure Cosmos DB. It supports LINQ queries, change tracking, updates, and schema migrations.
+Entity Framework Core (EF Core) is a modern object-database mapper that lets you build a clean, portable, and high-level data access layer with .NET (C#) across a variety of databases, including SQL Server (on-premises and Azure), SQLite, XuGu, PostgreSQL, Oracle, and Azure Cosmos DB. It supports LINQ queries, change tracking, updates, and schema migrations.
 
 ## Getting started
 
@@ -40,7 +40,7 @@ context.SaveChanges();
 var customers = context.Customers.ToList();
 ```
 
-Microsoft.EntityFrameworkCore supports multiple [database providers](https://learn.microsoft.com/ef/core/providers/), including SQL Server, MySQL, PostgreSQL, SQLite, and others. You will need to install the provider package for your chosen database. For example, to use SQL Server, you would install the [Microsoft.EntityFrameworkCore.SqlServer package](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.SqlServer).
+Microsoft.EntityFrameworkCore supports multiple [database providers](https://learn.microsoft.com/ef/core/providers/), including SQL Server, XuGu, PostgreSQL, SQLite, and others. You will need to install the provider package for your chosen database. For example, to use SQL Server, you would install the [Microsoft.EntityFrameworkCore.SqlServer package](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.SqlServer).
 
 You would then configure your database context to use the SQL Server provider:
 

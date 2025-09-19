@@ -26,41 +26,41 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Infrastructure
         public virtual XGTimeSpanType ClrTimeSpan { get; private set; }
         public virtual int ClrTimeOnlyPrecision { get; private set; } = -1;
 
-        public virtual XGDefaultDataTypeMappings WithClrBoolean(XGBooleanType mysqlBooleanType)
+        public virtual XGDefaultDataTypeMappings WithClrBoolean(XGBooleanType xuguBooleanType)
         {
             var clone = Clone();
-            clone.ClrBoolean = mysqlBooleanType;
+            clone.ClrBoolean = xuguBooleanType;
             return clone;
         }
 
-        public virtual XGDefaultDataTypeMappings WithClrDateTime(XGDateTimeType mysqlDateTimeType)
+        public virtual XGDefaultDataTypeMappings WithClrDateTime(XGDateTimeType xuguDateTimeType)
         {
             var clone = Clone();
-            clone.ClrDateTime = mysqlDateTimeType;
+            clone.ClrDateTime = xuguDateTimeType;
             return clone;
         }
 
-        public virtual XGDefaultDataTypeMappings WithClrDateTimeOffset(XGDateTimeType mysqlDateTimeType)
+        public virtual XGDefaultDataTypeMappings WithClrDateTimeOffset(XGDateTimeType xuguDateTimeType)
         {
             var clone = Clone();
-            clone.ClrDateTimeOffset = mysqlDateTimeType;
+            clone.ClrDateTimeOffset = xuguDateTimeType;
             return clone;
         }
 
         // TODO: Remove Time6, add optional precision parameter for Time types.
-        public virtual XGDefaultDataTypeMappings WithClrTimeSpan(XGTimeSpanType mysqlTimeSpanType)
+        public virtual XGDefaultDataTypeMappings WithClrTimeSpan(XGTimeSpanType xuguTimeSpanType)
         {
             var clone = Clone();
-            clone.ClrTimeSpan = mysqlTimeSpanType;
+            clone.ClrTimeSpan = xuguTimeSpanType;
             return clone;
         }
 
         /// <summary>
-        /// Set the default precision for `TimeOnly` CLR type mapping to a MySQL TIME type.
+        /// Set the default precision for `TimeOnly` CLR type mapping to a XuGu TIME type.
         /// Set <paramref name="precision"/> to <see langword="null"/>, to use the highest supported precision.
         /// Otherwise, set <paramref name="precision"/> to a valid value between `0` and `6`.
         /// </summary>
-        /// <param name="precision">The precision used for the MySQL TIME type.</param>
+        /// <param name="precision">The precision used for the XuGu TIME type.</param>
         /// <returns>The same instance, to allow chained method calls.</returns>
         public virtual XGDefaultDataTypeMappings WithClrTimeOnly(int? precision = null)
         {

@@ -15,14 +15,14 @@ using Microsoft.EntityFrameworkCore.XuGu.Metadata.Internal;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     MySQL specific extension methods for entity types.
+    ///     XuGu specific extension methods for entity types.
     /// </summary>
     public static class XGEntityTypeExtensions
     {
         #region CharSet
 
         /// <summary>
-        /// Get the MySQL character set for the table associated with this entity.
+        /// Get the XuGu character set for the table associated with this entity.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
         /// <returns> The name of the character set. </returns>
@@ -32,7 +32,7 @@ namespace Microsoft.EntityFrameworkCore
                 : entityType[XGAnnotationNames.CharSet] as string;
 
         /// <summary>
-        /// Sets the MySQL character set on the table associated with this entity. When you only specify the character set, MySQL implicitly
+        /// Sets the XuGu character set on the table associated with this entity. When you only specify the character set, XuGu implicitly
         /// uses the default collation.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
@@ -47,7 +47,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        /// Sets the MySQL character set on the table associated with this entity. When you only specify the character set, MySQL implicitly
+        /// Sets the XuGu character set on the table associated with this entity. When you only specify the character set, XuGu implicitly
         /// uses the default collation.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
@@ -153,7 +153,7 @@ namespace Microsoft.EntityFrameworkCore
         #region Collation
 
         /// <summary>
-        /// Get the MySQL collation for the table associated with this entity.
+        /// Get the XuGu collation for the table associated with this entity.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
         /// <returns> The name of the collation. </returns>
@@ -163,7 +163,7 @@ namespace Microsoft.EntityFrameworkCore
                 : entityType[RelationalAnnotationNames.Collation] as string;
 
         /// <summary>
-        /// Sets the MySQL collation on the table associated with this entity. When you specify the collation, MySQL implicitly sets the
+        /// Sets the XuGu collation on the table associated with this entity. When you specify the collation, XuGu implicitly sets the
         /// proper character set as well.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
@@ -178,7 +178,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        /// Sets the MySQL collation on the table associated with this entity. When you specify the collation, MySQL implicitly sets the
+        /// Sets the XuGu collation on the table associated with this entity. When you specify the collation, XuGu implicitly sets the
         /// proper character set as well.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
@@ -284,7 +284,7 @@ namespace Microsoft.EntityFrameworkCore
         #region StoreOptions
 
         /// <summary>
-        /// Gets the MySQL table options for the table associated with this entity.
+        /// Gets the XuGu table options for the table associated with this entity.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
         /// <returns> A dictionary of table options. </returns>
@@ -294,7 +294,7 @@ namespace Microsoft.EntityFrameworkCore
                 : DeserializeTableOptions(entityType[XGAnnotationNames.StoreOptions] as string);
 
         /// <summary>
-        /// Sets the MySQL table options for the table associated with this entity.
+        /// Sets the XuGu table options for the table associated with this entity.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
         /// <param name="options"> A dictionary of table options. </param>
@@ -304,7 +304,7 @@ namespace Microsoft.EntityFrameworkCore
             => entityType.SetOrRemoveAnnotation(XGAnnotationNames.StoreOptions, SerializeTableOptions(options));
 
         /// <summary>
-        /// Sets the MySQL table options for the table associated with this entity.
+        /// Sets the XuGu table options for the table associated with this entity.
         /// </summary>
         /// <param name="entityType"> The entity type. </param>
         /// <param name="options"> A dictionary of table options. </param>

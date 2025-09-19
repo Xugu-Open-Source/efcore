@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionTranslators.Internal;
 
 /// <summary>
-///     An expression that represents a MySQL JSON_TABLE() function call in a SQL tree.
+///     An expression that represents a XuGu JSON_TABLE() function call in a SQL tree.
 /// </summary>
 public class XGJsonTableExpression : TableValuedFunctionExpression
 {

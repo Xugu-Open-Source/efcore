@@ -89,7 +89,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
 
         // TODO: Just implicitly rely on TIME_TRUNCATE_FRACTIONAL SQL mode and use a default-like implementation instead (check for
         //       fractions in the actual value and then use a format with fractions or without). Then use this format for any precision.
-        //       Check support in different MySQL/MariaDB versions first.
+        //       Check support in different XuGu/MariaDB versions first.
         protected static string GetTimeFormatString(object value, int? precision)
         {
             var validPrecision = Math.Min(Math.Max(precision.GetValueOrDefault(), 0), 6);

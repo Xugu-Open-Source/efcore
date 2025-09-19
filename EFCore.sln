@@ -151,6 +151,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.XuGu.NTS", "src\EFCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.XuGu.FunctionalTests", "test\EFCore.XuGu.FunctionalTests\EFCore.XuGu.FunctionalTests.csproj", "{0CFD2002-3358-47AF-4D94-7F6E78B109A9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.XuGu.Tests", "test\EFCore.XuGu.Tests\EFCore.XuGu.Tests.csproj", "{3E32895A-A7ED-4ABE-91ED-3BBBA38BFD77}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -401,6 +403,10 @@ Global
 		{0CFD2002-3358-47AF-4D94-7F6E78B109A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CFD2002-3358-47AF-4D94-7F6E78B109A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CFD2002-3358-47AF-4D94-7F6E78B109A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E32895A-A7ED-4ABE-91ED-3BBBA38BFD77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E32895A-A7ED-4ABE-91ED-3BBBA38BFD77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E32895A-A7ED-4ABE-91ED-3BBBA38BFD77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E32895A-A7ED-4ABE-91ED-3BBBA38BFD77}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -468,6 +474,7 @@ Global
 		{18657EB9-54B6-4E54-BDC6-188955319B90} = {CE6B50B2-34AE-44C9-940A-4E48C3E1B3BC}
 		{9D575617-6E0B-A272-4F99-0E33ABA12BFC} = {CE6B50B2-34AE-44C9-940A-4E48C3E1B3BC}
 		{0CFD2002-3358-47AF-4D94-7F6E78B109A9} = {258D5057-81B9-40EC-A872-D21E27452749}
+		{3E32895A-A7ED-4ABE-91ED-3BBBA38BFD77} = {258D5057-81B9-40EC-A872-D21E27452749}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {285A5EB4-BCF4-40EB-B9E1-DF6DBCB5E705}

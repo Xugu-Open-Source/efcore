@@ -69,8 +69,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
 
         protected virtual void PrepareCommand(DbCommand command)
         {
-            // MySQL does not support user variables in LIMIT statements.
-            // (It does however support parameters in LIMIT statements since 2010. See https://bugs.mysql.com/bug.php?id=11918)
+            // XuGu does not support user variables in LIMIT statements.
+            // (It does however support parameters in LIMIT statements since 2010. See https://bugs.xugu.com/bug.php?id=11918)
             //
             // Because of that, we need to inline the parameter values as constants into the SQL command, in cases where they appear in a
             // LIMIT clause.

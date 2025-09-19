@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Utilities;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     MySQL specific extension methods for <see cref="ComplexTypePropertyBuilder" />.
+    ///     XuGu specific extension methods for <see cref="ComplexTypePropertyBuilder" />.
     /// </summary>
     public static class XGComplexTypePropertyBuilderExtensions
     {

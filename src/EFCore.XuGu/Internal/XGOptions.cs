@@ -33,7 +33,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Internal
             // by default, if none was explicitly set.
             DefaultCharSet = CharSet.Utf8Mb4;
 
-            // NCHAR and NVARCHAR are prefdefined by MySQL.
+            // NCHAR and NVARCHAR are prefdefined by XuGu.
             NationalCharSet = CharSet.Utf8Mb3;
 
             // Optimize space and performance for GUID columns.

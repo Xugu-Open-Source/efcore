@@ -36,7 +36,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         ///     <para>
         ///         Registers the given Entity Framework context as a service in the <see cref="IServiceCollection" />
-        ///         and configures it to connect to a MySQL compatible database.
+        ///         and configures it to connect to a XuGu compatible database.
         ///     </para>
         ///     <para>
         ///         Use this method when using dependency injection in your application, such as with ASP.NET Core.
@@ -68,10 +68,10 @@ namespace Microsoft.Extensions.DependencyInjection
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <param name="optionsAction"> An optional action to configure the <see cref="DbContextOptions" /> for the context. </param>
         /// <returns> The same service collection so that multiple calls can be chained. </returns>
         public static IServiceCollection AddXG<TContext>(
@@ -121,6 +121,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .TryAdd<IMemberTranslatorProvider, XGMemberTranslatorProvider>()
                 .TryAdd<IEvaluatableExpressionFilter, XGEvaluatableExpressionFilter>()
                 .TryAdd<IQuerySqlGeneratorFactory, XGQuerySqlGeneratorFactory>()
+                .TryAdd<IAggregateMethodCallTranslatorProvider, XGAggregateMethodCallTranslatorProvider>()
                 .TryAdd<IRelationalSqlTranslatingExpressionVisitorFactory, XGSqlTranslatingExpressionVisitorFactory>()
                 .TryAdd<IRelationalParameterBasedSqlProcessorFactory, XGParametersBasedSqlProcessorFactory>()
                 .TryAdd<ISqlExpressionFactory, XGSqlExpressionFactory>()

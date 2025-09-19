@@ -61,7 +61,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
 
         /// <summary>
         ///     <para>
-        ///         Call this method to build a <see cref="ConventionSet" /> for MySQL when using
+        ///         Call this method to build a <see cref="ConventionSet" /> for XuGu when using
         ///         the <see cref="ModelBuilder" /> outside of <see cref="DbContext.OnModelCreating" />.
         ///     </para>
         ///     <para>

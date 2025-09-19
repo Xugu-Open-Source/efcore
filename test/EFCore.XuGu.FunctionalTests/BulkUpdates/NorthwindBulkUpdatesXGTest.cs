@@ -761,7 +761,7 @@ LIMIT @__p_0
 """);
     }
 
-    [SupportedServerVersionCondition("0.0.0-mysql", Skip = "Can fail non-deterministically when targeting XuGu, if certain tests precede it.")]
+    [SupportedServerVersionCondition("0.0.0-xugu", Skip = "Can fail non-deterministically when targeting XuGu, if certain tests precede it.")]
     public override async Task Update_Where_Skip_Take_set_constant(bool async)
     {
         await base.Update_Where_Skip_Take_set_constant(async);

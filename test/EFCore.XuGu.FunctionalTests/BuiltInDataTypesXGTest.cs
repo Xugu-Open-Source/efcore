@@ -1399,16 +1399,17 @@ UnicodeDataTypes.StringUnicode ---> [nullable longtext] [MaxLength = -1]
         {
             const string query
                 = @"SELECT
-                        TABLE_NAME,
-                        COLUMN_NAME,
-                        DATA_TYPE,
-                        IS_NULLABLE,
-                        CHARACTER_MAXIMUM_LENGTH,
-                        NUMERIC_PRECISION,
-                        NUMERIC_SCALE,
-                        DATETIME_PRECISION
-                    FROM INFORMATION_SCHEMA.COLUMNS
- WHERE `TABLE_SCHEMA` like '%uilt%ata%'";
+TABLE_NAME,
+COL_NAME AS `COLUMN_NAME`,
+TYPE_NAME AS `DATA_TYPE`,
+`NOT_NULL` AS `IS_NULLABLE`,
+`SCALE` AS CHARACTER_MAXIMUM_LENGTH,
+(SCALE/65536)::INT AS `NUMERIC_PRECISION`,
+CAST(MOD(SCALE,65536) AS INT) AS `NUMERIC_SCALE`,
+`SCALE` AS DATETIME_PRECISION
+FROM ALL_COLUMNS AS c
+LEFT JOIN
+ALL_TABLES AS t ON c.TABLE_ID=t.TABLE_ID WHERE t.TABLE_NAME like '%uilt%ata%';";
 
             var columns = new List<ColumnInfo>();
 

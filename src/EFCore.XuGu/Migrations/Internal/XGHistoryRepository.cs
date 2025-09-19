@@ -66,7 +66,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations.Internal
         // since after the LOCK TABLES statement has run, only the tables specified can be access and access to any other table results in
         // an error.
         // We use GET_LOCK()/RELEASE_LOCK() for now. We would like to not specify a timeout, because we cannot know how long the migration
-        // operations are supposed to take. However, while MySQL interprets negative timeout values as infinite, MariaDB does not. We
+        // operations are supposed to take. However, while XuGu interprets negative timeout values as infinite, MariaDB does not. We
         // therefore specify a very large timeout in seconds instead (currently 72 hours). If RELEASE_LOCK() is never called, the lock is automatically released
         // when the session ends or is killed. This function pair is not bound to a database, but is a database server wide global mutex. We
         // therefore explicitly use the database name as part of the lock name.
@@ -106,15 +106,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations.Internal
 
                 var builder = new StringBuilder();
 
-                builder.Append("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE ");
+                builder.Append("SELECT 1 FROM ALL_TABLES WHERE ");
 
                 builder
-                    .Append("TABLE_SCHEMA=")
+                    .Append("SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME=")
                     .Append(
-                        stringTypeMapping.GenerateSqlLiteral(
-                            _sqlGenerationHelper.GetSchemaName(TableName, TableSchema) ??
-                            Dependencies.Connection.DbConnection.Database))
-                    .Append(" AND TABLE_NAME=")
+                        stringTypeMapping.GenerateSqlLiteral(TableSchema ?? "SYSDBA"))
+                    .Append(") AND TABLE_NAME=")
                     .Append(
                         stringTypeMapping.GenerateSqlLiteral(
                             _sqlGenerationHelper.GetObjectName(TableName, TableSchema)))
@@ -153,8 +151,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations.Internal
         /// </summary>
         /// <returns> The generated SQL. </returns>
         public virtual string GetBeginIfScript(string migrationId, bool notExists) => $@"DROP PROCEDURE IF EXISTS {MigrationsScript};
-DELIMITER //
-CREATE PROCEDURE {MigrationsScript}()
+CREATE PROCEDURE {MigrationsScript}() IS
 BEGIN
     IF{(notExists ? " NOT" : null)} EXISTS(SELECT 1 FROM {SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema)} WHERE {SqlGenerationHelper.DelimitIdentifier(MigrationIdColumnName)} = '{migrationId}') THEN
 ";
@@ -165,10 +162,9 @@ BEGIN
         /// <returns> The generated SQL. </returns>
         public override string GetEndIfScript() => $@"
     END IF;
-END //
-DELIMITER ;
-CALL {MigrationsScript}();
-DROP PROCEDURE {MigrationsScript};
+END;
+EXECUTE IMMEDIATE 'EXEC {MigrationsScript}();';
+DROP PROCEDURE IF EXISTS {MigrationsScript};
 ";
 
         public virtual void ConfigureModel(ModelBuilder modelBuilder)

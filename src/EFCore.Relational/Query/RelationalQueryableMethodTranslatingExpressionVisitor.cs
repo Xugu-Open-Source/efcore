@@ -956,7 +956,7 @@ public partial class RelationalQueryableMethodTranslatingExpressionVisitor : Que
     {
         // For Max() over an inline array, translate to GREATEST() if possible; otherwise use the default translation of aggregate SQL
         // MAX().
-        // Note that some providers propagate NULL arguments (SQLite, MySQL), while others only return NULL if all arguments evaluate to
+        // Note that some providers propagate NULL arguments (SQLite, XuGu), while others only return NULL if all arguments evaluate to
         // NULL (SQL Server, PostgreSQL). If the argument is a nullable value type, don't translate to GREATEST() if it propagates NULLs,
         // to match the .NET behavior.
         if (TryExtractBareInlineCollectionValues(source, out var values)

@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore.XuGu.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.Query.Expressions.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionTranslators.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.Storage.Internal;
+using ExpressionExtensions = Microsoft.EntityFrameworkCore.Query.ExpressionExtensions;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
 {
@@ -169,7 +170,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                     method.ReturnType,
                     stringTypeMapping);
 
-                // Due to a bug in all versions of MariaDB and all MySQL versions below 8.0.x (exact version that fixed the issue is
+                // Due to a bug in all versions of MariaDB and all XuGu versions below 8.0.x (exact version that fixed the issue is
                 // currently unclear), using `null` as the replacement argument in a REPLACE() call leads to unexpected results, in which
                 // the call returns the original string, instead of `null`.
                 // See https://jira.mariadb.org/browse/MDEV-24263

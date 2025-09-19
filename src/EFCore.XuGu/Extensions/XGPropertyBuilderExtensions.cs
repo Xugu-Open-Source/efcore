@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.XuGu.Metadata.Internal;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     MySQL specific extension methods for <see cref="PropertyBuilder" />.
+    ///     XuGu specific extension methods for <see cref="PropertyBuilder" />.
     /// </summary>
     public static class XGPropertyBuilderExtensions
     {
@@ -20,7 +20,7 @@ namespace Microsoft.EntityFrameworkCore
 
         /// <summary>
         ///     Configures the key property to use the AUTO_INCREMENT feature to generate values for new entities,
-        ///     when targeting MySQL. This method sets the property to be <see cref="ValueGenerated.OnAdd" />.
+        ///     when targeting XuGu. This method sets the property to be <see cref="ValueGenerated.OnAdd" />.
         /// </summary>
         /// <param name="propertyBuilder"> The builder for the property being configured. </param>
         /// <returns> The same builder instance so that multiple calls can be chained. </returns>
@@ -37,7 +37,7 @@ namespace Microsoft.EntityFrameworkCore
 
         /// <summary>
         ///     Configures the key property to use the AUTO_INCREMENT feature to generate values for new entities,
-        ///     when targeting MySQL. This method sets the property to be <see cref="ValueGenerated.OnAdd" />.
+        ///     when targeting XuGu. This method sets the property to be <see cref="ValueGenerated.OnAdd" />.
         /// </summary>
         /// <typeparam name="TProperty"> The type of the property being configured. </typeparam>
         /// <param name="propertyBuilder"> The builder for the property being configured. </param>
@@ -51,7 +51,7 @@ namespace Microsoft.EntityFrameworkCore
         #region General value generation strategy
 
         /// <summary>
-        ///     Configures the value generation strategy for the key property, when targeting MySQL.
+        ///     Configures the value generation strategy for the key property, when targeting XuGu.
         /// </summary>
         /// <param name="propertyBuilder">The builder for the property being configured.</param>
         /// <param name="valueGenerationStrategy">The value generation strategy.</param>
@@ -100,8 +100,8 @@ namespace Microsoft.EntityFrameworkCore
         #region Computed
 
         /// <summary>
-        ///     Configures the key property to use the MySQL Computed feature to generate values for new entities,
-        ///     when targeting MySQL. This method sets the property to be <see cref="ValueGenerated.OnAddOrUpdate" />.
+        ///     Configures the key property to use the XuGu Computed feature to generate values for new entities,
+        ///     when targeting XuGu. This method sets the property to be <see cref="ValueGenerated.OnAddOrUpdate" />.
         /// </summary>
         /// <param name="propertyBuilder"> The builder for the property being configured. </param>
         /// <returns> The same builder instance so that multiple calls can be chained. </returns>
@@ -117,8 +117,8 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        ///     Configures the key property to use the MySQL Computed feature to generate values for new entities,
-        ///     when targeting MySQL. This method sets the property to be <see cref="ValueGenerated.OnAddOrUpdate" />.
+        ///     Configures the key property to use the XuGu Computed feature to generate values for new entities,
+        ///     when targeting XuGu. This method sets the property to be <see cref="ValueGenerated.OnAddOrUpdate" />.
         /// </summary>
         /// <typeparam name="TProperty"> The type of the property being configured. </typeparam>
         /// <param name="propertyBuilder"> The builder for the property being configured. </param>
@@ -185,7 +185,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        /// Returns a value indicating whether the MySQL character set can be set on the column associated with this property.
+        /// Returns a value indicating whether the XuGu character set can be set on the column associated with this property.
         /// </summary>
         /// <param name="propertyBuilder"> The builder for the property being configured. </param>
         /// <param name="charSet"> The name of the character set. </param>

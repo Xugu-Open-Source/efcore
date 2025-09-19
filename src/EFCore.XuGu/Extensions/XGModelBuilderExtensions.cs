@@ -17,7 +17,7 @@ namespace Microsoft.EntityFrameworkCore
 
         /// <summary>
         ///     Configures the model to use the AUTO_INCREMENT feature to generate values for properties
-        ///     marked as <see cref="ValueGenerated.OnAdd" />, when targeting MySQL.
+        ///     marked as <see cref="ValueGenerated.OnAdd" />, when targeting XuGu.
         /// </summary>
         /// <param name="modelBuilder">The model builder.</param>
         /// <returns>The same builder instance so that multiple calls can be chained.</returns>
@@ -33,7 +33,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        ///     Configures the value generation strategy for the key property, when targeting MySQL.
+        ///     Configures the value generation strategy for the key property, when targeting XuGu.
         /// </summary>
         /// <param name="modelBuilder">The builder for the property being configured.</param>
         /// <param name="valueGenerationStrategy">The value generation strategy.</param>

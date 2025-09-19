@@ -104,7 +104,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
             var lastChar = '\0';
             var secondTolastChar = '\0';
 
-            // State machine to parse MySQL SQL.
+            // State machine to parse XuGu SQL.
             for (var i = 0; i < SqlFragment.Length; i++)
             {
                 var c = SqlFragment[i];
@@ -249,7 +249,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                             secondTolastChar == '\0')
                         {
                             // This could still be the beginning of a line comment.
-                            // In MySQL, a line comment starts with two dashes and a whitespace.
+                            // In XuGu, a line comment starts with two dashes and a whitespace.
                             secondTolastChar = '-';
                         }
                         else if (secondTolastChar == '-' &&

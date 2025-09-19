@@ -7,7 +7,7 @@ using System;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     Sets the character set of a type (table), property or field (column) for MySQL.
+    ///     Sets the character set of a type (table), property or field (column) for XuGu.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field)]
     public class XGCharSetAttribute : Attribute

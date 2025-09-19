@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.EntityFrameworkCore.XuGu.Query.Expressions.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.Storage.Internal;
 using Microsoft.EntityFrameworkCore.XuGu.Utilities;
+using ExpressionExtensions = Microsoft.EntityFrameworkCore.Query.ExpressionExtensions;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
 {
@@ -297,7 +298,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                 // Customize handling for binary expressions.
                 SqlBinaryExpression e => ApplyTypeMappingOnSqlBinary(e, typeMapping),
 
-                // MySQL specific expression types:
+                // XuGu specific expression types:
                 XGComplexFunctionArgumentExpression e => ApplyTypeMappingOnComplexFunctionArgument(e),
                 XGCollateExpression e => ApplyTypeMappingOnCollate(e),
                 XGRegexpExpression e => ApplyTypeMappingOnRegexp(e),

@@ -47,7 +47,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.Query
 
             AssertSql(
 """
-SELECT COALESCE(SUM(CAST(`o`.`Discount` AS decimal(65,30))), 0.0)
+SELECT COALESCE(SUM(CAST(`o`.`Discount` AS decimal(38,17))), 0.0)
 FROM `Order Details` AS `o`
 """);
         }

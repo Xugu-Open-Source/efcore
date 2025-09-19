@@ -106,7 +106,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
 
             if (operations.Count <= 0)
             {
-                // An empty column and value list signales MySQL that only default values should be used.
+                // An empty column and value list signales XuGu that only default values should be used.
                 // If not all columns have default values defined, an error occurs if STRICT_ALL_TABLES has been set.
                 commandStringBuilder.Append(" ()");
             }
@@ -191,7 +191,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
                 var columnModification = command.ColumnModifications[i];
                 var parameter = (IStoreStoredProcedureParameter)columnModification.Column!;
 
-                // MySQL stored procedures cannot return a regular result set, and output parameter values are simply sent back to us as the
+                // XuGu stored procedures cannot return a regular result set, and output parameter values are simply sent back to us as the
                 // result set, if we append a SELECT query for them. This is very different from SQL Server, where output parameter values
                 // can be sent back in addition to result sets.
                 if (!parameter.Direction.HasFlag(ParameterDirection.Output))
@@ -232,7 +232,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
 
             commandStringBuilder.Append("CALL ");
 
-            // MySQL supports neither a return value nor a result set that gets returned from inside of a stored procedures. It only
+            // XuGu supports neither a return value nor a result set that gets returned from inside of a stored procedures. It only
             // supports output parameters to propagate values back to the caller.
             Check.DebugAssert(storedProcedure.ReturnValue is null, "storedProcedure.Return is null");
             Check.DebugAssert(!storedProcedure.ResultColumns.Any(), "!storedProcedure.ResultColumns.Any()");

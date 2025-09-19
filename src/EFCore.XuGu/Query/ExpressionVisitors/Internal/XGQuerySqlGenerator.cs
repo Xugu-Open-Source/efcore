@@ -29,7 +29,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         private static readonly Dictionary<string, string[]> _castMappings = new Dictionary<string, string[]>
         {
             { "signed", new []{ "tinyint", "smallint", "mediumint", "int", "bigint", "bit" }},
-            { "decimal(65,30)", new []{ "decimal" } },
+            { "decimal(38,17)", new []{ "decimal" } },
             { "double", new []{ "double" } },
             { "float", new []{ "float" } },
             { "binary", new []{ "binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob" } },
@@ -60,7 +60,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
             { "nchar", new []{ "nchar", "nvarchar" } },
         };
 
-        private const ulong LimitUpperBound = 18446744073709551610;
+        private const ulong LimitUpperBound = 999999999;
 
         private readonly IRelationalTypeMappingSource _typeMappingSource;
         private readonly IXGOptions _options;
@@ -106,7 +106,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
 
         protected virtual Expression VisitJsonPathTraversal(XGJsonTraversalExpression expression)
         {
-            // If the path contains parameters, then the -> and ->> aliases are not supported by MySQL, because
+            // If the path contains parameters, then the -> and ->> aliases are not supported by XuGu, because
             // we need to concatenate the path and the parameters.
             // We will use JSON_EXTRACT (and JSON_UNQUOTE if needed) only in this case, because the aliases
             // are much more readable.
@@ -492,7 +492,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
             // }
             // else
             // {
-            //     // JSON_VALUE returns varchar(512) by default (https://dev.mysql.com/doc/refman/8.0/en/json-search-functions.html#function_json-value),
+            //     // JSON_VALUE returns varchar(512) by default (https://dev.xugu.com/doc/refman/8.0/en/json-search-functions.html#function_json-value),
             //     // so we let it cast the result to the expected type using the RETURNING clause.
             //     // CHECK: - except if it's a string (since the cast interferes with indexes over the JSON property).
             //     // if (jsonScalarExpression.TypeMapping is not StringTypeMapping)
@@ -687,6 +687,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
 
         private SqlUnaryExpression VisitConvert(SqlUnaryExpression sqlUnaryExpression)
         {
+            List<string> numberTypes = new List<string> { "tinyint", "smallint", "mediumint", "int", "bigint", "decimal", "float", "double" };
             var castMapping = GetCastStoreType(sqlUnaryExpression.TypeMapping);
 
             if (castMapping == "binary")
@@ -702,11 +703,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
             // mappings, but map to the same store type (e.g. `datetime(6)`).
             //
             // There also is no need for a double CAST() to the same type. Due to only rudimentary CAST() support in
-            // MySQL, the final store type of a CAST() operation might be different than the store type of the type
+            // XuGu, the final store type of a CAST() operation might be different than the store type of the type
             // mapping of the expression (e.g. "float" will be cast to "double"). So we optimize these cases too.
             //
             // An exception is the JSON data type, when used in conjunction with a parameter (like `JsonDocument`).
-            // JSON parameters like that will be serialized to string and supplied as a string parameter to MySQL
+            // JSON parameters like that will be serialized to string and supplied as a string parameter to XuGu
             // (at least this seems to be the case currently with XuguClient). To make assignments and comparisons
             // between JSON columns and JSON parameters (supplied as string) work, the string needs to be explicitly
             // converted to JSON.
@@ -725,7 +726,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
                     !_options.ServerVersion.Supports.DoubleCast)
                 {
                     useDecimalToDoubleWorkaround = true;
-                    castMapping = "decimal(65,30)";
+                    castMapping = "decimal(38,17)";
                 }
 
                 if (useDecimalToDoubleWorkaround)
@@ -739,14 +740,21 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
                 Sql.Append(castMapping);
                 Sql.Append(")");
 
-                // FLOAT and DOUBLE are supported by CAST() as of MySQL 8.0.17.
-                // For server versions before that, a workaround is applied, that casts to a DECIMAL,
-                // that is then added to 0e0, which results in a DOUBLE.
-                // REF: https://dev.mysql.com/doc/refman/8.0/en/number-literals.html
                 if (useDecimalToDoubleWorkaround)
                 {
                     Sql.Append(" + 0e0)");
                 }
+            }
+            else if (castMapping == "boolean" && sqlUnaryExpression.Operand is SqlUnaryExpression sqlExpression && numberTypes.Contains(sqlExpression.Operand.TypeMapping.StoreType))
+            {
+                Sql.Append("CAST(");
+                Sql.Append("(CASE WHEN ");
+                Visit(sqlExpression.Operand);
+                Sql.Append(" != 0 THEN 1 ELSE 0 END");
+                Sql.Append(")");
+                Sql.Append(" AS ");
+                Sql.Append(castMapping);
+                Sql.Append(")");
             }
             else
             {
@@ -787,7 +795,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
                 castMapping = "unsigned";
             }
 
-            // As of MySQL 8.0.18, a FLOAT cast might unnecessarily drop decimal places and round,
+            // As of XuGu 8.0.18, a FLOAT cast might unnecessarily drop decimal places and round,
             // so we just keep casting to double instead. XuguClient ensures, that a System.Single
             // will be returned if expected, even if we return a DOUBLE.
             if (castMapping.StartsWith("float", StringComparison.OrdinalIgnoreCase) &&
@@ -1020,7 +1028,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         /// <inheritdoc />
         protected override void CheckComposableSql(string sql)
         {
-            // MySQL supports CTE (WITH) expressions within subqueries, as well as others,
+            // XuGu supports CTE (WITH) expressions within subqueries, as well as others,
             // so we allow any raw SQL to be composed over.
         }
     }

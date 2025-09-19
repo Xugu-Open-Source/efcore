@@ -33,11 +33,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
     /// </summary>
     public class XGMigrationsSqlGenerator : MigrationsSqlGenerator
     {
-        private const string InternalAnnotationPrefix = XGAnnotationNames.Prefix + "XGMigrationsSqlGenerator:";
-        private const string OutputPrimaryKeyConstraintOnAutoIncrementAnnotationName = InternalAnnotationPrefix + "OutputPrimaryKeyConstraint";
-
-        private static readonly Regex _typeRegex = new Regex(@"(?<Name>[a-z0-9]+)\s*?(?:\(\s*(?<Length>\d+)?\s*\))?",
+        private static readonly Regex _typeRegex = new Regex(@"([a-z0-9]+)\s*?(?:\(\s*(\d+)?\s*\))?",
             RegexOptions.IgnoreCase);
+        private static readonly Dictionary<string, string> _guidIdentityMap = new Dictionary<string, string>();
 
         private static readonly HashSet<string> _spatialStoreTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -57,99 +55,19 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             "multipolygon",
         };
 
-        private readonly ICommandBatchPreparer _commandBatchPreparer;
+        private readonly IRelationalAnnotationProvider _annotationProvider;
         private readonly IXGOptions _options;
         private readonly RelationalTypeMapping _stringTypeMapping;
 
         public XGMigrationsSqlGenerator(
             [NotNull] MigrationsSqlGeneratorDependencies dependencies,
-            [NotNull] ICommandBatchPreparer commandBatchPreparer,
+            [NotNull] IRelationalAnnotationProvider annotationProvider,
             [NotNull] IXGOptions options)
             : base(dependencies)
         {
-            _commandBatchPreparer = commandBatchPreparer;
+            _annotationProvider = annotationProvider;
             _options = options;
             _stringTypeMapping = dependencies.TypeMappingSource.GetMapping(typeof(string));
-        }
-
-        public override IReadOnlyList<MigrationCommand> Generate(
-            IReadOnlyList<MigrationOperation> operations,
-            IModel model = null,
-            MigrationsSqlGenerationOptions options = MigrationsSqlGenerationOptions.Default)
-        {
-            try
-            {
-                var filteredOperations = FilterOperations(operations, model);
-                var migrationCommands = base.Generate(filteredOperations, model, options);
-
-                return migrationCommands;
-            }
-            finally
-            {
-                CleanUpInternalAnnotations(operations);
-            }
-        }
-
-        private static void CleanUpInternalAnnotations(IReadOnlyList<MigrationOperation> filteredOperations)
-        {
-            foreach (var filteredOperation in filteredOperations)
-            {
-                foreach (var annotation in filteredOperation.GetAnnotations().ToList())
-                {
-                    if (annotation.Name.StartsWith(InternalAnnotationPrefix,StringComparison.Ordinal))
-                    {
-                        filteredOperation.RemoveAnnotation(annotation.Name);
-                    }
-                }
-            }
-        }
-
-        protected virtual IReadOnlyList<MigrationOperation> FilterOperations(IReadOnlyList<MigrationOperation> operations, IModel model)
-        {
-            if (operations.Count <= 0)
-            {
-                return operations;
-            }
-
-            var filteredOperations = new List<MigrationOperation>();
-
-            var previousOperation = operations.First();
-            filteredOperations.Add(previousOperation);
-
-            foreach (var currentOperation in operations.Skip(1))
-            {
-                // Merge a ColumnOperation immediately followed by an AddPrimaryKeyOperation into a single operation (and SQL statement), if
-                // the ColumnOperation is for an AUTO_INCREMENT column. The *immediately followed* restriction could be lifted, if it later
-                // turns out to be necessary.
-                // MySQL dictates that there can be only one AUTO_INCREMENT column and it has to be a key.
-                // If we first add a new column with the AUTO_INCREMENT flag and *then* make it a primary key in the *next* statement, the
-                // first statement will fail, because the column is not a key yet, and AUTO_INCREMENT columns have to be keys.
-                if (previousOperation is ColumnOperation columnOperation &&
-                    currentOperation is AddPrimaryKeyOperation addPrimaryKeyOperation &&
-                    addPrimaryKeyOperation.Schema == columnOperation.Schema &&
-                    addPrimaryKeyOperation.Table == columnOperation.Table &&
-                    addPrimaryKeyOperation.Columns.Length == 1 &&
-                    addPrimaryKeyOperation.Columns[0] == columnOperation.Name &&
-                    // The following 3 conditions match the ones from `ColumnDefinition()`.
-                    XGValueGenerationStrategyCompatibility.GetValueGenerationStrategy(columnOperation.GetAnnotations().OfType<IAnnotation>().ToArray()) is var valueGenerationStrategy &&
-                    GetColumBaseTypeAndLength(columnOperation, model) is var (columnBaseType, _) &&
-                    IsAutoIncrement(columnOperation, columnBaseType, valueGenerationStrategy))
-                {
-                    // This internal annotation lets our `ColumnDefinition()` implementation generate a second clause for the primary key
-                    // constraint in the same statement.
-                    columnOperation[OutputPrimaryKeyConstraintOnAutoIncrementAnnotationName] = true;
-
-                    // We now skip adding the AddPrimaryKeyOperation to the list of operations.
-                }
-                else
-                {
-                    filteredOperations.Add(currentOperation);
-                }
-
-                previousOperation = currentOperation;
-            }
-
-            return filteredOperations.AsReadOnly();
         }
 
         /// <summary>
@@ -171,7 +89,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
         {
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
-            CheckSchema(operation);
 
             switch (operation)
             {
@@ -193,91 +110,64 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             }
         }
 
-        protected virtual void CheckSchema(MigrationOperation operation)
-        {
-            if (_options.SchemaNameTranslator != null)
-            {
-                return;
-            }
-
-            var schema = operation.GetType()
-                .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty)
-                .Where(p => p.Name.IndexOf(nameof(AddForeignKeyOperation.Schema), StringComparison.Ordinal) >= 0)
-                .Select(p => p.GetValue(operation) as string)
-                .FirstOrDefault(schemaValue => schemaValue != null);
-
-            if (schema != null)
-            {
-                var name = operation.GetType()
-                    .GetProperty(nameof(AddForeignKeyOperation.Name), BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty)
-                    ?.GetValue(operation) as string;
-
-                throw new InvalidOperationException($"A schema \"{schema}\" has been set for an object of type \"{operation.GetType().Name}\"{(string.IsNullOrEmpty(name) ? string.Empty : $" with the name of \"{name}\"")}. MySQL does not support the EF Core concept of schemas. Any schema property of any \"MigrationOperation\" must be null. This behavior can be changed by setting the `SchemaBehavior` option in the `UseXG` call.");
-            }
-        }
-
         protected override void Generate(
             [NotNull] CreateTableOperation operation,
             [CanBeNull] IModel model,
             [NotNull] MigrationCommandListBuilder builder,
             bool terminate = true)
         {
-            // Create a unique constraint for an AUTO_INCREMENT column that is part of a compound primary key, but is not the first column
-            // in that key. In this case, for InnoDB to be satisfied, an index (preferably UNIQUE) with the AUTO_INCREMENT column as the first
-            // column, has to exists.
-            //
-            // TODO: Only add the column, if there is not an already existing index that has the AUTO_INCREMENT column as the first index.
-            //       We should also monitor all related operations, to remove the index, if it is not needed anymore.
-            //       Check/test, whether this does not only apply to primary keys, but also to other (alternate) ones as well, or is
-            //       completely independent of keys, and really just applies to any AUTO_INCREMENT column.
-            //       Also, move handling to conventions.
-            if (operation.PrimaryKey is { Columns.Length: > 1 } primaryKey &&
-                primaryKey.Columns[0] is var firstPrimaryKeyColumnName &&
-                operation.Columns.Single(c => c.Name == firstPrimaryKeyColumnName) is var firstPrimaryKeyColumn &&
-                operation.Columns.FirstOrDefault(c => c[XGAnnotationNames.ValueGenerationStrategy] is XGValueGenerationStrategy.IdentityColumn) is { } autoIncrementColumn &&
-                operation.Columns.Contains(autoIncrementColumn) &&
-                autoIncrementColumn != firstPrimaryKeyColumn)
+            //base.Generate(operation, model, builder, false);
+            builder
+                .Append("CREATE TABLE ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema))
+                .Append(".")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+                .AppendLine(" (");
+
+            using (builder.Indent())
             {
-                operation.UniqueConstraints.Add(
-                    new AddUniqueConstraintOperation
-                    {
-                        Schema = operation.PrimaryKey.Schema,
-                        Table = operation.PrimaryKey.Table,
-                        Columns = [autoIncrementColumn.Name],
-                    });
+                CreateTableColumns(operation, model, builder);
+                CreateTableConstraints(operation, model, builder);
+                builder.AppendLine();
             }
 
-            base.Generate(operation, model, builder, false);
-
-            var tableOptions = new List<(string, string)>();
-
-            if (operation[XGAnnotationNames.CharSet] is string charSet)
-            {
-                tableOptions.Add(("CHARACTER SET", charSet));
-            }
-
-            if (operation[RelationalAnnotationNames.Collation] is string collation)
-            {
-                tableOptions.Add(("COLLATE", collation));
-            }
+            builder.Append(")");
 
             if (operation.Comment != null)
             {
-                tableOptions.Add(("COMMENT", XGStringTypeMapping.EscapeSqlLiteralWithLineBreaks(operation.Comment, !_options.NoBackslashEscapes, false)));
+                builder.Append($" COMMENT '{operation.Comment}'");
             }
 
-            tableOptions.AddRange(
-                XGEntityTypeExtensions.DeserializeTableOptions(operation[XGAnnotationNames.StoreOptions] as string)
-                    .Select(kvp => (kvp.Key, kvp.Value)));
-
-            foreach (var (key, value) in tableOptions)
+            if (terminate)
             {
-                builder
-                    .Append(" ")
-                    .Append(key)
-                    .Append("=")
-                    .Append(value);
+                builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                EndStatement(builder);
             }
+            GenerateComment(operation.Comment, builder);
+
+            if (_guidIdentityMap.ContainsKey(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema + "." + operation.Name))
+            {
+                builder.AppendLine(string.Format("DROP TABLE IF EXISTS `{0}`.`tmpIdentity_{1}`;", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name));
+                builder.AppendLine(string.Format("CREATE TABLE `{0}`.`tmpIdentity_{1}` (`guid` guid);", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name));
+                builder.AppendLine(string.Format("DROP TRIGGER IF EXISTS `{0}`.`{1}_IdentityTgr`;", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name));
+                builder.AppendLine(string.Format("CREATE TRIGGER `{0}`.`{1}_IdentityTgr` BEFORE INSERT ON `{0}`", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name));
+                builder.AppendLine("FOR EACH ROW BEGIN");
+                builder.AppendLine(string.Format("NEW.{0} := sys_guid();", _guidIdentityMap.GetValueOrDefault(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema + "." + operation.Name)));
+                builder.AppendLine(string.Format("INSERT INTO `{0}`.`tmpIdentity_{1}` VALUES(New.{2});", string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema, operation.Name, _guidIdentityMap.GetValueOrDefault(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema + "." + operation.Name)));
+                builder.AppendLine("END;");
+            }
+        }
+        protected override void Generate(
+            DropTableOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder,
+            bool terminate = true)
+        {
+            builder
+                .Append("DROP TABLE ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema))
+                .Append(".")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
 
             if (terminate)
             {
@@ -286,99 +176,37 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations
             }
         }
 
+
+        protected override void CreateTableColumns([NotNull] CreateTableOperation operation,
+            [CanBeNull] IModel model,
+            [NotNull] MigrationCommandListBuilder builder)
+        {
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
+
+            for (var i = 0; i < operation.Columns.Count; i++)
+            {
+                ColumnDefinition(operation.Columns[i], model, builder);
+                GenerateComment(operation.Columns[i].Comment, builder);
+
+                if (i != operation.Columns.Count - 1)
+                {
+                    builder.AppendLine(",");
+                }
+            }
+        }
+
         protected override void Generate(AlterTableOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
-            var oldCharSet = operation.OldTable[XGAnnotationNames.CharSet] as string;
-            var newCharSet = operation[XGAnnotationNames.CharSet] as string;
-
-            var oldCollation = operation.OldTable[RelationalAnnotationNames.Collation] as string;
-            var newCollation = operation[RelationalAnnotationNames.Collation] as string;
-
-            // Collations are more specific than charsets. So if a collation has been set, we use the collation instead of the charset.
-            if (newCollation != oldCollation &&
-                newCollation != null)
-            {
-                // A new collation has been set. It takes precedence over any defined charset.
-                builder
-                    .Append("ALTER TABLE ")
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
-                    .Append(" COLLATE=")
-                    .Append(newCollation)
-                    .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-
-                EndStatement(builder);
-            }
-            else if (newCharSet != oldCharSet ||
-                     newCollation != oldCollation && newCollation == null)
-            {
-                // The charset has been changed or the collation has been reset to the default.
-                if (newCharSet != null)
-                {
-                    // A new charset has been set without an explicit collation.
-                    builder
-                        .Append("ALTER TABLE ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
-                        .Append(" CHARACTER SET=")
-                        .Append(newCharSet)
-                        .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-
-                    EndStatement(builder);
-                }
-                else
-                {
-                    var collationColumnName = _options.ServerVersion.Supports.CollationCharacterSetApplicabilityWithFullCollationNameColumn
-                        ? "FULL_COLLATION_NAME"
-                        : "COLLATION_NAME";
-
-                    // The charset (and any collation) has been reset to the default.
-                    var resetCharSetSql = $"""
-set @__pomelo_TableCharset = (
-SELECT `ccsa`.`CHARACTER_SET_NAME` as `TABLE_CHARACTER_SET`
-FROM `INFORMATION_SCHEMA`.`TABLES` as `t`
-LEFT JOIN `INFORMATION_SCHEMA`.`COLLATION_CHARACTER_SET_APPLICABILITY` as `ccsa` ON `ccsa`.`{collationColumnName}` = `t`.`TABLE_COLLATION`
-WHERE `TABLE_SCHEMA` = SCHEMA() AND `TABLE_NAME` = {_stringTypeMapping.GenerateSqlLiteral(operation.Name)} AND `TABLE_TYPE` IN ('BASE TABLE', 'VIEW'));
-
-SET @__pomelo_SqlExpr = CONCAT('ALTER TABLE {Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name)} CHARACTER SET = ', @__pomelo_TableCharset, ';');
-PREPARE __pomelo_SqlExprExecute FROM @__pomelo_SqlExpr;
-EXECUTE __pomelo_SqlExprExecute;
-DEALLOCATE PREPARE __pomelo_SqlExprExecute;
-""";
-
-                    builder.AppendLine(resetCharSetSql);
-                    EndStatement(builder);
-                }
-            }
-
             if (operation.Comment != operation.OldTable.Comment)
             {
-                builder.Append("ALTER TABLE ")
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
-
-                // An existing comment will be removed, when set to an empty string.
-                GenerateComment(operation.Comment ?? string.Empty, builder);
-
-                builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-                EndStatement(builder);
-            }
-
-            var oldTableOptions = XGEntityTypeExtensions.DeserializeTableOptions(operation.OldTable[XGAnnotationNames.StoreOptions] as string);
-            var newTableOptions = XGEntityTypeExtensions.DeserializeTableOptions(operation[XGAnnotationNames.StoreOptions] as string);
-            var addedOrChangedTableOptions = newTableOptions.Except(oldTableOptions).ToArray();
-
-            if (addedOrChangedTableOptions.Length > 0)
-            {
-                builder
-                    .Append("ALTER TABLE ")
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
-
-                foreach (var (key, value) in addedOrChangedTableOptions)
-                {
-                    builder
-                        .Append(" ")
-                        .Append(key)
-                        .Append("=")
-                        .Append(value);
-                }
+                builder.Append("COMMENT ON TABLE ")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Schema ?? "SYSDBA"))
+                    .Append(".")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+                    .Append(" IS '")
+                    .Append(operation.Comment ?? "")
+                    .Append("'");
 
                 builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
                 EndStatement(builder);
@@ -414,6 +242,18 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                 builder);
 
             builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+
+            if (operation.Comment != operation.OldColumn.Comment)
+            {
+                builder.Append("COMMENT ON COLUMN ")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
+                    .Append(".")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+                    .Append(" IS '")
+                    .Append(operation.Comment ?? "")
+                    .Append("'");
+                builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+            }
             builder.EndCommand();
         }
 
@@ -441,11 +281,12 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             {
                 if (_options.ServerVersion.Supports.RenameIndex)
                 {
-                    builder.Append("ALTER TABLE ")
+                    builder.Append("ALTER INDEX ")
                         .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                        .Append(" RENAME INDEX ")
+                        .Append(".")
                         .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
-                        .Append(" TO ")
+                        .Append(" RENAME ")
+                        .Append("TO ")
                         .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName))
                         .AppendLine(";");
 
@@ -462,7 +303,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                     if (index == null)
                     {
                         throw new InvalidOperationException(
-                            $"Could not find the model index: {Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}.{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName)}. Upgrade to Mysql 5.7+ or split the 'RenameIndex' call into 'DropIndex' and 'CreateIndex'");
+                            $"Could not find the model index: {Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}.{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName)}. Upgrade to XuGu or split the 'RenameIndex' call into 'DropIndex' and 'CreateIndex'");
                     }
 
                     Generate(new DropIndexOperation
@@ -494,26 +335,16 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
         {
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
-
-            if (!_options.ServerVersion.Supports.Sequences)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot restart sequence '{operation.Name}' because sequences are not supported in server version {_options.ServerVersion}.");
-            }
-
+            //if (!_options.ServerVersion.Supports.Sequences)
+            //{
+            //    throw new InvalidOperationException(
+            //        $"Cannot restart sequence '{operation.Name}' because sequences are not supported in server version {_options.ServerVersion}.");
+            //}
             builder
                 .Append("ALTER SEQUENCE ")
-                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
-
-            if (operation.StartValue.HasValue)
-            {
-                builder
-                    .Append(" START WITH ")
-                    .Append(IntegerConstant(operation.StartValue));
-            }
-
-            builder
-                .Append(" RESTART")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+                .Append(" RESTART WITH ")
+                .Append(IntegerConstant(operation.StartValue))
                 .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
 
             EndStatement(builder);
@@ -537,7 +368,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             builder
                 .Append("ALTER TABLE ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
-                .Append(" RENAME ")
+                .Append(" RENAME TO ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName, operation.NewSchema))
                 .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
 
@@ -584,7 +415,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                 .Append(" ON ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
                 .Append(" (")
-                .Append(ColumnListWithIndexPrefixLengthAndSortOrder(operation, operation.Columns, operation[XGAnnotationNames.IndexPrefixLength] as int[], operation.IsDescending))
+                .Append(ColumnListWithIndexOrder(operation, operation.Columns))
                 .Append(")");
 
             IndexOptions(operation, model, builder);
@@ -597,18 +428,41 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
         }
 
         /// /// <summary>
-        ///     Ignored, since schemas are not supported by MySQL and are silently ignored to improve testing compatibility.
+        ///     Ignored, since schemas are not supported by XG and are silently ignored to improve testing compatibility.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <see langword="null"/> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(EnsureSchemaOperation operation, IModel model,
-            MigrationCommandListBuilder builder)
+        protected override void Generate(EnsureSchemaOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
+
+            if (string.Equals(operation.Name, "SYSDBA", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var stringTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(string));
+
+            builder
+                .Append("BEGIN ")
+                .Append("IF (SELECT COUNT(*) FROM `ALL_SCHEMAS` WHERE `SCHEMA_NAME` = ")
+                .Append(stringTypeMapping.GenerateSqlLiteral(operation.Name))
+                .Append(") < 1 THEN ")
+                .Append(
+                        "CREATE SCHEMA "
+                        + Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name)
+                        + Dependencies.SqlGenerationHelper.StatementTerminator)
+                .Append("END IF")
+                .Append(Dependencies.SqlGenerationHelper.StatementTerminator)
+                .Append("END")
+                .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
+                .EndCommand();
         }
 
         /// <summary>
-        ///     Ignored, since schemas are not supported by MySQL and are silently ignored to improve testing compatibility.
+        ///     Ignored, since schemas are not supported by XG and are silently ignored to improve testing compatibility.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <see langword="null"/> if the operations exist without a model. </param>
@@ -624,84 +478,63 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <see langword="null"/> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
+        //protected override void Generate(
+        //    [NotNull] CreateSequenceOperation operation,
+        //    [CanBeNull] IModel model,
+        //    [NotNull] MigrationCommandListBuilder builder)
+        //{
+        //    Check.NotNull(operation, nameof(operation));
+        //    Check.NotNull(builder, nameof(builder));
+        //    if (!_options.ServerVersion.Supports.Sequences)
+        //    {
+        //        throw new InvalidOperationException(
+        //            $"Cannot create sequence '{operation.Name}' because sequences are not supported in server version {_options.ServerVersion}.");
+        //    }
+
+        //    var oldValue = operation.ClrType;
+        //    operation.ClrType = typeof(long);
+        //    if (operation.StartValue <= 0)
+        //    {
+        //        operation.MinValue = operation.StartValue;
+        //    }
+        //    base.Generate(operation, model, builder);
+        //    operation.ClrType = oldValue;
+        //}
+
         protected override void Generate(
-            [NotNull] CreateSequenceOperation operation,
-            [CanBeNull] IModel model,
-            [NotNull] MigrationCommandListBuilder builder)
+            CreateSequenceOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder)
         {
-            Check.NotNull(operation, nameof(operation));
-            Check.NotNull(builder, nameof(builder));
+            builder
+                .Append("CREATE SEQUENCE IF NOT EXISTS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Schema ?? "SYSDBA"))
+                .Append(".")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
 
-            if (!_options.ServerVersion.Supports.Sequences)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot create sequence '{operation.Name}' because sequences are not supported in server version {_options.ServerVersion}.");
-            }
+            var typeMapping = Dependencies.TypeMappingSource.GetMapping(operation.ClrType);
 
-            // "CREATE SEQUENCE"  supported only in MariaDb from 10.3.
-            // However, "CREATE SEQUENCE name AS type" expression is currently not supported.
-            // The base MigrationsSqlGenerator.Generate method generates that expression.
-            // Also, when creating a sequence current version of MariaDb doesn't tolerate "NO MINVALUE"
-            // when specifying "STARTS WITH" so, StartValue mus be set accordingly.
-            // https://github.com/aspnet/EntityFrameworkCore/blob/master/src/EFCore.Relational/Migrations/MigrationsSqlGenerator.cs#L535-L543
-            var oldValue = operation.ClrType;
-            operation.ClrType = typeof(long);
-            if (operation.StartValue <= 0)
-            {
-                operation.MinValue = operation.StartValue;
-            }
-            base.Generate(operation, model, builder);
-            operation.ClrType = oldValue;
-        }
+            //if (operation.ClrType != typeof(long))
+            //{
+            //    builder
+            //        .Append(" AS ")
+            //        .Append(typeMapping.StoreType);
 
-        protected override void Generate(AlterSequenceOperation operation, IModel model, MigrationCommandListBuilder builder)
-        {
-            Check.NotNull(operation, nameof(operation));
-            Check.NotNull(builder, nameof(builder));
-
-            if (!_options.ServerVersion.Supports.Sequences)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot alter sequence '{operation.Name}' because sequences are not supported in server version {_options.ServerVersion}.");
-            }
-
-            base.Generate(operation, model, builder);
-        }
-
-        protected override void Generate(DropSequenceOperation operation, IModel model, MigrationCommandListBuilder builder)
-        {
-            Check.NotNull(operation, nameof(operation));
-            Check.NotNull(builder, nameof(builder));
-
-            if (!_options.ServerVersion.Supports.Sequences)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot alter sequence '{operation.Name}' because sequences are not supported in server version {_options.ServerVersion}.");
-            }
-
-            base.Generate(operation, model, builder);
-        }
-
-        protected override void Generate(RenameSequenceOperation operation, IModel model, MigrationCommandListBuilder builder)
-        {
-            Check.NotNull(operation, nameof(operation));
-            Check.NotNull(builder, nameof(builder));
-
-            if (!_options.ServerVersion.Supports.Sequences)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot alter sequence '{operation.Name}' because sequences are not supported in server version {_options.ServerVersion}.");
-            }
+            //    // set the typeMapping for use with operation.StartValue (i.e. a long) below
+            //    typeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(long));
+            //}
 
             builder
-                .Append("ALTER TABLE ")
-                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
-                .Append(" RENAME ")
-                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName, operation.NewSchema))
-                .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                .Append(" START WITH ")
+                .Append(typeMapping.GenerateSqlLiteral(operation.StartValue));
+
+            SequenceOptions(operation, model, builder);
+
+            builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
 
             EndStatement(builder);
         }
+
 
         /// <summary>
         ///     Builds commands for the given <see cref="XGCreateDatabaseOperation" />
@@ -727,13 +560,6 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                 builder
                     .Append(" CHARACTER SET ")
                     .Append(operation.CharSet);
-            }
-
-            if (operation.Collation != null)
-            {
-                builder
-                    .Append(" COLLATE ")
-                    .Append(operation.Collation);
             }
 
             builder
@@ -766,50 +592,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
 
         protected override void Generate(AlterDatabaseOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
-            Check.NotNull(operation, nameof(operation));
-            Check.NotNull(builder, nameof(builder));
 
-            // Also at this point, all explicitly added `Relational:Collation` annotations (through delegation) should have been set to the
-            // `Collation` property and removed.
-            Debug.Assert(operation.FindAnnotation(RelationalAnnotationNames.Collation) == null);
-
-            var oldCharSet = operation.OldDatabase[XGAnnotationNames.CharSet] as string;
-            var newCharSet = operation[XGAnnotationNames.CharSet] as string;
-
-            var oldCollation = operation.OldDatabase.Collation;
-            var newCollation = operation.Collation;
-
-            // Collations are more specific than charsets. So if a collation has been set, we use the collation instead of the charset.
-            if (newCollation != oldCollation &&
-                newCollation != null)
-            {
-                // A new collation has been set. It takes precedence over any defined charset.
-                builder
-                    .Append("ALTER DATABASE COLLATE ")
-                    .Append(newCollation)
-                    .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-
-                EndStatement(builder);
-            }
-            else if (newCharSet != oldCharSet ||
-                     newCollation != oldCollation && newCollation == null)
-            {
-                // The charset has been changed or the collation has been reset to the default.
-                if (newCharSet != null)
-                {
-                    // A new charset has been set without an explicit collation.
-                    builder
-                        .Append("ALTER DATABASE CHARACTER SET ")
-                        .Append(newCharSet)
-                        .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-
-                    EndStatement(builder);
-                }
-                else
-                {
-                    Dependencies.MigrationsLogger.Logger.LogWarning(@"ALTER DATABASE operations can currently not implicitly reset the character set AND the collation to the server default values. Please explicitly specify a character set, a collation or both.");
-                }
-            }
         }
 
         protected override void Generate(
@@ -821,15 +604,10 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
 
-            if (string.IsNullOrEmpty(operation.Table))
-            {
-                throw new InvalidOperationException(XGStrings.IndexTableRequired);
-            }
-
             builder
-                .Append("ALTER TABLE ")
+                .Append("DROP INDEX IF EXISTS ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                .Append(" DROP INDEX ")
+                .Append(".")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
 
             if (terminate)
@@ -868,7 +646,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             {
                 builder.Append("ALTER TABLE ")
                     .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                    .Append(" DROP KEY ")
+                    .Append(" DROP CONSTRAINT ")
                     .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
                     .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
 
@@ -896,7 +674,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             }
         }
 
-        protected virtual void TemporarilyDropForeignKeys(
+        protected void TemporarilyDropForeignKeys(
             IModel model,
             MigrationCommandListBuilder builder,
             string schemaName,
@@ -972,7 +750,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             builder
                 .Append("ALTER TABLE ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                .Append(" DROP FOREIGN KEY ")
+                .Append(" DROP CONSTRAINT ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
 
             if (terminate)
@@ -980,6 +758,36 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                 builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
                 EndStatement(builder);
             }
+        }
+
+        protected override void Generate(
+            AddColumnOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder,
+            bool terminate)
+        {
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
+
+            builder
+                .Append("ALTER TABLE ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
+                .Append(" ADD ");
+
+            ColumnDefinition(operation, model, builder);
+            builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+            if (!string.IsNullOrEmpty(operation.Comment))
+            {
+                builder.Append("COMMENT ON COLUMN ")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
+                    .Append(".")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+                    .Append(" IS '")
+                    .Append(operation.Comment)
+                    .Append("'");
+                builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+            }
+            EndStatement(builder);
         }
 
         // CHECK: Can we improve this implementation?
@@ -1017,39 +825,65 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
                 .Append(" ");
 
-            var column = model?.GetRelationalModel().FindTable(operation.Table, operation.Schema)?.FindColumn(operation.NewName);
-            if (column is null)
+            var column = model?.GetRelationalModel().FindTable(operation.Table, operation.Schema).FindColumn(operation.NewName);
+            if (column == null)
             {
-                throw new InvalidOperationException(
-                    $"The column '{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}.{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName)}' could not be found in the target model. Make sure the table name exists in the target model and check the order of all migration operations. Generally, rename tables first, then columns.");
-            }
+                if (!(operation[RelationalAnnotationNames.ColumnType] is string type))
+                {
+                    throw new InvalidOperationException(
+                        $"Could not find the column: {Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}.{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName)}. Specify the column type explicitly on 'RenameColumn' using the \"{RelationalAnnotationNames.ColumnType}\" annotation");
+                }
 
-            var columnType = (string)(operation[RelationalAnnotationNames.ColumnType] ??
-                                      column[RelationalAnnotationNames.ColumnType] ??
-                                      column.StoreType);
+                builder
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName))
+                    .Append(" ")
+                    .Append(type)
+                    .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+
+                EndStatement(builder);
+                return;
+            }
 
             var typeMapping = column.PropertyMappings.FirstOrDefault()?.TypeMapping;
             var converter = typeMapping?.Converter;
-            var defaultValue = converter != null
-                ? converter.ConvertToProvider(column.DefaultValue)
-                : column.DefaultValue;
+            var clrType = (converter?.ProviderClrType ?? typeMapping?.ClrType).UnwrapNullableType();
+            var columnType = (string)(operation[RelationalAnnotationNames.ColumnType]
+                                      ?? column[RelationalAnnotationNames.ColumnType]);
+            var isNullable = column.IsNullable;
+
+            var defaultValue = column.DefaultValue;
+            defaultValue = converter != null
+                ? converter.ConvertToProvider(defaultValue)
+                : defaultValue;
+            defaultValue = (defaultValue == DBNull.Value ? null : defaultValue)
+                           ?? (isNullable
+                               ? null
+                               : clrType == typeof(string)
+                                   ? string.Empty
+                                   : clrType.IsArray
+                                       ? Array.CreateInstance(clrType.GetElementType(), 0)
+                                       : clrType.GetDefaultValue());
+
+            var isRowVersion = (clrType == typeof(DateTime) || clrType == typeof(byte[])) &&
+                               column.IsRowVersion;
 
             var addColumnOperation = new AddColumnOperation
             {
                 Schema = operation.Schema,
                 Table = operation.Table,
                 Name = operation.NewName,
-                ClrType = (converter?.ProviderClrType ?? typeMapping?.ClrType).UnwrapNullableType(),
+                ClrType = clrType,
                 ColumnType = columnType,
                 IsUnicode = column.IsUnicode,
                 MaxLength = column.MaxLength,
                 IsFixedLength = column.IsFixedLength,
-                IsRowVersion = column.IsRowVersion,
-                IsNullable = column.IsNullable,
+                IsRowVersion = isRowVersion,
+                IsNullable = isNullable,
                 DefaultValue = defaultValue,
                 DefaultValueSql = column.DefaultValueSql,
                 ComputedColumnSql = column.ComputedColumnSql,
                 IsStored = column.IsStored,
+                Comment = column.Comment
             };
 
             ColumnDefinition(
@@ -1057,46 +891,63 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                 model,
                 builder);
             builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+            if (!string.IsNullOrEmpty(addColumnOperation.Comment))
+            {
+                builder.Append("COMMENT ON COLUMN ")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
+                    .Append(".")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+                    .Append(" IS '")
+                    .Append(addColumnOperation.Comment)
+                    .Append("'");
+                builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+            }
             EndStatement(builder);
         }
 
+        /// <summary>
+        ///     Generates a SQL fragment configuring a sequence with the given options.
+        /// </summary>
+        /// <param name="schema"> The schema that contains the sequence, or <see langword="null"/> to use the default schema. </param>
+        /// <param name="name"> The sequence name. </param>
+        /// <param name="operation"> The sequence options. </param>
+        /// <param name="model"> The target model which may be <see langword="null"/> if the operations exist without a model. </param>
+        /// <param name="builder"> The command builder to use to add the SQL fragment. </param>
         protected override void SequenceOptions(
             string schema,
             string name,
             SequenceOperation operation,
             IModel model,
-            MigrationCommandListBuilder builder,
-            bool forAlter)
+            MigrationCommandListBuilder builder)
         {
-            var intTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(int));
-            var longTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(long));
+            Check.NotEmpty(name, nameof(name));
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
 
             builder
                 .Append(" INCREMENT BY ")
-                .Append(intTypeMapping.GenerateSqlLiteral(operation.IncrementBy));
+                .Append(IntegerConstant(operation.IncrementBy));
 
-            if (operation.MinValue != null)
+            if (operation.MinValue.HasValue)
             {
                 builder
                     .Append(" MINVALUE ")
-                    .Append(longTypeMapping.GenerateSqlLiteral(operation.MinValue));
+                    .Append(IntegerConstant(operation.MinValue.Value));
             }
-            else if (forAlter)
+            else
             {
-                builder
-                    .Append(" NO MINVALUE");
+                builder.Append(" NOMINVALUE");
             }
 
-            if (operation.MaxValue != null)
+            if (operation.MaxValue.HasValue)
             {
                 builder
                     .Append(" MAXVALUE ")
-                    .Append(longTypeMapping.GenerateSqlLiteral(operation.MaxValue));
+                    .Append(IntegerConstant(operation.MaxValue.Value));
             }
-            else if (forAlter)
+            else
             {
-                builder
-                    .Append(" NO MAXVALUE");
+                builder.Append(" NOMAXVALUE");
             }
 
             builder.Append(operation.IsCyclic ? " CYCLE" : " NOCYCLE");
@@ -1139,16 +990,37 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
 
-            var (matchType, matchLen) = GetColumBaseTypeAndLength(schema, table, name, operation, model);
-            var valueGenerationStrategy = XGValueGenerationStrategyCompatibility.GetValueGenerationStrategy(operation.GetAnnotations().OfType<IAnnotation>().ToArray());
-            var autoIncrement = IsAutoIncrement(operation, matchType, valueGenerationStrategy);
+            var matchType = GetColumnType(schema, table, name, operation, model);
+            var matchLen = "";
+            var match = _typeRegex.Match(matchType ?? "-");
+            if (match.Success)
+            {
+                matchType = match.Groups[1].Value.ToLower();
+                if (!string.IsNullOrWhiteSpace(match.Groups[2].Value))
+                {
+                    matchLen = match.Groups[2].Value;
+                }
+            }
 
-            if (!autoIncrement &&
-                valueGenerationStrategy == XGValueGenerationStrategy.IdentityColumn &&
-                string.IsNullOrWhiteSpace(operation.DefaultValueSql))
+            var valueGenerationStrategy = XGValueGenerationStrategyCompatibility.GetValueGenerationStrategy(operation.GetAnnotations().OfType<IAnnotation>().ToArray());
+
+            var autoIncrement = false;
+            if (valueGenerationStrategy == XGValueGenerationStrategy.IdentityColumn &&
+                string.IsNullOrWhiteSpace(operation.DefaultValueSql) && operation.DefaultValue == null)
             {
                 switch (matchType)
                 {
+                    case "tinyint":
+                    case "smallint":
+                    case "mediumint":
+                    case "int":
+                    case "bigint":
+                        autoIncrement = true;
+                        break;
+                    case "guid":
+                        autoIncrement = true;
+                        _guidIdentityMap.Add(string.IsNullOrEmpty(operation.Schema) ? "SYSDBA" : operation.Schema + "." + operation.Name, name);
+                        break;
                     case "datetime":
                         if (!_options.ServerVersion.Supports.DateTimeCurrentTimestamp)
                         {
@@ -1156,10 +1028,10 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                                 $"Error in {table}.{name}: DATETIME does not support values generated " +
                                 $"on Add or Update in server version {_options.ServerVersion}. Try explicitly setting the column type to TIMESTAMP.");
                         }
-                        goto case "timestamp";
 
+                        goto case "timestamp";
                     case "timestamp":
-                        operation.DefaultValueSql = $"CURRENT_TIMESTAMP({matchLen})";
+                        operation.DefaultValueSql = $"CURRENT_TIMESTAMP";
                         break;
                 }
             }
@@ -1181,163 +1053,72 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                     case "timestamp":
                         if (string.IsNullOrWhiteSpace(operation.DefaultValueSql) && operation.DefaultValue == null)
                         {
-                            operation.DefaultValueSql = $"CURRENT_TIMESTAMP({matchLen})";
+                            operation.DefaultValueSql = $"CURRENT_TIMESTAMP";
                         }
 
-                        onUpdateSql = $"CURRENT_TIMESTAMP({matchLen})";
+                        onUpdateSql = $"CURRENT_TIMESTAMP";
                         break;
                 }
             }
+            ColumnDefinitionWithCharSet(schema, table, name, operation, model, builder);
 
-            if (operation.ComputedColumnSql == null)
+
+            if (autoIncrement)
             {
-                // AUTO_INCREMENT columns don't support DEFAULT values.
-                ColumnDefinitionWithCharSet(schema, table, name, operation, model, builder, withDefaultValue: !autoIncrement);
-
-                GenerateComment(operation.Comment, builder);
-
-                // AUTO_INCREMENT has priority over reference definitions.
-                if (autoIncrement)
-                {
-                    builder.Append(" AUTO_INCREMENT");
-
-                    // TODO: Add support for a non-primary key that is used as with auto_increment.
-                    if (model?.GetRelationalModel().FindTable(table, schema) is { PrimaryKey: { Columns.Count: 1 } primaryKey } &&
-                        primaryKey.Columns[0].Name == operation.Name &&
-                        (bool?)operation[OutputPrimaryKeyConstraintOnAutoIncrementAnnotationName] == true)
-                    {
-                        builder
-                            .AppendLine(",")
-                            .Append("ADD ");
-
-                        PrimaryKeyConstraint(
-                            AddPrimaryKeyOperation.CreateFrom(primaryKey),
-                            model,
-                            builder);
-                    }
-                }
-                else if (onUpdateSql != null)
-                {
-                    builder
-                        .Append(" ON UPDATE ")
-                        .Append(onUpdateSql);
-                }
+                builder.Append(" IDENTITY");
             }
-            else
-            {
-                builder
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
-                    .Append(" ")
-                    .Append(GetColumnType(schema, table, name, operation, model));
-                builder
-                    .Append(" AS ")
-                    .Append($"({operation.ComputedColumnSql})");
+            builder.Append(operation.IsNullable ? " NULL" : " NOT NULL");
 
-                if (operation.IsStored.GetValueOrDefault())
-                {
-                    builder.Append(" STORED");
-                }
-
-                if (operation.IsNullable && _options.ServerVersion.Supports.NullableGeneratedColumns)
-                {
-                    builder.Append(" NULL");
-                }
-
-                GenerateComment(operation.Comment, builder);
-            }
-        }
-
-        protected virtual (string matchType, string matchLen) GetColumBaseTypeAndLength(
-            ColumnOperation operation,
-            IModel model)
-            => GetColumBaseTypeAndLength(operation.Schema, operation.Table, operation.Name, operation, model);
-
-        protected virtual (string matchType, string matchLen) GetColumBaseTypeAndLength(
-            string schema,
-            string table,
-            string name,
-            ColumnOperation operation,
-            IModel model)
-        {
-            var matchType = GetColumnType(schema, table, name, operation, model);
-            var matchLen = "";
-            var match = _typeRegex.Match(matchType ?? "-");
-            if (match.Success)
-            {
-                matchType = match.Groups["Name"].Value.ToLower();
-                if (match.Groups["Length"].Success)
-                {
-                    matchLen = match.Groups["Length"].Value;
-                }
-            }
-
-            return (matchType, matchLen);
-        }
-
-        protected virtual bool IsAutoIncrement(ColumnOperation operation,
-            string columnType,
-            XGValueGenerationStrategy? valueGenerationStrategy)
-        {
-            if (valueGenerationStrategy == XGValueGenerationStrategy.IdentityColumn &&
-                string.IsNullOrWhiteSpace(operation.DefaultValueSql))
-            {
-                switch (columnType)
-                {
-                    case "tinyint":
-                    case "smallint":
-                    case "mediumint":
-                    case "int":
-                    case "bigint":
-                        return true;
-                }
-            }
-
-            return false;
+            //GenerateComment(operation.Comment, builder);
         }
 
         private void GenerateComment(string comment, MigrationCommandListBuilder builder)
         {
             if (comment == null)
-            {
                 return;
-            }
 
             builder.Append(" COMMENT ")
-                .Append(XGStringTypeMapping.EscapeSqlLiteralWithLineBreaks(comment, !_options.NoBackslashEscapes, false));
+                .Append($"'{comment}'"/*_stringTypeMapping.GenerateSqlLiteral(comment)*/);
         }
 
-        private void ColumnDefinitionWithCharSet(
-            string schema,
-            string table,
-            string name,
-            ColumnOperation operation,
-            IModel model,
-            MigrationCommandListBuilder builder,
-            bool withDefaultValue)
+        private void ColumnDefinitionWithCharSet(string schema, string table, string name, ColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
-            if (operation.ComputedColumnSql != null)
-            {
-                ComputedColumnDefinition(schema, table, name, operation, model, builder);
-                return;
-            }
+            //if (operation.ComputedColumnSql != null)
+            //{
+            //    ComputedColumnDefinition(schema, table, name, operation, model, builder);
+            //    return;
+            //}
 
             var columnType = GetColumnType(schema, table, name, operation, model);
+            if (columnType == "time(6)")
+            {
+                columnType = "time";
+            }
+            if (columnType == "bit(1)" || columnType == "tinyint(1)" || columnType == "clob(1)")
+            {
+                columnType = columnType.Replace("(1)", "");
+            }
 
             builder
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
                 .Append(" ")
                 .Append(columnType);
 
-            builder.Append(operation.IsNullable ? " NULL" : " NOT NULL");
 
-            if (withDefaultValue)
+
+            var isSpatialStoreType = IsSpatialStoreType(columnType);
+
+            if (columnType.IndexOf("blob", StringComparison.OrdinalIgnoreCase) < 0 &&
+                columnType.IndexOf("text", StringComparison.OrdinalIgnoreCase) < 0 &&
+                columnType.IndexOf("json", StringComparison.OrdinalIgnoreCase) < 0 &&
+                !isSpatialStoreType)
             {
                 DefaultValue(operation.DefaultValue, operation.DefaultValueSql, columnType, builder);
             }
 
             var srid = operation[XGAnnotationNames.SpatialReferenceSystemId];
             if (srid is int &&
-                IsSpatialStoreType(columnType))
+                isSpatialStoreType)
             {
                 builder.Append($" /*!80003 SRID {srid} */");
             }
@@ -1355,133 +1136,26 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
                 return columnType;
             }
 
-            var charSet = operation[XGAnnotationNames.CharSet];
-            if (charSet != null)
-            {
-                const string characterSetClausePattern = @"(CHARACTER SET|CHARSET)\s+\w+";
-                var characterSetClause = $@"CHARACTER SET {charSet}";
-
-                columnType = Regex.IsMatch(columnType, characterSetClausePattern, RegexOptions.IgnoreCase)
-                    ? Regex.Replace(columnType, characterSetClausePattern, characterSetClause)
-                    : columnType.TrimEnd() + " " + characterSetClause;
-            }
-
-            // At this point, all legacy `XG:Collation` annotations should have been replaced by `Relational:Collation` ones.
-#pragma warning disable 618
-            Debug.Assert(operation.FindAnnotation(XGAnnotationNames.Collation) == null);
-#pragma warning restore 618
-
-            // Also at this point, all explicitly added `Relational:Collation` annotations (through delegation) should have been set to the
-            // `Collation` property and removed.
-            Debug.Assert(operation.FindAnnotation(RelationalAnnotationNames.Collation) == null);
-
-            // If we set the collation through delegation, we use the `Relational:Collation` annotation, so the collation will not be in the
-            // `Collation` property.
-            var collation = operation.Collation;
-            if (collation != null)
-            {
-                const string collationClausePattern = @"COLLATE \w+";
-                var collationClause = $@"COLLATE {collation}";
-
-                columnType = Regex.IsMatch(columnType, collationClausePattern, RegexOptions.IgnoreCase)
-                    ? Regex.Replace(columnType, collationClausePattern, collationClause)
-                    : columnType.TrimEnd() + " " + collationClause;
-            }
-
             return columnType;
         }
 
-        protected override void DefaultValue(
-            object defaultValue,
-            string defaultValueSql,
-            string columnType,
-            MigrationCommandListBuilder builder)
+        protected override void DefaultValue(object defaultValue, string defaultValueSql, string columnType, MigrationCommandListBuilder builder)
         {
             Check.NotNull(builder, nameof(builder));
 
-            if (defaultValueSql is not null)
+            if (defaultValueSql != null)
             {
-                if (IsDefaultValueSqlSupported(defaultValueSql, columnType))
-                {
-                    builder
-                        .Append(" DEFAULT ")
-                        .Append(defaultValueSql);
-                }
-                else
-                {
-                    Dependencies.MigrationsLogger.DefaultValueNotSupportedWarning(defaultValueSql, _options.ServerVersion, columnType);
-                }
+                builder
+                    .Append(" DEFAULT ")
+                    .Append(defaultValueSql);
             }
-            else if (defaultValue is not null)
+            else if (defaultValue != null)
             {
-                var isDefaultValueSupported = IsDefaultValueSupported(columnType);
-                var supportsDefaultExpressionSyntax = _options.ServerVersion.Supports.DefaultExpression ||
-                                                      _options.ServerVersion.Supports.AlternativeDefaultExpression;
-
                 var typeMapping = Dependencies.TypeMappingSource.GetMappingForValue(defaultValue);
-
-                if (typeMapping is IDefaultValueCompatibilityAware defaultValueCompatibilityAware)
-                {
-                    typeMapping = defaultValueCompatibilityAware.Clone(isDefaultValueCompatible: true);
-                }
-
-                var sqlLiteralDefaultValue = typeMapping.GenerateSqlLiteral(defaultValue);
-
-                if (isDefaultValueSupported ||
-                    supportsDefaultExpressionSyntax)
-                {
-                    var useDefaultExpressionSyntax = !isDefaultValueSupported;
-
-                    builder.Append(" DEFAULT ");
-
-                    if (useDefaultExpressionSyntax)
-                    {
-                        builder.Append("(");
-                    }
-
-                    builder.Append(sqlLiteralDefaultValue);
-
-                    if (useDefaultExpressionSyntax)
-                    {
-                        builder.Append(")");
-                    }
-                }
-                else
-                {
-                    Dependencies.MigrationsLogger.DefaultValueNotSupportedWarning(
-                        sqlLiteralDefaultValue,
-                        _options.ServerVersion,
-                        columnType);
-                }
+                builder
+                    .Append(" DEFAULT ")
+                    .Append(typeMapping.GenerateSqlLiteral(defaultValue));
             }
-        }
-
-        private bool IsDefaultValueSqlSupported(string defaultValueSql, string columnType)
-        {
-            if (IsDefaultValueSupported(columnType))
-            {
-                return true;
-            }
-
-            var trimmedDefaultValueSql = defaultValueSql.Trim();
-
-            if (_options.ServerVersion.Supports.DefaultExpression)
-            {
-                if (trimmedDefaultValueSql.StartsWith("(", StringComparison.Ordinal) && trimmedDefaultValueSql.EndsWith(")", StringComparison.Ordinal))
-                {
-                    return true;
-                }
-            }
-            else if (_options.ServerVersion.Supports.AlternativeDefaultExpression)
-            {
-                if ((trimmedDefaultValueSql.EndsWith("()", StringComparison.Ordinal) && !trimmedDefaultValueSql.StartsWith("(", StringComparison.Ordinal)) ||
-                    (trimmedDefaultValueSql.StartsWith("(", StringComparison.Ordinal) && trimmedDefaultValueSql.EndsWith(")", StringComparison.Ordinal)))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         /// <summary>
@@ -1495,16 +1169,48 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             [CanBeNull] IModel model,
             [NotNull] MigrationCommandListBuilder builder)
         {
-            // We used to move an AUTO_INCREMENT column to the first position in a primary key, if the PK was a compound key and the column
-            // was not in the first position. We did this to satisfy InnoDB.
-            // However, this is technically an inaccuracy, and leads to incompatible FK -> PK mappings in MySQL 8.4.
-            // We will therefore reverse that behavior to leaving the key order unchanged again.
-            // This will lead to two issues:
-            //     - Migrations that upgrade vom Pomelo < 9.0 to Pomelo 9.0 will not include this change automatically, because the model
-            //       never changed (we only made the change (before and now) here in XGMigrationsSqlGenerator).
-            //     - There now needs to be an index for those cases, that contains the AUTO_INCREMENT column as its first column.
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
 
-            base.CreateTablePrimaryKeyConstraint(operation, model, builder);
+            var primaryKey = operation.PrimaryKey;
+            if (primaryKey == null || operation.Columns.Where(i => i.ColumnType != null && i.ColumnType.Contains("binary")).Select(i => i.Name).Any(primaryKey.Columns.Contains)) return;
+            if (primaryKey != null)
+            {
+                builder.AppendLine(",");
+
+                // XG InnoDB has the requirement, that an AUTO_INCREMENT column has to be the first
+                // column participating in an index.
+
+                var sortedColumnNames = primaryKey.Columns.Length > 1
+                    ? primaryKey.Columns
+                        .Select(columnName => operation.Columns.First(co => co.Name == columnName))
+                        .OrderBy(co => co[XGAnnotationNames.ValueGenerationStrategy] is XGValueGenerationStrategy generationStrategy
+                                       && generationStrategy == XGValueGenerationStrategy.IdentityColumn
+                            ? 0
+                            : 1)
+                        .Select(co => co.Name)
+                        .ToArray()
+                    : primaryKey.Columns;
+
+                var sortedPrimaryKey = new AddPrimaryKeyOperation()
+                {
+                    Schema = primaryKey.Schema,
+                    Table = primaryKey.Table,
+                    Name = primaryKey.Name,
+                    Columns = sortedColumnNames,
+                    IsDestructiveChange = primaryKey.IsDestructiveChange,
+                };
+
+                foreach (var annotation in primaryKey.GetAnnotations())
+                {
+                    sortedPrimaryKey[annotation.Name] = annotation.Value;
+                }
+
+                PrimaryKeyConstraint(
+                    sortedPrimaryKey,
+                    model,
+                    builder);
+            }
         }
 
         protected override void PrimaryKeyConstraint(
@@ -1529,7 +1235,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             IndexTraits(operation, model, builder);
 
             builder.Append("(")
-                .Append(ColumnListWithIndexPrefixLengthAndSortOrder(operation, operation.Columns, operation[XGAnnotationNames.IndexPrefixLength] as int[]))
+                .Append(ColumnListWithIndexPrefixLength(operation, operation.Columns))
                 .Append(")");
         }
 
@@ -1555,7 +1261,7 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             IndexTraits(operation, model, builder);
 
             builder.Append("(")
-                .Append(ColumnListWithIndexPrefixLengthAndSortOrder(operation, operation.Columns, operation[XGAnnotationNames.IndexPrefixLength] as int[]))
+                .Append(ColumnListWithIndexPrefixLength(operation, operation.Columns))
                 .Append(")");
         }
 
@@ -1574,11 +1280,32 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             if (operation.Columns.Length == 1)
             {
                 builder.Append(
-                    $"CALL POMELO_AFTER_ADD_PRIMARY_KEY({_stringTypeMapping.GenerateSqlLiteral(operation.Schema)}, {_stringTypeMapping.GenerateSqlLiteral(operation.Table)}, {_stringTypeMapping.GenerateSqlLiteral(operation.Columns.First())});");
+                    $"EXECUTE IMMEDIATE 'EXEC XuGu_AFTER_ADD_PRIMARY_KEY('{_stringTypeMapping.GenerateSqlLiteral(operation.Schema ?? "SYSDBA")}', '{_stringTypeMapping.GenerateSqlLiteral(operation.Table)}', '{_stringTypeMapping.GenerateSqlLiteral(operation.Columns.First())}');';");
 
                 builder.AppendLine();
             }
 
+            EndStatement(builder);
+        }
+
+        protected override void Generate(
+            [NotNull] DeleteDataOperation operation,
+            [CanBeNull] IModel model,
+            [NotNull] MigrationCommandListBuilder builder)
+        {
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
+
+            var sqlBuilder = new StringBuilder();
+            foreach (var modificationCommand in GenerateModificationCommands(operation, model))
+            {
+                SqlGenerator.AppendDeleteOperation(
+                    sqlBuilder,
+                    modificationCommand,
+                    0);
+            }
+
+            builder.Append(sqlBuilder.ToString());
             EndStatement(builder);
         }
 
@@ -1611,15 +1338,16 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
 
             void DropPrimaryKey()
             {
-                builder.Append($"CALL POMELO_BEFORE_DROP_PRIMARY_KEY({_stringTypeMapping.GenerateSqlLiteral(operation.Schema)}, {_stringTypeMapping.GenerateSqlLiteral(operation.Table)});")
-                    .AppendLine()
-                    .Append("ALTER TABLE ")
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                    .Append(" DROP PRIMARY KEY");
+                builder
+                    .AppendLine("BEGIN")
+                    .AppendLine($"IF (SELECT COUNT(CONS_NAME) FROM ALL_CONSTRAINTS WHERE CONS_TYPE='P' AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{operation.Table}' AND SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='{operation.Schema ?? "SYSDBA"}' LIMIT 1) LIMIT 1) LIMIT 1)>0 THEN")
+                    .AppendLine($"EXECUTE IMMEDIATE 'ALTER TABLE `{operation.Table}` DROP CONSTRAINT '||(SELECT CONS_NAME FROM ALL_CONSTRAINTS WHERE CONS_TYPE='P' AND TABLE_ID=(SELECT TABLE_ID FROM ALL_TABLES WHERE TABLE_NAME='{operation.Table}' AND SCHEMA_ID=(SELECT SCHEMA_ID FROM ALL_SCHEMAS WHERE SCHEMA_NAME='{operation.Schema ?? "SYSDBA"}' LIMIT 1) LIMIT 1) LIMIT 1);")
+                    .AppendLine("END IF;")
+                    .AppendLine("END;");
 
                 if (terminate)
                 {
-                    builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                    //builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
                     EndStatement(builder);
                 }
             }
@@ -1671,11 +1399,11 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
 
-            var fullText = operation[XGAnnotationNames.FullTextIndex] as bool?;
-            if (fullText == true)
-            {
-                builder.Append("FULLTEXT ");
-            }
+            //var fullText = operation[XGAnnotationNames.FullTextIndex] as bool?;
+            //if (fullText == true)
+            //{
+            //    builder.Append("FULLTEXT ");
+            //}
 
             var spatial = operation[XGAnnotationNames.SpatialIndex] as bool?;
             if (spatial == true)
@@ -1684,26 +1412,23 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             }
         }
 
-        protected override void IndexOptions(MigrationOperation operation, IModel model, MigrationCommandListBuilder builder)
-        {
-            // The base implementation supports index filters in form of a WHERE clause.
-            // This is not supported by MySQL, so we don't call it here.
+        //protected override void IndexOptions(CreateIndexOperation operation, IModel model, MigrationCommandListBuilder builder)
+        //{
+        //    // The base implementation supports index filters in form of a WHERE clause.
+        //    // This is not supported by XG, so we don't call it here.
 
-            var fullText = operation[XGAnnotationNames.FullTextIndex] as bool?;
-            if (fullText == true)
-            {
-                var fullTextParser = operation[XGAnnotationNames.FullTextParser] as string;
-                if (!string.IsNullOrEmpty(fullTextParser))
-                {
-                    // Official MySQL support exists since 5.1, but since MariaDB does not support full-text parsers and does not recognize
-                    // the "/*!xxxxx" syntax for versions below 50700, we use 50700 here, even though the statement would work in lower
-                    // versions as well. Since we don't support MySQL 5.6 officially anymore, this is fine.
-                    builder.Append(" /*!50700 WITH PARSER ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(fullTextParser))
-                        .Append(" */");
-                }
-            }
-        }
+        //    var fullText = operation[XGAnnotationNames.FullTextIndex] as bool?;
+        //    if (fullText == true)
+        //    {
+        //        var fullTextParser = operation[XGAnnotationNames.FullTextParser] as string;
+        //        if (!string.IsNullOrEmpty(fullTextParser))
+        //        {
+        //            builder.AppendLine(" USING VOCABLE TABLE 'vocab_table'")
+        //                .AppendLine("USING FILTER 'default_filter'")
+        //                .Append("USING LEXER 'default_lexer'");
+        //        }
+        //    }
+        //}
 
         /// <summary>
         ///     Generates a SQL fragment for the given referential action.
@@ -1725,38 +1450,28 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
             }
         }
 
-        /// <summary>
-        /// Use VALUES batches for INSERT commands where possible.
-        /// </summary>
-        protected override void Generate(InsertDataOperation operation, IModel model, MigrationCommandListBuilder builder, bool terminate = true)
+        private string ColumnListWithIndexPrefixLength(MigrationOperation operation, string[] columns)
+            => operation[XGAnnotationNames.IndexPrefixLength] is int[] prefixValues
+                ? ColumnList(
+                    columns,
+                    (c, i) => prefixValues.Length > i && prefixValues[i] > 0
+                        ? $"({prefixValues[i]})"
+                        : null)
+                : ColumnList(columns);
+
+        private string ColumnListWithIndexOrder(CreateIndexOperation operation, string[] columns)
         {
-            var sqlBuilder = new StringBuilder();
-
-            var modificationCommands = GenerateModificationCommands(operation, model).ToList();
-            var updateSqlGenerator = (IXGUpdateSqlGenerator)Dependencies.UpdateSqlGenerator;
-
-            foreach (var batch in _commandBatchPreparer.CreateCommandBatches(modificationCommands, moreCommandSets: true))
+            string result = "";
+            if (operation.IsDescending != null && operation.IsDescending is bool[] orderValues)
             {
-                updateSqlGenerator.AppendBulkInsertOperation(sqlBuilder, batch.ModificationCommands, commandPosition: 0, out _);
+                result = string.Join(", ", columns.Select((c, i) => $"{Dependencies.SqlGenerationHelper.DelimitIdentifier(c)}{(orderValues.Length > i ? (orderValues[i] ? " DESC" : " ASC") : " DESC")}"));
             }
-
-            builder.Append(sqlBuilder.ToString());
-
-            if (terminate)
+            else
             {
-                builder.EndCommand();
+                result = ColumnList(columns);
             }
+            return result;
         }
-
-        /// <remarks>
-        /// There is no need to check for explicit index collation/descending support, because ASC and DESC modifiers are being silently
-        /// ignored in versions of MySQL and MariaDB, that do not support them.
-        /// </remarks>
-        private string ColumnListWithIndexPrefixLengthAndSortOrder(MigrationOperation operation, string[] columns, int[] prefixValues, bool[] isDescending = null)
-            => ColumnList(
-                columns,
-                (c, i)
-                    => $"{(prefixValues is not null && prefixValues.Length > i && prefixValues[i] > 0 ? $"({prefixValues[i]})" : null)}{(isDescending is not null && (isDescending.Length == 0 || isDescending[i]) ? " DESC" : null)}");
 
         protected virtual string ColumnList([NotNull] string[] columns, Func<string, int, string> columnPostfix)
             => string.Join(", ", columns.Select((c, i) => Dependencies.SqlGenerationHelper.DelimitIdentifier(c) + columnPostfix?.Invoke(c, i)));
@@ -1777,11 +1492,5 @@ DEALLOCATE PREPARE __pomelo_SqlExprExecute;
 
         private static bool IsSpatialStoreType(string storeType)
             => _spatialStoreTypes.Contains(storeType);
-
-        private static bool IsDefaultValueSupported(string columnType)
-            => !columnType.Contains("blob", StringComparison.OrdinalIgnoreCase) &&
-               !columnType.Contains("text", StringComparison.OrdinalIgnoreCase) &&
-               !columnType.Contains("json", StringComparison.OrdinalIgnoreCase) &&
-               !IsSpatialStoreType(columnType);
     }
 }

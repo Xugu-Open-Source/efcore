@@ -77,7 +77,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
             }
 
             ServerVersion = new Lazy<ServerVersion>(() => Microsoft.EntityFrameworkCore.ServerVersion.AutoDetect((XGConnection)Connection));
-            DatabaseCharSet = databaseCharSet ?? "utf8mb4";
+            DatabaseCharSet = databaseCharSet ?? "utf8";
             DatabaseCollation = databaseCollation ?? ServerVersion.Value.DefaultUtf8CsCollation;
 
             if (scriptPath != null)
@@ -160,7 +160,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
             await master.OpenAsync();
 
             string databaseSetupSql;
-            if (await DatabaseExistsAsync(Name))
+            if (DatabaseExists(Name))
             {
                 // if (_scriptPath != null
                 //     && !TestEnvironment.IsCI)
@@ -182,14 +182,15 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
                     await CleanAsync(context);
                 }
 
-                databaseSetupSql = GetAlterDatabaseStatement(Name, DatabaseCharSet, DatabaseCollation);
+                //databaseSetupSql = GetAlterDatabaseStatement(Name, DatabaseCharSet);
 
-                // databaseSetupSql = GetCreateDatabaseStatement(Name, DatabaseCharSet, DatabaseCollation);
+                databaseSetupSql = GetCreateDatabaseStatement(Name, DatabaseCharSet);
                 // DeleteDatabase();
             }
             else
             {
-                databaseSetupSql = GetCreateDatabaseStatement(Name, DatabaseCharSet, DatabaseCollation);
+                databaseSetupSql = GetCreateDatabaseStatement(Name, DatabaseCharSet);
+                
             }
 
             await ExecuteNonQueryAsync(master, databaseSetupSql);
@@ -203,16 +204,22 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
             ExecuteNonQuery(master, $@"DROP DATABASE IF EXISTS `{Name}`;");
         }
 
-        private static string GetCreateDatabaseStatement(string name, string charset = null, string collation = null)
-            => $@"CREATE DATABASE `{name}`{(string.IsNullOrEmpty(charset) ? null : $" CHARACTER SET {charset}")}{(string.IsNullOrEmpty(collation) ? null : $" COLLATE {collation}")};";
 
         private static string GetAlterDatabaseStatement(string name, string charset = null, string collation = null)
-            => $@"ALTER DATABASE `{name}`{(string.IsNullOrEmpty(charset) ? null : $" CHARACTER SET {charset}")}{(string.IsNullOrEmpty(collation) ? null : $" COLLATE {collation}")};";
+            => $@"ALTER DATABASE `{name}`{(string.IsNullOrEmpty(charset) ? null : $" CHARACTER SET {charset}")};";
 
-        private static async Task<bool> DatabaseExistsAsync(string name)
+        private static string GetCreateDatabaseStatement(string name, string charset = null, string timeZone = null)
+            => $@"CREATE DATABASE `{name}`{(string.IsNullOrEmpty(charset) ? null : $" CHARACTER SET '{charset}'")}{(string.IsNullOrEmpty(timeZone) ? null : $" TIME ZONE '{timeZone}'")};";
+
+
+        private static bool DatabaseExists(string name)
         {
-            await using var master = new XGConnection(CreateAdminConnectionString());
-            return await ExecuteScalarAsync<long>(master, $@"SELECT COUNT(*) FROM `INFORMATION_SCHEMA`.`SCHEMATA` WHERE `SCHEMA_NAME` = '{name}';") > 0;
+            long count = 0;
+            using (var master = new XGConnection(CreateAdminConnectionString()))
+            {
+                count = ExecuteScalar<long>(master, $@"SELECT COUNT(*) FROM `ALL_DATABASES` WHERE `DB_NAME` = '{name}';");
+            }
+            return count > 0;
         }
 
         private static string CreateAdminConnectionString()

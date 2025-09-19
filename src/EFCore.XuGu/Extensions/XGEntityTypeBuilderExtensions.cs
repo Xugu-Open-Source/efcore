@@ -14,14 +14,14 @@ using Microsoft.EntityFrameworkCore.XuGu.Metadata.Internal;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     MySQL specific extension methods for <see cref="EntityTypeBuilder" />.
+    ///     XuGu specific extension methods for <see cref="EntityTypeBuilder" />.
     /// </summary>
     public static class XGEntityTypeBuilderExtensions
     {
         #region CharSet and delegation
 
         /// <summary>
-        /// Sets the MySQL character set on the table associated with this entity. When you only specify the character set, MySQL implicitly
+        /// Sets the XuGu character set on the table associated with this entity. When you only specify the character set, XuGu implicitly
         /// uses its default collation.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -47,7 +47,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        /// Sets the MySQL character set on the table associated with this entity. When you only specify the character set, MySQL implicitly
+        /// Sets the XuGu character set on the table associated with this entity. When you only specify the character set, XuGu implicitly
         /// uses its default collation.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -68,7 +68,7 @@ namespace Microsoft.EntityFrameworkCore
                     : DelegationModes.ApplyToAll);
 
         /// <summary>
-        /// Sets the MySQL character set on the table associated with this entity. When you only specify the character set, MySQL implicitly
+        /// Sets the XuGu character set on the table associated with this entity. When you only specify the character set, XuGu implicitly
         /// uses its default collation.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -86,7 +86,7 @@ namespace Microsoft.EntityFrameworkCore
             => (EntityTypeBuilder<TEntity>)HasCharSet((EntityTypeBuilder)entityTypeBuilder, charSet, delegationModes);
 
         /// <summary>
-        /// Sets the MySQL character set on the table associated with this entity. When you only specify the character set, MySQL implicitly
+        /// Sets the XuGu character set on the table associated with this entity. When you only specify the character set, XuGu implicitly
         /// uses its default collation.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -104,7 +104,7 @@ namespace Microsoft.EntityFrameworkCore
             => (EntityTypeBuilder<TEntity>)HasCharSet((EntityTypeBuilder)entityTypeBuilder, charSet, explicitlyDelegateToChildren);
 
         /// <summary>
-        /// Sets the MySQL character set on the table associated with this entity. When you only specify the character set, MySQL implicitly
+        /// Sets the XuGu character set on the table associated with this entity. When you only specify the character set, XuGu implicitly
         /// uses its default collation.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -138,7 +138,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        /// Sets the MySQL character set on the table associated with this entity. When you only specify the character set, MySQL implicitly
+        /// Sets the XuGu character set on the table associated with this entity. When you only specify the character set, XuGu implicitly
         /// uses its default collation.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -162,7 +162,7 @@ namespace Microsoft.EntityFrameworkCore
                 fromDataAnnotation);
 
         /// <summary>
-        /// Returns a value indicating whether the MySQL character set can be set on the table associated with this entity.
+        /// Returns a value indicating whether the XuGu character set can be set on the table associated with this entity.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
         /// <param name="charSet"> The name of the character set. </param>
@@ -202,7 +202,7 @@ namespace Microsoft.EntityFrameworkCore
         #region Collation and delegation
 
         /// <summary>
-        /// Sets the MySQL collation on the table associated with this entity. When you only specify the collation, MySQL implicitly sets
+        /// Sets the XuGu collation on the table associated with this entity. When you only specify the collation, XuGu implicitly sets
         /// the proper character set as well.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -228,7 +228,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        /// Sets the MySQL collation on the table associated with this entity. When you only specify the collation, MySQL implicitly sets
+        /// Sets the XuGu collation on the table associated with this entity. When you only specify the collation, XuGu implicitly sets
         /// the proper character set as well.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -249,7 +249,7 @@ namespace Microsoft.EntityFrameworkCore
                     : DelegationModes.ApplyToAll);
 
         /// <summary>
-        /// Sets the MySQL collation on the table associated with this entity. When you only specify the collation, MySQL implicitly sets
+        /// Sets the XuGu collation on the table associated with this entity. When you only specify the collation, XuGu implicitly sets
         /// the proper character set as well.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -267,7 +267,7 @@ namespace Microsoft.EntityFrameworkCore
             => (EntityTypeBuilder<TEntity>)UseCollation((EntityTypeBuilder)entityTypeBuilder, collation, delegationModes);
 
         /// <summary>
-        /// Sets the MySQL collation on the table associated with this entity. When you only specify the collation, MySQL implicitly sets
+        /// Sets the XuGu collation on the table associated with this entity. When you only specify the collation, XuGu implicitly sets
         /// the proper character set as well.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -285,7 +285,7 @@ namespace Microsoft.EntityFrameworkCore
             => (EntityTypeBuilder<TEntity>)UseCollation((EntityTypeBuilder)entityTypeBuilder, collation, explicitlyDelegateToChildren);
 
         /// <summary>
-        /// Sets the MySQL collation on the table associated with this entity. When you only specify the collation, MySQL implicitly sets
+        /// Sets the XuGu collation on the table associated with this entity. When you only specify the collation, XuGu implicitly sets
         /// the proper character set as well.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -319,7 +319,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        /// Sets the MySQL collation on the table associated with this entity. When you only specify the collation, MySQL implicitly sets
+        /// Sets the XuGu collation on the table associated with this entity. When you only specify the collation, XuGu implicitly sets
         /// the proper character set as well.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
@@ -343,7 +343,7 @@ namespace Microsoft.EntityFrameworkCore
                 fromDataAnnotation);
 
         /// <summary>
-        /// Returns a value indicating whether the MySQL collation can be set on the table associated with this entity.
+        /// Returns a value indicating whether the XuGu collation can be set on the table associated with this entity.
         /// </summary>
         /// <param name="entityTypeBuilder"> The builder for the entity type being configured. </param>
         /// <param name="collation"> The name of the collation. </param>

@@ -11,9 +11,9 @@ using Microsoft.EntityFrameworkCore.XuGu.Query.Internal;
 namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal;
 
 /// <summary>
-///     MySQL &amp; MariaDB currently do not support complex expressions in HAVING clauses (e.g. function calls).
+///     XuGu &amp; MariaDB currently do not support complex expressions in HAVING clauses (e.g. function calls).
 ///     Instead, they want you to reference SELECT aliases for those expressions in the HAVING clause.
-///     See https://bugs.mysql.com/bug.php?id=103961
+///     See https://bugs.xugu.com/bug.php?id=103961
 ///     This is only an issue for HAVING expressions that do not contain any aggregate functions.
 /// </summary>
 public class XGHavingExpressionVisitor : ExpressionVisitor

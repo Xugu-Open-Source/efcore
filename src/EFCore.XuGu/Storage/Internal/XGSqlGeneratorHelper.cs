@@ -86,5 +86,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
                 : name;
 
         public virtual string GetSchemaName(string name, string schema) => null;
+
+        public override string GenerateParameterName(string name)
+            => name.StartsWith(":", StringComparison.Ordinal)
+                ? name
+                : ":" + name;
+
+        public override void GenerateParameterName(StringBuilder builder, string name)
+            => builder.Append(':').Append(name);
     }
 }

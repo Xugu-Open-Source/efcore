@@ -301,7 +301,7 @@ public class XGModificationCommandBatch : AffectedCountModificationCommandBatch
         //////
         // Start of injected code.
 
-        // MySQL stored procedures cannot return a regular result set, and output parameter values are simply sent back as the
+        // XuGu stored procedures cannot return a regular result set, and output parameter values are simply sent back as the
         // result set; this is very different from SQL Server, where output parameter values can be sent back in addition to result
         // sets. So we avoid adding XGParameters for output parameters - we'll just retrieve and propagate the values below when
         // consuming the result set.

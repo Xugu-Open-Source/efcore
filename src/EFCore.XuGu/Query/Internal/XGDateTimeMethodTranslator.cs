@@ -44,8 +44,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
 
         private static readonly MethodInfo _timeOnlyAddTimeSpanMethod = typeof(TimeOnly).GetRuntimeMethod(nameof(TimeOnly.Add), new[] { typeof(TimeSpan) })!;
         private static readonly MethodInfo _timeOnlyIsBetweenMethod = typeof(TimeOnly).GetRuntimeMethod(nameof(TimeOnly.IsBetween), new[] { typeof(TimeOnly), typeof(TimeOnly) })!;
-        private static readonly MethodInfo _timeOnlyFromDateTimeMethod = typeof(TimeOnly).GetRuntimeMethod(nameof(TimeOnly.FromDateTime), new[] { typeof(DateTime) })!;
-        private static readonly MethodInfo _timeOnlyFromTimeSpanMethod = typeof(TimeOnly).GetRuntimeMethod(nameof(TimeOnly.FromTimeSpan), new[] { typeof(TimeSpan) })!;
 
         private static readonly MethodInfo _dateOnlyFromDateTimeMethod = typeof(DateOnly).GetRuntimeMethod(nameof(DateOnly.FromDateTime), new[] { typeof(DateTime) })!;
         private static readonly MethodInfo _dateOnlyToDateTimeMethod = typeof(DateOnly).GetRuntimeMethod(nameof(DateOnly.ToDateTime), new[] { typeof(TimeOnly) })!;
@@ -77,16 +75,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                             _sqlExpressionFactory.ComplexFunctionArgument(
                                 new SqlExpression[]
                                 {
-                                    _sqlExpressionFactory.Fragment("INTERVAL"),
-                                    datePart.Equals("millisecond", StringComparison.Ordinal)
+                                    _sqlExpressionFactory.Fragment("INTERVAL "),
+                                    datePart.Equals("microsecond", StringComparison.Ordinal)
                                         ? _sqlExpressionFactory.Multiply(
                                             _sqlExpressionFactory.Constant(1000),
-                                            _sqlExpressionFactory.Convert(arguments[0], typeof(int)))
-                                        : _sqlExpressionFactory.Convert(arguments[0], typeof(int)),
-                                    _sqlExpressionFactory.Fragment(
-                                        datePart == "millisecond"
-                                            ? "microsecond"
-                                            : datePart)
+                                            _sqlExpressionFactory.Fragment($"{Convert.ToInt32(((SqlConstantExpression)arguments[0]).Value)} "))
+                                        : _sqlExpressionFactory.Fragment($"{Convert.ToInt32(((SqlConstantExpression)arguments[0]).Value)} "),
+                                    _sqlExpressionFactory.Fragment($" {datePart}")
                                 },
                                 " ",
                                 typeof(string))
@@ -94,7 +89,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                         instance.Type,
                         instance.TypeMapping,
                         true,
-                        new[] {true, false});
+                        new[] { true, false });
             }
 
             if (method.DeclaringType == typeof(DateTimeOffset) &&
@@ -139,31 +134,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                         _sqlExpressionFactory.GreaterThanOrEqual(instance, arguments[0]),
                         _sqlExpressionFactory.LessThan(instance, arguments[1]));
                 }
-
-                if (instance is null &&
-                    arguments.Count == 1)
-                {
-                    if (method == _timeOnlyFromDateTimeMethod)
-                    {
-                        return _sqlExpressionFactory.NullableFunction(
-                            "TIME",
-                            arguments,
-                            typeof(TimeOnly),
-                            onlyNullWhenAnyNullPropagatingArgumentIsNull: true);
-                    }
-
-                    if (method == _timeOnlyFromTimeSpanMethod)
-                    {
-                        return _sqlExpressionFactory.Convert(arguments[0], method.ReturnType);
-                    }
-                }
             }
 
             if (method.DeclaringType == typeof(DateOnly))
             {
-                if (method == _dateOnlyFromDateTimeMethod &&
-                    instance is null &&
-                    arguments.Count == 1)
+                if (method == _dateOnlyFromDateTimeMethod)
                 {
                     return _sqlExpressionFactory.NullableFunction(
                         "DATE",

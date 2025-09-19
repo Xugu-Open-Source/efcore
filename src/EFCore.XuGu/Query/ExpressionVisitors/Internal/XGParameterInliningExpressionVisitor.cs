@@ -85,7 +85,7 @@ public class XGParametersInliningExpressionVisitor : ExpressionVisitor
         //                 () => (SqlExpression)Visit(selectExpression.Offset)))
         //         : base.VisitExtension(selectExpression));
 
-    // For test simplicity, we currently inline parameters even for non MySQL database engines (even though it should not be necessary
+    // For test simplicity, we currently inline parameters even for non XuGu database engines (even though it should not be necessary
     // for e.g. MariaDB).
     // TODO: Use inlined parameters only if JsonTableImplementationUsingParameterAsSourceWithoutEngineCrash is true.
     protected virtual Expression VisitJsonTable(XGJsonTableExpression jsonTableExpression)

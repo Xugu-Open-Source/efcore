@@ -301,7 +301,7 @@ COMMIT;
         {
             var exception = await Assert.ThrowsAsync<Exception>(() => base.Can_generate_idempotent_up_and_down_scripts());
 
-            Assert.Equal("'DELIMITER' should not be used with XuguClient. See https://mysqlconnector.net/delimiter", exception.Message);
+            Assert.Equal("'DELIMITER' should not be used with XuguClient. See https://xuguconnector.net/delimiter", exception.Message);
             Assert.Equal(
 """
 CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
@@ -386,7 +386,7 @@ COMMIT;
         {
             var exception = await Assert.ThrowsAsync<Exception>(() => base.Can_generate_idempotent_up_and_down_scripts_noTransactions());
 
-            Assert.Equal("'DELIMITER' should not be used with XuguClient. See https://mysqlconnector.net/delimiter", exception.Message);
+            Assert.Equal("'DELIMITER' should not be used with XuguClient. See https://xuguconnector.net/delimiter", exception.Message);
             Assert.Equal(
 """
 CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (

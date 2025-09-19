@@ -38,50 +38,58 @@ namespace Microsoft.EntityFrameworkCore.XuGu.FunctionalTests.TestUtilities
             var creator = facade.GetService<IRelationalDatabaseCreator>();
             var connection = facade.GetService<IRelationalConnection>();
 
+            //creator.EnsureDeleted();
+
+            //            if (creator.Exists())
+            //            {
+            //                OpenConnection(connection);
+
+            //                try
+            //                {
+            //                    var commands = new StringBuilder();
+
+            //                    var getRoutinesSql = $@"SELECT 
+            //	SCHEMA_NAME AS `ROUTINE_SCHEMA`,PROC_NAME AS `ROUTINE_NAME`,CASE WHEN DEFINE LIKE '%CREATE PROCEDURE%' THEN 'PROCEDURE' ELSE 'FUNCTION' END  AS `ROUTINE_TYPE`
+            //FROM ALL_PROCEDURES AS p
+            //JOIN ALL_SCHEMAS AS s 
+            //ON p.SCHEMA_ID=s.SCHEMA_ID;";
+
+            //                    using var command = connection.DbConnection.CreateCommand();
+            //                    command.CommandText = getRoutinesSql;
+
+            //                    using (var reader = command.ExecuteReader())
+            //                    {
+            //                        while (reader.Read())
+            //                        {
+            //                            if (string.Equals(reader["ROUTINE_TYPE"] as string, "PROCEDURE", StringComparison.OrdinalIgnoreCase))
+            //                            {
+            //                                commands.AppendLine($"DROP PROCEDURE IF EXISTS `{reader["ROUTINE_SCHEMA"]}`.`{reader["ROUTINE_NAME"]}`;");
+            //                            }
+            //                            else if (string.Equals(reader["ROUTINE_TYPE"] as string, "FUNCTION", StringComparison.OrdinalIgnoreCase))
+            //                            {
+            //                                commands.AppendLine($"DROP FUNCTION IF EXISTS `{reader["ROUTINE_SCHEMA"]}`.`{reader["ROUTINE_NAME"]}`;");
+            //                            }
+            //                        }
+            //                    }
+
+            //                    if (commands.Length > 0)
+            //                    {
+            //                        command.CommandText = commands.ToString();
+            //                        command.ExecuteNonQuery();
+            //                    }
+            //                }
+            //                finally
+            //                {
+            //                    connection.Close();
+            //                }
+            //            }
+
+            //base.Clean(facade);
+
             if (creator.Exists())
             {
-                OpenConnection(connection);
-
-                try
-                {
-                    var commands = new StringBuilder();
-
-                    var getRoutinesSql = $@"
-SELECT `ROUTINE_SCHEMA`, `ROUTINE_NAME`, `ROUTINE_TYPE`
-FROM `INFORMATION_SCHEMA`.`ROUTINES`
-WHERE `ROUTINE_SCHEMA` = SCHEMA();";
-
-                    using var command = connection.DbConnection.CreateCommand();
-                    command.CommandText = getRoutinesSql;
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            if (string.Equals(reader["ROUTINE_TYPE"] as string, "PROCEDURE", StringComparison.OrdinalIgnoreCase))
-                            {
-                                commands.AppendLine($"DROP PROCEDURE IF EXISTS `{reader["ROUTINE_SCHEMA"]}`.`{reader["ROUTINE_NAME"]}`;");
-                            }
-                            else if (string.Equals(reader["ROUTINE_TYPE"] as string, "FUNCTION", StringComparison.OrdinalIgnoreCase))
-                            {
-                                commands.AppendLine($"DROP FUNCTION IF EXISTS `{reader["ROUTINE_SCHEMA"]}`.`{reader["ROUTINE_NAME"]}`;");
-                            }
-                        }
-                    }
-
-                    if (commands.Length > 0)
-                    {
-                        command.CommandText = commands.ToString();
-                        command.ExecuteNonQuery();
-                    }
-                }
-                finally
-                {
-                    connection.Close();
-                }
+                creator.EnsureDeleted();
             }
-
-            base.Clean(facade);
         }
 
         protected override IDatabaseModelFactory CreateDatabaseModelFactory(ILoggerFactory loggerFactory)
@@ -99,16 +107,15 @@ WHERE `ROUTINE_SCHEMA` = SCHEMA();";
         protected override bool AcceptTable(DatabaseTable table) => !(table is DatabaseView);
 
         protected override string BuildCustomSql(DatabaseModel databaseModel)
-            => @"SET @views = NULL;
-
-SELECT GROUP_CONCAT(CONCAT('`', `TABLE_SCHEMA`, '.', `TABLE_NAME`, '`')) INTO @views
-FROM `INFORMATION_SCHEMA`.`VIEWS`
-WHERE `TABLE_SCHEMA` = SCHEMA();
-
-SET @views = IFNULL(CONCAT('DROP VIEW IF EXISTS ', @views), 'SELECT 0');
-
-PREPARE stmt FROM @views;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;";
+            => @"DECLARE
+CURSOR fk_cursor IS
+(SELECT `VIEW_NAME` FROM `ALL_VIEWS`);
+sqlstr VARCHAR;
+BEGIN
+FOR fk IN fk_cursor LOOP
+sqlstr:='DROP VIEW IF EXISTS ""' || `fk`.`VIEW_NAME` || '"" CASCADE;';
+EXECUTE IMMEDIATE sqlstr;
+END LOOP;
+END;";
     }
 }

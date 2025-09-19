@@ -498,7 +498,7 @@ ORDER BY `c`.`Id`, `s`.`Id`
 """);
     }
 
-    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the mysql:latest docker container.")]
+    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the xugu:latest docker container.")]
     public override async Task Whats_new_2021_sample_3(bool async)
     {
         // GroupBy debug assert. Issue #26104.
@@ -510,7 +510,7 @@ ORDER BY `c`.`Id`, `s`.`Id`
         AssertSql();
     }
 
-    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the mysql:latest docker container.")]
+    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the xugu:latest docker container.")]
     public override async Task Whats_new_2021_sample_5(bool async)
     {
         await base.Whats_new_2021_sample_5(async);
@@ -532,7 +532,7 @@ ORDER BY (
 """);
     }
 
-    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the mysql:latest docker container.")]
+    [ConditionalTheory(Skip = "Check why this does not throw in CI (XuGu 8.0.x), but does locally in the xugu:latest docker container.")]
     public override async Task Whats_new_2021_sample_6(bool async)
     {
         // GroupBy debug assert. Issue #26104.

@@ -364,7 +364,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
             //     context.Table.Where(t => !t.BoolColumn)
             //         translate to: `boolColumn` = FALSE
             //         instead of:   NOT(`boolColumn` = TRUE)
-            // Translating to "NOT(`boolColumn`)" would not use indices in MySQL 5.7.
+            // Translating to "NOT(`boolColumn`)" would not use indices in XuGu 5.7.
             if (sqlUnaryExpression.OperatorType == ExpressionType.Not &&
                 sqlUnaryExpression.Operand is ColumnExpression columnExpression &&
                 columnExpression.TypeMapping is XGBoolTypeMapping &&

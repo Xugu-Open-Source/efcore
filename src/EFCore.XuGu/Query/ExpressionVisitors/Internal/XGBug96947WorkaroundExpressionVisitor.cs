@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.XuGu.Query.Internal;
 namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
 {
     /// <summary>
-    /// When using constant values in an LEFT JOIN, an later an ORDER BY is applied, MySQL 5.7+ will incorrectly return a NULL values for
+    /// When using constant values in an LEFT JOIN, an later an ORDER BY is applied, XuGu 5.7+ will incorrectly return a NULL values for
     /// some columns.
-    /// This is not an issue with any MariaDB release and not an issue with MySQL 5.6.
+    /// This is not an issue with any MariaDB release and not an issue with XuGu 5.6.
     ///
-    /// See https://bugs.mysql.com/bug.php?id=96947
+    /// See https://bugs.xugu.com/bug.php?id=96947
     ///     https://github.com/OData/WebApi/issues/2124
     ///     https://github.com/PomeloFoundation/Microsoft.EntityFrameworkCore.XuGu/issues/1293
     /// </summary>

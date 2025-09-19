@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    /// Provides methods for supporting translation to MySQL JSON operators and functions.
+    /// Provides methods for supporting translation to XuGu JSON operators and functions.
     /// </summary>
     public static class XGJsonDbFunctionsExtensions
     {
@@ -36,7 +36,7 @@ namespace Microsoft.EntityFrameworkCore
         /// A JSON column or value. Can be a DOM object, a string property mapped to JSON, or a user POCO mapped to JSON.
         /// </param>
         /// <returns> The JSON type as a text string. </returns>
-        /// <remarks> For possible return values see: https://dev.mysql.com/doc/refman/8.0/en/json-attribute-functions.html#function_json-type </remarks>
+        /// <remarks> For possible return values see: https://dev.xugu.com/doc/refman/8.0/en/json-attribute-functions.html#function_json-type </remarks>
         public static string JsonType([CanBeNull] this DbFunctions _, [NotNull] object json)
             => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(JsonType)));
 

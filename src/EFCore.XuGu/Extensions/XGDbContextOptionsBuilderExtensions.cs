@@ -15,13 +15,13 @@ namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
     /// Provides extension methods on <see cref="DbContextOptionsBuilder"/> and <see cref="DbContextOptionsBuilder{T}"/>
-    /// to configure a <see cref="DbContext"/> to use with MySQL/MariaDB and Microsoft.EntityFrameworkCore.XuGu.
+    /// to configure a <see cref="DbContext"/> to use with XuGu/MariaDB and Microsoft.EntityFrameworkCore.XuGu.
     /// </summary>
     public static class XGDbContextOptionsBuilderExtensions
     {
         /// <summary>
         ///     <para>
-        ///         Configures the context to connect to a MySQL compatible database, but without initially setting any
+        ///         Configures the context to connect to a XuGu compatible database, but without initially setting any
         ///         <see cref="DbConnection" /> or connection string.
         ///     </para>
         ///     <para>
@@ -42,10 +42,10 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <returns> The options builder so that further configuration can be chained. </returns>
         public static DbContextOptionsBuilder UseXG(
             [NotNull] this DbContextOptionsBuilder optionsBuilder,
@@ -69,7 +69,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        ///     Configures the context to connect to a MySQL compatible database.
+        ///     Configures the context to connect to a XuGu compatible database.
         /// </summary>
         /// <param name="optionsBuilder"> The builder being used to configure the context. </param>
         /// <param name="connectionString"> The connection string of the database to connect to. </param>
@@ -84,10 +84,10 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <returns> The options builder so that further configuration can be chained. </returns>
         public static DbContextOptionsBuilder UseXG(
             [NotNull] this DbContextOptionsBuilder optionsBuilder,
@@ -114,7 +114,7 @@ namespace Microsoft.EntityFrameworkCore
         }
 
         /// <summary>
-        ///     Configures the context to connect to a MySQL compatible database.
+        ///     Configures the context to connect to a XuGu compatible database.
         /// </summary>
         /// <param name="optionsBuilder"> The builder being used to configure the context. </param>
         /// <param name="connection">
@@ -133,10 +133,10 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <returns> The options builder so that further configuration can be chained. </returns>
         public static DbContextOptionsBuilder UseXG(
             [NotNull] this DbContextOptionsBuilder optionsBuilder,
@@ -164,7 +164,7 @@ namespace Microsoft.EntityFrameworkCore
 
 
         /// <summary>
-        ///     Configures the context to connect to a MySQL compatible database.
+        ///     Configures the context to connect to a XuGu compatible database.
         /// </summary>
         /// <param name="optionsBuilder"> The builder being used to configure the context. </param>
         /// <param name="dataSource"> A <see cref="DbDataSource" /> which will be used to get database connections. </param>
@@ -179,10 +179,10 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <returns> The options builder so that further configuration can be chained. </returns>
         public static DbContextOptionsBuilder UseXG(
             this DbContextOptionsBuilder optionsBuilder,
@@ -210,7 +210,7 @@ namespace Microsoft.EntityFrameworkCore
 
         /// <summary>
         ///     <para>
-        ///         Configures the context to connect to a MySQL compatible database, but without initially setting any
+        ///         Configures the context to connect to a XuGu compatible database, but without initially setting any
         ///         <see cref="DbConnection" /> or connection string.
         ///     </para>
         ///     <para>
@@ -232,10 +232,10 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <returns> The options builder so that further configuration can be chained. </returns>
         public static DbContextOptionsBuilder<TContext> UseXG<TContext>(
             [NotNull] this DbContextOptionsBuilder<TContext> optionsBuilder,
@@ -246,7 +246,7 @@ namespace Microsoft.EntityFrameworkCore
                 (DbContextOptionsBuilder)optionsBuilder, serverVersion, xgOptionsAction);
 
         /// <summary>
-        ///     Configures the context to connect to a MySQL compatible database.
+        ///     Configures the context to connect to a XuGu compatible database.
         /// </summary>
         /// <typeparam name="TContext"> The type of context to be configured. </typeparam>
         /// <param name="optionsBuilder"> The builder being used to configure the context. </param>
@@ -262,10 +262,10 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <returns> The options builder so that further configuration can be chained. </returns>
         public static DbContextOptionsBuilder<TContext> UseXG<TContext>(
             [NotNull] this DbContextOptionsBuilder<TContext> optionsBuilder,
@@ -277,7 +277,7 @@ namespace Microsoft.EntityFrameworkCore
                 (DbContextOptionsBuilder)optionsBuilder, connectionString, serverVersion, xgOptionsAction);
 
         /// <summary>
-        ///     Configures the context to connect to a MySQL compatible database.
+        ///     Configures the context to connect to a XuGu compatible database.
         /// </summary>
         /// <param name="optionsBuilder"> The builder being used to configure the context. </param>
         /// <param name="connection">
@@ -297,10 +297,10 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <returns> The options builder so that further configuration can be chained. </returns>
         public static DbContextOptionsBuilder<TContext> UseXG<TContext>(
             [NotNull] this DbContextOptionsBuilder<TContext> optionsBuilder,
@@ -312,7 +312,7 @@ namespace Microsoft.EntityFrameworkCore
                 (DbContextOptionsBuilder)optionsBuilder, connection, serverVersion, xgOptionsAction);
 
         /// <summary>
-        ///     Configures the context to connect to a MySQL compatible database.
+        ///     Configures the context to connect to a XuGu compatible database.
         /// </summary>
         /// <param name="optionsBuilder"> The builder being used to configure the context. </param>
         /// <param name="dataSource"> A <see cref="DbDataSource" /> which will be used to get database connections. </param>
@@ -328,10 +328,10 @@ namespace Microsoft.EntityFrameworkCore
         ///         from the database server),
         ///         by parsing a version string using the static methods
         ///         <see cref="ServerVersion.Parse(string)"/> or <see cref="ServerVersion.TryParse(string,out ServerVersion)"/>,
-        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for MySQL) classes.
+        ///         or by directly instantiating an object from the <see cref="XGServerVersion"/> (for XuGu) classes.
         ///      </para>
         /// </param>
-        /// <param name="xgOptionsAction"> An optional action to allow additional MySQL specific configuration. </param>
+        /// <param name="xgOptionsAction"> An optional action to allow additional XuGu specific configuration. </param>
         /// <returns> The options builder so that further configuration can be chained. </returns>
         public static DbContextOptionsBuilder<TContext> UseXG<TContext>(
             [NotNull] this DbContextOptionsBuilder<TContext> optionsBuilder,

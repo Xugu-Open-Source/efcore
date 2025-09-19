@@ -44,9 +44,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         /// </summary>
         protected virtual Expression VisitSelectMutable(SelectExpression selectExpression)
         {
-            // MySQL & MariaDB currently do not support complex expressions in HAVING clauses (e.g. function calls).
+            // XuGu & MariaDB currently do not support complex expressions in HAVING clauses (e.g. function calls).
             // Instead, they want you to reference SELECT aliases for those expressions in the HAVING clause.
-            // See https://bugs.mysql.com/bug.php?id=103961
+            // See https://bugs.xugu.com/bug.php?id=103961
             // This is only an issue for HAVING expressions that do not contain any aggregate functions.
             var havingExpression = selectExpression.Having;
             if (havingExpression is not null &&
@@ -125,9 +125,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         /// </summary>
         protected virtual Expression VisitSelectImmutable(SelectExpression selectExpression)
         {
-            // MySQL & MariaDB currently do not support complex expressions in HAVING clauses (e.g. function calls).
+            // XuGu & MariaDB currently do not support complex expressions in HAVING clauses (e.g. function calls).
             // Instead, they want you to reference SELECT aliases for those expressions in the HAVING clause.
-            // See https://bugs.mysql.com/bug.php?id=103961
+            // See https://bugs.xugu.com/bug.php?id=103961
             // This is only an issue for HAVING expressions that do not contain any aggregate functions.
             var havingExpression = selectExpression.Having;
             if (havingExpression is not null &&

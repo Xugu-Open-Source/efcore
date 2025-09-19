@@ -14,7 +14,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal;
 /// </summary>
 public sealed class XGContainsAggregateFunctionExpressionVisitor : ExpressionVisitor
 {
-    // See https://dev.mysql.com/doc/refman/8.0/en/aggregate-functions.html
+    // See https://dev.xugu.com/doc/refman/8.0/en/aggregate-functions.html
     private static readonly SortedSet<string> _aggregateFunctions = new SortedSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "AVG",

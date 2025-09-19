@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using XuguClient;
 using Microsoft.EntityFrameworkCore.XuGu.Infrastructure;
 using Microsoft.EntityFrameworkCore.XuGu.Infrastructure.Internal;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
 {
@@ -152,27 +153,27 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
                 throw new InvalidOperationException($"{nameof(XGOptionsExtension)} not found in {nameof(CreateMasterConnection)}");
             }
 
-            // Add master connection specific options.
-            var csb = new XGConnectionStringBuilder(ConnectionString!)
+            string pattern = @"DB=[^;]+";
+            var csb = new XGConnectionStringBuilder(ConnectionString)
             {
-                Database = string.Empty
+                Database = string.Empty,
+                ConnectionString = Regex.Replace(ConnectionString, pattern, $"DB=SYSTEM")
             };
 
             csb = AddConnectionStringOptions(csb);
 
-            var masterConnectionString = csb.ConnectionString;
+            var connectionString = csb.ConnectionString;
+            var relationalOptions = RelationalOptionsExtension.Extract(Dependencies.ContextOptions);
 
             // Apply modified connection string.
-            var masterXGOptions = _dataSource is not null
-                ? xgOptions.WithConnection(((XGConnection)CreateDbConnection()).CloneWith(masterConnectionString), owned: true)
-                : xgOptions.Connection is null
-                    ? xgOptions.WithConnectionString(masterConnectionString)
-                    : xgOptions.WithConnection(DbConnection.CloneWith(masterConnectionString), owned: true);
+            relationalOptions = relationalOptions.Connection is null
+                ? relationalOptions.WithConnectionString(connectionString)
+                : relationalOptions.WithConnection(DbConnection.CloneWith(connectionString));
 
             var optionsBuilder = new DbContextOptionsBuilder();
             var optionsBuilderInfrastructure = (IDbContextOptionsBuilderInfrastructure)optionsBuilder;
 
-            optionsBuilderInfrastructure.AddOrUpdateExtension(masterXGOptions);
+            optionsBuilderInfrastructure.AddOrUpdateExtension(relationalOptions);
 
             return CreateMasterConnectionCore(optionsBuilder, _xgConnectionStringOptionsValidator);
         }

@@ -293,14 +293,14 @@ public class XGQueryableMethodTranslatingExpressionVisitor : RelationalQueryable
 
 
         // Using primitive collections in parameters that are used as the JSON source argument for JSON_TABLE(source, ...) can crash
-        // MySQL 8 somewhere later down the line. We mitigate this by inlining those parameters.
-        // There are however other scenarios that can still crash MySQL 8 (e.g. `NorthwindSelectQueryXGTest.Correlated_collection_after_distinct_not_containing_original_identifier`).
+        // XuGu 8 somewhere later down the line. We mitigate this by inlining those parameters.
+        // There are however other scenarios that can still crash XuGu 8 (e.g. `NorthwindSelectQueryXGTest.Correlated_collection_after_distinct_not_containing_original_identifier`).
         // For those cases, we implement a flag to skip skip the JSON_TABLE generation.
         if (elementTypeMapping is null &&
             !_options.ServerVersion.Supports.JsonTableImplementationUsingParameterAsSourceWithoutEngineCrash &&
             _xg8EngineCrashWhenUsingJsonTableWithPrimitiveCollectionInParametersSkip)
         {
-            AddTranslationErrorDetails($"JSON_TABLE() has been disabled by the '{Issue1792SkipWithParameterFlagName}' AppContext switch, because it can crash MySQL 8.");
+            AddTranslationErrorDetails($"JSON_TABLE() has been disabled by the '{Issue1792SkipWithParameterFlagName}' AppContext switch, because it can crash XuGu 8.");
             return null;
         }
 

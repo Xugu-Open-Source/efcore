@@ -1,8 +1,8 @@
 ﻿## About
 
-_Microsoft.EntityFrameworkCore.XuGu_ is the Entity Framework Core (EF Core) provider for [MySQL](https://www.mysql.com), [MariaDB](https://mariadb.org), [Amazon Aurora](https://aws.amazon.com/rds/aurora), [Azure Database for MySQL](https://azure.microsoft.com/en-us/services/mysql) and other MySQL-compatible databases.
+_Microsoft.EntityFrameworkCore.XuGu_ is the Entity Framework Core (EF Core) provider for [XuGu](https://www.xugu.com), [MariaDB](https://mariadb.org), [Amazon Aurora](https://aws.amazon.com/rds/aurora), [Azure Database for XuGu](https://azure.microsoft.com/en-us/services/xugu) and other XuGu-compatible databases.
 
-It is build on top of [XuguClient](https://github.com/mysql-net/XuguClient).
+It is build on top of [XuguClient](https://github.com/xugu-net/XuguClient).
 
 ## How to Use
 

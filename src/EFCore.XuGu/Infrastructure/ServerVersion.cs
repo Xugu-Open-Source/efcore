@@ -38,7 +38,9 @@ namespace Microsoft.EntityFrameworkCore
         public abstract ServerVersionSupport Supports { get; }
 
         public virtual int MaxKeyLength => Supports.LargerKeyLength ? 3072 : 767;
-        public virtual CharSet DefaultCharSet => Supports.DefaultCharSetUtf8Mb4 ? CharSet.Utf8Mb4 : CharSet.Latin1;
+
+        [Obsolete]
+        public virtual CharSet DefaultCharSet => CharSet.Utf8;
         public abstract string DefaultUtf8CsCollation { get; }
         public abstract string DefaultUtf8CiCollation { get; }
 
@@ -240,8 +242,8 @@ namespace Microsoft.EntityFrameworkCore
         /// <param name="versionString">The server version (mandatory) and type (optional).</param>
         /// <returns>The <see cref="ServerVersion"/>.</returns>
         /// <remarks>
-        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-mysql` or `10.5.3-mariadb`. If the type is being omitted, it is
-        /// assumed to be MySQL (and not MariaDB).
+        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-xugu` or `10.5.3-mariadb`. If the type is being omitted, it is
+        /// assumed to be XuGu (and not MariaDB).
         /// </remarks>
         public static ServerVersion Parse(string versionString)
             => Parse(versionString, null);
@@ -253,8 +255,8 @@ namespace Microsoft.EntityFrameworkCore
         /// <param name="serverType">The <see cref="ServerType"/> or <see langword="null" />. </param>
         /// <returns>The <see cref="ServerVersion"/>.</returns>
         /// <remarks>
-        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-mysql` or `10.5.3-mariadb`. If the type is being omitted, it is
-        /// assumed to be MySQL (and not MariaDB). The <paramref name="serverType"/> parameter takes precedence over a server type specified
+        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-xugu` or `10.5.3-mariadb`. If the type is being omitted, it is
+        /// assumed to be XuGu (and not MariaDB). The <paramref name="serverType"/> parameter takes precedence over a server type specified
         /// in the <paramref name="versionString"/> parameter, if not <see langword="null" />.
         /// </remarks>
         public static ServerVersion Parse(string versionString, ServerType? serverType)
@@ -276,8 +278,8 @@ namespace Microsoft.EntityFrameworkCore
         /// <param name="serverVersion">The <see cref="ServerVersion"/>.</param>
         /// <returns><see langword="true" /> if the conversion was successful, otherwise <see langword="false" />.</returns>
         /// <remarks>
-        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-mysql` or `10.5.3-mariadb`. If the type is being omitted, it is
-        /// assumed to be MySQL (and not MariaDB).
+        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-xugu` or `10.5.3-mariadb`. If the type is being omitted, it is
+        /// assumed to be XuGu (and not MariaDB).
         /// </remarks>
         public static bool TryParse(string versionString, out ServerVersion serverVersion)
             => TryParse(versionString, null, out serverVersion);
@@ -290,8 +292,8 @@ namespace Microsoft.EntityFrameworkCore
         /// <param name="serverVersion">The <see cref="ServerVersion"/>.</param>
         /// <returns><see langword="true" /> if the conversion was successful, otherwise <see langword="false" />.</returns>
         /// <remarks>
-        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-mysql` or `10.5.3-mariadb`. If the type is being omitted, it is
-        /// assumed to be MySQL (and not MariaDB). The <paramref name="serverType"/> parameter takes precedence over a server type specified
+        /// The general format is `major.minor.patch-type`, e.g. `8.0.21-xugu` or `10.5.3-mariadb`. If the type is being omitted, it is
+        /// assumed to be XuGu (and not MariaDB). The <paramref name="serverType"/> parameter takes precedence over a server type specified
         /// in the <paramref name="versionString"/> parameter, if not <see langword="null" />.
         /// </remarks>
         public static bool TryParse(string versionString, ServerType? serverType, out ServerVersion serverVersion)
