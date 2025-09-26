@@ -60,7 +60,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Internal
 
             ConnectionSettings = GetConnectionSettings(xgOptions, options);
             DataSource = xgOptions.DataSource;
-            ServerVersion = xgOptions.ServerVersion ?? throw new InvalidOperationException($"The {nameof(ServerVersion)} has not been set.");
+            ServerVersion = xgOptions.ServerVersion ?? new XGServerVersion("12.0.0");
             NoBackslashEscapes = xgOptions.NoBackslashEscapes;
             ReplaceLineBreaksWithCharFunction = xgOptions.ReplaceLineBreaksWithCharFunction;
             DefaultDataTypeMappings = ApplyDefaultDataTypeMappings(xgOptions.DefaultDataTypeMappings, ConnectionSettings);
@@ -98,13 +98,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Internal
                     XGStrings.TwoDataSourcesInSameServiceProvider(nameof(DbContextOptionsBuilder.UseInternalServiceProvider)));
             }
 
-            if (!Equals(ServerVersion, xgOptions.ServerVersion))
-            {
-                throw new InvalidOperationException(
-                    CoreStrings.SingletonOptionChanged(
-                        nameof(XGOptionsExtension.ServerVersion),
-                        nameof(DbContextOptionsBuilder.UseInternalServiceProvider)));
-            }
+            //if (!Equals(ServerVersion, xgOptions.ServerVersion))
+            //{
+            //    throw new InvalidOperationException(
+            //        CoreStrings.SingletonOptionChanged(
+            //            nameof(XGOptionsExtension.ServerVersion),
+            //            nameof(DbContextOptionsBuilder.UseInternalServiceProvider)));
+            //}
 
             if (!Equals(NoBackslashEscapes, xgOptions.NoBackslashEscapes))
             {
@@ -245,8 +245,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Internal
                    ReferenceEquals(DataSource, other.DataSource) &&
                    Equals(ServerVersion, other.ServerVersion) &&
                    Equals(DefaultCharSet, other.DefaultCharSet) &&
-                   Equals(NationalCharSet, other.NationalCharSet) &&
-                   Equals(DefaultGuidCollation, other.DefaultGuidCollation) &&
+                   //Equals(NationalCharSet, other.NationalCharSet) &&
+                   //Equals(DefaultGuidCollation, other.DefaultGuidCollation) &&
                    NoBackslashEscapes == other.NoBackslashEscapes &&
                    ReplaceLineBreaksWithCharFunction == other.ReplaceLineBreaksWithCharFunction &&
                    Equals(DefaultDataTypeMappings, other.DefaultDataTypeMappings) &&

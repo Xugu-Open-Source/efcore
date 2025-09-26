@@ -833,11 +833,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
         {
             Check.NotNull(xgCollateExpression, nameof(xgCollateExpression));
 
-            Sql.Append("CONVERT(");
-
             Visit(xgCollateExpression.ValueExpression);
-
-            Sql.Append($" USING {xgCollateExpression.Charset}) COLLATE {xgCollateExpression.Collation}");
 
             return xgCollateExpression;
         }

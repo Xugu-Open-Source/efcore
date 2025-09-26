@@ -54,15 +54,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
                     storeType ?? GetBaseType(size, fixedLength),
                     GetStoreTypePostfix(size),
                     type,
-                    size: size,
+                    size: null,
                     fixedLength: fixedLength))
         {
         }
 
         private static string GetBaseType(int? size, bool isFixedLength)
-            => size == null
-                ? "longblob"
-                : isFixedLength ? "binary" : "varbinary";
+            => "binary";
 
         private static StoreTypePostfix GetStoreTypePostfix(int? size)
             => size != null && size <= MaxSize ? StoreTypePostfix.Size : StoreTypePostfix.None;

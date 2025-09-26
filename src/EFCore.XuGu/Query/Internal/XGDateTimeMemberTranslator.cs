@@ -64,7 +64,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                                 " ",
                                 typeof(string))
                         },
-                        returnType,
+                        returnType==typeof(int)?typeof(long):returnType,
                         false);
 
                     if (datePart.Divisor != 1)
@@ -88,10 +88,9 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
 
                     case nameof(DateTime.Date):
                         return _sqlExpressionFactory.NullableFunction(
-                            "CONVERT",
+                            "CAST",
                             new[]{
-                                instance,
-                                _sqlExpressionFactory.Fragment("date")
+                                _sqlExpressionFactory.Fragment($"{instance.Print()} AS date")
                             },
                             returnType,
                             false);
@@ -104,17 +103,13 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                             declaringType == typeof(DateTimeOffset)
                                 ? "UTC_TIMESTAMP"
                                 : "CURRENT_TIMESTAMP",
-                            _xgOptions.ServerVersion.Supports.DateTime6 ?
-                                new [] { _sqlExpressionFactory.Constant(6)} :
-                                Array.Empty<SqlExpression>(),
+                            Array.Empty<SqlExpression>(),
                             returnType);
 
                     case nameof(DateTime.UtcNow):
                         return _sqlExpressionFactory.NonNullableFunction(
                             "UTC_TIMESTAMP",
-                            _xgOptions.ServerVersion.Supports.DateTime6 ?
-                                new [] { _sqlExpressionFactory.Constant(6)} :
-                                ArraySegment<SqlExpression>.Empty,
+                            Array.Empty<SqlExpression>(),
                             returnType);
 
                     case nameof(DateTime.Today):
@@ -146,27 +141,6 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Query.Internal
                             new[] { instance },
                             returnType),
                         _sqlExpressionFactory.Constant(366));
-                }
-            }
-
-            if (declaringType == typeof(DateTimeOffset))
-            {
-                switch (member.Name)
-                {
-                    case nameof(DateTimeOffset.DateTime):
-                    case nameof(DateTimeOffset.UtcDateTime):
-                        // We represent `DateTimeOffset` values as UTC datetime values in the database. Therefore, `DateTimeOffset`,
-                        // `DateTimeOffset.DateTime` and `DateTimeOffset.UtcDateTime` are all the same.
-                        return _sqlExpressionFactory.Convert(instance, typeof(DateTime));
-
-                    case nameof(DateTimeOffset.LocalDateTime):
-                        return _sqlExpressionFactory.NullableFunction(
-                            "CONVERT_TZ",
-                            [instance, _sqlExpressionFactory.Constant("+00:00"), _sqlExpressionFactory.Fragment("@@session.time_zone")],
-                            typeof(DateTime),
-                            null,
-                            false,
-                            Statics.GetTrueValues(3));
                 }
             }
 

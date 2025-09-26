@@ -72,7 +72,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations.Internal
         // therefore explicitly use the database name as part of the lock name.
         // If it turns out, that users want a replication-save method later, we could implement a locking table mechanism as Sqlite does.
         private string GetAcquireLockCommandSql()
-            => $"SELECT GET_LOCK('{GetDatabaseLockName(Dependencies.Connection.DbConnection.Database)}', {60 * 60 * 24 * 3})";
+            => "SELECT 1 FROM DUAL;";//$"SELECT GET_LOCK('{GetDatabaseLockName(Dependencies.Connection.DbConnection.Database)}', {60 * 60 * 24 * 3})";
 
         private RelationalCommandParameterObject CreateRelationalCommandParameters()
             => new(
@@ -89,7 +89,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Migrations.Internal
                 CreateRelationalCommandParameters());
 
         private IRelationalCommand CreateReleaseLockCommand()
-            => Dependencies.RawSqlCommandBuilder.Build($"SELECT RELEASE_LOCK('{GetDatabaseLockName(Dependencies.Connection.DbConnection.Database)}')");
+            => Dependencies.RawSqlCommandBuilder.Build("SELECT 1 FROM DUAL;"/*$"SELECT RELEASE_LOCK('{GetDatabaseLockName(Dependencies.Connection.DbConnection.Database)}')"*/);
 
         protected override void ConfigureTable([NotNull] EntityTypeBuilder<HistoryRow> history)
         {

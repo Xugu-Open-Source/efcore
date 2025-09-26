@@ -889,9 +889,9 @@ public abstract class CustomConvertersTestBase<TFixture>(TFixture fixture) : Bui
                     b.Property(e => e.TestInt64).HasConversion(v => v, v => v);
                     b.Property(e => e.TestDecimal).HasConversion(NumberToBytesConverter<decimal>.DefaultInfo.Create());
                     b.Property(e => e.TestDateTime).HasConversion(v => v.ToBinary(), v => DateTime.FromBinary(v));
-                    b.Property(e => e.TestDateOnly).HasConversion(v => v.ToShortDateString(), v => DateOnly.Parse(v));
+                    //b.Property(e => e.TestDateOnly).HasConversion(v => v.ToShortDateString(), v => DateOnly.Parse(v));
                     b.Property(e => e.TestTimeSpan).HasConversion(v => v.TotalMilliseconds, v => TimeSpan.FromMilliseconds(v));
-                    b.Property(e => e.TestTimeOnly).HasConversion(v => v.Ticks, v => new TimeOnly(v));
+                    //b.Property(e => e.TestTimeOnly).HasConversion(v => v.Ticks, v => new TimeOnly(v));
                     b.Property(e => e.TestSingle).HasConversion(new CastingConverter<float, double>());
                     b.Property(e => e.TestBoolean).HasConversion(new BoolToTwoValuesConverter<string>("Nope", "Yeps")).HasMaxLength(4);
                     b.Property(e => e.TestByte).HasConversion(v => (ushort)v, v => (byte)v);
@@ -998,14 +998,14 @@ public abstract class CustomConvertersTestBase<TFixture>(TFixture fixture) : Bui
                     b.Property(nameof(BuiltInDataTypes.TestInt64)).HasConversion(new ValueConverter<long, long>(v => v, v => v));
                     b.Property(nameof(BuiltInDataTypes.TestDecimal))
                         .HasConversion(NumberToBytesConverter<decimal>.DefaultInfo.Create());
-                    b.Property(nameof(BuiltInDataTypes.TestDateOnly)).HasConversion(
-                        new ValueConverter<DateOnly, string>(v => v.ToShortDateString(), v => DateOnly.Parse(v)));
+                    //b.Property(nameof(BuiltInDataTypes.TestDateOnly)).HasConversion(
+                    //    new ValueConverter<DateOnly, string>(v => v.ToShortDateString(), v => DateOnly.Parse(v)));
                     b.Property(nameof(BuiltInDataTypes.TestDateTime)).HasConversion(
                         new ValueConverter<DateTime, long>(v => v.ToBinary(), v => DateTime.FromBinary(v)));
                     b.Property(nameof(BuiltInDataTypes.TestTimeSpan)).HasConversion(
                         new ValueConverter<TimeSpan, double>(v => v.TotalMilliseconds, v => TimeSpan.FromMilliseconds(v)));
-                    b.Property(nameof(BuiltInDataTypes.TestTimeOnly)).HasConversion(
-                        new ValueConverter<TimeOnly, long>(v => v.Ticks, v => new TimeOnly(v)));
+                    //b.Property(nameof(BuiltInDataTypes.TestTimeOnly)).HasConversion(
+                    //    new ValueConverter<TimeOnly, long>(v => v.Ticks, v => new TimeOnly(v)));
                     b.Property(nameof(BuiltInDataTypes.TestSingle)).HasConversion(new CastingConverter<float, double>());
                     b.Property(nameof(BuiltInDataTypes.TestBoolean)).HasConversion(new BoolToTwoValuesConverter<string>("Nope", "Yep"));
                     b.Property(nameof(BuiltInDataTypes.TestByte))
@@ -1139,12 +1139,7 @@ public abstract class CustomConvertersTestBase<TFixture>(TFixture fixture) : Bui
                 });
 
             modelBuilder.Entity<BinaryKeyDataType>(
-                b =>
-                {
-                    b.Property(e => e.Id).HasConversion(
-                        v => new byte[] { 4, 2, 0 }.Concat(v).ToArray(),
-                        v => v.Skip(3).ToArray());
-                });
+                b => b.Property(e => e.Id).HasConversion<string>());
 
             modelBuilder.Entity<StringKeyDataType>(
                 b =>

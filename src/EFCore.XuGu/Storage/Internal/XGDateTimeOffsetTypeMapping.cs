@@ -39,7 +39,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
                     storeType,
                     StoreTypePostfix.Precision,
                     System.Data.DbType.DateTimeOffset,
-                    precision: precision),
+                    precision: null),
                 isDefaultValueCompatible)
         {
         }
@@ -80,26 +80,34 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
         {
             base.ConfigureParameter(parameter);
 
-            if (Size.HasValue
-                && Size.Value != -1)
+            if (parameter.Value is DateTimeOffset dateTimeOffset)
             {
-                parameter.Size = Size.Value;
+                // Format the DateTimeOffset to the desired string format
+                parameter.Value = dateTimeOffset.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff zzz");
             }
         }
 
         public override string GenerateProviderValueSqlLiteral([CanBeNull] object value)
-            => value == null
-                ? "NULL"
-                : GenerateNonNullSqlLiteral(
-                    value is DateTimeOffset dateTimeOffset
-                        ? dateTimeOffset.UtcDateTime
-                        : value);
+        {
+            if (value == null)
+            {
+                return "NULL";
+            }
+
+            if (value is DateTimeOffset dateTimeOffset)
+            {
+                // Use the specified format for DateTimeOffset
+                return $"'{dateTimeOffset.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff zzz")}'";
+            }
+
+            return GenerateNonNullSqlLiteral(value);
+        }
 
         /// <summary>
         ///     Gets the string format to be used to generate SQL literals of this type.
         /// </summary>
         protected override string SqlLiteralFormatString
-            => $"{(_isDefaultValueCompatible ? null : "TIMESTAMP ")}'{{0:{GetFormatString()}}}'";
+            => $"'{{0:{GetFormatString()}}}'";
 
         public virtual string GetFormatString()
             => GetDateTimeOffsetFormatString(Parameters.Precision);

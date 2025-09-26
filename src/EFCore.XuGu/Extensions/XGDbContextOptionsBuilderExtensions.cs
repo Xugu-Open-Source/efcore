@@ -358,5 +358,23 @@ namespace Microsoft.EntityFrameworkCore
 
             ((IDbContextOptionsBuilderInfrastructure)optionsBuilder).AddOrUpdateExtension(coreOptionsExtension);
         }
+
+        public static DbContextOptionsBuilder UseXG(
+            [NotNull] this DbContextOptionsBuilder optionsBuilder,
+            [CanBeNull] string connectionString,
+            [CanBeNull] Action<XGDbContextOptionsBuilder> xgOptionsAction = null)
+        {
+            Check.NotNull(optionsBuilder, nameof(optionsBuilder));
+            Check.NullButNotEmpty(connectionString, nameof(connectionString));
+
+            var extension = (XGOptionsExtension)GetOrCreateExtension(optionsBuilder)
+                .WithConnectionString(connectionString);
+
+            ((IDbContextOptionsBuilderInfrastructure)optionsBuilder).AddOrUpdateExtension(extension);
+            ConfigureWarnings(optionsBuilder);
+            xgOptionsAction?.Invoke(new XGDbContextOptionsBuilder(optionsBuilder));
+
+            return optionsBuilder;
+        }
     }
 }

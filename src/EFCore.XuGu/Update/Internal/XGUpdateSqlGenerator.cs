@@ -38,6 +38,8 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
                 ? AppendInsertReturningOperation(commandStringBuilder, command, commandPosition, out requiresTransaction)
                 : base.AppendInsertOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
 
+
+
         public virtual ResultSetMapping AppendBulkInsertOperation(
             StringBuilder commandStringBuilder,
             IReadOnlyList<IReadOnlyModificationCommand> modificationCommands,
@@ -52,16 +54,51 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
             var readOperations = modificationCommands[0].ColumnModifications.Where(o => o.IsRead).ToList();
             var writeOperations = modificationCommands[0].ColumnModifications.Where(o => o.IsWrite).ToList();
 
-            if (readOperations.Count == 0)
-            {
-                return AppendInsertMultipleRowsInSingleStatementOperation(commandStringBuilder, modificationCommands, writeOperations, out requiresTransaction);
-            }
+            //if (readOperations.Count == 0)
+            //{
+            //    var modifications = modificationCommands.GroupBy(o => o.Schema+"."+o.TableName);
+            //    foreach (var key in modifications.Select(i=>i.Key))
+            //    {
+            //        return AppendInsertMultipleRowsInSingleStatementOperation(commandStringBuilder, modifications.FirstOrDefault(i=>i.Key==key).ToArray(), writeOperations, out requiresTransaction);
+            //    }
+            //}
 
             requiresTransaction = modificationCommands.Count > 1;
+            int index = 0;
             foreach (var modification in modificationCommands)
             {
                 AppendInsertOperation(commandStringBuilder, modification, commandPosition, out var localRequiresTransaction);
                 requiresTransaction = requiresTransaction || localRequiresTransaction;
+                if (index < modificationCommands.Count - 1) commandStringBuilder.AppendLine("--GO");
+                index++;
+            }
+
+            return ResultSetMapping.LastInResultSet;
+        }
+
+        public virtual ResultSetMapping AppendBulkDeleteOperation(
+            StringBuilder commandStringBuilder,
+            IReadOnlyList<IReadOnlyModificationCommand> modificationCommands,
+            int commandPosition,
+            out bool requiresTransaction)
+        {
+            if (modificationCommands.Count == 1)
+            {
+                return AppendDeleteOperation(commandStringBuilder, modificationCommands[0], commandPosition, out requiresTransaction);
+            }
+
+            var readOperations = modificationCommands[0].ColumnModifications.Where(o => o.IsRead).ToList();
+            var writeOperations = modificationCommands[0].ColumnModifications.Where(o => o.IsWrite).ToList();
+
+
+            requiresTransaction = modificationCommands.Count > 1;
+            int index = 0;
+            foreach (var modification in modificationCommands)
+            {
+                AppendDeleteOperation(commandStringBuilder, modification, commandPosition, out var localRequiresTransaction);
+                requiresTransaction = requiresTransaction || localRequiresTransaction;
+                if (index < modificationCommands.Count - 1) commandStringBuilder.AppendLine("--GO");
+                index++;
             }
 
             return ResultSetMapping.LastInResultSet;
@@ -108,7 +145,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
             {
                 // An empty column and value list signales XuGu that only default values should be used.
                 // If not all columns have default values defined, an error occurs if STRICT_ALL_TABLES has been set.
-                commandStringBuilder.Append(" ()");
+                commandStringBuilder.Append(" DEFAULT");
             }
         }
 
@@ -133,7 +170,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
 
             if (operations.Count <= 0)
             {
-                commandStringBuilder.Append("()");
+                commandStringBuilder.Append("");
             }
         }
 
@@ -145,12 +182,72 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
                 ? AppendDeleteReturningOperation(commandStringBuilder, command, commandPosition, out requiresTransaction)
                 : base.AppendDeleteOperation(commandStringBuilder, command, commandPosition, out requiresTransaction);
 
+
+        protected override ResultSetMapping AppendInsertAndSelectOperation(
+            StringBuilder commandStringBuilder,
+            IReadOnlyModificationCommand command,
+            int commandPosition,
+            out bool requiresTransaction)
+        {
+            var name = command.TableName;
+            var schema = command.Schema;
+            var operations = command.ColumnModifications;
+
+            var writeOperations = operations.Where(o => o.IsWrite).ToList();
+            var readOperations = operations.Where(o => o.IsRead).ToList();
+
+            AppendInsertCommand(commandStringBuilder, name, schema, writeOperations, readOperations: Array.Empty<IColumnModification>());
+
+            if (readOperations.Count > 0)
+            {
+                var keyOperations = operations.Where(o => o.IsKey).ToList();
+
+                requiresTransaction = true;
+
+                return AppendSelectAffectedCommand(commandStringBuilder, name, schema, readOperations, keyOperations, commandPosition);
+            }
+
+            requiresTransaction = false;
+
+            return AppendSelectAffectedCountCommand(commandStringBuilder, name, schema, commandPosition);
+        }
+
+        protected override ResultSetMapping AppendUpdateAndSelectOperation(
+            StringBuilder commandStringBuilder,
+            IReadOnlyModificationCommand command,
+            int commandPosition,
+            out bool requiresTransaction)
+        {
+            var name = command.TableName;
+            var schema = command.Schema;
+            var operations = command.ColumnModifications;
+
+            var writeOperations = operations.Where(o => o.IsWrite).ToList();
+            var conditionOperations = operations.Where(o => o.IsCondition).ToList();
+            var readOperations = operations.Where(o => o.IsRead).ToList();
+
+            AppendUpdateCommand(commandStringBuilder, name, schema, writeOperations, Array.Empty<IColumnModification>(), conditionOperations);
+
+            if (readOperations.Count > 0)
+            {
+                var keyOperations = operations.Where(o => o.IsKey).ToList();
+
+                requiresTransaction = true;
+
+                return AppendSelectAffectedCommand(commandStringBuilder, name, schema, readOperations, keyOperations, commandPosition);
+            }
+
+            requiresTransaction = false;
+
+            return AppendSelectAffectedCountCommand(commandStringBuilder, name, schema, commandPosition);
+        }
+
+
         protected override ResultSetMapping AppendSelectAffectedCountCommand(StringBuilder commandStringBuilder, string name, string schema, int commandPosition)
         {
             commandStringBuilder
-                .Append("SELECT ROW_COUNT()")
-                .Append(SqlGenerationHelper.StatementTerminator).AppendLine()
-                .AppendLine();
+                .Append("SELECT ROWNUM")
+                .Append(SqlGenerationHelper.StatementTerminator).AppendLine().AppendLine("--GO");
 
             return ResultSetMapping.LastInResultSet | ResultSetMapping.ResultSetWithRowsAffectedOnly;
         }
@@ -164,7 +261,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
 
         protected override void AppendRowsAffectedWhereCondition(StringBuilder commandStringBuilder, int expectedRowsAffected)
             => commandStringBuilder
-                .Append("ROW_COUNT() = ")
+                .Append("ROWNUM = ")
                 .Append(expectedRowsAffected.ToString(CultureInfo.InvariantCulture));
 
         public override ResultSetMapping AppendStoredProcedureCall(
@@ -230,7 +327,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
                 commandStringBuilder.AppendLine(SqlGenerationHelper.StatementTerminator);
             }
 
-            commandStringBuilder.Append("CALL ");
+            commandStringBuilder.Append("EXECUTE IMMEDIATE 'EXEC ");
 
             // XuGu supports neither a return value nor a result set that gets returned from inside of a stored procedures. It only
             // supports output parameters to propagate values back to the caller.
@@ -270,7 +367,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
                         : commandParameterName);
             }
 
-            commandStringBuilder.Append(')');
+            commandStringBuilder.Append(");'");
             commandStringBuilder.AppendLine(SqlGenerationHelper.StatementTerminator);
 
             // The CALL has propagated any INOUT and OUT values back into our previously declared variables.
@@ -329,37 +426,24 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
         protected virtual string GetProcedureCallOutParameterVariableName(string commandParameterName)
             => "_out_" + commandParameterName;
 
-        protected override bool IsIdentityOperation(IColumnModification modification)
-        {
-            var isIdentityOperation = base.IsIdentityOperation(modification);
+        //protected override bool IsIdentityOperation(IColumnModification modification)
+        //{
+        //    var isIdentityOperation = base.IsIdentityOperation(modification);
 
-            if (isIdentityOperation &&
-                modification.Property is { } property)
-            {
-                var (tableName, schema) = GetTableNameAndSchema(modification, property);
-                var storeObject = StoreObjectIdentifier.Table(tableName, schema);
+        //    if (isIdentityOperation &&
+        //        modification.Property is { } property)
+        //    {
+        //        var (tableName, schema) = GetTableNameAndSchema(modification, property);
+        //        var storeObject = StoreObjectIdentifier.Table(tableName, schema);
 
-                return property.GetValueGenerationStrategy(storeObject) is XGValueGenerationStrategy.IdentityColumn;
-            }
+        //        return property.GetValueGenerationStrategy(storeObject) is XGValueGenerationStrategy.IdentityColumn;
+        //    }
 
-            return isIdentityOperation;
-        }
+        //    return isIdentityOperation;
+        //}
+        protected override bool IsIdentityOperation(IColumnModification modification) => modification.IsKey && modification.IsRead;
 
         public override void PrependEnsureAutocommit(StringBuilder commandStringBuilder)
-            => commandStringBuilder.Insert(0, $"SET AUTOCOMMIT = 1{SqlGenerationHelper.StatementTerminator}{Environment.NewLine}");
-
-        private static (string tableName, string schema) GetTableNameAndSchema(IColumnModification modification, IProperty property)
-        {
-            if (modification.Column?.Table is { } table)
-            {
-                return (table.Name, table.Schema);
-            }
-            else
-            {
-                // CHECK: Is this branch ever hit and then returns something different than null, or can we just rely on
-                // `modification.Column?.Table`?
-                return (property.DeclaringType.GetTableName(), property.DeclaringType.GetSchema());
-            }
-        }
+            => commandStringBuilder.Insert(0, $"SET AUTO_COMMIT ON{SqlGenerationHelper.StatementTerminator}{Environment.NewLine}");
     }
 }

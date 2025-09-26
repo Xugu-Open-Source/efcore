@@ -15,5 +15,11 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Update.Internal
             [NotNull] IReadOnlyList<IReadOnlyModificationCommand> modificationCommands,
             int commandPosition,
             out bool requiresTransaction);
+
+        ResultSetMapping AppendBulkDeleteOperation(
+            [NotNull] StringBuilder commandStringBuilder,
+            [NotNull] IReadOnlyList<IReadOnlyModificationCommand> modificationCommands,
+            int commandPosition,
+            out bool requiresTransaction);
     }
 }

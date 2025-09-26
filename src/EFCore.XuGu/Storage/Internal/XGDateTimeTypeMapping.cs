@@ -80,7 +80,7 @@ namespace Microsoft.EntityFrameworkCore.XuGu.Storage.Internal
         ///     Gets the string format to be used to generate SQL literals of this type.
         /// </summary>
         protected override string SqlLiteralFormatString
-            => $"{(_isDefaultValueCompatible ? null : "TIMESTAMP ")}'{{0:{GetFormatString()}}}'";
+            => $"'{{0:{GetFormatString()}}}'";
 
         public virtual string GetFormatString()
             => GetDateTimeFormatString(Parameters.Precision);
