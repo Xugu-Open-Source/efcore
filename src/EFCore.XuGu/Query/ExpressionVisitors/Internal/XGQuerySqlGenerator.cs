@@ -812,7 +812,7 @@ namespace EntityFrameworkCore.XuGu.Query.ExpressionVisitors.Internal
 
                 Visit(selectExpression.Limit);
             }
-            else if (selectExpression.Offset != null)
+            if (selectExpression.Offset != null)
             {
                 if (selectExpression.Limit == null)
                 {
