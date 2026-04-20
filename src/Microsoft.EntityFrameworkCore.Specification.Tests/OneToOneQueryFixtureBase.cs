@@ -33,14 +33,14 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
 
             context.Set<Address>().AddRange(address1, address2, address3);
 
-            var address21 = new Address2 { Id = "1", Street = "3 Dragons Way",PersonId=1, City = "Meereen" };
-            var address22 = new Address2 { Id = "2", Street = "42 Castle Black",PersonId=2, City = "The Wall" };
-            var address23 = new Address2 { Id = "3", Street = "House of Black and White",PersonId=3, City = "Braavos" };
+            var address21 = new Address2 { Id = "1", Street = "3 Dragons Way", City = "Meereen" };
+            var address22 = new Address2 { Id = "2", Street = "42 Castle Black", City = "The Wall" };
+            var address23 = new Address2 { Id = "3", Street = "House of Black and White", City = "Braavos" };
 
             context.Set<Person2>().AddRange(
-                new Person2 { Id = 1, Name = "Daenerys Targaryen", Address = address21 },
-                new Person2 { Id = 2, Name = "John Snow", Address = address22 },
-                new Person2 { Id = 3, Name = "Arya Stark", Address = address23 });
+                new Person2 { Name = "Daenerys Targaryen", Address = address21 },
+                new Person2 { Name = "John Snow", Address = address22 },
+                new Person2 { Name = "Arya Stark", Address = address23 });
 
             context.Set<Address2>().AddRange(address21, address22, address23);
 
@@ -75,8 +75,6 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
         public string Id { get; set; }
         public string Street { get; set; }
         public string City { get; set; }
-
-        public int PersonId { get; set; }
         public Person2 Resident { get; set; }
     }
 }

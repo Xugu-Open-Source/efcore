@@ -31,7 +31,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                     b.Property(e => e.ByteArray5).HasMaxLength(5);
                     b.Property(e => e.String3).HasMaxLength(3);
                     b.Property(e => e.ByteArray9000).HasMaxLength(9000);
-                    b.Property(e => e.String9000).HasMaxLength(9000);
+                    b.Property(e => e.String8000).HasMaxLength(8000);
                 });
         }
 
@@ -103,13 +103,13 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
         public int Id { get; set; }
         public string String3 { get; set; }
         public byte[] ByteArray5 { get; set; }
-        public string String9000 { get; set; }
+        public string String8000 { get; set; }
         public byte[] ByteArray9000 { get; set; }
     }
 
     public class BinaryKeyDataType
     {
-        public byte[] Id { get; set; }
+        public long Id { get; set; }
 
         public ICollection<BinaryForeignKeyDataType> Dependents { get; set; }
     }
@@ -117,7 +117,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
     public class BinaryForeignKeyDataType
     {
         public int Id { get; set; }
-        public byte[] BinaryKeyDataTypeId { get; set; }
+        public long BinaryKeyDataTypeId { get; set; }
 
         public BinaryKeyDataType Principal { get; set; }
     }

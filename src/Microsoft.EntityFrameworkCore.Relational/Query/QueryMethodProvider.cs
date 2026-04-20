@@ -141,9 +141,6 @@ namespace Microsoft.EntityFrameworkCore.Query
             {
                 if (enumerator.MoveNext())
                 {
-                    var test1 = typeof(TResult);
-                    var test2 = enumerator.Current[0].GetType();
-
                     return enumerator.Current[0] == null
                         ? default(TResult)
                         : (TResult)enumerator.Current[0];

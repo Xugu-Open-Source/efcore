@@ -4,9 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.ServiceModel.Description;
 using Microsoft.CodeAnalysis;
-using MetadataReference = Microsoft.CodeAnalysis.MetadataReference;
 
 #if NETSTANDARD1_6
 using Microsoft.Extensions.DependencyModel;

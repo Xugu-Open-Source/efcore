@@ -57,7 +57,6 @@ ORDER BY [o].[CustomerID]",
                 Sql);
         }
 
-        [Fact]
         public override void Include_reference_and_collection()
         {
             base.Include_reference_and_collection();
@@ -182,7 +181,6 @@ ORDER BY [o0].[OrderID]",
                 Sql);
         }
 
-        [Fact]
         public override void Include_collection_alias_generation()
         {
             base.Include_collection_alias_generation();

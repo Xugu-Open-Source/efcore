@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests.TestModels.Inheritan
         public Island FoundOn { get; set; }
     }
 
-    public enum Island : int
+    public enum Island : byte
     {
         North,
         South

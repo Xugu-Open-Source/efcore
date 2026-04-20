@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.0.0",
   "description": "In-memory database provider for Entity Framework Core (to be used for testing purposes).",
   "packOptions": {
@@ -23,10 +23,10 @@
     }
   },
   "dependencies": {
-    "Microsoft.EntityFrameworkCore": "1.0.0",
-    "Microsoft.Extensions.DependencyInjection": "1.0.0"
+    "Microsoft.EntityFrameworkCore": "1.0.0"
   },
   "frameworks": {
-    "net451": {}
+    "net451": {},
+    "netstandard1.3": {}
   }
 }

@@ -493,7 +493,9 @@ namespace Microsoft.EntityFrameworkCore.Relational.Tests.Migrations
 
             var batch = SqlGenerator.Generate(operation, modelBuilder.Model);
 
-            Sql = string.Join(EOL,batch.Select(b => b.CommandText));
+            Sql = string.Join(
+                "GO" + EOL + EOL,
+                batch.Select(b => b.CommandText));
         }
     }
 }

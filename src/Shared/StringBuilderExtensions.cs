@@ -86,31 +86,5 @@ namespace System.Text
 
             return stringBuilder;
         }
-
-        public static StringBuilder AppendJoin<T, TParam1, TParam2, TParam3>(
-            this StringBuilder stringBuilder,
-            IEnumerable<T> values,
-            TParam1 param1,
-            TParam2 param2,
-            TParam3 param3,
-            Action<StringBuilder, T, TParam1, TParam2, TParam3> joinAction,
-            string separator = ", ")
-        {
-            var appended = false;
-
-            foreach (var value in values)
-            {
-                joinAction(stringBuilder, value, param1, param2, param3);
-                stringBuilder.Append(separator);
-                appended = true;
-            }
-
-            if (appended)
-            {
-                stringBuilder.Length -= separator.Length;
-            }
-
-            return stringBuilder;
-        }
     }
 }

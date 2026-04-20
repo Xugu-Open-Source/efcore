@@ -331,7 +331,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                 os => os.Take(5).OrderBy(o => o.OrderID).Count());
         }
 
-        [ConditionalFact]
+        [Fact]
         public virtual void Any_predicate()
         {
             AssertQuery<Customer>(
@@ -5704,21 +5704,11 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
         {
             using (var context = CreateContext())
             {
-                if (asserter == null)
-                {
-                    TestHelpers.AssertResults(
-                    new[] { query(NorthwindData.Set<TItem>()) },
-                    new[] { query(context.Set<TItem>()) },
-                    assertOrder);
-                }
-                else
-                {
-                    TestHelpers.AssertResults(
+                TestHelpers.AssertResults(
                     new[] { query(NorthwindData.Set<TItem>()) },
                     new[] { query(context.Set<TItem>()) },
                     assertOrder,
                     (l2os, efs) => asserter(l2os.Single(), efs.Single()));
-                }
 
                 Assert.Equal(entryCount, context.ChangeTracker.Entries().Count());
             }

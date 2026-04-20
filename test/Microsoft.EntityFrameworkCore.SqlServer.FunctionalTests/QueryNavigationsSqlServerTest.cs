@@ -282,7 +282,6 @@ ORDER BY [o].[CustomerID]",
                 Sql);
         }
 
-        [Fact]
         public override void Select_Where_Navigation_Scalar_Equals_Navigation_Scalar_Projected()
         {
             base.Select_Where_Navigation_Scalar_Equals_Navigation_Scalar_Projected();
@@ -882,7 +881,6 @@ FROM [Orders] AS [o3]",
 
         }
 
-        [Fact]
         public override void Navigation_in_subquery_referencing_outer_query()
         {
             base.Navigation_in_subquery_referencing_outer_query();
@@ -913,7 +911,6 @@ ORDER BY [o].[CustomerID]",
                 Sql);
         }
 
-        [Fact]
         public override void Where_nav_prop_group_by()
         {
             base.Where_nav_prop_group_by();

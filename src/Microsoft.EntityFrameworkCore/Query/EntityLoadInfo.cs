@@ -45,10 +45,6 @@ namespace Microsoft.EntityFrameworkCore.Query
         ///      Materializes the data into an entity instance.
         /// </summary>
         /// <returns> The entity instance. </returns>
-        //public object Materialize() => _materializer(ValueBuffer);
-        public object Materialize()
-        {
-            return _materializer(ValueBuffer);
-        }
+        public object Materialize() => _materializer(ValueBuffer);
     }
 }

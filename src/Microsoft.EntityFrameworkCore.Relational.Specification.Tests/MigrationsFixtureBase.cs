@@ -80,11 +80,6 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                     migrationBuilder.Sql("CREATE DATABASE TransactionSuppressed", suppressTransaction: true);
                     migrationBuilder.Sql("DROP DATABASE TransactionSuppressed", suppressTransaction: true);
                 }
-                else if (ActiveProvider == "Microsoft.EntityFrameworkCore.XuGuDB")
-                {
-                    migrationBuilder.Sql("CREATE DATABASE IF NOT EXISTS `TransactionSuppressed`", suppressTransaction: true);
-                    migrationBuilder.Sql("DROP DATABASE IF EXISTS `TransactionSuppressed`", suppressTransaction: true);
-                }
             }
 
             protected override void Down(MigrationBuilder migrationBuilder)

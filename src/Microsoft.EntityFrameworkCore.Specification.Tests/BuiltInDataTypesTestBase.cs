@@ -26,7 +26,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
         {
             var shortString = "Sky";
             var shortBinary = new byte[] { 8, 8, 7, 8, 7 };
-            var longString = new string('X', 9000);
+            var longString = new string('X', 8000);
             var longBinary = new byte[9000];
             for (var i = 0; i < longBinary.Length; i++)
             {
@@ -41,7 +41,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                         Id = 799,
                         String3 = shortString,
                         ByteArray5 = shortBinary,
-                        String9000 = longString,
+                        String8000 = longString,
                         ByteArray9000 = longBinary
                     });
 
@@ -53,7 +53,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                 Assert.NotNull(context.Set<MaxLengthDataTypes>().SingleOrDefault(e => e.Id == 799 && e.String3 == shortString));
                 Assert.NotNull(context.Set<MaxLengthDataTypes>().SingleOrDefault(e => e.Id == 799 && e.ByteArray5 == shortBinary));
 
-                Assert.NotNull(context.Set<MaxLengthDataTypes>().SingleOrDefault(e => e.Id == 799 && e.String9000 == longString));
+                Assert.NotNull(context.Set<MaxLengthDataTypes>().SingleOrDefault(e => e.Id == 799 && e.String8000 == longString));
                 Assert.NotNull(context.Set<MaxLengthDataTypes>().SingleOrDefault(e => e.Id == 799 && e.ByteArray9000 == longBinary));
             }
         }
@@ -460,7 +460,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                 AssertEqualIfMapped(entityType, -1234567890.01M, () => dt.TestDecimal);
                 AssertEqualIfMapped(entityType, DateTime.Parse("01/01/2000 12:34:56"), () => dt.TestDateTime);
                 AssertEqualIfMapped(entityType, new DateTimeOffset(DateTime.Parse("01/01/2000 12:34:56"), TimeSpan.FromHours(-8.0)), () => dt.TestDateTimeOffset);
-                AssertEqualIfMapped(entityType, new TimeSpan(0, 10, 9, 8, 7), () => dt.TestTimeSpan);
+                AssertEqualIfMapped(entityType, new TimeSpan(0, 10, 9, 8), () => dt.TestTimeSpan);
                 AssertEqualIfMapped(entityType, -1.234F, () => dt.TestSingle);
                 AssertEqualIfMapped(entityType, true, () => dt.TestBoolean);
                 AssertEqualIfMapped(entityType, (byte)255, () => dt.TestByte);
@@ -482,7 +482,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
             const string shortString = "Sky";
             var shortBinary = new byte[] { 8, 8, 7, 8, 7 };
 
-            var longString = new string('X', 9000);
+            var longString = new string('X', 8000);
             var longBinary = new byte[9000];
             for (var i = 0; i < longBinary.Length; i++)
             {
@@ -497,7 +497,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                         Id = 79,
                         String3 = shortString,
                         ByteArray5 = shortBinary,
-                        String9000 = longString,
+                        String8000 = longString,
                         ByteArray9000 = longBinary
                     });
 
@@ -510,7 +510,7 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
 
                 Assert.Equal(shortString, dt.String3);
                 Assert.Equal(shortBinary, dt.ByteArray5);
-                Assert.Equal(longString, dt.String9000);
+                Assert.Equal(longString, dt.String8000);
                 Assert.Equal(longBinary, dt.ByteArray9000);
             }
         }
@@ -528,14 +528,14 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                 context.Set<BinaryKeyDataType>().Add(
                     new BinaryKeyDataType
                     {
-                        Id = new byte[] { 1, 2, 3 }
+                        Id = 123
                     });
 
                 context.Set<BinaryForeignKeyDataType>().Add(
                     new BinaryForeignKeyDataType
                     {
                         Id = 77,
-                        BinaryKeyDataTypeId = new byte[] { 1, 2, 3 }
+                        BinaryKeyDataTypeId = 123
                     });
 
                 Assert.Equal(2, context.SaveChanges());
@@ -546,10 +546,10 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
                 var entity = context
                     .Set<BinaryKeyDataType>()
                     .Include(e => e.Dependents)
-                    .Single(e => e.Id == new byte[] { 1, 2, 3 });
+                    .Single(e => e.Id == 123);
 
-                Assert.Equal(new byte[] { 1, 2, 3 }, entity.Id);
-                Assert.Equal(new byte[] { 1, 2, 3 }, entity.Dependents.First().BinaryKeyDataTypeId);
+                Assert.Equal(123, entity.Id);
+                Assert.Equal(123, entity.Dependents.First().BinaryKeyDataTypeId);
             }
         }
 

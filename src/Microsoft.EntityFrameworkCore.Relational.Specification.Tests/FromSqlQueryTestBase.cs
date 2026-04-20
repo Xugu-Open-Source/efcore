@@ -113,8 +113,8 @@ namespace Microsoft.EntityFrameworkCore.Specification.Tests
             using (var context = CreateContext())
             {
                 var actual
-                    = (from c in context.Set<Customer>().FromSql(@"SELECT * FROM ""Customers""")
-                       from o in context.Set<Order>().FromSql(@"SELECT * FROM ""Orders"" WHERE ""OrderDate"" BETWEEN {0} AND {1}",
+                    = (from c in context.Set<Customer>().FromSql(@"SELECT * FROM Customers")
+                       from o in context.Set<Order>().FromSql(@"SELECT * FROM Orders WHERE OrderDate BETWEEN {0} AND {1}",
                            startDate,
                            endDate)
                        where c.CustomerID == o.CustomerID

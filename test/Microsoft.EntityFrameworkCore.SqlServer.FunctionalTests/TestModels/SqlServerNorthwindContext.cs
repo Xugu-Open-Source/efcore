@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.FunctionalTests.TestModels
     public class SqlServerNorthwindContext : NorthwindContext
     {
         public static readonly string DatabaseName = StoreName;
-        public static readonly string ConnectionString = "Data Source=.;Initial Catalog=Northwind;Integrated Security=True";//SqlServerTestStore.CreateConnectionString(DatabaseName);
+        public static readonly string ConnectionString = SqlServerTestStore.CreateConnectionString(DatabaseName);
 
         public SqlServerNorthwindContext(DbContextOptions options)
             : base(options)
