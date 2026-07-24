@@ -111,3 +111,15 @@ Remaining on those classes: SEM/SQL + LINQ (Wave5 continued).
 Roughly **−130 fail rows** on native/compat if re-run isolated Functional matrix (66+28+38).
 Not yet re-run full 29-class suite after this commit.
 
+### Full matrix revalidation after Wave5 (`0963eb6`)
+
+Evidence: `E:/Work/Tests/entityframeworkcore-xugu-release-test/test-output/revalidation-local-tip-0963eb6/`
+
+| | tip `49a6751` | tip `0963eb6` | Δ |
+|--|-------------:|-------------:|--:|
+| Functional native fails | 513 | **380** | **−133** |
+| Functional compat fails | 513 | **380** | **−133** |
+| APPLY / E17010 / E19132 / E9016 fail rows | 66/28/38/1 | **0/0/0/0** | cleared |
+
+Remaining 380: LINQ 151 + SEMANTICS 154 + SQL_BASELINE 48 + OTHER/OVERRIDE/E5021.
+
