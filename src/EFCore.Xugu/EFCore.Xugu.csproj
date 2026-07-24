@@ -29,22 +29,26 @@
     <PackageReference Include="Xuguclient" VersionOverride="3.3.6-bionic" />
   </ItemGroup>
 
-  <!-- Native xugusql.dll: copy to output + NuGet runtimes folder when present (6.S2) -->
+  <!-- Local/dev: copy native xugusql beside output for real-DB tests. -->
+  <!-- Release pack (UseLocalXuguDriver=false): do NOT embed local xugusql.dll —
+       consumers must use Xuguclient package native assets to avoid dual-source conflicts. -->
   <ItemGroup Condition="'$(XuguNativeDllExists)' == 'true'">
     <None Include="$(XuguNativeDllPath)">
       <Link>xugusql.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Pack>true</Pack>
+      <Pack Condition="'$(UseLocalXuguDriver)' != 'false'">true</Pack>
+      <Pack Condition="'$(UseLocalXuguDriver)' == 'false'">false</Pack>
       <PackagePath>runtimes/win-x64/native/</PackagePath>
     </None>
   </ItemGroup>
 
-  <!-- linux-x64 native: pack when XuguNativeSoPath exists (10.205 鈥?blocked until driver ships .so) -->
+  <!-- linux-x64 native: pack only when local driver mode and .so exists (PLAT-02). -->
   <ItemGroup Condition="'$(XuguNativeSoExists)' == 'true'">
     <None Include="$(XuguNativeSoPath)">
       <Link>libxugusql.so</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Pack>true</Pack>
+      <Pack Condition="'$(UseLocalXuguDriver)' != 'false'">true</Pack>
+      <Pack Condition="'$(UseLocalXuguDriver)' == 'false'">false</Pack>
       <PackagePath>runtimes/linux-x64/native/</PackagePath>
     </None>
   </ItemGroup>

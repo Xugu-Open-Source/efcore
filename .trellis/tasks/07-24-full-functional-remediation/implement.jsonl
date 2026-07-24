@@ -1,0 +1,8 @@
+{"file": "docs/superpowers/specs/2026-07-23-release-acceptance-wave-a-design.md", "reason": "Prior Wave A baseline and constraints"}
+{"file": ".trellis/tasks/07-24-full-functional-remediation/design.md", "reason": "Approved six-wave full Functional remediation design"}
+{"file": ".trellis/tasks/07-24-full-functional-remediation/prd.md", "reason": "Locked Done definition, version, waves, no mid-push"}
+{"file": "docs/LIMITATIONS.md", "reason": "APPLY/E17010/E19132 hard-limit registry for Skip policy"}
+{"file": "docs/RELEASE-SCOPE.md", "reason": "Must upgrade from Wave A to full capability at Wave 6"}
+{"file": "docs/contracts/sql-dialect.contract.md", "reason": "Dialect contracts; UTF-8 cleanup in Wave 1"}
+{"file": "docs/references/xugudb-docs-map.md", "reason": "Locate from.md and system-view docs for E17010/E19132"}
+{"file": ".trellis/spec/guides/xugu-provider-constraints.md", "reason": "Hard constraints: Xugu docs authority, no external edits"}

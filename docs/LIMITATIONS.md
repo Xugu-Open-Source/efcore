@@ -203,7 +203,7 @@ SQL 生成见 `XuguQuerySqlGenerator`；验证见 `ExecuteDeleteTests` / `Execut
 | 导航 JOIN UPDATE（`o.Customer.City`） | **拒绝**（生成 CROSS，E19132） | 用 FK 谓词代替 |
 | FK 谓词单表 ExecuteUpdate | **支持** | `Single_table_ExecuteUpdate_by_fk_filter_*` |
 | `ORDER BY` / `LIMIT` / `DISTINCT` / `GROUP BY` 源 | **拒绝**（翻译或服务器错误） | `ExecuteBulkBoundaryTests` / Execute*Tests |
-| `CROSS APPLY` / `OUTER APPLY` / `LATERAL` | **拒绝**（`XuguStrings.ApplyNotSupported`；实库 E19132） | Northwind BulkUpdates `*_apply_*`；Functional **~120** 覆盖 APPLY/LATERAL 的 override 已 `[Skip]`（Wave A Task 6）；`from.md` 无 APPLY/LATERAL |
+| `CROSS APPLY` / `OUTER APPLY` / `LATERAL` | **拒绝**（`XuguStrings.ApplyNotSupported`；实库 E19132） | Northwind BulkUpdates `*_apply_*`；Functional APPLY/LATERAL overrides 已 `[Skip]`（含 TPC ManyToMany residual 3 methods × tracking/no-tracking）；`from.md` 无 APPLY/LATERAL |
 | `UPDATE`/`DELETE` … `CROSS JOIN` | **拒绝**（实库 E19132 unexpected CROSS；SELECT 侧 `CROSS JOIN` 有文档） | Northwind BulkUpdates `*_cross_join_*` 负向断言 |
 
 需要上述能力时请使用常规 `SaveChanges` 或显式 SQL。
@@ -261,7 +261,8 @@ CLR `Guid` 默认映射 XuguDB 原生 `GUID`（16 字节），非 MySQL 风格 `
 | **NuGet 依赖** | 发布包 nuspec 依赖 **`Xuguclient`**（pack 时 `UseLocalXuguDriver=false`，当前 `VersionOverride=3.3.6-bionic`） |
 | **托管层** | `XuguClient.dll` 由 `Xuguclient` 包还原 |
 | **原生层** | P/Invoke 加载 `xugusql.dll`（Windows）或 `libxugusql.so`（Linux，若存在） |
-| **双源行为** | 仓库可在 `runtimes/win-x64/native/` **嵌入**本地 `xugusql.dll`（`XuguNativeDllPath` / `NativeAssets.props`）；**NuGet 还原时 `Xuguclient` 包内资产优先**，可能与本地嵌入版本不同 — 以消费方还原结果为准 |
+| **发布包 native 策略（9.0.0 Wave1）** | `dotnet pack -p:UseLocalXuguDriver=false` **不再**把仓库本地 `xugusql.dll` 打进 Provider nupkg；消费方只使用 **`Xuguclient` 传递依赖** 自带的 native 资产 |
+| **本地开发构建** | `UseLocalXuguDriver` 默认 true：仍可把 `XuguNativeDllPath` 的 `xugusql.dll` **复制到输出目录**并可选打进本地调试包；**不等于**发布包策略 |
 | **Wave A 范围** | **仅 Windows x64 已验收**；连接串须含 `CHAR_SET=UTF8`（驱动默认 GBK 会导致中文/重音乱码） |
 
 **预备**：`NativeAssets.props` + `EFCore.Xugu.csproj` 条件 `runtimes/linux-x64/native/` 打包（`.so` 存在时自动启用）。`Xuguclient` **3.3.6-bionic** 预发布包**可能**含 Linux `.so` 资产，但 **Wave A 未在 Linux 实库验收**，**不得**据此宣称 Linux 生产就绪。

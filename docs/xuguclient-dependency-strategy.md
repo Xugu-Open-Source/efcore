@@ -138,11 +138,11 @@ scripts/publish-nuget.ps1 -Pack -Push
 | 项 | 说明 |
 |----|------|
 | 文件 | `xugusql.dll`（Windows x64） |
-| 打包路径 | `runtimes/win-x64/native/xugusql.dll`（NuGet 包内） |
-| 构建属性 | `XuguNativeDllPath` / `XUGU_NATIVE_DLL_PATH` 环境变量 |
-| 运行时 | 须能被进程加载（输出目录或 PATH） |
+| 本地调试 | `XuguNativeDllPath` / `XUGU_NATIVE_DLL_PATH`：存在时复制到输出目录（`CopyToOutputDirectory`） |
+| 发布 pack | `UseLocalXuguDriver=false` 时 **`Pack=false`**：Provider nupkg **不**嵌入仓库本地 `xugusql.dll`，避免与 `Xuguclient` 包内 native 双源冲突 |
+| 消费方运行时 | 使用 `Xuguclient` 传递依赖中的 `runtimes/win-x64/native/xugusql.dll`（或手动部署匹配版本） |
 
-`Directory.Build.props` 通过 `NativeAssets.props` 检测 DLL 是否存在；缺失时跳过 native 打包（本地无 DLL 仍可编译，但实库测试可能失败）。
+`Directory.Build.props` 通过 `NativeAssets.props` 检测 DLL 是否存在；缺失时跳过本地 native 复制（本地无 DLL 仍可编译，但实库测试可能失败）。
 
 ---
 

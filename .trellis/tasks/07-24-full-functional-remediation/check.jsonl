@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/07-24-full-functional-remediation/prd.md", "reason": "Acceptance: Functional 0 FAIL, local-only mid commits, final v9.0.0 overwrite"}
+{"file": ".trellis/tasks/07-24-full-functional-remediation/design.md", "reason": "Per-wave gates and out-of-scope boundaries"}
+{"file": ".trellis/tasks/07-24-full-functional-remediation/implement.md", "reason": "Wave checklist and validation commands"}
+{"file": "docs/LIMITATIONS.md", "reason": "Skip set must match documented hard limits only"}
+{"file": "docs/RELEASE-SCOPE.md", "reason": "Final scope text must match definition A full capability"}

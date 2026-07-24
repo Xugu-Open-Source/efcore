@@ -66,7 +66,7 @@ Microsoft.EntityFrameworkCore.Xugu  →  Xuguclient (XuguClient.dll)  →  xugus
 1. **NuGet 还原（推荐）**：安装 Provider 后，`Xuguclient` 作为传递依赖还原；`runtimes/win-x64/native/xugusql.dll` 随应用输出目录复制。
 2. **手动复制**：若运行时提示找不到 DLL，将与 `Xuguclient` 版本匹配的 `xugusql.dll` 复制到 `.exe` 同目录。
 
-**双源注意**：从源码构建时，仓库可能在 `runtimes/win-x64/native/` **嵌入**本地 `xugusql.dll`；**NuGet 消费方以 `Xuguclient` 包内资产为准**，可能与仓库嵌入版本不同。详见 [xuguclient-dependency-strategy.md](xuguclient-dependency-strategy.md)。
+**发布包 native 策略**：`dotnet pack -p:UseLocalXuguDriver=false` **不**把仓库本地 `xugusql.dll` 打进 Provider nupkg；NuGet 消费方只使用 **`Xuguclient` 传递依赖** 中的 native 资产。本地源码调试仍可把 `XuguNativeDllPath` 的 DLL 复制到输出目录。详见 [xuguclient-dependency-strategy.md](xuguclient-dependency-strategy.md)。
 
 **字符集**：连接串务必含 `CHAR_SET=UTF8`（或 `CHARSET=UTF8`）。驱动在省略时默认 GBK，会导致中文与欧洲重音字符乱码。
 
