@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.TestUtilities;
 using Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
@@ -16,6 +17,15 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
         {
             //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
         }
+
+        [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
+        public override Task Distinct_over_owned_collection(bool async)
+            => base.Distinct_over_owned_collection(async);
+
+        [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
+        public override Task Union_over_owned_collection(bool async)
+            => base.Union_over_owned_collection(async);
+
 
         public class OwnedQueryXuguFixture : RelationalOwnedQueryFixture
         {

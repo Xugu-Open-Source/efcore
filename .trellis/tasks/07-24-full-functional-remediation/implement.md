@@ -27,9 +27,9 @@
 
 ### Wave 3 — E17010
 
-- [ ] Confirm dialect rules via docs map (`from.md` etc.).
-- [ ] For each cluster: rewrite SQL **or** Skip + LIMITATIONS anchor.
-- [ ] Validate: E17010 no longer unregistered FAIL.
+- [x] Confirm dialect rules via docs map (`from.md` etc.).
+- [x] For each cluster: rewrite SQL **or** Skip + LIMITATIONS anchor.
+- [x] Validate: E17010 methods Skip-attributed + LIMITATIONS/contract anchors; Functional build green (live filter deferred, DB down).
 - [ ] **Local commit**.
 
 ### Wave 4 — E19132

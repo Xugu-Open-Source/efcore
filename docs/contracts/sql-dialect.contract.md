@@ -463,3 +463,14 @@ CREATE TABLE t1(c1 INTEGER IDENTITY(1, 1));
 | 2026-07-09 | Phase 12 W5：ROW_COUNT **signed-off blocked**：2.509/PLAT-01：2.501 复验 E10049）；Linux RID **signed-off**（PLAT-02）；`PlatformLimitationProbeTests` | Platform / Testing |
 | 2026-07-08 | Phase 11 W1：方言权威声明强化；JSON § 扩展�11.109 实现脚手架；COMPATIBLE_MODE 标注为可选开发便�| Docs |
 | 2026-07-08 | Phase 10 Wave 6：0.108）：JSON 原生类型 + 函数已确认；Provider defer 10.109 �Phase 11 | Orchestrator |
+
+## FROM 相关子查询（E17010）
+
+| 项 | 规则 |
+|----|------|
+| 错误 | 实库 `[E17010] From部份的子查询不能使用上级查询的表达式` |
+| 规则 | **FROM** 子查询不得引用上级查询表达式（非相关派生表） |
+| 文档 | `reference/sql/select/subquery.md`（表子查询）；`from.md`（`select_with_parens` 数据源） |
+| Provider | 不生成 APPLY/LATERAL；已知 Functional 用例 Skip |
+| 登记日期 | 2026-07-24 Wave3 |
+

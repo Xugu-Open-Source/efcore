@@ -625,6 +625,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_firstordefault_boolean(bool async)
     {
         await base.Where_subquery_distinct_firstordefault_boolean(async);
@@ -632,6 +633,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_firstordefault_boolean_with_pushdown(bool async)
     {
         await base.Where_subquery_distinct_firstordefault_boolean_with_pushdown(async);
@@ -639,6 +641,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_first_boolean(bool async)
     {
         await base.Where_subquery_distinct_first_boolean(async);
@@ -646,6 +649,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_singleordefault_boolean1(bool async)
     {
         await base.Where_subquery_distinct_singleordefault_boolean1(async);
@@ -659,6 +663,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_singleordefault_boolean_with_pushdown(bool async)
     {
         await base.Where_subquery_distinct_singleordefault_boolean_with_pushdown(async);
@@ -666,6 +671,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_lastordefault_boolean(bool async)
     {
         await base.Where_subquery_distinct_lastordefault_boolean(async);
@@ -673,6 +679,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_last_boolean(bool async)
     {
         await base.Where_subquery_distinct_last_boolean(async);
@@ -680,6 +687,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_orderby_firstordefault_boolean(bool async)
     {
         await base.Where_subquery_distinct_orderby_firstordefault_boolean(async);
@@ -687,6 +695,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_distinct_orderby_firstordefault_boolean_with_pushdown(bool async)
     {
         await base.Where_subquery_distinct_orderby_firstordefault_boolean_with_pushdown(async);
@@ -694,6 +703,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_union_firstordefault_boolean(bool async)
     {
         await base.Where_subquery_union_firstordefault_boolean(async);
@@ -701,6 +711,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_join_firstordefault_boolean(bool async)
     {
         await base.Where_subquery_join_firstordefault_boolean(async);
@@ -708,6 +719,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_left_join_firstordefault_boolean(bool async)
     {
         await base.Where_subquery_left_join_firstordefault_boolean(async);
@@ -715,6 +727,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Where_subquery_concat_firstordefault_boolean(bool async)
     {
         await base.Where_subquery_concat_firstordefault_boolean(async);
@@ -746,6 +759,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Select_navigation_with_concat_and_count(bool async)
     {
         await base.Select_navigation_with_concat_and_count(async);
@@ -753,6 +767,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Concat_with_collection_navigations(bool async)
     {
         await base.Concat_with_collection_navigations(async);
@@ -760,6 +775,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Union_with_collection_navigations(bool async)
     {
         await base.Union_with_collection_navigations(async);
@@ -767,6 +783,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Select_subquery_distinct_firstordefault(bool async)
     {
         await base.Select_subquery_distinct_firstordefault(async);
@@ -2007,6 +2024,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
             // AssertSql deferred (Wave1: result assertions only)
     }
 
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Order_by_entity_qsre_composite_key(bool async)
     {
         await base.Order_by_entity_qsre_composite_key(async);
@@ -2236,6 +2254,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Select_subquery_distinct_singleordefault_boolean1(bool async)
     {
         await base.Select_subquery_distinct_singleordefault_boolean1(async);
@@ -2249,6 +2268,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Select_subquery_distinct_singleordefault_boolean_with_pushdown(bool async)
     {
         await base.Select_subquery_distinct_singleordefault_boolean_with_pushdown(async);
@@ -2256,6 +2276,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Select_subquery_distinct_singleordefault_boolean_empty1(bool async)
     {
         await base.Select_subquery_distinct_singleordefault_boolean_empty1(async);
@@ -2269,6 +2290,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
     }
 
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Select_subquery_distinct_singleordefault_boolean_empty_with_pushdown(bool async)
     {
         await base.Select_subquery_distinct_singleordefault_boolean_empty_with_pushdown(async);
@@ -2581,6 +2603,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
             // AssertSql deferred (Wave1: result assertions only)
     }
 
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Include_with_complex_order_by(bool async)
     {
         await base.Include_with_complex_order_by(async);
@@ -3170,6 +3193,7 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
             // AssertSql deferred (Wave1: result assertions only)
     }
 
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
     public override async Task Groupby_anonymous_type_with_navigations_followed_up_by_anonymous_projection_and_orderby(bool async)
     {
         await base.Groupby_anonymous_type_with_navigations_followed_up_by_anonymous_projection_and_orderby(async);
@@ -4080,6 +4104,11 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
         await base.Where_subquery_equality_to_null_without_composite_key_should_match_null(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
+
+    [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
+    public override Task Non_string_concat_uses_appropriate_type_mapping(bool async)
+        => base.Non_string_concat_uses_appropriate_type_mapping(async);
+
 
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);

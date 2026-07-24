@@ -32,6 +32,7 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
         }
 
         [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterReferenceInMultiLevelSubquery))]
+        [ConditionalTheory(Skip = "XuguDB E17010: FROM subquery cannot reference outer query (docs: reference/sql/select/subquery.md table subquery; server [E17010]).")]
         public override Task Contains_with_subquery_optional_navigation_and_constant_item(bool async)
         {
             return base.Contains_with_subquery_optional_navigation_and_constant_item(async);
