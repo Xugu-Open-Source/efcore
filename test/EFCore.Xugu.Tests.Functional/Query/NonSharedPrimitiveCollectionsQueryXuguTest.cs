@@ -2,11 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 using System;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.TestUtilities;
 using Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.TestUtilities;
 using Microsoft.EntityFrameworkCore.Xugu.Infrastructure;
 using Microsoft.EntityFrameworkCore.Xugu.Tests;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query;
@@ -213,6 +215,38 @@ public class NonSharedPrimitiveCollectionsQueryXuguTest : NonSharedPrimitiveColl
 
     protected override ITestStoreFactory TestStoreFactory
         => XuguRelationalTestStoreFactory.Instance;
+
+    protected override IServiceCollection AddServices(IServiceCollection serviceCollection)
+        => XuguFunctionalTestHelpers.AddModelCacheKey(base.AddServices(serviceCollection), StoreName);
+
+    protected override Task<ContextFactory<TContext>> InitializeAsync<TContext>(
+        Action<ModelBuilder>? onModelCreating = null,
+        Action<DbContextOptionsBuilder>? onConfiguring = null,
+        Func<IServiceCollection, IServiceCollection>? addServices = null,
+        Action<ModelConfigurationBuilder>? configureConventions = null,
+        Func<TContext, Task>? seed = null,
+        Func<string, bool>? shouldLogCategory = null,
+        Func<Task<TestStore>>? createTestStore = null,
+        bool usePooling = true,
+        bool useServiceProvider = true)
+    {
+        Action<ModelBuilder> wrappedModel = mb =>
+        {
+            onModelCreating?.Invoke(mb);
+            XuguFunctionalTestHelpers.ApplyTablePrefix(mb, StoreName);
+        };
+
+        return base.InitializeAsync(
+            wrappedModel,
+            onConfiguring,
+            addServices,
+            configureConventions,
+            seed,
+            shouldLogCategory,
+            createTestStore,
+            usePooling,
+            useServiceProvider);
+    }
 }
 
 

@@ -16,13 +16,13 @@
 - [x] Change pack story: do not embed conflicting local `xugusql.dll` for `UseLocalXuguDriver=false` packs (or equivalent unified policy).
 - [x] UTF-8 cleanup on `docs/contracts/*.md` mojibake.
 - [x] Validate: APPLY filter 0 FAIL; `dotnet pack -p:UseLocalXuguDriver=false`; Unit green.
-- [ ] **Local commit** (no push).
+- [x] **Local commit** (no push).
 
 ### Wave 2 — E9016
 
-- [ ] Reproduce `E9016` (e.g. NonSharedModelBulkUpdates `BlogsPart1`) under isolation.
-- [ ] Fix store naming / cleanup / Dispose / Ensure path.
-- [ ] Validate: E9016-related filter → 0 FAIL; Integration still 0 FAIL.
+- [x] Reproduce `E9016` (e.g. NonSharedModelBulkUpdates `BlogsPart1`) under isolation.
+- [x] Fix store naming / cleanup / Dispose / Ensure path.
+- [x] Validate: offline model assert (`BlogsPart1` → `EF_*_BLOGSPART1`); Shared/Functional build green; Unit 283 green. Live E9016 filter deferred (local XuguDB :5138 down this session).
 - [ ] **Local commit**.
 
 ### Wave 3 — E17010

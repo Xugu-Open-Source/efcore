@@ -1,9 +1,13 @@
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Microsoft.EntityFrameworkCore.Xugu.Tests.TestUtilities;
 
 /// <summary>
 /// Applies per-store table/view prefixes for EF Specification Tests hosted against shared SYSTEM database.
+/// Also renames entity-splitting / table-mapping fragments (e.g. SplitToTable "BlogsPart1") so DROP/CREATE
+/// cleanup by store prefix can isolate NonShared suites and avoid E9016 collisions.
 /// </summary>
 public static class XuguTestModelExtensions
 {
@@ -60,27 +64,86 @@ public static class XuguTestModelExtensions
             var tableName = entityType.GetTableName();
             if (!string.IsNullOrEmpty(tableName))
             {
-                var normalized = tableName.ToUpperInvariant();
-                if (!normalized.StartsWith(prefix, StringComparison.Ordinal))
-                {
-                    normalized = prefix + normalized;
-                }
-
-                entityType.SetTableName(normalized);
+                entityType.SetTableName(PrefixIfNeeded(tableName, prefix));
             }
 
             var viewName = entityType.GetViewName();
             if (!string.IsNullOrEmpty(viewName) && entityType.BaseType is null)
             {
-                var normalized = viewName.ToUpperInvariant();
-                if (!normalized.StartsWith(prefix, StringComparison.Ordinal))
+                entityType.SetViewName(PrefixIfNeeded(viewName, prefix));
+            }
+
+            PrefixMappingFragments(entityType, prefix);
+        }
+    }
+
+    private static void PrefixMappingFragments(IMutableEntityType entityType, string prefix)
+    {
+        // Materialize first — Remove/GetOrCreate mutates the fragment collection.
+        var fragments = entityType.GetMappingFragments(StoreObjectType.Table).ToList();
+        if (fragments.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var fragment in fragments)
+        {
+            var oldStoreObject = fragment.StoreObject;
+            var oldName = oldStoreObject.Name;
+            if (string.IsNullOrEmpty(oldName))
+            {
+                continue;
+            }
+
+            var newName = PrefixIfNeeded(oldName, prefix);
+            if (string.Equals(oldName, newName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var newStoreObject = StoreObjectIdentifier.Table(newName, oldStoreObject.Schema);
+            var excluded = fragment.IsTableExcludedFromMigrations;
+
+            // Preserve per-table property overrides (column names on the split fragment).
+            var propertyMoves = new List<(IMutableProperty Property, string? ColumnName)>();
+            foreach (var property in entityType.GetProperties())
+            {
+                var overrides = property.FindOverrides(in oldStoreObject);
+                if (overrides is null)
                 {
-                    normalized = prefix + normalized;
+                    continue;
                 }
 
-                entityType.SetViewName(normalized);
+                propertyMoves.Add((property, property.GetColumnName(in oldStoreObject)));
+            }
+
+            entityType.RemoveMappingFragment(in oldStoreObject);
+            var created = entityType.GetOrCreateMappingFragment(in newStoreObject);
+            if (excluded is not null)
+            {
+                created.IsTableExcludedFromMigrations = excluded;
+            }
+
+            foreach (var (property, columnName) in propertyMoves)
+            {
+                property.RemoveOverrides(in oldStoreObject);
+                if (!string.IsNullOrEmpty(columnName))
+                {
+                    property.SetColumnName(columnName, in newStoreObject);
+                }
             }
         }
+    }
+
+    private static string PrefixIfNeeded(string name, string prefix)
+    {
+        var normalized = name.ToUpperInvariant();
+        if (!normalized.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            normalized = prefix + normalized;
+        }
+
+        return normalized;
     }
 
     private static bool IsTphDerived(IMutableEntityType entityType)
