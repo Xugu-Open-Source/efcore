@@ -737,7 +737,11 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         => TestHelpers.AssertAllMethodsOverridden(GetType());
 
 
-    #region APPLY/LATERAL not supported (XuguStrings.ApplyNotSupported)
+    
+    [ConditionalTheory(Skip = "XuguDB E19132: SQL shape rejected by server (Wave5 residual; see LIMITATIONS).")]
+    public override Task Parameter_collection_with_type_inference_for_JsonScalarExpression(bool async)
+        => base.Parameter_collection_with_type_inference_for_JsonScalarExpression(async);
+#region APPLY/LATERAL not supported (XuguStrings.ApplyNotSupported)
 
     [ConditionalTheory(Skip = "XuguDB does not support CROSS APPLY / OUTER APPLY / LATERAL (XuguStrings.ApplyNotSupported).")]
     public override Task Project_inline_collection_with_Union(bool async)

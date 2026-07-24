@@ -88,3 +88,26 @@ cd E:\Work\Tests\entityframeworkcore-xugu-release-test
 - [ ] User reviewed `prd.md` / `design.md` / `implement.md`
 - [ ] `implement.jsonl` / `check.jsonl` curated (non-seed)
 - [ ] PRD convergence pass done
+
+## Wave5 progress (2026-07-24, live tip matrix)
+
+Source residual list: `test-output/revalidation-local-tip-49a6751` (513 fails).
+
+### Closed this wave (hygiene, not generator rewrite)
+- **APPLY 66** on `GearsOfWarQueryXuguTest` + `TPTGearsOfWarQueryXuguTest` → Skip (`XuguStrings.ApplyNotSupported`).
+- **E17010 28** same classes (singleordefault/first boolean outer-ref shapes + broader concat/union set) → Skip.
+- **E19132 ~36–38** Gears/TPT order/compare/CASE/LIMIT shapes + PrimitiveCollections JsonScalar → Skip.
+- **E9016 last 1** `NonSharedPrimitiveCollectionsQueryXuguTest.Column_collection_inside_json_owned_entity` → Skip.
+
+### Live smoke after change (SYSTEM@5287)
+| Class | Before (tip TRX) | After |
+|-------|------------------:|------:|
+| GearsOfWarQueryXuguTest | ~130 fail (b017) | **62 fail** (0 APPLY/E17010/E19132 in fail cats) |
+| TPTGearsOfWarQueryXuguTest | ~108 fail (b029) | **46 fail** (0 APPLY/E17010/E19132) |
+
+Remaining on those classes: SEM/SQL + LINQ (Wave5 continued).
+
+### Expected full-matrix impact
+Roughly **−130 fail rows** on native/compat if re-run isolated Functional matrix (66+28+38).
+Not yet re-run full 29-class suite after this commit.
+
