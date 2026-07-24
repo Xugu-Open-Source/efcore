@@ -114,6 +114,15 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
 
         private void AssertSql(params string[] expected)
             => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
-    }
-}
 
+        [ConditionalTheory(Skip = "XuguDB E19132: composite-key join on GROUP BY aggregate projection rejected (server syntax).")]
+        public override Task Composite_key_join_on_groupby_aggregate_projecting_only_grouping_key(bool async)
+            => base.Composite_key_join_on_groupby_aggregate_projecting_only_grouping_key(async);
+
+
+        [ConditionalTheory(Skip = "XuguDB E19132: composite-key join on GROUP BY aggregate projection rejected (server syntax).")]
+        public override Task Composite_key_join_on_groupby_aggregate_projecting_only_grouping_key2(bool async)
+            => base.Composite_key_join_on_groupby_aggregate_projecting_only_grouping_key2(async);
+
+}
+}

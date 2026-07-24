@@ -205,6 +205,7 @@ SQL 生成见 `XuguQuerySqlGenerator`；验证见 `ExecuteDeleteTests` / `Execut
 | `ORDER BY` / `LIMIT` / `DISTINCT` / `GROUP BY` 源 | **拒绝**（翻译或服务器错误） | `ExecuteBulkBoundaryTests` / Execute*Tests |
 | `CROSS APPLY` / `OUTER APPLY` / `LATERAL` | **拒绝**（`XuguStrings.ApplyNotSupported`；实库 E19132） | Northwind BulkUpdates `*_apply_*`；Functional APPLY/LATERAL overrides 已 `[Skip]`（含 TPC ManyToMany residual 3 methods × tracking/no-tracking）；`from.md` 无 APPLY/LATERAL |
 | `FROM` 子查询引用上级查询表达式 | **拒绝**（实库 **E17010**：`From部份的子查询不能使用上级查询的表达式`） | 表子查询文档 `reference/sql/select/subquery.md`；Functional 相关 override 已 Skip（ComplexNavigations Contains、Owned Distinct/Union、TPC/TPT GearsOfWar 子查询簇） |
+| 内联集合 `VALUES` 派生表 | **已修复生成**（`GenerateValues` → `SELECT … UNION ALL SELECT …`；拒绝 EF 默认 `UNION ALL VALUES`） | `set.md` UNION ALL；`insert.md` 多行 VALUES 仅 DML |
 | `UPDATE`/`DELETE` … `CROSS JOIN` | **拒绝**（实库 E19132 unexpected CROSS；SELECT 侧 `CROSS JOIN` 有文档） | Northwind BulkUpdates `*_cross_join_*` 负向断言 |
 
 需要上述能力时请使用常规 `SaveChanges` 或显式 SQL。

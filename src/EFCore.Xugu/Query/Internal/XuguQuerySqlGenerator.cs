@@ -166,6 +166,59 @@ public class XuguQuerySqlGenerator : QuerySqlGenerator
         }
     }
 
+    /// <summary>
+    /// EF Core default emits <c>SELECT … UNION ALL VALUES (…), (…)</c>, which Xugu rejects with
+    /// E19132 (unexpected VALUES). Use portable <c>UNION ALL SELECT</c> row expansion instead
+    /// (docs: set.md UNION ALL; insert.md multi-row VALUES is DML-only).
+    /// </summary>
+    protected override void GenerateValues(ValuesExpression valuesExpression)
+    {
+        if (valuesExpression.RowValues is null)
+        {
+            throw new InvalidOperationException(
+                "ValuesExpression.ValuesParameter must be expanded to constants before SQL generation.");
+        }
+
+        var rowValues = valuesExpression.RowValues;
+        if (rowValues.Count == 0)
+        {
+            throw new InvalidOperationException(RelationalStrings.EmptyCollectionNotSupportedAsInlineQueryRoot);
+        }
+
+        Sql.Append("SELECT ");
+
+        var firstRowValues = rowValues[0].Values;
+        for (var i = 0; i < firstRowValues.Count; i++)
+        {
+            if (i > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Visit(firstRowValues[i]);
+
+            Sql
+                .Append(AliasSeparator)
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(valuesExpression.ColumnNames[i]));
+        }
+
+        for (var r = 1; r < rowValues.Count; r++)
+        {
+            Sql.Append(" UNION ALL SELECT ");
+
+            var values = rowValues[r].Values;
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (i > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(values[i]);
+            }
+        }
+    }
+
     protected override Expression VisitColumn(ColumnExpression columnExpression)
     {
         if (_removeTableAliasOld is not null

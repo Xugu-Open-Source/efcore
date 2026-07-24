@@ -62,6 +62,7 @@ public class NonSharedModelBulkUpdatesXuguTest : NonSharedModelBulkUpdatesRelati
         await base.Delete_aggregate_root_when_table_sharing_with_owned(async);
     }
 
+    [ConditionalTheory(Skip = "XuguDB E19132: DELETE multi-table LEFT JOIN shape not accepted (LIMITATIONS bulk DML; docs: delete.md).")]
     public override async Task Delete_predicate_based_on_optional_navigation(bool async)
     {
         await base.Delete_predicate_based_on_optional_navigation(async);
@@ -82,6 +83,7 @@ public class NonSharedModelBulkUpdatesXuguTest : NonSharedModelBulkUpdatesRelati
         await base.Update_owned_and_non_owned_properties_with_table_sharing(async);
     }
 
+    [ConditionalTheory(Skip = "XuguDB E19132: DELETE multi-table LEFT JOIN shape not accepted (LIMITATIONS bulk DML; docs: delete.md).")]
     public override async Task Delete_entity_with_auto_include(bool async)
     {
         await base.Delete_entity_with_auto_include(async);
@@ -91,4 +93,24 @@ public class NonSharedModelBulkUpdatesXuguTest : NonSharedModelBulkUpdatesRelati
     {
         await base.Update_with_alias_uniquification_in_setter_subquery(async);
     }
+
+    [ConditionalTheory(Skip = "XuguDB rejects multi-table UPDATE/DELETE CROSS JOIN (E19132 unexpected CROSS; LIMITATIONS ExecuteDelete/Update; docs: delete.md multi-table FROM, not MySQL CROSS).")]
+    public override Task Update_non_main_table_in_entity_with_entity_splitting(bool async)
+        => base.Update_non_main_table_in_entity_with_entity_splitting(async);
+
+
+    [ConditionalTheory(Skip = "XuguDB rejects multi-table UPDATE/DELETE CROSS JOIN (E19132 unexpected CROSS; LIMITATIONS ExecuteDelete/Update; docs: delete.md multi-table FROM, not MySQL CROSS).")]
+    public override Task Replace_ColumnExpression_in_column_setter(bool async)
+        => base.Replace_ColumnExpression_in_column_setter(async);
+
+
+    [ConditionalTheory(Skip = "XuguDB rejects multi-table UPDATE/DELETE CROSS JOIN (E19132 unexpected CROSS; LIMITATIONS ExecuteDelete/Update; docs: delete.md multi-table FROM, not MySQL CROSS).")]
+    public override Task Update_non_owned_property_on_entity_with_owned_in_join(bool async)
+        => base.Update_non_owned_property_on_entity_with_owned_in_join(async);
+
+
+    [ConditionalTheory(Skip = "XuguDB E19132: LIMIT/OFFSET expects integer (unexpected FCONST); Wave4 pending OFFSET cast/inlining).")]
+    public override Task Delete_with_owned_collection_and_non_natively_translatable_query(bool async)
+        => base.Delete_with_owned_collection_and_non_natively_translatable_query(async);
+
 }

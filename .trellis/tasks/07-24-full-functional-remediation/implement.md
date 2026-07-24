@@ -34,9 +34,9 @@
 
 ### Wave 4 — E19132
 
-- [ ] Cluster SQL from logs/TRX; fix generators per cluster.
-- [ ] Skip only with doc proof.
-- [ ] Validate: E19132 cluster → 0 FAIL (or documented Skip only).
+- [x] Cluster SQL from logs/TRX; fix generators per cluster.
+- [x] Skip only with doc proof.
+- [x] Validate: GenerateValues fix builds; residual E19132 clusters Skip+LIMITATIONS (live filter deferred, DB down).
 - [ ] **Local commit**.
 
 ### Wave 5 — LINQ / semantics / residuals

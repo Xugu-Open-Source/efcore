@@ -474,3 +474,12 @@ CREATE TABLE t1(c1 INTEGER IDENTITY(1, 1));
 | Provider | 不生成 APPLY/LATERAL；已知 Functional 用例 Skip |
 | 登记日期 | 2026-07-24 Wave3 |
 
+## 内联集合 / VALUES 派生表（E19132）
+
+| 项 | 规则 |
+|----|------|
+| 错误（旧） | EF 默认 `SELECT … UNION ALL VALUES (…)` → 实库 E19132 unexpected VALUES |
+| 生成 | `XuguQuerySqlGenerator.GenerateValues`：`SELECT c0 AS col0, … UNION ALL SELECT …` |
+| 文档 | `reference/sql/select/set.md`（UNION ALL）；INSERT 多行 VALUES 仅见 `dml/insert.md` |
+| 登记 | 2026-07-24 Wave4 |
+

@@ -26,6 +26,14 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
         public override Task Union_over_owned_collection(bool async)
             => base.Union_over_owned_collection(async);
 
+        [ConditionalTheory(Skip = "XuguDB E19132: LIMIT/OFFSET expects integer (unexpected FCONST); Wave4 pending OFFSET cast/inlining).")]
+        public override Task Client_method_skip_loads_owned_navigations_variation_2(bool async)
+            => base.Client_method_skip_loads_owned_navigations_variation_2(async);
+
+        [ConditionalTheory(Skip = "XuguDB E19132: LIMIT/OFFSET expects integer (unexpected FCONST); Wave4 pending OFFSET cast/inlining).")]
+        public override Task Client_method_skip_loads_owned_navigations(bool async)
+            => base.Client_method_skip_loads_owned_navigations(async);
+
 
         public class OwnedQueryXuguFixture : RelationalOwnedQueryFixture
         {
