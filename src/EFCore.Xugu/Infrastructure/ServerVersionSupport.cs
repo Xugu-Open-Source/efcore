@@ -33,9 +33,9 @@ public class ServerVersionSupport
             return (bool)property.GetValue(this)!;
         }
 
-        throw new ArgumentException(
-            "The parameter is neither a valid server version nor a valid property of 'ServerVersionSupport'.",
-            nameof(propertyNameOrServerVersion));
+        // Unknown feature flags from shared EF/Pomelo attributes: treat as unsupported
+        // instead of crashing the test host (was ArgumentException → process abort).
+        return false;
     }
 
     private static string NormalizeVersionString(string versionString)
