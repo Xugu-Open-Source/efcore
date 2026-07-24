@@ -23,21 +23,21 @@
 - [x] Reproduce `E9016` (e.g. NonSharedModelBulkUpdates `BlogsPart1`) under isolation.
 - [x] Fix store naming / cleanup / Dispose / Ensure path.
 - [x] Validate: offline model assert (`BlogsPart1` → `EF_*_BLOGSPART1`); Shared/Functional build green; Unit 283 green. Live E9016 filter deferred (local XuguDB :5138 down this session).
-- [ ] **Local commit**.
+- [x] **Local commit**.
 
 ### Wave 3 — E17010
 
 - [x] Confirm dialect rules via docs map (`from.md` etc.).
 - [x] For each cluster: rewrite SQL **or** Skip + LIMITATIONS anchor.
 - [x] Validate: E17010 methods Skip-attributed + LIMITATIONS/contract anchors; Functional build green (live filter deferred, DB down).
-- [ ] **Local commit**.
+- [x] **Local commit**.
 
 ### Wave 4 — E19132
 
 - [x] Cluster SQL from logs/TRX; fix generators per cluster.
 - [x] Skip only with doc proof.
 - [x] Validate: GenerateValues fix builds; residual E19132 clusters Skip+LIMITATIONS (live filter deferred, DB down).
-- [ ] **Local commit**.
+- [x] **Local commit**.
 
 ### Wave 5 — LINQ / semantics / residuals
 
