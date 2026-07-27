@@ -123,3 +123,38 @@ Evidence: `E:/Work/Tests/entityframeworkcore-xugu-release-test/test-output/reval
 
 Remaining 380: LINQ 151 + SEMANTICS 154 + SQL_BASELINE 48 + OTHER/OVERRIDE/E5021.
 
+### Full matrix revalidation after Wave5b (`95c3ea5`)
+
+Evidence: `E:/Work/Tests/entityframeworkcore-xugu-release-test/test-output/revalidation-local-tip-95c3ea5/`
+
+**Trajectory:**
+
+| Snapshot | Native fails | Compat fails |
+|----------|-------------:|-------------:|
+| TEST-REPORT remote (`b04fbc4`) | 473 | 487 |
+| Wave1-4 (`49a6751`) | 513 | 513 |
+| Wave5a (`0963eb6`) | 380 | 380 |
+| **Wave5b SEM/LINQ (`95c3ea5`)** | **228** | **228** |
+
+**Δ vs peak:** −285 (−55.6%)  
+**Δ vs baseline report:** −245 (−51.8%)  
+**Pass rate:** 7462/8157 ≈ **91.5%**
+
+**Remaining 228 by category:**
+- LINQ 125 (translation gaps, largely PrimitiveCollections)
+- SEMANTICS 50 (GUID format, null propagation, Include order)
+- SQL_BASELINE 42 (bool_optimization AssertSql + table prefix noise)
+- OVERRIDE 4 + E5021 4 + OTHER 3
+
+**Remaining by class:**
+- PrimitiveCollections 110
+- NonSharedPrimitiveCollections 23
+- ComplexNavigations 18 (+ 14 SharedType)
+- GearsOfWar 18 (+ TPC 11 + TPT 2)
+- ComplexTypeBulkUpdates 11
+- NullSemantics 5
+- TPCManyToMany 8
+- Others 8
+
+**Next: Wave6 — final burn-down or accept as known limitations, then pack + overwrite v9.0.0.**
+
