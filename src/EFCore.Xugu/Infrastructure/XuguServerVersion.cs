@@ -22,12 +22,15 @@ public sealed class XuguServerVersion : ServerVersion
         {
         }
 
-        public override bool OuterApply => ServerVersion.Version >= new Version(12, 0);
+        // Live XuguDB 12 supports JSON scalar functions (JSON_VALUE/LENGTH/CONTAINS/EXTRACT)
+        // but NOT JSON_TABLE / unnest as a rowset source (docs have no JSON_TABLE; probe → E19132).
+        public override bool OuterApply => false;
         public override bool OuterReferenceInMultiLevelSubquery => ServerVersion.Version >= new Version(12, 0);
         public override bool Json => ServerVersion.Version >= new Version(12, 0);
-        public override bool JsonTable => ServerVersion.Version >= new Version(12, 0);
+        public override bool JsonTable => false;
         public override bool JsonValue => ServerVersion.Version >= new Version(12, 0);
+        // VALUES as SELECT source is limited; GenerateValues rewrites to UNION ALL SELECT.
         public override bool Values => ServerVersion.Version >= new Version(12, 0);
-        public override bool ValuesWithRows => ServerVersion.Version >= new Version(12, 0);
+        public override bool ValuesWithRows => false;
     }
 }
