@@ -56,3 +56,10 @@ Closed Wave A gaps: TimeOnly Unit, ALL_* catalog, UTF-8 Northwind, APPLY skips, 
 - **Deleted** `docs/references/test-parity-matrix.md`, `pomelo-file-map.md`; retargeted links; fixed verify scripts.
 - Wave6 still deferred.
 
+## 2026-07-28 — Merge to release/9.0.0 and republish v9.0.0
+
+- Fast-forwarded `release/9.0.0` to tip `f2f4628` (from phase-13).
+- Force-moved tag `v9.0.0`; recreated GitHub Release assets (nupkg/snupkg).
+- **Primary development branch is now `release/9.0.0` only.**
+- nuget.org not pushed.
+
