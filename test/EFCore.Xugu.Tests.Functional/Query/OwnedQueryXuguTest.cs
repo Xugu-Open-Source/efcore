@@ -35,13 +35,6 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
             => base.Client_method_skip_loads_owned_navigations(async);
 
 
-        #region Wave5 residual skips
-
-        [ConditionalTheory(Skip = "XuguDB FromSql owned join residual (driver/server). Wave5 residual.")]
-        public override Task Using_from_sql_on_owner_generates_join_with_table_for_owned_shared_dependents(bool async)
-            => base.Using_from_sql_on_owner_generates_join_with_table_for_owned_shared_dependents(async);
-
-        #endregion
         public class OwnedQueryXuguFixture : RelationalOwnedQueryFixture
         {
             protected override ITestStoreFactory TestStoreFactory

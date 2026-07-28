@@ -124,44 +124,5 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
         public override Task Composite_key_join_on_groupby_aggregate_projecting_only_grouping_key2(bool async)
             => base.Composite_key_join_on_groupby_aggregate_projecting_only_grouping_key2(async);
 
-        #region Wave5 residual skips
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task GroupJoin_on_left_side_being_a_subquery(bool async)
-            => base.GroupJoin_on_left_side_being_a_subquery(async);
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task GroupJoin_on_right_side_being_a_subquery(bool async)
-            => base.GroupJoin_on_right_side_being_a_subquery(async);
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task Include18_1_1(bool async)
-            => base.Include18_1_1(async);
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task Member_over_null_check_ternary_and_nested_dto_type(bool async)
-            => base.Member_over_null_check_ternary_and_nested_dto_type(async);
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task Optional_navigation_take_optional_navigation(bool async)
-            => base.Optional_navigation_take_optional_navigation(async);
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task OrderBy_collection_count_ThenBy_reference_navigation(bool async)
-            => base.OrderBy_collection_count_ThenBy_reference_navigation(async);
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task OrderBy_nav_prop_reference_optional(bool async)
-            => base.OrderBy_nav_prop_reference_optional(async);
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task OrderBy_nav_prop_reference_optional_via_DefaultIfEmpty(bool async)
-            => base.OrderBy_nav_prop_reference_optional_via_DefaultIfEmpty(async);
-
-        [ConditionalTheory(Skip = "XuguDB semantic difference: LEFT JOIN / optional navigation / Include ordering residual. Wave5 residual.")]
-        public override Task Sum_with_filter_with_include_selector_cast_using_as(bool async)
-            => base.Sum_with_filter_with_include_selector_cast_using_as(async);
-
-        #endregion
 }
 }

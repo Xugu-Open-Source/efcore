@@ -290,16 +290,6 @@ XuguDB **服务端**支持原生 `JSON` 列类型（LOB，最大 2GB）、`->` /
 | Pomelo `MySqlJson*` / `Json*MySqlTest` 全矩阵 | — | **skip** |
 | EF `ToJson()` owned JSON 列 | — | **不承诺** |
 
-### Primitive collections in LINQ
-
-**状态：skip/defer（XuguDB 12.0.0）**
-
-XuguDB 支持 JSON 标量函数（如 `JSON_LENGTH`、`JSON_VALUE`、`JSON_CONTAINS`），但官方 JSON 函数文档未提供 `JSON_TABLE` 或 `unnest` 行集函数。对实库 `JSON_TABLE(... COLUMNS ...)` 的探测返回 **E19132 语法错误**。因此 EF Core `int[]`/`string[]` JSON 列或参数的 LINQ 行集展开（`Any`、`ElementAt`、集合运算等）当前不承诺；`ServerVersionSupport.JsonTable` 明确为 `false`，相关 Functional 用例以带证据的 Skip 记录。
-
-推荐使用标量路径投影（`EF.Functions.JsonValue` / `JsonExtract`）或在应用层展开集合。若后续 XuguDB 提供行集 JSON API，应新增 provider-specific SQL tree expression 和 `TranslatePrimitiveCollection` 实现后再恢复这些测试。
-
-**依据**：`E:\Work\docs\content\reference\sql\datatype\json.md`、`E:\Work\docs\content\reference\function\json-functions\`；实库 `SYSTEM@5287` XuguDB 12.0.0 探测（`JSON_TABLE` → E19132）。
-
 **变通**：查询优先 `EF.Functions.JsonValue` / `JsonExtract`；整列读取仅适合小 JSON；见 `ado-driver-contract.md` G-06。  
 **测试**：`JsonIntegrationTests`（小文档/函数）；`JsonBoundaryTests`（大 LOB 边界 + `ToJson` 非支持路径，Category=`QualityMatrix`）。
 

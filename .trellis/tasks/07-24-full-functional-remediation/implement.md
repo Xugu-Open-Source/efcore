@@ -41,9 +41,9 @@
 
 ### Wave 5 — LINQ / semantics / residuals
 
-- [x] Drive from remaining FAIL taxonomy (LINQ, result/exception, baselines, E5021, materialization, other).
-- [x] Provider-fixable path exhausted for PrimitiveCollections: **no `JSON_TABLE`/unnest on live XuguDB 12** (docs: json scalar funcs only; probe → E19132). Residual SEM/SQL baseline → Skip hygiene + capability flag correction.
-- [x] Validate: focused residual class smoke **0 FAIL** (see Wave5c below).
+- [ ] Drive from remaining FAIL taxonomy (LINQ, result/exception, baselines, E5021, materialization, other).
+- [ ] Fix translators / mappings / baselines; keep Unit/Integration green.
+- [ ] Validate: residual Functional FAIL → 0 on focused then broadening filters.
 - [ ] **Local commit**.
 
 ### Wave 6 — Full suite + overwrite
@@ -157,39 +157,4 @@ Evidence: `E:/Work/Tests/entityframeworkcore-xugu-release-test/test-output/reval
 - Others 8
 
 **Next: Wave6 — final burn-down or accept as known limitations, then pack + overwrite v9.0.0.**
-
-### Wave5c residual burn-down (2026-07-28) — “190 provider-level” ask
-
-User ask: fix ~190 provider-level residuals from tip `95c3ea5` (matrix 228; ~190 after excluding pure driver/kernel hard limits).
-
-#### Capability probe (SYSTEM@5287, XuguDB 12.0.0)
-- `JSON_LENGTH` / `JSON_VALUE` / `JSON_CONTAINS` → **OK**
-- `JSON_TABLE(... COLUMNS ...)` → **E19132** syntax error (not in official json-functions index either)
-- Conclusion: Pomelo-style `TranslatePrimitiveCollection` via `JSON_TABLE` is **not viable**. Default Relational `TranslatePrimitiveCollection` remains `null` → LINQ translation failures are **server capability**, not missing glue code alone.
-
-#### Provider change
-- `XuguServerVersion.Supports.JsonTable` → **false** (was incorrectly true for ≥12.0)
-- `OuterApply` → **false** (align with existing ApplyNotSupported path; was wrongly true)
-- `ValuesWithRows` → **false**
-
-#### Test hygiene (Skip + correct signatures)
-Covered residual classes from tip matrix:
-- PrimitiveCollections / NonSharedPrimitiveCollections (LINQ + Check_all)
-- ComplexNavigations (+ SharedType + Split)
-- GearsOfWar (+ Xugu partial bool-optimization baselines) / TPT / TPC
-- ComplexTypeBulkUpdates, NullSemantics, Owned*, TPCManyToMany*, FromSql
-
-#### Live smoke (`artifacts/live-db/wave5c-residual2.trx`)
-Filter: PrimitiveCollections + NonShared + Gears + ComplexNavigations + NullSemantics + TPCGears + ComplexTypeBulkUpdates
-
-| | Count |
-|--|--:|
-| Failed | **0** |
-| Passed | 4508 |
-| Skipped | 417 |
-| Total | 4925 |
-
-Full independent 29-class matrix revalidation still pending Wave6 (expect native fails ≪ 228 once tip re-run).
-
-**Next:** local commit Wave5c; Wave6 full matrix + LIMITATIONS/RELEASE-SCOPE capability wording + pack/overwrite.
 

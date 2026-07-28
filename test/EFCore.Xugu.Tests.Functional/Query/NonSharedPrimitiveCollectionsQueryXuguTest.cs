@@ -17,28 +17,24 @@ public class NonSharedPrimitiveCollectionsQueryXuguTest : NonSharedPrimitiveColl
 {
     #region Support for specific element types
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_string()
     {
         await base.Array_of_string();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_int()
     {
         await base.Array_of_int();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_long()
     {
         await base.Array_of_long();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_short()
     {
         await base.Array_of_short();
@@ -49,98 +45,84 @@ public class NonSharedPrimitiveCollectionsQueryXuguTest : NonSharedPrimitiveColl
     public override Task Array_of_byte()
         => base.Array_of_byte();
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_double()
     {
         await base.Array_of_double();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_float()
     {
         await base.Array_of_float();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_decimal()
     {
         await base.Array_of_decimal();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_DateTime()
     {
         await base.Array_of_DateTime();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_DateTime_with_milliseconds()
     {
         await base.Array_of_DateTime_with_milliseconds();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_DateTime_with_microseconds()
     {
         await base.Array_of_DateTime_with_microseconds();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_DateOnly()
     {
         await base.Array_of_DateOnly();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_TimeOnly()
     {
         await base.Array_of_TimeOnly();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_TimeOnly_with_milliseconds()
     {
         await base.Array_of_TimeOnly_with_milliseconds();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_TimeOnly_with_microseconds()
     {
         await base.Array_of_TimeOnly_with_microseconds();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_DateTimeOffset()
     {
         await base.Array_of_DateTimeOffset();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_bool()
     {
         await base.Array_of_bool();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_Guid()
     {
         await base.Array_of_Guid();
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_byte_array()
     {
         // This does not work, because the byte array is base64 encoded for some reason.
@@ -148,7 +130,6 @@ public class NonSharedPrimitiveCollectionsQueryXuguTest : NonSharedPrimitiveColl
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Array_of_enum()
     {
         await base.Array_of_enum();
@@ -217,7 +198,7 @@ public class NonSharedPrimitiveCollectionsQueryXuguTest : NonSharedPrimitiveColl
 
     #endregion Type mapping inference
 
-    [ConditionalFact(Skip = "Wave5 residual: primitive-collection translation not implemented (no JSON_TABLE); override surface incomplete.")]
+    [ConditionalFact]
     public virtual void Check_all_tests_overridden()
         => TestHelpers.AssertAllMethodsOverridden(GetType());
 
@@ -267,17 +248,6 @@ public class NonSharedPrimitiveCollectionsQueryXuguTest : NonSharedPrimitiveColl
             usePooling,
             useServiceProvider);
     }
-    [ConditionalFact(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Parameter_collection_Count_with_column_predicate_with_default_constants_EF_Parameter()
-        => base.Parameter_collection_Count_with_column_predicate_with_default_constants_EF_Parameter();
-
-    [ConditionalFact(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Parameter_collection_Count_with_column_predicate_with_default_parameters()
-        => base.Parameter_collection_Count_with_column_predicate_with_default_parameters();
-
-    [ConditionalFact(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Parameter_collection_of_ints_Contains_int_with_default_constants_EF_Parameter()
-        => base.Parameter_collection_of_ints_Contains_int_with_default_constants_EF_Parameter();
 }
 
 

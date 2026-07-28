@@ -24,7 +24,7 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
         private void AssertSql(params string[] expected)
             => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-        [Fact(Skip = "XuguDB null-semantics / FromSql residual. Wave5 residual.")]
+        [Fact]
         public override void From_sql_composed_with_relational_null_comparison()
         {
             using (var context = CreateContext(useRelationalNulls: true))
@@ -99,16 +99,5 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
         public override Task Where_equal_with_and_and_contains(bool async)
             => base.Where_equal_with_and_and_contains(async);
 
-        #region Wave5 residual skips
-
-[ConditionalTheory(Skip = "XuguDB null-semantics / FromSql residual. Wave5 residual.")]
-        public override Task Null_semantics_applied_when_comparing_two_functions_with_multiple_nullable_arguments(bool async)
-            => base.Null_semantics_applied_when_comparing_two_functions_with_multiple_nullable_arguments(async);
-
-        [ConditionalTheory(Skip = "XuguDB null-semantics / FromSql residual. Wave5 residual.")]
-        public override Task Nullable_string_FirstOrDefault_compared_to_nullable_string_LastOrDefault(bool async)
-            => base.Nullable_string_FirstOrDefault_compared_to_nullable_string_LastOrDefault(async);
-
-        #endregion
 }
 }

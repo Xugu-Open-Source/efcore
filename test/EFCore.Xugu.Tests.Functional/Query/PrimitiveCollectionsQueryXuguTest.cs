@@ -46,7 +46,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override Task Inline_collection_Count_with_zero_values(bool async)
         => AssertTranslationFailedWithDetails(
             () => base.Inline_collection_Count_with_zero_values(async),
@@ -93,7 +92,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override Task Inline_collection_Contains_with_zero_values(bool async)
         => AssertTranslationFailedWithDetails(
             () => base.Inline_collection_Contains_with_zero_values(async),
@@ -141,7 +139,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_Count(bool async)
     {
         await base.Parameter_collection_Count(async);
@@ -246,7 +243,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTableImplementationWithoutXGBugs))]
     public override async Task Column_collection_of_ints_Contains(bool async)
     {
@@ -254,7 +250,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTableImplementationWithoutXGBugs))]
     public override async Task Column_collection_of_nullable_ints_Contains(bool async)
     {
@@ -262,7 +257,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTableImplementationWithoutXGBugs))]
     public override async Task Column_collection_of_nullable_ints_Contains_null(bool async)
     {
@@ -270,14 +264,12 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_of_strings_contains_null(bool async)
     {
         await base.Column_collection_of_strings_contains_null(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTableImplementationWithoutXGBugs))]
     public override async Task Column_collection_of_nullable_strings_contains_null(bool async)
     {
@@ -285,7 +277,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTableImplementationWithoutXGBugs))]
     public override async Task Column_collection_of_bools_Contains(bool async)
     {
@@ -293,21 +284,18 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_Count_method(bool async)
     {
         await base.Column_collection_Count_method(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_Length(bool async)
     {
         await base.Column_collection_Length(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_index_int(bool async)
     {
         await base.Column_collection_index_int(async);
@@ -322,7 +310,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_index_string(bool async)
     {
         await base.Column_collection_index_string(async);
@@ -337,7 +324,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_index_datetime(bool async)
     {
         await base.Column_collection_index_datetime(async);
@@ -352,7 +338,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_index_beyond_end(bool async)
     {
         await base.Column_collection_index_beyond_end(async);
@@ -367,14 +352,13 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
+    [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonValue), Skip = "TODO: Fix NULL handling of JSON_EXTRACT().")]
     public override async Task Nullable_reference_column_collection_index_equals_nullable_column(bool async)
     {
         await base.Nullable_reference_column_collection_index_equals_nullable_column(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Non_nullable_reference_column_collection_index_equals_nullable_column(bool async)
     {
         await base.Non_nullable_reference_column_collection_index_equals_nullable_column(async);
@@ -396,21 +380,18 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_index_Column_equal_Column(bool async)
     {
         await base.Parameter_collection_index_Column_equal_Column(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_index_Column_equal_constant(bool async)
     {
         await base.Parameter_collection_index_Column_equal_constant(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_ElementAt(bool async)
     {
         await base.Column_collection_ElementAt(async);
@@ -425,7 +406,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_Skip(bool async)
     {
         await base.Column_collection_Skip(async);
@@ -446,21 +426,18 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_OrderByDescending_ElementAt(bool async)
     {
         await base.Column_collection_OrderByDescending_ElementAt(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_Any(bool async)
     {
         await base.Column_collection_Any(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_Distinct(bool async)
     {
         await base.Column_collection_Distinct(async);
@@ -473,42 +450,36 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_Join_parameter_collection(bool async)
     {
         await base.Column_collection_Join_parameter_collection(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Inline_collection_Join_ordered_column_collection(bool async)
     {
         await base.Inline_collection_Join_ordered_column_collection(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_Concat_column_collection(bool async)
     {
         await base.Parameter_collection_Concat_column_collection(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_Union_parameter_collection(bool async)
     {
         await base.Column_collection_Union_parameter_collection(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_Intersect_inline_collection(bool async)
     {
         await base.Column_collection_Intersect_inline_collection(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Inline_collection_Except_column_collection(bool async)
     {
         await base.Inline_collection_Except_column_collection(async);
@@ -533,28 +504,24 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_in_subquery_Union_column_collection_as_compiled_query(bool async)
     {
         await base.Parameter_collection_in_subquery_Union_column_collection_as_compiled_query(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_in_subquery_Union_column_collection(bool async)
     {
         await base.Parameter_collection_in_subquery_Union_column_collection(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_in_subquery_Union_column_collection_nested(bool async)
     {
         await base.Parameter_collection_in_subquery_Union_column_collection_nested(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalFact(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override void Parameter_collection_in_subquery_and_Convert_as_compiled_query()
     {
         // base.Parameter_collection_in_subquery_and_Convert_as_compiled_query();
@@ -583,7 +550,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_in_subquery_Union_another_parameter_collection_as_compiled_query(bool async)
     {
         var message = (await Assert.ThrowsAsync<EqualException>(
@@ -595,14 +561,12 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Parameter_collection_in_subquery_Count_as_compiled_query(bool async)
     {
         await base.Parameter_collection_in_subquery_Count_as_compiled_query(async);
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     public override async Task Column_collection_in_subquery_Union_parameter_collection(bool async)
     {
         await base.Column_collection_in_subquery_Union_parameter_collection(async);
@@ -615,7 +579,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTableImplementationStable))]
     public override async Task Project_collection_of_ints_ordered(bool async)
     {
@@ -623,7 +586,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTable))]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterApply))]
     public override async Task Project_collection_of_datetimes_filtered(bool async)
@@ -654,7 +616,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTable))]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterApply))]
     public override async Task Project_collection_of_nullable_ints_with_paging2(bool async)
@@ -705,7 +666,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTable))]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.OuterApply))]
     public override async Task Project_empty_collection_of_nullables_and_collection_only_containing_nulls(bool async)
@@ -722,7 +682,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
         }
     }
 
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
     [SupportedServerVersionCondition(nameof(ServerVersionSupport.JsonTableImplementationStable))]
     public override async Task Project_multiple_collections(bool async)
     {
@@ -773,7 +732,7 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalFact(Skip = "Wave5 residual: primitive-collection translation not implemented (no JSON_TABLE); override surface incomplete.")]
+    [ConditionalFact]
     public virtual void Check_all_tests_overridden()
         => TestHelpers.AssertAllMethodsOverridden(GetType());
 
@@ -833,61 +792,6 @@ public class PrimitiveCollectionsQueryXuguTest : PrimitiveCollectionsQueryRelati
     private PrimitiveCollectionsContext CreateContext()
         => Fixture.CreateContext();
 
-    #region Wave5 residual skips
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_Contains_over_subquery(bool async)
-        => base.Column_collection_Contains_over_subquery(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_Count_with_predicate(bool async)
-        => base.Column_collection_Count_with_predicate(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_First(bool async)
-        => base.Column_collection_First(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_FirstOrDefault(bool async)
-        => base.Column_collection_FirstOrDefault(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_SelectMany(bool async)
-        => base.Column_collection_SelectMany(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_SelectMany_with_Select_to_anonymous_type(bool async)
-        => base.Column_collection_SelectMany_with_Select_to_anonymous_type(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_Single(bool async)
-        => base.Column_collection_Single(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_SingleOrDefault(bool async)
-        => base.Column_collection_SingleOrDefault(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_Where_Count(bool async)
-        => base.Column_collection_Where_Count(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_Where_Skip(bool async)
-        => base.Column_collection_Where_Skip(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_Where_Skip_Take(bool async)
-        => base.Column_collection_Where_Skip_Take(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Column_collection_Where_Take(bool async)
-        => base.Column_collection_Where_Take(async);
-
-    [ConditionalTheory(Skip = "XuguDB has no JSON_TABLE/unnest for primitive collections (docs: json functions only; live E19132). Wave5 residual.")]
-    public override Task Inline_collection_Count_with_column_predicate_with_EF_Parameter(bool async)
-        => base.Inline_collection_Count_with_column_predicate_with_EF_Parameter(async);
-
-#endregion
     public class PrimitiveCollectionsQueryXuguFixture : PrimitiveCollectionsQueryFixtureBase
     {
         public TestSqlLoggerFactory TestSqlLoggerFactory

@@ -27,7 +27,6 @@ public class ComplexTypeBulkUpdatesXuguTest : ComplexTypeBulkUpdatesRelationalTe
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB complex-type UPDATE SQL baseline residual. Wave5 residual.")]
     public override async Task Update_property_inside_complex_type(bool async)
     {
         await base.Update_property_inside_complex_type(async);
@@ -40,7 +39,6 @@ WHERE `c`.`ShippingAddress_ZipCode` = 7728
 """);
     }
 
-    [ConditionalTheory(Skip = "XuguDB complex-type UPDATE SQL baseline residual. Wave5 residual.")]
     public override async Task Update_property_inside_nested_complex_type(bool async)
     {
         await base.Update_property_inside_nested_complex_type(async);
@@ -53,7 +51,6 @@ WHERE `c`.`ShippingAddress_Country_Code` = 'US'
 """);
     }
 
-    [ConditionalTheory(Skip = "XuguDB complex-type UPDATE SQL baseline residual. Wave5 residual.")]
     public override async Task Update_multiple_properties_inside_multiple_complex_types_and_on_entity_type(bool async)
     {
         await base.Update_multiple_properties_inside_multiple_complex_types_and_on_entity_type(async);
@@ -68,7 +65,6 @@ WHERE `c`.`ShippingAddress_ZipCode` = 7728
 """);
     }
 
-    [ConditionalTheory(Skip = "XuguDB complex-type UPDATE SQL baseline residual. Wave5 residual.")]
     public override async Task Update_projected_complex_type(bool async)
     {
         await base.Update_projected_complex_type(async);
@@ -80,7 +76,6 @@ SET `c`.`ShippingAddress_ZipCode` = 12345
 """);
     }
 
-    [ConditionalTheory(Skip = "XuguDB complex-type UPDATE SQL baseline residual. Wave5 residual.")]
     public override async Task Update_multiple_projected_complex_types_via_anonymous_type(bool async)
     {
         await base.Update_multiple_projected_complex_types_via_anonymous_type(async);
@@ -93,7 +88,7 @@ SET `c`.`BillingAddress_ZipCode` = 54321,
 """);
     }
 
-    [ConditionalFact(Skip = "Wave5 residual: complex-type bulk update baseline skips; override surface incomplete.")]
+    [ConditionalFact]
     public virtual void Check_all_tests_overridden()
     {
         TestHelpers.AssertAllMethodsOverridden(GetType());
