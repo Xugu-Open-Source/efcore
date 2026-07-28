@@ -136,7 +136,7 @@
 | Scaffolding Baselines 快照 | 维护成本 | 永久 skip（10.209） |
 | Lazy loading proxies 宿主 | 无 Proxies 测试基础设施 | 永久 skip |
 
-详见 `docs/references/pomelo-file-map.md` 来源 **skip** 列（历史 Phase 任务文档已随 harness 移除，见 git 历史）。
+永久 skip 的产品口径以 [LIMITATIONS.md](LIMITATIONS.md) 与 [stub-and-exclusion.contract.md](contracts/stub-and-exclusion.contract.md) 为准；Pomelo 源码树仅作 C# 结构参考：`external/Pomelo.EntityFrameworkCore.MySql/`（原 `pomelo-file-map.md` 无干净历史，已删除）。
 
 ---
 
@@ -267,7 +267,7 @@
 | Linux RID | blocked（10.205） |
 | FOR UPDATE / 位运算 / RelationalCommand | defer（10.202–10.204） |
 
-详见 `docs/references/test-parity-matrix.md`（Phase 10 closure handoff 已随 harness 移除，见 git 历史）。
+详见 [TESTING.md](TESTING.md)（Phase 10 closure handoff 已随 harness 移除，见 git 历史）。
 
 ---
 
@@ -376,6 +376,6 @@ options.UseXugu(connectionString, xugu => xugu.EnableRetryOnFailure(
 | SQL 方言契约 | `docs/contracts/sql-dialect.contract.md` |
 | Retry 调研 | `docs/references/retrying-execution-strategy.md` |
 | Wave 6 / Phase 10 Closure | 原 `harness/handoffs/*`（已移除；见 git 历史） |
-| 测试对等矩阵 | `docs/references/test-parity-matrix.md` |
+| 测试说明 | [TESTING.md](TESTING.md) |
 | XuguDB 官方文档 | `E:\BaiduSyncdisk\docs\content\` |
 | Pomelo 参考源码 | `external/Pomelo.EntityFrameworkCore.MySql/` |

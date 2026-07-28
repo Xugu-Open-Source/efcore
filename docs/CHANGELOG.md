@@ -21,6 +21,7 @@ Known limitations and deferred features: [LIMITATIONS.md](LIMITATIONS.md).
 ### Docs
 
 - RELEASE-SCOPE / LIMITATIONS：Wave A 门禁保持；补充 2026-07-28 交付口径与 Primitive collections / residual 说明。
+- **契约/参考清理**：`sql-dialect.contract.md` / `stub-and-exclusion.contract.md` 全文重写（历史 UTF-8 损坏且 git 无干净祖先）；删除不可恢复的 `test-parity-matrix.md` / `pomelo-file-map.md`，引用改指向 TESTING / LIMITATIONS / `external/Pomelo…`；`verify.ps1` / `verify-source-lineage.ps1` 同步。
 
 ---
 
@@ -161,7 +162,7 @@ Provider 侧闭环应用审核暴露的 6 个独立运行时缺口（保留官�
 
 ## [3.0.0] — 2026-07-09 (Phase 12 — Pomelo 完全体 GA)
 
-Phase 12 完成：**首次生产 GA**。Adjusted **110.9%** Pomelo Comparable Parity（分母 **952** / 列测 **1057**）；compat + native 双矩阵 **0 FAIL**；`pomelo-file-map` **194/194** disposition **100%**。
+Phase 12 完成：**首次生产 GA**。Adjusted **110.9%** Pomelo Comparable Parity（分母 **952** / 列测 **1057**）；compat + native 双矩阵 **0 FAIL**；Pomelo comparable 文件 disposition **194/194**（历史；原 map 文档已删）**100%**。
 
 ### Added
 

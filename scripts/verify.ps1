@@ -18,8 +18,10 @@ Write-Host "Root: $Root"
 
 $required = @(
     "docs\contracts\sql-dialect.contract.md",
+    "docs\contracts\stub-and-exclusion.contract.md",
+    "docs\LIMITATIONS.md",
+    "docs\RELEASE-SCOPE.md",
     "docs\references\xugudb-docs-map.md",
-    "docs\references\pomelo-file-map.md",
     ".trellis\workflow.md"
 )
 foreach ($f in $required) {

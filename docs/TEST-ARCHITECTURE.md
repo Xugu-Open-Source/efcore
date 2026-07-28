@@ -143,7 +143,7 @@ ASCII 简图：
 
 - Functional 本地属性很少（~20），但发现用例 **8500+**，因方法在 Spec 基类中，经继承 + Theory 展开后由 VSTest 发现。
 - 门禁脚本用 `Select-String '^\s+[A-Za-z]'` 计数，会把约 **3** 行构建输出（如 `EFCore.Xugu.Tests.* -> ...dll`）一并计入；下表 **discovered** 已按 `Microsoft.EntityFrameworkCore.*` FQN 过滤，更接近真实用例数。
-- Integration 历史冻结文档（`test-parity-matrix.md`）曾记 compat **1057**；当前工程拆分/演进后以本次实测为准。
+- Integration 历史曾用已删除的 `test-parity-matrix` 冻结 compat **1057**；当前以本次实测与 [TESTING.md](TESTING.md) 为准。
 
 ### 4.2 主表（discovered）
 
@@ -188,7 +188,7 @@ dotnet test test/EFCore.Xugu.Tests.Functional -c Release --list-tests
 | 来源 | 落点 | 说明 |
 |------|------|------|
 | **自写** | Unit 为主；Integration 部分 | SQL 金标、TypeMapping、NotSupported、Retry、方言烟测、QualityMatrix 等 |
-| **Pomelo 对等** | Integration | 目录/类命名对齐 Pomelo FunctionalTests 子集；矩阵与 Adjusted 覆盖率见 `docs/references/test-parity-matrix.md`（Phase 12 冻结叙事） |
+| **Pomelo 对等** | Integration | 目录/类命名对齐 Pomelo FunctionalTests 子集；历史 `test-parity-matrix` 已删除，覆盖率以 [TESTING.md](TESTING.md) / [RELEASE-SCOPE.md](RELEASE-SCOPE.md) 与实测为准 |
 | **EF Relational Spec** | Functional（主）；Integration `Specification/` 子集 | 继承 `*TestBase`；Functional W1 对齐开源 Xugu FunctionalTests |
 | **L3 消费路径** | 脚本 + samples / integration-sample | 验证 pack、dotnet-ef、MinimalApi，非 Spec 继承 |
 
@@ -242,14 +242,14 @@ CI：L1 = 所有 PR/push；L2 = main / schedule / `v*`；L3 = schedule / `v*`。
 | Functional 规模 | 全量 ~8500+，宜按套件过滤；共享 SYSTEM + 表前缀 |
 | Spec AssertSql | Wave1 多 deferred，以结果正确优先 |
 | 旧单体 | `test/EFCore.Xugu.Tests` 已退役 |
-| Pomelo IntegrationTests | ASP.NET+性能宿主，**未**对等移植（低价值，见 parity 矩阵 9.IT） |
+| Pomelo IntegrationTests | ASP.NET+性能宿主，**未**对等移植（低价值） |
 
 ## 9. 相关文档
 
 | 文档 | 用途 |
 |------|------|
 | [TESTING.md](TESTING.md) | 日常命令、环境变量、QualityMatrix、三类绿 |
-| `.trellis/spec/guides/xugu-provider-constraints.md` | Trellis 项目硬约束（含测试门禁入口） |
-| `docs/references/test-parity-matrix.md` | Phase 9–12 Pomelo 对等与冻结数字（历史） |
+| [RELEASE-SCOPE.md](RELEASE-SCOPE.md) | 发布口径与 Wave A 门禁 |
+| `.trellis/spec/guides/xugu-provider-constraints.md` | Trellis 项目硬约束 |
 | `docs/superpowers/specs/2026-07-21-spec-matrix-alignment-design.md` | Functional Spec 对齐设计 |
 | [LIMITATIONS.md](LIMITATIONS.md) | 产品/平台限制 |

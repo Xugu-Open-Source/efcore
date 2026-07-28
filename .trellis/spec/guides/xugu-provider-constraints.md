@@ -47,7 +47,7 @@ All provider code lives under `src/EFCore.Xugu/`, depending on `Microsoft.Entity
 
 ### 3. Do not modify Pomelo sources
 
-`external/Pomelo.EntityFrameworkCore.MySql/` is read-only reference. See [docs/references/pomelo-file-map.md](../../../docs/references/pomelo-file-map.md).
+`external/Pomelo.EntityFrameworkCore.MySql/` is read-only reference. See [external/Pomelo.EntityFrameworkCore.MySql/](../../../external/Pomelo.EntityFrameworkCore.MySql/).
 
 ### 4. Architecture may mirror Pomelo (C# only)
 

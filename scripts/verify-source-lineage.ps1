@@ -23,7 +23,7 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $SrcRoot = Join-Path $Root "src\EFCore.Xugu"
-$MapPath = Join-Path $Root "docs\references\pomelo-file-map.md"
+
 
 Write-Host "=== Verify Source Lineage ===" -ForegroundColor Cyan
 Write-Host "Source: $SrcRoot"
@@ -119,22 +119,22 @@ foreach ($file in $csFiles) {
     }
 }
 
-# --- Positive: Xugu-native files from pomelo-file-map ---
+# --- Positive: known Xugu-native scaffolding / connection touchpoints ---
+# (Former docs/references/pomelo-file-map.md was UTF-8-corrupt with no clean git
+# ancestor and was deleted 2026-07-28. Keep a small explicit allowlist instead.)
 $xuguNativeFiles = [System.Collections.Generic.List[string]]::new()
-if (Test-Path $MapPath) {
-    $mapLines = [System.IO.File]::ReadAllLines($MapPath)
-    foreach ($mapLine in $mapLines) {
-        if ($mapLine -match '^\|\s*`[^`]+\.cs`\s*\|\s*`([^`]+\.cs)`\s*\|[^|]+\|\s*(Xugu-native)\s*\|') {
-            $xuguFile = $Matches[1] -replace '/', '\'
-            $xuguNativeFiles.Add((Join-Path $SrcRoot $xuguFile))
-        }
-    }
+@(
+    "Scaffolding\Internal\XuguDatabaseModelFactory.cs",
+    "Storage\Internal\XuguRelationalConnection.cs",
+    "Storage\Internal\XuguDatabaseCreator.cs"
+) | ForEach-Object {
+    $xuguNativeFiles.Add((Join-Path $SrcRoot ($_ -replace '/', '\')))
 }
 
-$xuguMarkers = @("DBA_", "XGConnection", "ALL_INDEXES", "ALL_TABLES")
+$xuguMarkers = @("DBA_", "XGConnection", "ALL_INDEXES", "ALL_TABLES", "ALL_COLUMNS")
 foreach ($nativePath in $xuguNativeFiles) {
     if (-not (Test-Path $nativePath)) {
-        Add-Warning "[Xugu-native] Mapped file missing: $($nativePath.Replace($Root.Path + '\', ''))"
+        Add-Warning "[Xugu-native] Expected file missing: $($nativePath.Replace($Root.Path + '\', ''))"
         continue
     }
     $content = [System.IO.File]::ReadAllText($nativePath)
@@ -143,7 +143,7 @@ foreach ($nativePath in $xuguNativeFiles) {
         if ($content.Contains($marker)) { $hasMarker = $true; break }
     }
     if (-not $hasMarker) {
-        Add-Warning "[Xugu-native] No DBA_/XGConnection marker in: $($nativePath.Replace($Root.Path + '\', ''))"
+        Add-Warning "[Xugu-native] No catalog/connection marker in: $($nativePath.Replace($Root.Path + '\', ''))"
     }
     elseif ($Verbose) {
         Write-Host "[OK] Xugu-native markers present: $($nativePath.Replace($Root.Path + '\', ''))" -ForegroundColor DarkGreen
@@ -154,8 +154,8 @@ foreach ($nativePath in $xuguNativeFiles) {
 $modelFactoryFiles = Get-ChildItem -Path $SrcRoot -Filter "*DatabaseModelFactory*.cs" -Recurse -File
 foreach ($file in $modelFactoryFiles) {
     $content = [System.IO.File]::ReadAllText($file.FullName)
-    if ($content -notmatch "DBA_TABLES|DBA_COLUMNS") {
-        Add-Warning "[Scaffolding] No DBA_TABLES/DBA_COLUMNS in: $($file.FullName.Replace($Root.Path + '\', ''))"
+    if ($content -notmatch "ALL_TABLES|ALL_COLUMNS|DBA_TABLES|DBA_COLUMNS") {
+        Add-Warning "[Scaffolding] No ALL_*/DBA_* catalog refs in: $($file.FullName.Replace($Root.Path + '\', ''))"
     }
     elseif ($Verbose) {
         Write-Host "[OK] Scaffolding catalog refs: $($file.Name)" -ForegroundColor DarkGreen

@@ -195,3 +195,9 @@ Evidence: `E:/Work/Tests/entityframeworkcore-xugu-release-test/test-output/reval
 - Trellis: query/storage/testing specs updated；`.omp/hooks.json` + hook scripts ported from Cursor；gitignore `.tmp/` + `.trellis/spec/external/`.
 - **Gate**: Wave A still the public release bar. Full Functional definition A **not** closed (~105 residual FAIL class before latest skips; re-run matrix before claiming 0).
 - Local commit expected this freeze; **no push** until Wave6 independent suite decision.
+
+### Docs hygiene — garbled UTF-8 (2026-07-28)
+
+- No recoverable clean blob in git for dialect/stub contracts or parity/pomelo maps.
+- Rewrote both contracts; deleted two reference files; scripts/links updated.
+- Wave6 still out of scope for now.

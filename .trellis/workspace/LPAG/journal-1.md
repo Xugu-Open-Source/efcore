@@ -49,3 +49,10 @@ Closed Wave A gaps: TimeOnly Unit, ALL_* catalog, UTF-8 Northwind, APPLY skips, 
 - Trellis backend specs: query / storage / testing Wave5 rules; task implement Wave5e; omp hooks ported.
 - Public claim remains **9.0.0 Wave A Windows trialable**, not full Functional 0 FAIL.
 
+## 2026-07-28 — Garbled docs: rewrite or delete
+
+- git history for sql-dialect / stub-and-exclusion / test-parity-matrix / pomelo-file-map: **no clean UTF-8 ancestor** (corrupt since harness→docs migrate).
+- **Rewrote** `docs/contracts/sql-dialect.contract.md` and `stub-and-exclusion.contract.md` clean (9.0.0 + Wave5 facts).
+- **Deleted** `docs/references/test-parity-matrix.md`, `pomelo-file-map.md`; retargeted links; fixed verify scripts.
+- Wave6 still deferred.
+
