@@ -2,7 +2,7 @@
 
 > **当前公开版本**：**9.0.0**（`v9.0.0` — 对齐 EF Core 9.0.x；方言迭代基线）  
 > **历史示例**：3.0.0 GA（`v3.0.0` @ `6ab8184`）  
-> **更新**：2026-07-21（公开口径改为 9.0.0；下文 `release/3.0.0` 段落保留为历史流程参考）
+> **更新**：2026-07-28（**主开发线 = `release/9.0.0`**；`phase-13-production-hardening` 已并入）
 
 本文档对比 [Pomelo.EntityFrameworkCore.MySql](https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql) 的公开发布布局与当前 **xuguefcore** 开发单体仓库，并定义 **release 分支** 与 **公开远程** 的推送策略。当前发布线建议使用 `release/9.0.0`（见 [RELEASE.md](../RELEASE.md)）。
 
@@ -12,8 +12,9 @@
 
 | 角色 | 分支 | 远程 | 用途 |
 |------|------|------|------|
-| **开发单体** | `phase-13-production-hardening`（或未来 `develop`） | 公开 GitHub / 可选内部 GitLab | Trellis（`.trellis/`）Agent 工作流、Pomelo 参考子模块、内部驱动子模块、`scripts/` 门禁 |
-| **发布线** | `release/9.0.0`（及历史 `release/3.0.0` / 未来 `release/x.y.z`） | 可选：公开 GitHub / 公开 GitLab / NuGet only | 稳定版代码快照 + 面向用户的 README / LICENSE / 发布说明 |
+| **开发 + 发布线** | **`release/9.0.0`**（当前唯一主线） | 公开 GitHub | 9.0.0 开发与发版；含 Trellis / tests / docs |
+| **历史开发** | `phase-13-production-hardening`（已并入 9.0.0，不再作为主线） | — | 仅历史参考 |
+| **更早发布线** | `release/3.0.0` / `release/3.0.1` | — | 旧编号归档 |
 | **公开镜像**（推荐） | `main` on **独立公开仓库** 或同仓 `main` | 例如 `github.com/xugudb/EntityFrameworkCore.Xugu` | 仅含可发布路径；无 `.trellis/workspace`、无 external 子模块 |
 
 **原则**：开发分支 **保留** Trellis 与 external；公开发布 **不推送** 整个单体仓库（或用 `-Mirror` 剥离）。

@@ -1,7 +1,7 @@
 # Microsoft.EntityFrameworkCore.Xugu — Release Guide
 
-> **Current release**: **9.0.0** (`v9.0.0`) — EF Core **9.0.x** aligned（含 Trellis 改造，同版覆盖）  
-> **Release branch**: `phase-13-production-hardening` / tip also on `release/9.0.0`  
+> **Current release**: **9.0.0** (`v9.0.0`) — EF Core **9.0.x** aligned（Wave A + Wave5 同版覆盖）  
+> **Development / release branch**: **`release/9.0.0`**（后续只在此分支开发；历史 `phase-13-production-hardening` 已并入）  
 > **Package ID**: `Microsoft.EntityFrameworkCore.Xugu`
 
 ---
@@ -155,6 +155,13 @@ To publish from CI, add feed secrets and extend workflow (not enabled by default
 ---
 
 ## 7. Release checklist
+
+### 9.0.0 (2026-07-28 overwrite) — Wave A + Wave5
+
+- [x] Merge `phase-13-production-hardening` → `release/9.0.0`
+- [x] Docs/contracts cleaned; Functional maturity documented（非 full 0 FAIL）
+- [x] Retag `v9.0.0` + GitHub Release assets overwrite
+- [ ] NuGet.org push（仍按需）
 
 ### 9.0.0 (2026-07-21) — EF Core aligned / dialect iteration baseline
 

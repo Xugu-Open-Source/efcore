@@ -9,23 +9,11 @@ Known limitations and deferred features: [LIMITATIONS.md](LIMITATIONS.md).
 
 ## [Unreleased]
 
-### Added / Fixed（9.0.0 工作区 — Wave5 Functional 加固，待覆盖 tag 时并入发布说明）
-
-- **Primitive collection 参数 membership** — `GenerateIn` 对 JSON 参数集合发出带防护的标量 JSON 谓词；`XuguPrimitiveCollectionTypeMapping` 序列化参数；无 `JSON_TABLE` 的行集路径保持 Skip（见 LIMITATIONS）。
-- **string `FirstOrDefault` / `LastOrDefault`** — 按字符序列翻译为 `SUBSTRING`（+ `LENGTH` 用于 Last）。
-- **`TimeSpan.Milliseconds`** — `MICROSECOND/1000` 后投影 `INTEGER`，规避驱动 `GetInt32` **E34412**。
-- **LIMIT/OFFSET** — 常量整数化 / 非常量 CAST，贴合 Xugu 分页语法。
-- **Functional 卫生** — FromSql 测试使用表前缀；bool 优化与 ComplexTypeBulkUpdates 脆弱 AssertSql 降噪；复杂导航/TPC M2M/Owned 等语义 residual 带原因 Skip。
-- **矩阵快照** — native class-isolated：约 7524 passed / ~105 failed / 509 skipped；PrimitiveCollections* 0 FAIL；经典方言炸码 FAIL 清零。**仍非** full Functional 0 FAIL。
-
-### Docs
-
-- RELEASE-SCOPE / LIMITATIONS：Wave A 门禁保持；补充 2026-07-28 交付口径与 Primitive collections / residual 说明。
-- **契约/参考清理**：`sql-dialect.contract.md` / `stub-and-exclusion.contract.md` 全文重写（历史 UTF-8 损坏且 git 无干净祖先）；删除不可恢复的 `test-parity-matrix.md` / `pomelo-file-map.md`，引用改指向 TESTING / LIMITATIONS / `external/Pomelo…`；`verify.ps1` / `verify-source-lineage.ps1` 同步。
+（下一批次变更记于此。）
 
 ---
 
-## [9.0.0] — 2026-07-23 (EF Core 9 aligned — dialect iteration baseline + Wave A acceptance)
+## [9.0.0] — 2026-07-28 (EF Core 9 aligned — Wave A + Wave5 overwrite)
 
 **版本策略**：自本版起，包版本 **主.次与目标 EF Core 对齐**（`EFCoreVersion=9.0.0` → `9.0.0`）。历史 `1.x`–`3.x` 编号仅作归档。本 tag 为 **覆盖式** 发布（Wave A 修复仍标 9.0.0，不 bump 9.0.1）。
 
@@ -39,6 +27,17 @@ Known limitations and deferred features: [LIMITATIONS.md](LIMITATIONS.md).
 | Integration | 独立验收原 **13 FAIL → 0 FAIL** |
 | Functional | **仅** APPLY/LATERAL Skip；**不**宣称 Comparable Set 全矩阵 0 FAIL |
 | 平台 | **Windows x64 可试用**；Linux **未验收** |
+
+### Wave5 Functional 加固（同版覆盖，2026-07-28）
+
+- **Primitive collection 参数 membership** — JSON 标量谓词 + `XuguPrimitiveCollectionTypeMapping`；无 `JSON_TABLE` 行集仍 Skip。
+- **string `FirstOrDefault` / `LastOrDefault`** — `SUBSTRING`（+ `LENGTH`）。
+- **`TimeSpan.Milliseconds`** — `MICROSECOND/1000` 后投影 `INTEGER`（避 E34412）。
+- **LIMIT/OFFSET** 整数化；内联 VALUES → `UNION ALL SELECT`（Wave4，并入本覆盖）。
+- **Functional 卫生** — FromSql 表前缀、AssertSql 降噪、复杂导航/TPC M2M 等 residual 带原因 Skip。
+- **契约文档** — `sql-dialect` / `stub-and-exclusion` 全文重写；删除不可恢复的 `test-parity-matrix` / `pomelo-file-map`。
+- **矩阵** — native class-isolated 约 7524 passed / ~105 failed / 509 skipped；经典方言炸码 FAIL 清零；**仍非** full Functional 0 FAIL。
+- **口径** — 仍为 **Wave A Windows 可试用**；见 RELEASE-SCOPE 2026-07-28 交付表。
 
 ### Wave A fixes（2026-07-23）
 
