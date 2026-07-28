@@ -2,7 +2,7 @@
 
 > **当前稳定版**：**9.0.0**（`v9.0.0` — **与 EF Core 9.0.x 版本对齐**；**方言迭代基线**）  
 > **上一公开 tag（旧编号）**：**3.0.1**（`v3.0.1`）  
-> **更新**：2026-07-23（Wave A 验收口径对齐；Post-GA hardening 并入 9.0.0）
+> **更新**：2026-07-28（Wave A 门禁仍有效；补充 Wave5 Functional 成熟度与交付口径，**非** full Functional 0 FAIL）
 
 > **版本策略**：包 `主.次` = 目标 EF Core `主.次`（见 `Directory.Packages.props` / `Version.props`）。旧 `3.x` 编号不再用于新公开发布。
 
@@ -63,7 +63,7 @@
 
 | 项 | 处置 |
 |----|------|
-| Pomelo **Comparable Set** 全量 Functional（~8500+ 列测）双模式 **0 FAIL** | **未宣称** — 仍有 LINQ 翻译、E19132、E17010、结果/异常不匹配等 FAIL；后续波次 |
+| Pomelo **Comparable Set** 全量 Functional（~8500+ 列测）双模式 **0 FAIL** | **未宣称** — Wave5 后 native 矩阵约 7524 pass / ~105 fail / 509 skip；经典方言炸码 FAIL 已清零，剩余多为复杂导航语义与测试金标；后续 full Functional 波次 |
 | **Linux x64** 生产可用 | **未验收** — `Xuguclient` 3.3.6-bionic 可能含 `.so` 资产，Wave A **仅签 Windows x64 试用** |
 | nuget.org 公开发布 | 不在本波次 |
 | 版本号 bump（9.0.1） | 不在本波次 — 仍为 **9.0.0 覆盖式** 发布叙事 |
@@ -78,6 +78,20 @@ dotnet pack src/EFCore.Xugu/EFCore.Xugu.csproj -c Release -p:UseLocalXuguDriver=
 ```
 
 证据与修复明细见 `.superpowers/sdd/task-*-report.md` 与 `docs/superpowers/specs/2026-07-23-release-acceptance-wave-a-design.md`。
+
+### 9.0.0 交付口径（2026-07-28）
+
+| 口径 | 是否达到 | 说明 |
+|------|----------|------|
+| **Wave A / Windows 可试用** | **是** | Unit/Integration 门禁 + 核心用户路径；可交付试用 |
+| **Functional 方言硬失败清零** | **是（工作区矩阵）** | APPLY / E17010 / E19132 / E19196 无 residual FAIL 行 |
+| **Primitive collection 参数 membership** | **是** | JSON 标量谓词路径；行集 `JSON_TABLE` 仍不支持 |
+| **Full Functional definition A（0 FAIL + 仅权威 Skip）** | **否** | 仍有复杂导航/继承边角 residual；见 [LIMITATIONS.md](LIMITATIONS.md) |
+| **Linux 生产 / nuget.org** | **否** | 未验收 / 非本波次默认动作 |
+
+**对用户一句话**：9.0.0 可在 **Windows x64** 作为 EF Core 9 Xugu 原生 Provider **认真试用/试投产**；请阅读 LIMITATIONS（APPLY、复杂导航边角、DateTimeOffset 驱动边界）。**不要**按 Pomelo Functional 全绿或 Linux 生产认证理解本版。
+
+独立全量套件复跑与 tag 覆盖属于发版操作，不改变 Wave A 门禁定义。
 
 ---
 
@@ -198,6 +212,10 @@ dotnet pack src/EFCore.Xugu/EFCore.Xugu.csproj -c Release -p:UseLocalXuguDriver=
 ### 9.0.0 Wave A（**done** @ 2026-07-23）
 
 在 **Windows 可试用** 前提下：Unit **0 FAIL**；Integration 独立验收原 13 项 **0 FAIL**；Functional **仅** APPLY/LATERAL Skip 卫生；NuGet 描述 UTF-8 修复。**不**宣称 Functional Comparable Set 全绿或 Linux 生产就绪。详见上文 [9.0.0 Wave A 验收](#900-wave-a-验收release-acceptance-wave-a)。
+
+### 9.0.0 Wave5 能力增强（工作区，2026-07-28）
+
+在 **不改变 Wave A 门禁** 前提下：PrimitiveCollections 参数 membership、string First/LastOrDefault、`TimeSpan.Milliseconds` E34412 规避、FromSql 测试前缀、大量方言硬限制 Skip 证据化；Functional native 成熟度见上文交付口径。**完全体 / definition A 仍未关闭**。
 
 ---
 

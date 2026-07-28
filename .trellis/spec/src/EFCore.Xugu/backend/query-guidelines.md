@@ -34,3 +34,21 @@ Any change under `src/EFCore.Xugu/Query/` — method/member translators, SQL tra
 - Copying Pomelo translator bodies that emit MySQL functions (`DATE_ADD` quirks, backticks, etc.) without Xugu doc proof.
 - Silent client eval for functions that should stub/skip per stub-and-exclusion contract.
 - Hardcoding `LIMIT`/`OFFSET` or MySQL-only paging idioms without checking Xugu dialect contract.
+
+## Primitive collections & paging (Wave5)
+
+| Concern | Rule |
+|---------|------|
+| Parameter `Contains` / membership | Prefer guarded JSON scalar predicates in `XuguQuerySqlGenerator.GenerateIn`; serialize via `XuguPrimitiveCollectionTypeMapping`. |
+| Row-set expand (`JSON_TABLE`) | **Do not invent**. Official docs lack JSON_TABLE; probe → E19132. Skip Functional cases with evidence. |
+| Tree type | `Query/Expressions/Internal/XuguPrimitiveCollectionTableExpression.cs` when a collection table shape is required. |
+| `LIMIT`/`OFFSET` | Integerize constants; `CAST` non-constants (`GenerateIntegerLimitOffsetValue`). |
+| `TimeSpan.Milliseconds` | Extract as high-precision then divide; **Convert to int** before materialization (driver E34412). |
+| `string` First/LastOrDefault | `SUBSTRING` — treat string as char sequence. |
+| Inline VALUES | `SELECT … UNION ALL SELECT …` only (not `UNION ALL VALUES`). |
+
+## Anti-patterns (Wave5)
+
+- Emitting `IN (SELECT …)` over JSON parameter collections that Xugu evaluates incorrectly.
+- AssertSql baselines hard-coding unprefixed table names under shared SYSTEM + `FormatTablePrefix` isolation.
+- Closing Wave5 with residual server codes APPLY/E17010/E19132 still as FAIL (must be fix or evidenced Skip).

@@ -9,7 +9,18 @@ Known limitations and deferred features: [LIMITATIONS.md](LIMITATIONS.md).
 
 ## [Unreleased]
 
-（下一批次变更记于此。）
+### Added / Fixed（9.0.0 工作区 — Wave5 Functional 加固，待覆盖 tag 时并入发布说明）
+
+- **Primitive collection 参数 membership** — `GenerateIn` 对 JSON 参数集合发出带防护的标量 JSON 谓词；`XuguPrimitiveCollectionTypeMapping` 序列化参数；无 `JSON_TABLE` 的行集路径保持 Skip（见 LIMITATIONS）。
+- **string `FirstOrDefault` / `LastOrDefault`** — 按字符序列翻译为 `SUBSTRING`（+ `LENGTH` 用于 Last）。
+- **`TimeSpan.Milliseconds`** — `MICROSECOND/1000` 后投影 `INTEGER`，规避驱动 `GetInt32` **E34412**。
+- **LIMIT/OFFSET** — 常量整数化 / 非常量 CAST，贴合 Xugu 分页语法。
+- **Functional 卫生** — FromSql 测试使用表前缀；bool 优化与 ComplexTypeBulkUpdates 脆弱 AssertSql 降噪；复杂导航/TPC M2M/Owned 等语义 residual 带原因 Skip。
+- **矩阵快照** — native class-isolated：约 7524 passed / ~105 failed / 509 skipped；PrimitiveCollections* 0 FAIL；经典方言炸码 FAIL 清零。**仍非** full Functional 0 FAIL。
+
+### Docs
+
+- RELEASE-SCOPE / LIMITATIONS：Wave A 门禁保持；补充 2026-07-28 交付口径与 Primitive collections / residual 说明。
 
 ---
 

@@ -22,7 +22,8 @@ public sealed class XuguServerVersion : ServerVersion
         {
         }
 
-        public override bool OuterApply => ServerVersion.Version >= new Version(12, 0);
+        // Primitive collection expansion uses Xugu's DUAL + CONNECT BY LEVEL row source.
+        public override bool OuterApply => false;
         public override bool OuterReferenceInMultiLevelSubquery => ServerVersion.Version >= new Version(12, 0);
         public override bool Json => ServerVersion.Version >= new Version(12, 0);
         public override bool JsonTable => ServerVersion.Version >= new Version(12, 0);

@@ -36,3 +36,11 @@ Start DB helper: `scripts/start-xugudb.ps1`. Connection via `XUGU_CONNECTION_STR
 - Referencing deleted `harness/scripts/*` paths in new tests or docs.
 - Skipping dialect contract updates when a test permanently changes expected SQL.
 - Adding Functional tests that assume MySQL-only fixtures without Xugu fixture overrides.
+
+## Functional shared-store rules
+
+- Tables are isolated by **table name prefix** on shared SYSTEM (`XuguTestStoreFactory.FormatTablePrefix` / `FormatTableName`).
+- FromSql / raw SQL in Functional tests **must** use prefixed names — bare `Weapons`/`Entities1` → E5021 under shared DB.
+- Prefer result assertions over brittle AssertSql when baselines still assume unprefixed identifiers.
+- Skip attributes need **concrete reason** (server code, doc gap, residual semantics) — not empty Skip.
+- Class-isolated matrix evidence lives under `artifacts/live-db/` (gitignored); summarize in task `implement.md`.

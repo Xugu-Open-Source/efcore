@@ -1,3 +1,5 @@
+> **Encoding note (2026-07-28)**: This file has historical invalid UTF-8 bytes / U+FFFD. Numeric paths may still be useful; authoritative release numbers are in docs/RELEASE-SCOPE.md, task implement.md, and artifacts/live-db/.
+
 # Phase 9�?2 测试对等矩阵
 
 > **状�?*：Phase 12 **done** + 3.0.1 patch�?*3.0.x 冻结** compat **1057** / native **1056** / Adjusted **111.0%**�?057÷952�? 

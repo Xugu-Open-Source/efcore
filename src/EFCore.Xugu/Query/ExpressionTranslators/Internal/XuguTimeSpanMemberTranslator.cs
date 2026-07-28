@@ -39,19 +39,22 @@ public class XuguTimeSpanMemberTranslator : IMemberTranslator
             return null;
         }
 
+        // MICROSECOND() returns high-precision numeric; driver GetInt32 throws E34412.
+        // Project INTEGER (same mitigation as COUNT/TIMESTAMPDIFF).
         var extract = _sqlExpressionFactory.NullableFunction(
             datePart.Function,
             [instance],
-            returnType,
+            typeof(long),
             onlyNullWhenAnyNullPropagatingArgumentIsNull: false);
 
+        SqlExpression value = extract;
         if (datePart.Divisor != 1)
         {
-            return _sqlExpressionFactory.Divide(
+            value = _sqlExpressionFactory.Divide(
                 extract,
                 _sqlExpressionFactory.Constant(datePart.Divisor));
         }
 
-        return extract;
+        return _sqlExpressionFactory.Convert(value, typeof(int));
     }
 }

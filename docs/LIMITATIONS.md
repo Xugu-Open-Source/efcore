@@ -16,7 +16,9 @@
 
 详见 [TESTING.md](TESTING.md)。PR **不**跑 L2；主干与发布强制双方言完整集成。
 
-**9.0.0 Wave A**：Unit **0 FAIL**；Integration **0 FAIL**（原独立验收 13 项已闭合）；Functional **仅** APPLY/LATERAL（`ApplyNotSupported`）~120 方法已 Skip — 其余 FAIL **不**计入 Wave A 发布阻塞。见 [RELEASE-SCOPE.md](RELEASE-SCOPE.md#900-wave-a-验收release-acceptance-wave-a)。
+**9.0.0 Wave A（发布门禁，仍有效）**：Unit **0 FAIL**；Integration **0 FAIL**（原独立验收 13 项已闭合）；Functional **仅** APPLY/LATERAL（`ApplyNotSupported`）集群必须 Skip — 其余 FAIL **不**计入 Wave A 发布阻塞。见 [RELEASE-SCOPE.md](RELEASE-SCOPE.md#900-wave-a-验收release-acceptance-wave-a)。
+
+**9.0.0 工作区 Functional 成熟度（2026-07-28，非完全体门禁）**：class-isolated native 矩阵约 **7524 passed / ~105 failed / 509 skipped**（`artifacts/live-db/matrix-native-current`）。经典方言服务器炸码 FAIL（APPLY / E17010 / E19132 / E19196）已清零；`PrimitiveCollections*` **0 FAIL**（硬限制项为带证据 Skip）。**仍不宣称** Pomelo Comparable Set 双模式 0 FAIL。
 
 ## 方言模式（9.0.0）
 
@@ -293,6 +295,26 @@ XuguDB **服务端**支持原生 `JSON` 列类型（LOB，最大 2GB）、`->` /
 **变通**：查询优先 `EF.Functions.JsonValue` / `JsonExtract`；整列读取仅适合小 JSON；见 `ado-driver-contract.md` G-06。  
 **测试**：`JsonIntegrationTests`（小文档/函数）；`JsonBoundaryTests`（大 LOB 边界 + `ToJson` 非支持路径，Category=`QualityMatrix`）。
 
+
+## Primitive collections（LINQ 参数 / 列）
+
+**状态：部分支持（9.0.0 Wave5 加固，2026-07-28）**
+
+XuguDB 有 JSON 标量函数（`JSON_LENGTH` / `JSON_VALUE` / `JSON_CONTAINS` 等），但 **无** 文档化的 `JSON_TABLE` / `unnest` 行集 API；实库 `JSON_TABLE(...)` 探测为 **E19132**。因此 EF 原始集合能力分层如下：
+
+| 场景 | 状态 | Provider 处理 |
+|------|------|----------------|
+| 参数集合成员判定（`list.Contains(col)` / 取反） | **支持** | `XuguQuerySqlGenerator.GenerateIn` → 带长度/JSON-null 防护的标量 JSON 谓词；参数经 `XuguPrimitiveCollectionTypeMapping` 序列化为 JSON 文本 |
+| `OpenJson` / 行集展开（`SelectMany`、集合投影为行、部分 `ElementAt`/集合运算） | **不承诺** | `ServerVersionSupport.JsonTable = false`；相关 Functional 用例 **Skip**（证据：无 JSON_TABLE + E19132） |
+| 列上 JSON 数组的复杂集合运算 / 嵌套 Contains | **Skip/defer** | 见 Functional `PrimitiveCollections*` / `NonSharedPrimitiveCollections*` Skip 原因 |
+| 空内联集合抛错契约、部分 float/Guid/DateTime 数组物化 | **Skip** | 方言/驱动边界；带原因属性 |
+
+**推荐**：参数侧 membership 用 LINQ `Contains`；需要行集语义时在应用层展开，或用 `EF.Functions.JsonValue` / `JsonExtract` 做标量投影。
+
+**依据**：`reference/sql/datatype/json.md`、`reference/function/json-functions/`；实库 SYSTEM@5287（XuguDB 12）探测；矩阵见任务 `07-24-full-functional-remediation` Wave5c/5d。
+
+**测试**：`PrimitiveCollectionsQueryXuguTest` / `NonSharedPrimitiveCollectionsQueryXuguTest`（参数 membership 矩阵绿；行集硬限制 Skip）。
+
 ## Sequence（序列）
 
 **状态：Migrations DDL done（2026-07-21）** — 文档 `reference/object/sequence.md`
@@ -306,6 +328,26 @@ XuguDB **服务端**支持原生 `JSON` 列类型（LOB，最大 2GB）、`->` /
 | Sequence HiLo 值生成器 | **未做**（可用 `seq.NEXTVAL` 手工/默认值） |
 
 **测试**：`MigrationSequenceSqlTests`（Unit）；`SequenceIntegrationTests`（实库 NEXTVAL）。
+
+
+## Functional Spec 矩阵 residual（9.0.0）
+
+**状态：已知边角 / 不阻塞 Wave A**
+
+在 APPLY/E17010/E19132 硬失败清零后，剩余 Functional FAIL/Skip 主要集中在：
+
+| 类别 | 说明 | 用户影响 |
+|------|------|----------|
+| 复杂导航 / GroupJoin / 多级 Include 结果序或计数 | ComplexNavigations* residual；部分已 Skip | 常规 CRUD/简单 Include 通常不受影响 |
+| TPC + skip navigation 左连接键序 | 如 `Left_join_with_skip_navigation`（`1_2` vs `1_1`） | 少见继承+多对多边角 |
+| Owned 空导航 / 相关集合投影语义 | Owned residual Skip | 复杂 owned 图查询 |
+| SQL 金标 / 共享 SYSTEM 表前缀噪声 | 测试基建；部分 AssertSql 已 no-op 或 deferred | **不影响**应用运行时 |
+| `Check_all_tests_overridden` | override 面不完整，非运行时缺陷 | 仅测试卫生 |
+| string `FirstOrDefault`/`LastOrDefault` | **已修复** → `SUBSTRING` | — |
+| `TimeSpan.Milliseconds` 物化 E34412 | **已修复** → `MICROSECOND/1000` 后 `Convert(int)` | — |
+| FromSql 裸表名 | 测试侧应使用 `FormatTableName` 前缀；应用应使用真实表名/映射 | 共享库测试基建问题 |
+
+完整 burn-down 与独立套件 0 FAIL 属于 **full Functional（definition A）** 后续工作，**不是** 9.0.0 Wave A 发布阻塞项。
 
 ## 其他 excluded / blocked（摘要）
 

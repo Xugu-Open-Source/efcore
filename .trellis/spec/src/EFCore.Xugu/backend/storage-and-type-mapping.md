@@ -22,6 +22,7 @@ Representative files:
 | `XuguDateOnlyTypeMapping.cs` / `XuguTimeOnlyTypeMapping.cs` | Temporal via driver-friendly binding |
 | `XuguTemporalValueConverters.cs` | Shared temporal converters |
 | `XuguGuidTypeMapping.cs` | GUID store handling |
+| `XuguPrimitiveCollectionTypeMapping.cs` | Parameter primitive collections as JSON text; DateTime ISO normalize before DATETIME |
 
 Driver behavior authority: [docs/contracts/ado-driver-contract.md](../../../../docs/contracts/ado-driver-contract.md), [docs/references/csharp-driver-analysis.md](../../../../docs/references/csharp-driver-analysis.md).
 

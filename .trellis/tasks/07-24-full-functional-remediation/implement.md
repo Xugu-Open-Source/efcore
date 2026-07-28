@@ -158,3 +158,40 @@ Evidence: `E:/Work/Tests/entityframeworkcore-xugu-release-test/test-output/reval
 
 **Next: Wave6 — final burn-down or accept as known limitations, then pack + overwrite v9.0.0.**
 
+### Wave5c — Primitive collection parameter membership
+
+- Xugu rejects the generated `IN (SELECT ...)` shape for JSON-backed parameter collections; it can return incorrect membership results even when the equivalent scalar JSON expression is valid.
+- `XuguQuerySqlGenerator.GenerateIn` now emits guarded scalar JSON predicates for positive and negated membership, including array-length and JSON-null guards.
+- Primitive collection parameters are serialized as JSON text by `XuguPrimitiveCollectionTypeMapping`; ISO DateTime JSON values are normalized before Xugu DATETIME conversion, and DATETIME type detection precedes DATE prefix matching.
+- Live validation: parameter collection matrix **26/26 passed**, including nullable and DateTime cases, on SYSTEM@5287; the null-parameter case also passed; functional project build passed with existing warnings only.
+- Full `PrimitiveCollectionsQueryXuguTest` class result after this change: **175 passed, 28 skipped, 75 remaining failures**; remaining failures are outside the parameter-membership matrix (column/subquery shapes, unsupported set operations, and known temporal/materialization cases).
+
+- Provider fixes retained:
+  - `XuguSqlNullabilityProcessor.Visit(TableExpressionBase)` now calls base (restores `ValuesExpression` expansion) and registers `XuguPrimitiveCollectionTableExpression` via `IsCollectionTable` / `UpdateParameterCollection`.
+  - `GenerateLimitOffset` integerizes constants / CASTs non-constants for Xugu LIMIT/OFFSET.
+  - Parameter collection membership still uses guarded JSON scalar predicates + JSON type mapping.
+- Dialect hard residuals formally Skip’d on `PrimitiveCollectionsQueryXuguTest` / `NonSharedPrimitiveCollectionsQueryXuguTest` (APPLY/SelectMany/projection, E17010 set-ops, E19132 index/Skip, E19196 nested Contains, empty-inline throw contract mismatch, nonshared float/Guid/DateTime array materialization).
+- Live validation after cleanup (SYSTEM@5287): **PrimitiveCollections\* 0 FAIL** — 183 passed, 64 skipped, 247 total.
+
+### Wave5d — Full Functional native matrix on current workspace (2026-07-28)
+
+- Harness: class-isolated `dotnet test` over current `test/EFCore.Xugu.Tests.Functional` (29 classes, 8126 listed tests), SYSTEM@5287, `XUGU_DIALECT_MODE=native`.
+- Evidence: `artifacts/live-db/matrix-native-current/` + `summary.json`.
+- Totals (UnitTestResult outcomes): **7524 passed / 105 failed / 509 skipped**.
+- **No residual FAIL rows with classic dialect server codes** `E17010` / `E19132` / `E19196` / APPLY-LATERAL.
+- Remaining FAIL taxonomy:
+  - SEMANTICS/result assert (~44) — ComplexNavigations / Include / OrderBy / GroupJoin count or entity mismatch
+  - SQL_BASELINE / table-prefix AssertSql (~12–22) — ComplexTypeBulkUpdates + Gears bool_optimization baselines still expect unprefixed names
+  - SEMANTICS order/join (~8) — TPCManyToMany `Left_join_with_skip_navigation` (`1_2` vs `1_1`)
+  - LINQ translation (2) — NullSemantics `FirstOrDefault`/`LastOrDefault` on nullable string
+  - OTHER: FromSql `E5021` table/view missing (2), TimeSpan milliseconds (2), owned null projection
+- PrimitiveCollections / NonSharedPrimitiveCollections: **0 FAIL** in this matrix.
+
+### Wave5e — Workspace freeze + docs/Trellis sync (2026-07-28)
+
+- Provider working tree retained: primitive collection membership, string First/LastOrDefault, TimeSpan.Milliseconds int projection, LIMIT/OFFSET integerize, nullability/collection table wiring.
+- Functional overrides: residual semantic Skips + FromSql prefix + bool/ComplexTypeBulk AssertSql noise reduction.
+- Docs: RELEASE-SCOPE 交付口径；LIMITATIONS Primitive collections + residual；CHANGELOG Unreleased；sql-dialect Wave5 登记；stub contract intro UTF-8 repair (body still has historical U+FFFD in places).
+- Trellis: query/storage/testing specs updated；`.omp/hooks.json` + hook scripts ported from Cursor；gitignore `.tmp/` + `.trellis/spec/external/`.
+- **Gate**: Wave A still the public release bar. Full Functional definition A **not** closed (~105 residual FAIL class before latest skips; re-run matrix before claiming 0).
+- Local commit expected this freeze; **no push** until Wave6 independent suite decision.

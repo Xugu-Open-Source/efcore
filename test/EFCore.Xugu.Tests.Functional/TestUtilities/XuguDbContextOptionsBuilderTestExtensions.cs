@@ -1,9 +1,10 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Xugu.Infrastructure;
 
 namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.TestUtilities;
 
 /// <summary>
-/// Compile-time stubs for Pomelo/MySQL functional-test options not yet implemented on Xugu.
+/// Functional-test helpers for options not exposed as first-class Xugu product APIs.
 /// </summary>
 public static class XuguDbContextOptionsBuilderTestExtensions
 {

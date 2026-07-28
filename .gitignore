@@ -36,3 +36,9 @@ test-results.txt
 
 ## Native driver binaries (obtain from XuguDB SDK; path configured in Directory.Build.props)
 external/csharp-driver/test_xugusql/
+
+## Local scratch / probes
+.tmp/
+
+## Accidental external package Trellis specs (not this repo)
+.trellis/spec/external/

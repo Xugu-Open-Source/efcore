@@ -83,6 +83,37 @@ public class XuguStringMethodTranslator : IMethodCallTranslator
         IReadOnlyList<SqlExpression> arguments,
         IDiagnosticsLogger<DbLoggerCategory.Query> logger)
     {
+        // string treated as char sequence: FirstOrDefault/LastOrDefault → SUBSTRING
+        // (docs: string-functions/substring; same shape as SQL Server/SQLite providers).
+        if (instance is null
+            && method.DeclaringType == typeof(Enumerable)
+            && method.IsGenericMethod
+            && arguments is [var source]
+            && source.Type == typeof(string)
+            && method.Name is nameof(Enumerable.FirstOrDefault) or nameof(Enumerable.LastOrDefault))
+        {
+            if (method.Name == nameof(Enumerable.FirstOrDefault))
+            {
+                return _sqlExpressionFactory.NullableFunction(
+                    "SUBSTRING",
+                    [source, _sqlExpressionFactory.Constant(1), _sqlExpressionFactory.Constant(1)],
+                    method.ReturnType);
+            }
+
+            return _sqlExpressionFactory.NullableFunction(
+                "SUBSTRING",
+                [
+                    source,
+                    _sqlExpressionFactory.NullableFunction(
+                        "LENGTH",
+                        [source],
+                        typeof(int),
+                        onlyNullWhenAnyNullPropagatingArgumentIsNull: false),
+                    _sqlExpressionFactory.Constant(1)
+                ],
+                method.ReturnType);
+        }
+
         if (instance is null)
         {
             return null;

@@ -1,3 +1,5 @@
+> **Encoding note (2026-07-28)**: This file has historical invalid UTF-8 bytes / U+FFFD. Numeric paths may still be useful; authoritative release numbers are in docs/RELEASE-SCOPE.md, task implement.md, and artifacts/live-db/.
+
 # Pomelo �?XuguDB Provider 文件映射�?
 
 > Pomelo 路径根：`external/Pomelo.EntityFrameworkCore.MySql/src/EFCore.MySql/`  

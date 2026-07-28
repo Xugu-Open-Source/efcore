@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
@@ -14,6 +15,7 @@ public class XuguQuerySqlGenerator : QuerySqlGenerator
 
     private readonly IRelationalTypeMappingSource _typeMappingSource;
     private string? _removeTableAliasOld;
+    private readonly Dictionary<string, XuguPrimitiveCollectionTableExpression> _primitiveCollectionTables = new(StringComparer.Ordinal);
     private string? _removeTableAliasNew;
 
     private static readonly Dictionary<string, string[]> CastMappings =
@@ -37,6 +39,89 @@ public class XuguQuerySqlGenerator : QuerySqlGenerator
         IRelationalTypeMappingSource typeMappingSource)
         : base(dependencies)
         => _typeMappingSource = typeMappingSource;
+    protected override void GenerateIn(InExpression inExpression, bool negated)
+    {
+        if (inExpression.Subquery is { } subquery
+            && subquery.Tables.Count == 1
+            && subquery.Tables[0] is XuguPrimitiveCollectionTableExpression table)
+        {
+            if (!negated)
+            {
+                Sql.Append("(");
+                for (var index = 0; index < table.MaxElementCount; index++)
+                {
+                    if (index > 0)
+                    {
+                        Sql.Append(" OR ");
+                    }
+
+                    Sql.Append("(JSON_LENGTH(");
+                    Visit(table.CollectionExpression);
+                    Sql.Append(") >= ").Append((index + 1).ToString()).Append(" AND ");
+                    GeneratePrimitiveCollectionScalarValue(table, index);
+                    Sql.Append(" IS NOT NULL AND ");
+                    Visit(inExpression.Item);
+                    Sql.Append(" = ");
+                    GeneratePrimitiveCollectionScalarValue(table, index);
+                    Sql.Append(")");
+                }
+
+                Sql.Append(")");
+                return;
+            }
+
+            Sql.Append("(");
+            for (var index = 0; index < table.MaxElementCount; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(" AND ");
+                }
+
+                Sql.Append("(JSON_LENGTH(");
+                Visit(table.CollectionExpression);
+                Sql.Append(") < ").Append((index + 1).ToString()).Append(" OR ");
+                GeneratePrimitiveCollectionScalarValue(table, index);
+                Sql.Append(" IS NULL OR ");
+                Visit(inExpression.Item);
+                Sql.Append(" <> ");
+                GeneratePrimitiveCollectionScalarValue(table, index);
+                Sql.Append(")");
+            }
+
+            Sql.Append(")");
+            return;
+        }
+
+        base.GenerateIn(inExpression, negated);
+    }
+
+    private void GeneratePrimitiveCollectionScalarValue(
+        XuguPrimitiveCollectionTableExpression table,
+        int index)
+    {
+        GeneratePrimitiveCollectionJsonValue(table, index);
+    }
+
+    private void GeneratePrimitiveCollectionJsonValue(
+        XuguPrimitiveCollectionTableExpression table,
+        int index)
+    {
+        var returnType = GetJsonValueReturningType(table);
+        if (returnType.Equals("DATETIME", StringComparison.OrdinalIgnoreCase))
+        {
+            Sql.Append("CAST(REPLACE(REPLACE(JSON_VALUE(");
+            Visit(table.CollectionExpression);
+            Sql.Append(", '$[").Append(index.ToString()).Append("]' RETURNING VARCHAR), 'T', ' '), 'Z', '') AS DATETIME)");
+            return;
+        }
+
+        Sql.Append("JSON_VALUE(");
+        Visit(table.CollectionExpression);
+        Sql.Append(", '$[").Append(index.ToString()).Append("]' RETURNING ")
+            .Append(returnType)
+            .Append(")");
+    }
 
     protected override Expression VisitExtension(Expression extensionExpression)
         => extensionExpression switch
@@ -49,8 +134,104 @@ public class XuguQuerySqlGenerator : QuerySqlGenerator
                 => VisitInlinedParameterExpression(inlinedParameterExpression),
             XuguJsonTraversalExpression jsonTraversalExpression
                 => VisitJsonPathTraversal(jsonTraversalExpression),
+            XuguPrimitiveCollectionTableExpression primitiveCollectionTable
+                => VisitPrimitiveCollectionTable(primitiveCollectionTable),
             _ => base.VisitExtension(extensionExpression)
         };
+
+
+    private Expression VisitPrimitiveCollectionTable(XuguPrimitiveCollectionTableExpression table)
+    {
+        _primitiveCollectionTables[table.Alias] = table;
+        Sql.Append("(SELECT LEVEL");
+        Sql.Append(AliasSeparator).Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("key"));
+        Sql.Append(" FROM DUAL CONNECT BY LEVEL <= ")
+            .Append(table.MaxElementCount.ToString())
+            .Append(")")
+            .Append(AliasSeparator)
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table.Alias));
+        return table;
+    }
+
+    private void GeneratePrimitiveCollectionValue(XuguPrimitiveCollectionTableExpression table)
+    {
+        Sql.Append("CASE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table.Alias))
+            .Append(".")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("key"));
+        for (var index = 0; index < table.MaxElementCount; index++)
+        {
+            Sql.Append(" WHEN ").Append((index + 1).ToString()).Append(" THEN ");
+            GeneratePrimitiveCollectionJsonValue(table, index);
+        }
+
+        Sql.Append(" END");
+    }
+
+    private static string GetJsonValueReturningType(XuguPrimitiveCollectionTableExpression table)
+    {
+        var storeType = table.ElementTypeMapping?.StoreType;
+        if (string.IsNullOrWhiteSpace(storeType))
+        {
+            storeType = (Nullable.GetUnderlyingType(table.ElementType) ?? table.ElementType).Name;
+        }
+
+        var normalized = storeType.ToUpperInvariant();
+        if (normalized.StartsWith("BOOL", StringComparison.Ordinal)
+            || normalized.StartsWith("BOOLEAN", StringComparison.Ordinal))
+        {
+            return "BOOLEAN";
+        }
+
+        if (normalized.StartsWith("TINYINT", StringComparison.Ordinal)
+            || normalized.StartsWith("SMALLINT", StringComparison.Ordinal)
+            || normalized.StartsWith("INTEGER", StringComparison.Ordinal)
+            || normalized.StartsWith("INT", StringComparison.Ordinal))
+        {
+            return "INTEGER";
+        }
+
+        if (normalized.StartsWith("BIGINT", StringComparison.Ordinal)
+            || normalized.StartsWith("LONG", StringComparison.Ordinal))
+        {
+            return "BIGINT";
+        }
+
+        if (normalized.StartsWith("FLOAT", StringComparison.Ordinal))
+        {
+            return "FLOAT";
+        }
+
+        if (normalized.StartsWith("DOUBLE", StringComparison.Ordinal))
+        {
+            return "DOUBLE";
+        }
+
+        if (normalized.StartsWith("DECIMAL", StringComparison.Ordinal)
+            || normalized.StartsWith("NUMERIC", StringComparison.Ordinal)
+            || normalized.StartsWith("NUMBER", StringComparison.Ordinal))
+        {
+            return "NUMERIC";
+        }
+
+        if (normalized.StartsWith("DATETIME", StringComparison.Ordinal)
+            || normalized.StartsWith("TIMESTAMP", StringComparison.Ordinal))
+        {
+            return "DATETIME";
+        }
+
+        if (normalized.StartsWith("DATE", StringComparison.Ordinal))
+        {
+            return "DATE";
+        }
+
+        if (normalized.StartsWith("TIME", StringComparison.Ordinal))
+        {
+            return "TIME";
+        }
+
+        return "VARCHAR";
+    }
 
     private Expression VisitInlinedParameterExpression(XuguInlinedParameterExpression inlinedParameterExpression)
     {
@@ -151,7 +332,7 @@ public class XuguQuerySqlGenerator : QuerySqlGenerator
         if (selectExpression.Limit != null)
         {
             Sql.AppendLine().Append("LIMIT ");
-            Visit(selectExpression.Limit);
+            GenerateIntegerLimitOffsetValue(selectExpression.Limit);
         }
 
         if (selectExpression.Offset != null)
@@ -162,9 +343,42 @@ public class XuguQuerySqlGenerator : QuerySqlGenerator
             }
 
             Sql.Append(" OFFSET ");
-            Visit(selectExpression.Offset);
+            GenerateIntegerLimitOffsetValue(selectExpression.Offset);
         }
     }
+
+    private void GenerateIntegerLimitOffsetValue(SqlExpression value)
+    {
+        // Xugu LIMIT/OFFSET require integer constants/params; float literals from
+        // some collection Skip/Take translations yield E19132 unexpected FCONST.
+        if (value is SqlConstantExpression { Value: not null } constant
+            && IsIntegral(constant.Value))
+        {
+            Sql.Append(Convert.ToInt64(constant.Value).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            return;
+        }
+
+        // Already-integral parameter/column: emit as-is. Only coerce non-integral expressions.
+        if (value.Type == typeof(int)
+            || value.Type == typeof(long)
+            || value.Type == typeof(short)
+            || value.Type == typeof(byte)
+            || value.Type == typeof(uint)
+            || value.Type == typeof(ulong)
+            || value.Type == typeof(ushort)
+            || value.Type == typeof(sbyte))
+        {
+            Visit(value);
+            return;
+        }
+
+        Sql.Append("CAST(");
+        Visit(value);
+        Sql.Append(" AS BIGINT)");
+    }
+
+    private static bool IsIntegral(object value)
+        => value is byte or sbyte or short or ushort or int or uint or long or ulong;
 
     /// <summary>
     /// EF Core default emits <c>SELECT … UNION ALL VALUES (…), (…)</c>, which Xugu rejects with
@@ -219,8 +433,35 @@ public class XuguQuerySqlGenerator : QuerySqlGenerator
         }
     }
 
+    protected override Expression VisitSelect(SelectExpression selectExpression)
+    {
+        foreach (var table in selectExpression.Tables.OfType<XuguPrimitiveCollectionTableExpression>())
+        {
+            _primitiveCollectionTables[table.Alias] = table;
+        }
+
+        return base.VisitSelect(selectExpression);
+    }
+
     protected override Expression VisitColumn(ColumnExpression columnExpression)
     {
+        if (_primitiveCollectionTables.TryGetValue(columnExpression.TableAlias, out var primitiveCollectionTable))
+        {
+            if (columnExpression.Name.Equals("key", StringComparison.OrdinalIgnoreCase))
+            {
+                Sql.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(primitiveCollectionTable.Alias))
+                    .Append(".")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("key"));
+                return columnExpression;
+            }
+
+            if (columnExpression.Name.Equals("value", StringComparison.OrdinalIgnoreCase))
+            {
+                GeneratePrimitiveCollectionValue(primitiveCollectionTable);
+                return columnExpression;
+            }
+        }
+
         if (_removeTableAliasOld is not null
             && columnExpression.TableAlias == _removeTableAliasOld)
         {
