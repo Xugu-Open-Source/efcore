@@ -180,7 +180,6 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB residual: TPC gears navigation/order/null semantics; not dialect SQL reject.")]
     public override async Task Include_with_nested_navigation_in_order_by(bool async)
     {
         await base.Include_with_nested_navigation_in_order_by(async);
@@ -1927,7 +1926,6 @@ public class TPCGearsOfWarQueryXuguTest : TPCGearsOfWarQueryRelationalTestBase<T
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB residual: TPC gears navigation/order/null semantics; not dialect SQL reject.")]
     public override async Task Correlated_collections_with_funky_orderby_complex_scenario2(bool async)
     {
         await base.Correlated_collections_with_funky_orderby_complex_scenario2(async);

@@ -9,7 +9,8 @@ Known limitations and deferred features: [LIMITATIONS.md](LIMITATIONS.md).
 
 ## [Unreleased]
 
-（下一批次变更记于此。）
+- **Wave5f** — `ORDER BY` null ordering: `ASC NULLS FIRST` / `DESC NULLS LAST`（对齐 SQL Server/EF；Xugu 默认 ASC 空值在后）。ComplexNavigations / TPC M2M / correlated OrderBy 主 residual 簇 live 转绿；少数 collection-count / Sum+Include / Owned 仍 Skip。
+- 全量 Functional 0 FAIL + 覆写 `v9.0.0` 仍属 Wave6。
 
 ---
 

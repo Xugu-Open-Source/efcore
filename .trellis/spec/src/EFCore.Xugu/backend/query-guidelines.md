@@ -46,6 +46,7 @@ Any change under `src/EFCore.Xugu/Query/` — method/member translators, SQL tra
 | `TimeSpan.Milliseconds` | Extract as high-precision then divide; **Convert to int** before materialization (driver E34412). |
 | `string` First/LastOrDefault | `SUBSTRING` — treat string as char sequence. |
 | Inline VALUES | `SELECT … UNION ALL SELECT …` only (not `UNION ALL VALUES`). |
+| `ORDER BY` nulls | Emit `NULLS FIRST` (ASC) / `NULLS LAST` (DESC) — Xugu default is opposite SQL Server. |
 
 ## Anti-patterns (Wave5)
 

@@ -161,7 +161,6 @@ public class TPCManyToManyQueryXuguTest : TPCManyToManyQueryRelationalTestBase<T
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB: left join + skip navigation key ordering residual (1_2 vs 1_1); not engine SQL reject.")]
     public override async Task Left_join_with_skip_navigation(bool async)
     {
         await base.Left_join_with_skip_navigation(async);
@@ -597,7 +596,6 @@ public class TPCManyToManyQueryXuguTest : TPCManyToManyQueryRelationalTestBase<T
             // AssertSql deferred (Wave1: result assertions only)
     }
 
-    [ConditionalTheory(Skip = "XuguDB: left join + skip navigation key ordering residual (1_2 vs 1_1); not engine SQL reject.")]
     public override async Task Left_join_with_skip_navigation_unidirectional(bool async)
     {
         await base.Left_join_with_skip_navigation_unidirectional(async);

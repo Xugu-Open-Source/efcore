@@ -338,8 +338,8 @@ XuguDB 有 JSON 标量函数（`JSON_LENGTH` / `JSON_VALUE` / `JSON_CONTAINS` �
 
 | 类别 | 说明 | 用户影响 |
 |------|------|----------|
-| 复杂导航 / GroupJoin / 多级 Include 结果序或计数 | ComplexNavigations* residual；部分已 Skip | 常规 CRUD/简单 Include 通常不受影响 |
-| TPC + skip navigation 左连接键序 | 如 `Left_join_with_skip_navigation`（`1_2` vs `1_1`） | 少见继承+多对多边角 |
+| `ORDER BY` 空值序 | **已修复** → `ASC NULLS FIRST` / `DESC NULLS LAST`（Xugu 默认 ASC 空值在后，与 SQL Server/EF 相反） | 可选导航 `OrderBy`/`Take`/`Include` 序与 CLR 对齐 |
+| 复杂导航 / GroupJoin / 多级 Include 边角 | 少数仍 Skip：`OrderBy_collection_count_*`、`Sum_with_filter_*` | 常规 CRUD/简单 Include 通常不受影响 |
 | Owned 空导航 / 相关集合投影语义 | Owned residual Skip | 复杂 owned 图查询 |
 | SQL 金标 / 共享 SYSTEM 表前缀噪声 | 测试基建；部分 AssertSql 已 no-op 或 deferred | **不影响**应用运行时 |
 | `Check_all_tests_overridden` | override 面不完整，非运行时缺陷 | 仅测试卫生 |

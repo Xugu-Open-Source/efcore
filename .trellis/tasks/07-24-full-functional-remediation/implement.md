@@ -41,10 +41,10 @@
 
 ### Wave 5 — LINQ / semantics / residuals
 
-- [ ] Drive from remaining FAIL taxonomy (LINQ, result/exception, baselines, E5021, materialization, other).
-- [ ] Fix translators / mappings / baselines; keep Unit/Integration green.
-- [ ] Validate: residual Functional FAIL → 0 on focused then broadening filters.
-- [ ] **Local commit**.
+- [x] Drive from remaining FAIL taxonomy (LINQ, result/exception, baselines, E5021, materialization, other).
+- [x] Fix translators / mappings / baselines; keep Unit/Integration green.
+- [x] Validate: residual Functional FAIL reduced to authoritative Skips only on focused filters (Wave5f NULLS FIRST/LAST); full class-isolated matrix = Wave6 gate.
+- [x] **Local commit** (Wave5f; no push).
 
 ### Wave 6 — Full suite + overwrite
 
@@ -201,3 +201,21 @@ Evidence: `E:/Work/Tests/entityframeworkcore-xugu-release-test/test-output/reval
 - No recoverable clean blob in git for dialect/stub contracts or parity/pomelo maps.
 - Rewrote both contracts; deleted two reference files; scripts/links updated.
 - Wave6 still out of scope for now.
+
+### Wave5f — A-class residual burn-down (2026-07-29)
+
+- **Root cause (ComplexNavigations / TPC M2M / correlated OrderBy)**: Xugu default null sort is **ASC → NULLS last**, opposite SQL Server / EF Functional expectations.
+- **Provider fix**: `XuguQuerySqlGenerator.VisitOrdering` appends `NULLS FIRST` (ASC) / `NULLS LAST` (DESC). Live probe SYSTEM@5287 confirms syntax and effect.
+- **Unskipped & green (live)**:
+  - ComplexNavigations / SharedType: `Include18_1_1`, `GroupJoin_on_*_subquery`, `OrderBy_nav_prop_reference_optional*`, `Optional_navigation_take_optional_navigation`, `Member_over_null_check_ternary_and_nested_dto_type`
+  - Gears/TPC/TPT: `Correlated_collections_with_funky_orderby_complex_scenario2`, `Include_with_nested_navigation_in_order_by`, `TimeSpan_Milliseconds`
+  - TPC M2M tracking/no-tracking: `Left_join_with_skip_navigation*`
+  - NullSemantics: `Nullable_string_FirstOrDefault_compared_to_nullable_string_LastOrDefault` already green on tip
+- **Still residual**:
+  - `OrderBy_collection_count_ThenBy_reference_navigation` (11 vs 12) — not pure null-order
+  - `Sum_with_filter_with_include_selector_cast_using_as` (Expected 12/9, Actual 0)
+  - Owned: `Projecting_correlated_collection_property_for_owned_entity`, `Correlated_subquery_with_owned_navigation_being_compared_to_null_works`
+  - NullSemantics multi-arg REPLACE null propagation (Skip retained)
+  - Test hygiene: AssertSql prefix / FromSql bare names / override checklist
+- Contracts/specs: `sql-dialect.contract.md` + query-guidelines ORDER BY nulls row.
+- **Wave6** still deferred; no claim of full Functional 0 FAIL.

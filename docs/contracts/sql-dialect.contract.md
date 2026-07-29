@@ -105,6 +105,7 @@
 | `CROSS/OUTER APPLY` / `LATERAL` | — | **NotSupported** → `XuguStrings.ApplyNotSupported` |
 | `FROM` 子查询引用上级列 | — | **skip**（E17010） |
 | 内联 `VALUES` 派生表 | `SELECT … UNION ALL SELECT …`（禁止 `UNION ALL VALUES`） | done（Wave4，避 E19132） |
+| `OrderBy` / `ThenBy` 空值序 | `… ASC NULLS FIRST` / `… DESC NULLS LAST`（对齐 SQL Server/EF；Xugu 默认 ASC 空值在后） | done（Wave5 residual） |
 
 未列出的函数：先查官方 `reference/function/**`，再补行；无文档则走 [stub-and-exclusion.contract.md](stub-and-exclusion.contract.md)。
 

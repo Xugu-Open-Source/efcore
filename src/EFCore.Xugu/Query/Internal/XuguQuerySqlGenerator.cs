@@ -268,6 +268,22 @@ public class XuguQuerySqlGenerator : QuerySqlGenerator
             ? VisitConvert(sqlUnaryExpression)
             : base.VisitSqlUnary(sqlUnaryExpression);
 
+    /// <summary>
+    /// Xugu default null ordering is opposite SQL Server / EF Functional expectations:
+    /// ASC puts NULLs last, DESC puts NULLs first (live SYSTEM@5287 probe).
+    /// EF Core tests and CLR-like OrderBy expect NULLs first on ASC.
+    /// Xugu accepts <c>NULLS FIRST</c>/<c>NULLS LAST</c>; use them to align.
+    /// </summary>
+    protected override Expression VisitOrdering(OrderingExpression orderingExpression)
+    {
+        base.VisitOrdering(orderingExpression);
+
+        // Mirror SQL Server default: ASC → nulls first, DESC → nulls last.
+        Sql.Append(orderingExpression.IsAscending ? " NULLS FIRST" : " NULLS LAST");
+
+        return orderingExpression;
+    }
+
     private SqlUnaryExpression VisitConvert(SqlUnaryExpression sqlUnaryExpression)
     {
         var targetStoreType = GetCastStoreType(sqlUnaryExpression.TypeMapping);
