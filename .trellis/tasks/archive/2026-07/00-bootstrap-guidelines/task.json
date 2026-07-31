@@ -21,7 +21,7 @@
   "children": [],
   "parent": null,
   "relatedFiles": [
-    ".trellis/spec/src/EFCore.Xugu/backend/",
+    ".trellis/spec/EFCore.Xugu/backend/",
     ".trellis/spec/guides/xugu-provider-constraints.md",
     "docs/contracts/",
     "scripts/"

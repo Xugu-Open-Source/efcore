@@ -18,7 +18,7 @@ Populate `.trellis/spec/` with real conventions for this repository so future Tr
 
 ## Acceptance criteria
 
-- [x] `.trellis/spec/src/EFCore.Xugu/backend/` has practical guidelines with real paths
+- [x] `.trellis/spec/EFCore.Xugu/backend/` has practical guidelines with real paths
 - [x] `.trellis/spec/guides/xugu-provider-constraints.md` matches source namespaces
 - [x] No template placeholders remain in project-owned specs
 - [x] Spec changes committed on the development branch

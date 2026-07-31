@@ -21,6 +21,6 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "Wave1-5 closed (Wave5f: ORDER BY NULLS FIRST/LAST). Full Functional definition A pending Wave6 class-isolated matrix + independent suite + RELEASE-SCOPE upgrade + tag overwrite. Branch tip release/9.0.0.",
+  "notes": "Wave1-5 closed (Wave5f: ORDER BY NULLS FIRST/LAST). Full Functional definition A pending Wave6 class-isolated matrix + independent suite + RELEASE-SCOPE upgrade + tag overwrite. Branch tip release/9.0.0. Recovery: no session currently owns this in-progress task; resume from Wave6 and run task.py start from the target platform session to establish its session-scoped pointer.",
   "meta": {}
 }
