@@ -17,6 +17,17 @@
     <None Include="Baselines\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- Live-SQL unit tests (Translator/JsonColumn/NativeSqlBaseline/CompatibleMode) need the native
+       driver beside the test host. In project-reference mode xugusql.dll flows transitively from
+       src/EFCore.Xugu; in release-consumer mode (ReleaseConsumerTest=true, nupkg has no native
+       assets) nothing flows - copy it explicitly like the Functional/Integration projects do. -->
+  <ItemGroup Condition="'$(XuguNativeDllExists)' == 'true'">
+    <None Include="$(XuguNativeDllPath)">
+      <Link>xugusql.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational.Specification.Tests" />

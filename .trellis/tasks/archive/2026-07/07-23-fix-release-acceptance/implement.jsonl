@@ -1,8 +1,0 @@
-{"file": "docs/superpowers/specs/2026-07-23-release-acceptance-wave-a-design.md", "reason": "Approved Wave A design — scope, layered approach, acceptance gate"}
-{"file": ".trellis/tasks/07-23-fix-release-acceptance/prd.md", "reason": "Locked product decisions for Wave A"}
-{"file": "docs/superpowers/plans/2026-07-23-release-acceptance-wave-a.md", "reason": "Implementation plan tasks 1–9"}
-{"file": "docs/contracts/sql-dialect.contract.md", "reason": "TIME/temporal and APPLY dialect authority before Unit/Skip changes"}
-{"file": "docs/LIMITATIONS.md", "reason": "APPLY/LATERAL and packaging notes to keep aligned"}
-{"file": "docs/RELEASE-SCOPE.md", "reason": "Must reflect Wave A gate instead of full Functional 0 FAIL claim"}
-{"file": "docs/references/xugudb-docs-map.md", "reason": "Locate TIME + system-view docs for E18012/catalog fix"}
-{"file": ".trellis/spec/guides/xugu-provider-constraints.md", "reason": "Hard constraints: Xugu docs authority, no external edits"}

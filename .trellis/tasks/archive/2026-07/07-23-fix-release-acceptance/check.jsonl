@@ -1,5 +1,0 @@
-{"file": "docs/superpowers/specs/2026-07-23-release-acceptance-wave-a-design.md", "reason": "Acceptance checklist and out-of-scope boundaries for verification"}
-{"file": "docs/superpowers/plans/2026-07-23-release-acceptance-wave-a.md", "reason": "Per-task gates: Unit, Integration, APPLY filter, pack, independent suite"}
-{"file": ".trellis/tasks/07-23-fix-release-acceptance/prd.md", "reason": "Wave A requirements R1–R8 must all be satisfied"}
-{"file": "docs/RELEASE-SCOPE.md", "reason": "Post-change docs must state Wave A gate, not full Functional green"}
-{"file": "docs/LIMITATIONS.md", "reason": "APPLY Skip and any E18012/catalog privilege notes must match code"}

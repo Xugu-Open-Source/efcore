@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.TestUtilities;
 using Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.TestUtilities;
+using Microsoft.EntityFrameworkCore.Xugu.Tests.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -33,6 +34,27 @@ namespace Microsoft.EntityFrameworkCore.Xugu.FunctionalTests.Query
         [ConditionalTheory(Skip = "XuguDB E19132: LIMIT/OFFSET expects integer (unexpected FCONST); Wave4 pending OFFSET cast/inlining).")]
         public override Task Client_method_skip_loads_owned_navigations(bool async)
             => base.Client_method_skip_loads_owned_navigations(async);
+
+        // Shared-store isolation maps every fixture table behind a per-store prefix
+        // (e.g. EF_<hash>_OWNEDPERSON, see XuguTestModelExtensions.ApplyTablePrefix), while the
+        // upstream raw SQL references the logical name [OwnedPerson] → server E5021 表或视图不存在.
+        // Same pattern as GearsOfWarFromSqlQueryXGTest.From_sql_queryable_simple_columns_out_of_order.
+        [ConditionalTheory]
+        public override async Task Using_from_sql_on_owner_generates_join_with_table_for_owned_shared_dependents(bool async)
+        {
+            using var context = CreateContext();
+            var table = XuguTestStoreFactory.Instance.FormatTableName(Fixture.TestStore.Name, "OwnedPerson");
+            var query = context.Set<OwnedPerson>().FromSqlRaw("SELECT * FROM `" + table + "`");
+
+            if (async)
+            {
+                await query.ToListAsync();
+            }
+            else
+            {
+                query.ToList();
+            }
+        }
 
 
         public class OwnedQueryXuguFixture : RelationalOwnedQueryFixture
